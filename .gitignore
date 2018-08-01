@@ -1,2 +1,3 @@
 build/*
-pyqstrat-egg.info/*
+dist/*
+pyqstrat.egg-info/*
