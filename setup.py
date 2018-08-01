@@ -41,6 +41,8 @@ class PyTest(TestCommand):
 setup(
     name='pyqstrat',
     version=__version__,
+    author='sal',
+    author_email='abbasi.sal@gmail.com',
     url='http://github.com/saabbasi/pyqstrat/',
     license='BSD',
     tests_require=['pytest'],
