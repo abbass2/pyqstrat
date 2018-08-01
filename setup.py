@@ -25,7 +25,7 @@ def read(*filenames, **kwargs):
             buf.append(f.read())
     return sep.join(buf)
 
-long_description = read('README.txt', 'CHANGES.txt')
+long_description = read('README.rst', 'CHANGES.txt')
 
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -38,30 +38,18 @@ class PyTest(TestCommand):
         errcode = pytest.main(self.test_args)
         sys.exit(errcode)
 
-from setuptools.command.test import test as TestCommand
-import sys
-
-class Tox(TestCommand):
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-    def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
-        import tox
-        errcode = tox.cmdline(self.test_args)
-        sys.exit(errcode)
-
 setup(
     name='pyqstrat',
-    version=pyqstrat.__version__,
+    version=__version__,
+    author='sal',
+    author_email='abbasi.sal@gmail.com',
     url='http://github.com/saabbasi/pyqstrat/',
     license='BSD',
-    tests_require=['tox'],
+    tests_require=['pytest'],
     python_requires='>=3.6',
     install_requires=['pandas>=0.22',
                       'numpy>=1.14',
-                      'matplotlib>=2.2.22'
+                      'matplotlib>=2.2.2'
                     ],
     description='fast / extensible library for backtesting quantitative strategies',
     long_description=long_description,
@@ -84,5 +72,5 @@ setup(
     extras_require={
         'testing': ['pytest'],
     },
-    cmdclass = {'test': Tox},
+    cmdclass = {'test': PyTest},
 )
