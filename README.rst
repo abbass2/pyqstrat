@@ -42,7 +42,7 @@ Documentation
 
 `notebooks <http://rawgit.com/saabbasi/pyqstrat/master/docs/html/notebooks.html>`_
 
-`API docs <http://rawgit.com/saabbasi/pyqstrat/master/docs/html/api.html>`_
+`API docs <https://pyqstrat.readthedocs.io>`_
 
 Discussion
 ----------
@@ -88,4 +88,4 @@ The software is provided on the conditions of the simplified BSD license.
    
 .. |Docs| image:: https://readthedocs.org/projects/pyqstrat/badge/?version=latest
    :alt: Documentation Status
-   :target: http://rawgit.com/saabbasi/pyqstrat/master/docs/html/api.html
+   :target: https://pyqstrat.readthedocs.io
