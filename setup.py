@@ -38,26 +38,12 @@ class PyTest(TestCommand):
         errcode = pytest.main(self.test_args)
         sys.exit(errcode)
 
-from setuptools.command.test import test as TestCommand
-import sys
-
-class Tox(TestCommand):
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-    def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
-        import tox
-        errcode = tox.cmdline(self.test_args)
-        sys.exit(errcode)
-
 setup(
     name='pyqstrat',
     version=pyqstrat.__version__,
     url='http://github.com/saabbasi/pyqstrat/',
     license='BSD',
-    tests_require=['tox'],
+    tests_require=['pytest'],
     python_requires='>=3.6',
     install_requires=['pandas>=0.22',
                       'numpy>=1.14',
@@ -84,5 +70,5 @@ setup(
     extras_require={
         'testing': ['pytest'],
     },
-    cmdclass = {'test': Tox},
+    cmdclass = {'test': PyTest},
 )
