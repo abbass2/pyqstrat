@@ -40,7 +40,7 @@ Requirements:
 Documentation
 -------------
 
-`Jupyter Notebooks <https://github.com/abbass2/pyqstrat/tree/master/docs/notebooks>_` 
+`Jupyter Notebooks <https://github.com/abbass2/pyqstrat/tree/master/docs/notebooks>`_ 
 
 `API docs <https://pyqstrat.readthedocs.io>`_
 
