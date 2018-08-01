@@ -47,12 +47,26 @@ Discussion
 
 The `pyqstrat user group <https://groups.io/g/pyqstrat>`_ is the group used for pyqstrat discussions.
 
+
+Acknowledgements
+----------------
+
+Before building this, I looked at the following.  Although I ended up not using them, I got some great ideas for them.
+
+`R quantstrat library <https://github.com/braverock/quantstrat>`_
+`Python backtrader project <https://www.backtrader.com>`_
+
+
+Here are some books I recommend for learning to build quant strategies.  Several of the ideas I use in this framework come from these books
+
+`Trading Systems: A New Approach to System Development and Portfolio Optimisation - Tomasini, Emilio and Jaekle, Urban <https://www.amazon.com/gp/product/1905641796/ref=oh_aui_search_detailpage?ie=UTF8&psc=1>`_
+`Machine Trading - Chan, Ernie <https://www.amazon.com/gp/product/1119219604>`_
+`Algorithmic Trading: Winning Strategies and Their Rationale - Chan, Ernie https://www.amazon.com/gp/product/1118460146>_`
+
 Disclaimer
 ----------
 
 The software is provided on the conditions of the simplified BSD license.
-
-
 
 .. _Python: http://www.python.org
 .. _`Interactive Brokers Python API`: http://interactivebrokers.github.io

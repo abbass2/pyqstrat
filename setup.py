@@ -40,14 +40,14 @@ class PyTest(TestCommand):
 
 setup(
     name='pyqstrat',
-    version=pyqstrat.__version__,
+    version=__version__,
     url='http://github.com/saabbasi/pyqstrat/',
     license='BSD',
     tests_require=['pytest'],
     python_requires='>=3.6',
     install_requires=['pandas>=0.22',
                       'numpy>=1.14',
-                      'matplotlib>=2.2.22'
+                      'matplotlib>=2.2.2'
                     ],
     description='fast / extensible library for backtesting quantitative strategies',
     long_description=long_description,
