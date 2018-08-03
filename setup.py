@@ -50,7 +50,8 @@ setup(
     install_requires=['pandas>=0.22',
                       'numpy>=1.14',
                       'matplotlib>=2.2.2',
-                      'scipy >= 1.0.0'
+                      'scipy >= 1.0.0',
+		      'ipython>=6.5.0'
                     ],
     description='fast / extensible library for backtesting quantitative strategies',
     long_description=long_description,
