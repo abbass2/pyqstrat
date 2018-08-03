@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[3]:
+# In[1]:
 
 
 import numpy as np
@@ -12,7 +12,7 @@ from scipy.interpolate import griddata
 import os
 import sys
 import concurrent
-from pyqstrat.pq_utils import set_defaults
+from pyqstrat.pq_utils import set_defaults, has_display
 
 set_defaults()
 
@@ -83,7 +83,9 @@ class Optimizer:
     
     def plot(self, xname, yname, zname = 'all', plot_type = 'surface', figsize = (15,8), interpolation = 'linear', 
              cmap = 'viridis', marker_size = 100, marker_color = 'r', xlim = None, ylim = None):
+        
         if len(self.experiments) == 0: return
+        if not has_display(): return
 
         # Get rid of nans since matplotlib does not like them
         experiments = [experiment for experiment in self.experiments if experiment.valid()]

@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[6]:
+# In[1]:
 
 
 from functools import reduce
@@ -19,7 +19,7 @@ from IPython.display import display
 from pyqstrat.pq_utils import *
 
 
-# In[4]:
+# In[2]:
 
 
 _VERBOSE = False
