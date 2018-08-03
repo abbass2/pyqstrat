@@ -287,6 +287,7 @@ def plot_return_metrics(metrics, title = None):
     ann_ret = BucketedValues('annual returns', bucket_names = years, bucket_values = ann_rets)
     ann_ret_subplot = Subplot(ann_ret, 'Annual Returns', height_ratio = 0.2, horizontal_lines=[zero_line])
     
+    
     plt = Plot([equity_subplot, dd_subplot, ann_ret_subplot], title = title)
     plt.draw()
     
@@ -299,7 +300,7 @@ def test_evaluator():
     
     ev = compute_return_metrics(dates, rets, starting_equity)
     metrics = display_return_metrics(ev.metrics());
-    plot_return_metrics(ev.metrics())
+    #plot_return_metrics(ev.metrics())
     
     assert(round(ev.metric('sharpe0'), 6) == 2.932954)
     assert(round(ev.metric('sortino'), 6) == 5.690878)

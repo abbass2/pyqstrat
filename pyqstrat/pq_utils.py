@@ -13,6 +13,22 @@ import matplotlib.pyplot as plt
 
 SEC_PER_DAY = 3600 * 24
 
+_HAS_DISPLAY = None
+
+def has_display():
+    '''
+    If we are running in unit test mode or on a server, then don't try to draw graphs, etc.
+    '''
+    global _HAS_DISPLAY
+    if _HAS_DISPLAY is not None: return _HAS_DISPLAY
+    
+    _HAS_DISPLAY = True
+    try:
+        plt.figure()
+    except:
+        _HAS_DISPLAY = False
+    return _HAS_DISPLAY
+
 def shift_np(array, n):
     if array is None: return None
     if len(array) == 0: return array

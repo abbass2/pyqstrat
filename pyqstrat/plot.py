@@ -375,6 +375,11 @@ class Plot:
         return plot_dates
         
     def draw(self, check_data_size = True):
+        
+        if not has_display():
+            print('no display found, cannot plot')
+            return
+        
         plot_dates = self.get_plot_dates()
         if check_data_size and len(plot_dates) > 1000:
             raise Exception(f'trying to plot large data set with {len(plot_dates)} points, reduce date range or turn check_data_size flag off')
