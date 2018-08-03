@@ -1,4 +1,8 @@
-build/*
-dist/*
-pyqstrat.egg-info/*
+**/build/**
+**/dist/**
+**/pyqstrat.egg-info/**
 **/.ipynb_checkpoints/**
+**/.eggs/**
+**/.pytest_cache/**
+**/__pycache__/**
+
