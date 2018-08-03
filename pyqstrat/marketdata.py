@@ -1,12 +1,22 @@
-#cell 0
+
+# coding: utf-8
+
+# In[1]:
+
+
+import warnings
+warnings.filterwarnings("ignore", message="numpy.dtype size changed") # another bogus warning, see https://github.com/numpy/numpy/pull/432
 import pandas as pd
 import numpy as np
 import IPython.display as dsp
 import matplotlib.dates as mdates
-from pybt.pybt_utils import *
-from pybt.plot import *
+from pyqstrat.pq_utils import *
+from pyqstrat.plot import *
 
-#cell 1
+
+# In[2]:
+
+
 def sort_ohlcv(a):
     l = ['o', 'h', 'l', 'c', 'v']
     if a in l:

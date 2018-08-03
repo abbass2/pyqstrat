@@ -1,4 +1,9 @@
-#cell 0
+
+# coding: utf-8
+
+# In[6]:
+
+
 from functools import reduce
 import pandas as pd
 import numpy as np
@@ -11,9 +16,12 @@ import matplotlib.gridspec as gridspec
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from IPython.display import display
-from pybt.pybt_utils import *
+from pyqstrat.pq_utils import *
 
-#cell 1
+
+# In[4]:
+
+
 _VERBOSE = False
 
 class DateFormatter(mtick.Formatter):
@@ -428,7 +436,7 @@ def get_long_short_trade_sets(trades, positions):
             TradeSet('short_enter', trades = select_long_short_trades(trade_pos_list, False, True), marker = 'P', marker_color = 'r'),
             TradeSet('short_exit', trades = select_long_short_trades(trade_pos_list, False, False), marker = 'X', marker_color = 'r')]
 
-if __name__ == "__main__":
+def test_plot():
     
     class MockTrade:
         def __init__(self, date, qty, price):
@@ -471,7 +479,8 @@ if __name__ == "__main__":
     subplot_list = [ind_subplot, sig_subplot, pos_subplot, equity_subplot, annual_returns_subplot]
     plot = Plot(subplot_list, figsize = (20,15), title = 'Test')
     plot.draw()
-
-#cell 2
-
+    
+    
+if __name__ == "__main__":
+    test_plot()
 

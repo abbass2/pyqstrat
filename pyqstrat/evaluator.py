@@ -1,10 +1,20 @@
-#cell 0
+
+# coding: utf-8
+
+# In[1]:
+
+
+import warnings
+warnings.filterwarnings("ignore", message="numpy.dtype size changed") # another bogus warning, see https://github.com/numpy/numpy/pull/432
 import pandas as pd
 import numpy as np
-from pybt.pybt_utils import *
-from pybt.plot import *
+from pyqstrat.pq_utils import *
+from pyqstrat.plot import *
 
-#cell 1
+
+# In[2]:
+
+
 _VERBOSE = False
 
 def compute_amean(returns):
@@ -166,7 +176,7 @@ class Evaluator:
             
         self.metric_values[metric_name] = values
                 
-    def values(self, metric_name):
+    def metric(self, metric_name):
         return self.metric_values[metric_name]
     
     def metrics(self):
@@ -280,7 +290,7 @@ def plot_return_metrics(metrics, title = None):
     plt = Plot([equity_subplot, dd_subplot, ann_ret_subplot], title = title)
     plt.draw()
     
-if __name__ == "__main__":
+def test_evaluator():
     from datetime import datetime, timedelta
     np.random.seed(10)
     dates = np.arange(datetime(2018, 1, 1), datetime(2018, 3, 1), timedelta(days = 1))
@@ -290,13 +300,14 @@ if __name__ == "__main__":
     ev = compute_return_metrics(dates, rets, starting_equity)
     metrics = display_return_metrics(ev.metrics());
     plot_return_metrics(ev.metrics())
-   
-    #print(ev.values('sharpe0'))
-    #print(ev.values('sortino'))
-    #print(ev.values('rolling_dd'))
-    #print(f'annual_returns: {ev.values("annual_returns_buckets")} {ev.values("annual_returns")}')
-    #print(f'{ev.values("mdd_start")} {ev.values("mdd_date")}')
-
-#cell 2
-
+    
+    assert(round(ev.metric('sharpe0'), 6) == 2.932954)
+    assert(round(ev.metric('sortino'), 6) == 5.690878)
+    assert(ev.metric('annual_returns_buckets') == [2018])
+    assert(round(ev.metric('annual_returns')[0], 6) == [0.042643])
+    assert(ev.metric('mdd_start') == np.datetime64('2018-01-19'))
+    assert(ev.metric('mdd_date') == np.datetime64('2018-01-22'))
+    
+if __name__ == "__main__":
+    test_evaluator()
 

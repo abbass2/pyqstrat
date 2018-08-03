@@ -1,5 +1,9 @@
-#cell 0
-from utils.common_functions import set_display_format
+
+# coding: utf-8
+
+# In[3]:
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
@@ -8,7 +12,9 @@ from scipy.interpolate import griddata
 import os
 import sys
 import concurrent
-set_display_format()
+from pyqstrat.pq_utils import set_defaults
+
+set_defaults()
 
 class Experiment:
     def __init__(self, suggestion, total_cost, partial_costs):
@@ -134,14 +140,13 @@ class Optimizer:
             m.set_array(Z)
             plt.colorbar(m, ax = ax)
             
-if __name__ == "__main__":
-    
+def test_optimize():
     def generator():
         for x in range(0,5):
             for y in range(0,5):
                 costs = (yield {'x' : x, 'y' : y})
                 yield
-                print(f'got costs: {costs} with suggestion: {x} {y}')
+                #print(f'got costs: {costs} with suggestion: {x} {y}')
 
     def cost_func(suggestion):
         x = suggestion['x']
@@ -154,7 +159,8 @@ if __name__ == "__main__":
     optimizer = Optimizer('test', generator(), cost_func, max_processes = 1)
     optimizer.run()
     optimizer.plot(xname = 'x', yname = 'y', plot_type = 'contour', figsize = (20,20), xlim = (0,2), ylim = (0,2))
-
-#cell 1
-
+    
+            
+if __name__ == "__main__":
+    test_optimize()
 
