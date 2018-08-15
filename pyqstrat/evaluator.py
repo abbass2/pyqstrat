@@ -15,7 +15,7 @@ from pyqstrat.plot import *
 # In[12]:
 
 
-_VERBOSE = True
+_VERBOSE = False
 
 def compute_amean(returns):
     """Computes arithmetic mean of a return array, ignoring NaNs
