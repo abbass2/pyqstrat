@@ -94,5 +94,5 @@ The software is provided on the conditions of the simplified BSD license.
 .. |License| image:: https://img.shields.io/badge/license-BSD-blue.svg
    :alt:
    
-.. |Docs| image:: https://readthedocs.org/projects/pyqstrat/badge/?version=latest
+.. |Docs| image:: https://readthedocs.org/projects/pyqstrat/badge/
    :alt:
