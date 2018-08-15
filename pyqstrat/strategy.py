@@ -26,7 +26,7 @@ from pyqstrat.plot import *
 from pyqstrat.evaluator import *
 
 
-# In[2]:
+# In[3]:
 
 
 def _calc_pnl(open_trades, new_trades, ending_close, multiplier):
@@ -925,6 +925,9 @@ def test_strategy():
             reason_code = ReasonCode.EXIT_LONG if order_qty < 0 else ReasonCode.EXIT_SHORT
         
         order_qty = round(order_qty)
+        
+        if np.isnan(order_qty):
+            raise Exception(f'Got nan order qty date: {date} i: {i} curr_pos: {curr_pos} curr_equity: {curr_equity} entry_limit: {entry_limit} stop_limit: {stop_limit}')
             
         if math.isclose(order_qty, 0): return []
         
@@ -982,8 +985,8 @@ def test_strategy():
     print('done')
     
     strat1 = portfolio.strategies['strat_0.5']
-    portfolio.plot()
-    strat1.plot()
+    portfolio.plot();
+    strat1.plot();
     
 if __name__ == "__main__":
     test_strategy()
