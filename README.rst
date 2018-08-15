@@ -29,6 +29,10 @@ Using this framework, you can:
 
 Installation
 ------------
+I would strongly recommend installing anaconda and creating an anaconda environment. See installation instructions at https://docs.anaconda.com/anaconda/install/
+
+pyqstrat relies on numpy, scipy, matplotlib and pandas which in turn use Fortran and C code that needs to be compiled.  
+Depending on your environment, using pip may not result in a smooth install of these packages
 
 ::
 
