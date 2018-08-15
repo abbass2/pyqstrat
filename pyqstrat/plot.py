@@ -630,10 +630,8 @@ class Plot:
             check_data_size: If set to True, will not plot if there are > 100K points to avoid locking up your computer for a long time.
               Default True
         '''
-        #import matplotlib
-        #raise Exception(matplotlib.get_backend())
         if not has_display():
-            raise Exception('no display found, cannot plot')
+            print('no display found, cannot plot')
             return
         
         plot_dates = self._get_plot_dates()
