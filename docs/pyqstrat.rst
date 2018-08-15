@@ -1,6 +1,13 @@
 pyqstrat package
 ================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    pyqstrat.examples
+
 Submodules
 ----------
 
@@ -28,6 +35,14 @@ pyqstrat.optimize module
     :undoc-members:
     :show-inheritance:
 
+pyqstrat.orders module
+----------------------
+
+.. automodule:: pyqstrat.orders
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyqstrat.plot module
 --------------------
 
@@ -36,18 +51,26 @@ pyqstrat.plot module
     :undoc-members:
     :show-inheritance:
 
-pyqstrat.py_bt module
----------------------
+pyqstrat.pq_utils module
+------------------------
 
-.. automodule:: pyqstrat.py_bt
+.. automodule:: pyqstrat.pq_utils
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyqstrat.pybt_utils module
---------------------------
+pyqstrat.strategy module
+------------------------
 
-.. automodule:: pyqstrat.pybt_utils
+.. automodule:: pyqstrat.strategy
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyqstrat.test_pyqstrat module
+-----------------------------
+
+.. automodule:: pyqstrat.test_pyqstrat
     :members:
     :undoc-members:
     :show-inheritance:
