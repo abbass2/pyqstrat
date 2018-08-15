@@ -6,7 +6,8 @@ Please read README.rst in the main directory to get started
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-   
+   source/modules
+
 Indices and tables
 ==================
 

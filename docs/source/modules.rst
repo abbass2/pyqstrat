@@ -5,4 +5,3 @@ pyqstrat
    :maxdepth: 4
 
    pyqstrat
-   setup
