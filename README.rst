@@ -46,7 +46,9 @@ Requirements:
 Documentation
 -------------
 
-The best way to get started is to go through this Jupyter notebook: ``Building Strategies <https://github.com/abbass2/pyqstrat/tree/master/pyqstrat/notebooks/building_strategies.ipynb>`_
+The best way to get started is to go through this Jupyter notebook:
+
+`Building Strategies <https://github.com/abbass2/pyqstrat/tree/master/pyqstrat/notebooks/building_strategies.ipynb>`_
 
 `Jupyter Notebooks <https://github.com/abbass2/pyqstrat/tree/master/pyqstrat/notebooks>`_ 
 
