@@ -19,10 +19,13 @@ _VERBOSE = False
 
 def compute_amean(returns):
     """Computes arithmetic mean of a return array, ignoring NaNs
+    
     Args:
         returns: a numpy array of floats representing returns at any frequency
+        
     Returns:
         a float
+        
     >>> compute_amean(np.array([3, 4, np.nan]))
     3.5
     """
@@ -30,11 +33,15 @@ def compute_amean(returns):
     return np.nanmean(returns)
 
 def compute_periods_per_year(dates):
-    """Computes trading periods per year for an array of numpy datetime64's. E.g. if most of the dates are separated by 1 day, will return 252.
+    """Computes trading periods per year for an array of numpy datetime64's.
+      E.g. if most of the dates are separated by 1 day, will return 252.
+      
     Args:
         dates: a numpy array of datetime64's
+        
     Returns:
         a float
+        
     >>> compute_periods_per_year(np.array(['2018-01-01', '2018-01-02', '2018-01-03', '2018-01-09'], dtype = 'M8[D]'))
     252.0
     """
@@ -44,11 +51,14 @@ def compute_periods_per_year(dates):
 
 def compute_gmean(returns, periods_per_year):
     """ Computes geometric mean of an array of returns
+    
     Args:
         returns: a numpy array of returns
         periods_per_year: number of trading periods per year
+        
     Returns:
         a float
+        
     >>> round(compute_gmean(np.array([0.001, 0.002, 0.003]), 252.), 6)
     0.654358
     """
@@ -66,10 +76,12 @@ def compute_std(returns):
 def compute_sortino(returns, amean, periods_per_year):
     '''
     Note that this assumes target return is 0.
+    
     Args:
         returns: a numpy array of returns
         amean: arithmetic mean of returns
         periods_per_year: number of trading periods per year
+        
     >>> round(compute_sortino(np.array([0.001, -0.001, 0.002]), 0.001, 252), 6)
     33.674916
     '''
@@ -83,10 +95,12 @@ def compute_sortino(returns, amean, periods_per_year):
 def compute_sharpe(returns, amean, periods_per_year):
     '''
     Note that this does not take into risk free returns so it's really a sharpe0, i.e. assumes risk free returns are 0
+    
     Args:
         returns: a numpy array of returns
         amean: arithmetic mean of returns
         periods_per_year: number of trading periods per year
+        
     >>> round(compute_sharpe(np.array([0.001, -0.001, 0.002]), 0.001, 252), 6)
     12.727922
     '''
@@ -103,6 +117,7 @@ def compute_equity(dates, starting_equity, returns):
 def compute_rolling_dd(dates, equity):
     '''
     Compute numpy array of rolling drawdown percentage
+    
     Args:
         dates: numpy array of datetime64
         equity: numpy array of equity
@@ -180,6 +195,7 @@ def compute_calmar(returns_3yr, periods_per_year, mdd_pct_3yr):
 def compute_bucketed_returns(dates, returns):
     '''
     Bucket returns by year
+    
     Returns:
         A tuple with the first element being a list of years and the second a list of numpy arrays containing returns for each corresponding year
     '''
@@ -195,11 +211,12 @@ def compute_bucketed_returns(dates, returns):
     return years_list, rets_list
 
 def compute_annual_returns(dates, returns, periods_per_year):
-    '''
-    Takes the output of compute_bucketed_returns and returns geometric mean of returns by year
+    '''Takes the output of compute_bucketed_returns and returns geometric mean of returns by year
+    
     Returns:
         A tuple with the first element being an array of years (integer) and the second element 
         an array of annualized returns for those years
+        
     '''
     assert(len(dates) == len(returns) and periods_per_year > 0)
     if not len(dates): return np.array([], dtype = np.str), np.array([], dtype = np.float)
@@ -220,6 +237,7 @@ class Evaluator:
     """
     def __init__(self, initial_metrics):
         """Inits Evaluator with a dictionary of initial metrics that are used to compute subsequent metrics
+        
         Args:
             initial_metrics: a dictionary of string name -> metric.  metric can be any object including a scalar, an array or a tuple
         """
@@ -238,6 +256,7 @@ class Evaluator:
         
     def compute(self, metric_names = None):
         '''Compute metrics using the internal dependency graph
+        
         Args:
             metric_names: an array of metric names.  If not passed in, evaluator will compute and store all metrics
         '''
@@ -251,6 +270,7 @@ class Evaluator:
     def compute_metric(self, metric_name):
         '''
         Compute and store a single metric:
+        
         Args:
             metric_name: string representing the metric to compute
         '''
@@ -292,6 +312,7 @@ def compute_return_metrics(dates, rets, starting_equity):
         dates: a numpy datetime array with one date per return
         rets: a numpy float array of returns
         starting_equity: starting equity value in your portfolio
+        
     Returns:
         An Evaluator object containing computed metrics off the returns passed in.  
         If needed, you can add your own metrics to this object based on the values of existing metrics and recompute the Evaluator.
@@ -341,8 +362,10 @@ def compute_return_metrics(dates, rets, starting_equity):
 def display_return_metrics(metrics, float_precision = 3):
     '''
     Creates a dataframe making it convenient to view the output of the metrics obtained using the compute_return_metrics function.
+    
     Args:
         float_precision: Change if you want to display floats with more or less significant figures than the default, 3 significant figures.
+        
     Returns:
         A one row dataframe with formatted metrics.
     '''

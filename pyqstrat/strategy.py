@@ -124,6 +124,7 @@ class Portfolio:
         
     def run_indicators(self, strategy_names = None):
         '''Compute indicators for the strategies specified
+        
         Args:
             strategy_names: A list of strategy names.  By default this is set to None and we use all strategies.
         '''
@@ -133,6 +134,7 @@ class Portfolio:
                 
     def run_signals(self, strategy_names = None):
         '''Compute signals for the strategies specified.  Must be called after run_indicators
+        
         Args:
             strategy_names: A list of strategy names.  By default this is set to None and we use all strategies.
         '''
@@ -196,7 +198,8 @@ class Portfolio:
                 
     def run(self, strategy_names = None, start_date = None, end_date = None, run_first = False, run_last = True):
         '''
-        Run indicators, signals and rules.  
+        Run indicators, signals and rules.
+        
         Args:
             strategy_names: A list of strategy names.  By default this is set to None and we use all strategies.
             start_date: Run rules starting from this date.  
@@ -214,6 +217,7 @@ class Portfolio:
     def df_returns(self, sampling_frequency = 'D', strategy_names = None):
         '''
         Return dataframe containing equity and returns with a date index.  Equity and returns are combined from all strategies passed in.
+        
         Args:
             sampling_frequency: Date frequency for rows.  Default 'D' for daily so we will have one row per day
             strategy_names: A list of strategy names.  By default this is set to None and we use all strategies.
@@ -232,6 +236,7 @@ class Portfolio:
         
     def evaluate_returns(self, sampling_frequency = 'D', strategy_names = None, plot = True, float_precision = 4):
         '''Returns a dictionary of common return metrics.
+        
         Args:
             sampling_frequency: Date frequency.  Default 'D' for daily so we downsample to daily returns before computing metrics
             strategy_names: A list of strategy names.  By default this is set to None and we use all strategies.
@@ -246,6 +251,7 @@ class Portfolio:
     
     def plot(self, sampling_frequency = 'D', strategy_names = None):
         '''Display plots of equity, drawdowns and returns
+        
         Args:
             sampling_frequency: Date frequency.  Default 'D' for daily so we downsample to daily returns before computing metrics
             strategy_names: A list of strategy names.  By default this is set to None and we use all strategies.
@@ -286,6 +292,7 @@ class ContractPNL:
         
     def calc(self, prev_i, i):
         '''Compute pnl and store it internally
+        
         Args:
             prev_i: Start index to compute pnl from
             i: End index to compute pnl to
@@ -307,6 +314,7 @@ class ContractPNL:
         
     def trades(self, start_date = None, end_date = None):
         '''Get a list of trades
+        
         Args:
             start_date: A string or numpy datetime64.  Trades with trade dates >= start_date will be returned.  Default None
             end_date: A string or numpy datetime64.  Trades with trade dates <= end_date will be returned.  Default None
@@ -385,7 +393,8 @@ class Account:
         
     def calc(self, i):
         '''
-        Computes P&L and stores it internally for all contracts
+        Computes P&L and stores it internally for all contracts.
+        
         Args:
             i: Index to compute P&L at.  Account remembers the last index it computed P&L up to and will compute P&L between these two indices
         '''
@@ -524,7 +533,8 @@ class Strategy:
         self.rules[name] = rule_function
         
     def add_market_sim(self, market_sim_function, symbols = None):
-        '''Add a market simulator.  A market simulator takes a list of Orders as input and returns a list of Trade objects
+        '''Add a market simulator.  A market simulator takes a list of Orders as input and returns a list of Trade objects.
+        
         Args:
             market_sim_function: A function that takes a list of Orders and MarketData as input and returns a list of Trade objects
             symbols: A list of the symbols that this market_sim_function applies to. If None (default) it will apply to all symbols
@@ -534,6 +544,7 @@ class Strategy:
         
     def run_indicators(self, indicator_names = None, symbols = None):
         '''Calculate values of the indicators specified and store them.
+        
         Args:
             indicator_names: List of indicator names.  If None (default) run all indicators
             symbols: List of symbols to run these indicators for.  If None (default) use all symbols
@@ -549,6 +560,7 @@ class Strategy:
                 
     def run_signals(self, signal_names = None, symbols = None):
         '''Calculate values of the signals specified and store them.
+        
         Args:
             signal_names: List of signal names.  If None (default) run all signals
             symbols: List of symbols to run these signals for.  If None (default) use all symbols
@@ -564,6 +576,7 @@ class Strategy:
                 
     def run_rules(self, rule_names = None, symbols = None, start_date = None, end_date = None, run_first = False, run_last = True):
         '''Run trading rules.
+        
         Args:
             rule_names: List of rule names.  If None (default) run all rules
             symbols: List of symbols to run these signals for.  If None (default) use all symbols
@@ -654,7 +667,8 @@ class Strategy:
             
     def df_data(self, symbols = None, add_pnl = True, start_date = None, end_date = None):
         '''
-        Add indicators and signals to end of market data and return as a pandas dataframe
+        Add indicators and signals to end of market data and return as a pandas dataframe.
+        
         Args:
             symbols: list of symbols to include.  All if set to None (default)
             add_pnl: If True (default), include P&L columns in dataframe
@@ -735,6 +749,7 @@ class Strategy:
     
     def df_returns(self, symbol = None, sampling_frequency = 'D'):
         '''Return a dataframe of returns and equity indexed by date.
+        
         Args:
             symbol: The symbol to get returns for.  If set to None (default), this returns the sum of PNL for all symbols
             sampling_frequency: Downsampling frequency.  Default is None.  See pandas frequency strings for possible values
@@ -749,6 +764,7 @@ class Strategy:
              date_format = None, sampling_frequency = None, trade_marker_properties = None, hspace = 0.15):
         
         '''Plot indicators, signals, trades, position, pnl
+        
         Args:
             symbols: List of symbols or None (default) for all symbols
             md_columns: List of columns of market data to plot.  Default is 'c' for close price.  You can set this to 'ohlcv' if you want to plot
@@ -798,6 +814,7 @@ class Strategy:
             
     def evaluate_returns(self, symbol = None, plot = True, float_precision = 4):
         '''Returns a dictionary of common return metrics.
+        
         Args:
             sampling_frequency: Date frequency.  Default 'D' for daily so we downsample to daily returns before computing metrics
             strategy_names: A list of strategy names.  By default this is set to None and we use all strategies.

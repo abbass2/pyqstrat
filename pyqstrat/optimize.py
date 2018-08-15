@@ -23,6 +23,7 @@ set_defaults()
 
 class Experiment:
     '''An Experiment stores a suggestion and its result
+    
     Attributes:
         suggestion: A dictionary of variable name -> value
         cost: A float representing output of the function we are testing with this suggestion as input.
@@ -93,6 +94,7 @@ class Optimizer:
     
     def run(self, raise_on_error = False):
         '''Run the optimizer.
+        
         Args:
             raise_on_error: If set to True, even if we are running a multiprocess optimization, any Exceptions will bubble up and stop the Optimizer.
               This can be useful for debugging to see stack traces for Exceptions.
@@ -102,6 +104,7 @@ class Optimizer:
         
     def experiment_list(self, sort_order = 'lowest_cost'):
         '''Returns the list of experiments we have run
+        
         Args:
             sort_order: Can be set to lowest_cost, highest_cost or sequence.  
               If set to sequence, experiments are returned in the sequence in which they were run
@@ -132,6 +135,7 @@ class Optimizer:
              cmap = 'viridis', marker = 'X', marker_size = 50, marker_color = 'r', xlim = None, ylim = None, hspace = None):
         
         """Creates a 3D plot of the optimization output for plotting 2 parameters and costs.
+        
         Args:
             x: Name of the parameter to plot on the x axis, corresponding to the same name in the generator.
             y: Name of the parameter to plot on the y axis, corresponding to the same name in the generator.
@@ -191,6 +195,7 @@ class Optimizer:
         
     def plot_2d(self, x, y = 'all', plot_type = 'line', figsize = (15,8), marker = 'X', marker_size = 50, marker_color = 'r', xlim = None, hspace = None):
         """Creates a 2D plot of the optimization output for plotting 1 parameter and costs.
+        
         Args:
             x: Name of the parameter to plot on the x axis, corresponding to the same name in the generator.
             y: Can be one of:

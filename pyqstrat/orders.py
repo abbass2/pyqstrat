@@ -91,7 +91,7 @@ class RollOrder:
   
 class StopLimitOrder:
     '''Used for stop loss or stop limit orders.  The order is triggered when price goes above or below trigger price, depending on whether this is a short
-    or long order.  Becomes either a market or limit order at that point, depending on whether you set the limit price or not.
+      or long order.  Becomes either a market or limit order at that point, depending on whether you set the limit price or not.
     '''
     def __init__(self, symbol, date, qty, trigger_price, limit_price = np.nan, reason_code = ReasonCode.NONE, status = 'open'):
         '''

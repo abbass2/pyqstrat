@@ -56,6 +56,7 @@ def has_display():
 def shift_np(array, n, fill_value = None):
     '''
     Similar to pandas.Series.shift but works on numpy arrays.
+    
     Args:
         array: The numpy array to shift
         n: Number of places to shift, can be positive or negative
@@ -80,6 +81,7 @@ def shift_np(array, n, fill_value = None):
 def set_defaults(df_float_sf = 4, df_display_max_rows = 200, df_display_max_columns = 99, np_seterr = 'raise', plot_style = 'ggplot', mpl_figsize = (8, 6)):
     '''
     Set some display defaults to make it easier to view dataframes and graphs.
+    
     Args:
         df_float_sf: Number of significant figures to show in dataframes (default 4). Set to None to use pandas defaults
         df_display_max_rows: Number of rows to display for pandas dataframes when you print them (default 200).  Set to None to use pandas defaults
@@ -108,7 +110,7 @@ def str2date(s):
 
 def strtup2date(tup):
     '''Converts a string tuple like ("2008-01-15", "2009-01-16") to a numpy datetime64 tuple.  
-    If the tuple does not contain strings, return it back unchanged'''
+      If the tuple does not contain strings, return it back unchanged'''
     if tup and type(tup) is tuple and isinstance(tup[0], str): return (str2date(tup[0]), str2date(tup[1]))
     return tup
 
@@ -139,7 +141,20 @@ def date_2_num(d):
     return dt
 
 def resample_ohlc(dates, o, h, l, c, v, sampling_frequency):
-    '''
+    '''Downsample OHLCV data using sampling frequency
+    
+    Args:
+        o: open price, downsampling uses the first point in the bin
+        h: high price, downsampling uses the max
+        l: low price, downsampling uses the min
+        c: close price, downsampling uses the last point
+        v: volume, downsampling uses the sum
+        sampling_frequency: See pandas frequency strings
+        
+    Returns:
+        A tuple of arrays, corresponding to each array passed in that was not None.  
+          For example, if l and v were passed in as None, the tuple will not contain these.
+        
     >>> dates = np.array(['2018-01-08 15:00:00', '2018-01-09 15:00:00', '2018-01-09 15:00:00', '2018-01-11 15:00:00'], dtype = 'M8[ns]')
     >>> o = np.array([8.9, 9.1, 9.3, 8.6])
     >>> h = np.array([9.0, 9.3, 9.4, 8.7])
@@ -162,6 +177,7 @@ def resample_ohlc(dates, o, h, l, c, v, sampling_frequency):
 
 def resample_ts(dates, values, sampling_frequency):
     '''Downsample a pair of dates and values using sampling frequency, using the last value if it does not exist at bin edge.  See pandas.Series.resample
+    
     Args:
         dates: a numpy datetime64 array
         values: a numpy array
@@ -184,6 +200,7 @@ def nan_to_zero(array):
 def monotonically_increasing(array):
     '''
     Returns True if the array is monotonically_increasing, False otherwise
+    
     >>> monotonically_increasing(np.array(['2018-01-02', '2018-01-03'], dtype = 'M8[D]'))
     True
     >>> monotonically_increasing(np.array(['2018-01-02', '2018-01-02'], dtype = 'M8[D]'))

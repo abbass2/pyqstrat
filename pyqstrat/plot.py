@@ -104,12 +104,15 @@ class BucketedValues:
 class XYData:
     '''
     Data in a subplot that has x and y values that are both arrays of floats
-    Args:
-        x: pandas series or numpy array of floats
-        y: pandas series or numpy arry of floats
+    
     '''
     def __init__(self, name, x, y, plot_type = 'line', line_type = 'solid', line_width = None, color = None, marker = None, marker_size = 50,
                  marker_color = 'red'):
+        '''
+        Args:
+            x: pandas series or numpy array of floats
+            y: pandas series or numpy arry of floats
+        '''
         self.name = name
         self.x = series_to_array(x)
         self.y = series_to_array(y)
@@ -317,6 +320,7 @@ def draw_3d_plot(ax, x, y, z, plot_type, marker = 'X', marker_size = 50, marker_
                 interpolation = 'linear', cmap = 'viridis'):
 
     '''Draw a 3d plot.  See XYZData class for explanation of arguments
+    
     >>> points = np.random.rand(1000, 2)
     >>> x = np.random.rand(10)
     >>> y = np.random.rand(10)
@@ -626,6 +630,7 @@ class Plot:
 
     def draw(self, check_data_size = True):
         '''Draw the subplots.
+        
         Args:
             check_data_size: If set to True, will not plot if there are > 100K points to avoid locking up your computer for a long time.
               Default True
@@ -690,6 +695,7 @@ def trade_sets_by_reason_code(trades, marker_props = ReasonCode.MARKER_PROPERTIE
     '''
     Returns a list of TradeSet objects.  Each TradeSet contains trades with a different reason code.  The markers for each TradeSet
     are set by looking up marker properties for each reason code using the marker_props argument:
+    
     Args:
         trades: List of Trade objects, each containing an order attribute which in turn contains a reason_code attribute
         marker_props: Dictionary from reason code string -> dictionary of marker properties.  See ReasonCode.MARKER_PROPERTIES for example.

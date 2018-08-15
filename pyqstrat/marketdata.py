@@ -26,6 +26,7 @@ def _sort_ohlcv(a):
 
 class MarketData:
     '''Used to store OHLCV bars.  You must at least supply dates and close prices.  All other fields are optional.
+    
     Attributes:
         dates: A numpy datetime array with the datetime for each bar.  Must be monotonically increasing.
         c:     A numpy float array with close prices for the bar.
@@ -65,6 +66,7 @@ class MarketData:
     def resample(self, sampling_frequency, inplace = False):
         '''
         Downsample the OHLCV data into a new bar frequency
+        
         Args:
             sampling_frequency: See sampling frequency in pandas
             inplace: If set to False, don't modify this object, return a new object instead.
@@ -117,6 +119,7 @@ class MarketData:
     
     def warnings(self, warn_std = 10, display = True):
         '''Returns a dataframe indicating any values where the bar over bar change is more than warn_std standard deviations.
+        
         Args:
             warn_std: Number of standard deviations to use as a threshold (default 10)
             display:  Whether to print out the warning dataframe as well as returning it
@@ -145,6 +148,7 @@ class MarketData:
                               
     def overview(self, display = True):
         '''Returns a dataframe showing basic information about the data, including count, number and percent missing, min, max
+        
         Args:
             display:  Whether to print out the warning dataframe as well as returning it
         '''
@@ -159,6 +163,7 @@ class MarketData:
     def time_distribution(self, frequency = '15 minutes', display = True, plot = True, figsize = None):
         '''
         Return a dataframe with the time distribution of the bars
+        
         Args:
             frequency: The width of each bin (default "15 minutes").  You can use hours or days as well.
             display:   Whether to display the data in addition to returning it.
@@ -219,7 +224,8 @@ class MarketData:
     def describe(self, warn_std = 10, time_distribution_frequency = '15 min', print_time_distribution = False):
         '''
         Describe the bars.  Shows an overview, errors and warnings for the bar data.  This is a good function to use 
-        before running any backtests on a set of bar data
+        before running any backtests on a set of bar data.
+        
         Args:
             warn_std: See warning function
             time_distribution_frequency: See time_distribution function
@@ -243,6 +249,7 @@ class MarketData:
     def plot(self, figsize = (15,8), date_range = None, sampling_frequency = None, title = 'Price / Volume'):
         '''
         Plot a candlestick or line plot depending on whether we have ohlc data or just close prices
+        
         Args:
             figsize: Size of the figure (default (15,8))
             date_range: A tuple of strings or numpy datetimes for plotting a smaller sample of the data, e.g. ("2018-01-01", "2018-01-06")
@@ -269,6 +276,7 @@ class MarketData:
     
 def roll_futures(md, date_func, condition_func, expiries = None, return_full_df = False):
     '''Construct a continuous futures dataframe with one row per datetime given rolling logic
+    
     Args:
         md: A dataframe containing the columns 'date', 'series', and any other market data, for example, ohlcv data. Date can contain time for sub-daily bars. 
           The series column must contain a different string name for each futures series, e.g. SEP2018, DEC2018, etc.
@@ -282,9 +290,11 @@ def roll_futures(md, date_func, condition_func, expiries = None, return_full_df 
           If you don't pass this in, the function will assume that the expiry column is present in the original dataframe.
         return_full_df: If set, will return the datframe without removing extra dates so you can use your own logic for rolling, including the _next columns and 
           the roll flag
+          
     Returns:
         A pandas DataFrame with one row per date, which contains the columns in the original md DataFrame and the same columns suffixed with _next 
-          representing the series we want to roll to.  There is also a column called roll_flag which is set to True whenever the date and roll condition functions are met.
+          representing the series we want to roll to.  There is also a column called roll_flag which is set to True whenever 
+          the date and roll condition functions are met.
           
     >>> md = pd.DataFrame({'date' : np.concatenate((np.arange(np.datetime64('2018-03-11'), np.datetime64('2018-03-16')),
     ...                                            np.arange(np.datetime64('2018-03-11'), np.datetime64('2018-03-16')))),
