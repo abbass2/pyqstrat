@@ -95,5 +95,4 @@ The software is provided on the conditions of the simplified BSD license.
    :alt:
    
 .. |Docs| image:: https://readthedocs.org/projects/pyqstrat/badge/?version=latest
-   :alt: Documentation Status
-   :target: https://pyqstrat.readthedocs.io
+   :alt:
