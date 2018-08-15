@@ -485,7 +485,8 @@ class Account:
     
 class Strategy:
     def __init__(self, contracts, starting_equity = 1.0e6, calc_frequency = 'D'):
-        '''Args:
+        '''
+        Args:
             contracts: A list of contract objects
             starting_equity: Starting equity in Strategy currency.  Default 1.e6
             calc_frequency: How often P&L is calculated.  Default is 'D' for daily
@@ -505,7 +506,8 @@ class Strategy:
         self.dates = self.account.all_dates
         
     def add_indicator(self, name, indicator_function):
-        '''Args:
+        '''
+        Args:
             name: Name of the indicator
             indicator_function:  A function taking a MarketData object and returning a numpy array
               containing indicator values.  The return array must have the same length as the MarketData object
@@ -522,7 +524,8 @@ class Strategy:
         self.signals[name] = signal_function
         
     def add_rule(self, name, rule_function, signal_name, sig_true_values):
-        ''' Add a trading rule
+        '''Add a trading rule
+        
         Args:
             name: Name of the trading rule
             rule_function: A trading rule function that returns a list of Orders

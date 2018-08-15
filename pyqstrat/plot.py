@@ -587,10 +587,13 @@ class Subplot:
         if self.zlabel: ax.set_zlabel(self.zlabel)
             
 class Plot:
+    
     '''Top level plot containing a list of subplots to draw'''
+    
     def __init__(self, subplot_list,  title = None, figsize = (15, 8), date_range = None, date_format = None, 
                  sampling_frequency = None, show_grid = True, show_date_gaps = True, hspace = 0.15):
-        '''Args:
+        '''
+        Args:
             subplot_list: List of Subplot objects to draw
             title: Title for this plot.  Default None
             figsize: Figure size.  Default (15, 8)
