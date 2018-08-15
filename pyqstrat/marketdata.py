@@ -200,6 +200,9 @@ class MarketData:
         if plot:
             if not figsize: figsize = (20, 8)
             cols = ['close_count', 'volume'] if 'v' in df.columns else ['close_count']
+            if not has_display():
+                print('no display found, cannot plot time distribution')
+                return tdf
             tdf[cols].plot(figsize = figsize, kind = 'bar', subplots = True, title = 'Time Distribution')
             
         return tdf
