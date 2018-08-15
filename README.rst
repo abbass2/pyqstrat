@@ -83,7 +83,6 @@ Disclaimer
 The software is provided on the conditions of the simplified BSD license.
 
 .. _Python: http://www.python.org
-.. _`Interactive Brokers Python API`: http://interactivebrokers.github.io
 
 .. |PyVersion| image:: https://img.shields.io/badge/python-3.6+-blue.svg
    :alt:
