@@ -61,7 +61,7 @@ The `pyqstrat user group <https://groups.io/g/pyqstrat>`_ is the group used for 
 Acknowledgements
 ----------------
 
-Before building this, I looked at the following.  Although I ended up not using them, I got some great ideas for them.
+Before building this, I looked at the following.  Although I ended up not using them, they are definitely worth looking at.
 
 `R quantstrat library <https://github.com/braverock/quantstrat>`_
 
