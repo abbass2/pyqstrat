@@ -25,6 +25,8 @@ Using this framework, you can:
 * Plot trades, market data, indicators and add custom subplots to give you insight into your strategy's operation.
 * Optimize your strategy's parameters using all the CPU cores on your machine.
 
+** NOTE: This is beta software and the API will change **
+
 Installation
 ------------
 
@@ -39,6 +41,8 @@ Requirements:
 
 Documentation
 -------------
+
+The best way to get started is to go through this Jupyter notebook: `<https://github.com/abbass2/pyqstrat/tree/master/docs/notebooks/building_strategies.ipynb>_`
 
 `Jupyter Notebooks <https://github.com/abbass2/pyqstrat/tree/master/docs/notebooks>`_ 
 
@@ -60,7 +64,7 @@ Before building this, I looked at the following.  Although I ended up not using 
 `Python backtrader project <https://www.backtrader.com>`_
 
 
-Several of the ideas I use in this framework come from the following books
+Some of the ideas I use in this framework come from the following books
 
 `Trading Systems: A New Approach to System Development and Portfolio Optimisation - Tomasini, Emilio and Jaekle, Urban <https://www.amazon.com/gp/product/1905641796/ref=oh_aui_search_detailpage?ie=UTF8&psc=1>`_
 
