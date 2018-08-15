@@ -12,10 +12,10 @@ from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
 
-# In[2]:
+# In[12]:
 
 
-_VERBOSE = False
+_VERBOSE = True
 
 def compute_amean(returns):
     """Computes arithmetic mean of a return array, ignoring NaNs
@@ -230,7 +230,7 @@ class Evaluator:
     so dependencies are computed first before the functions that need their output.  You can retrieve the output of a metric using the metric member function
     
     >>> evaluator = Evaluator(initial_metrics={'x' : np.array([1, 2, 3]), 'y' : np.array([3, 4, 5])})
-    >>> evaluator.add_scalar_metric('z', lambda x, y: sum(x, y), dependencies=['x', 'y'])
+    >>> evaluator.add_metric('z', lambda x, y: sum(x, y), dependencies=['x', 'y'])
     >>> evaluator.compute()
     >>> evaluator.metric('z')
     array([ 9, 10, 11])
@@ -245,22 +245,15 @@ class Evaluator:
         self.metric_values = initial_metrics
         self._metrics = {}
         
-    def add_scalar_metric(self, name, func, dependencies):
-        self._metrics[name] = ('scalar', func, dependencies)
+    def add_metric(self, name, func, dependencies):
+        self._metrics[name] = (func, dependencies)
     
-    def add_rolling_metric(self, name, func, dependencies):
-        self._metrics[name] = ('rolling', func, dependencies)
-        
-    def add_bucketed_metric(self, name, func, dependencies):
-        self._metrics[name] = ('bucketed', func, dependencies)
-        
     def compute(self, metric_names = None):
         '''Compute metrics using the internal dependency graph
         
         Args:
             metric_names: an array of metric names.  If not passed in, evaluator will compute and store all metrics
         '''
-
 
         if metric_names is None: metric_names = list(self._metrics.keys())
         for metric_name in metric_names:
@@ -274,24 +267,13 @@ class Evaluator:
         Args:
             metric_name: string representing the metric to compute
         '''
-        metric_type, func, dependencies = self._metrics[metric_name]
+        func, dependencies = self._metrics[metric_name]
         for dependency in dependencies:
             if dependency not in self.metric_values:
                 self.compute_metric(dependency)
         dependency_values = {k: self.metric_values[k] for k in dependencies}
         
-        if metric_type == 'scalar':
-            values = func(**dependency_values)
-        elif metric_type == 'rolling':
-            dates, values = func(**dependency_values)
-            assert(len(dates) == len(values))
-            self.metric_values[metric_name + '_dates'] = dates
-        elif metric_type == 'bucketed':
-            bucket_names, values = func(**dependency_values)
-            assert(len(bucket_names) == len(values))
-            self.metric_values[metric_name + '_buckets'] = bucket_names
-        else:
-            raise Exception(f'unknown metric type: {metric_type}')
+        values = func(**dependency_values)
             
         self.metric_values[metric_name] = values
                 
@@ -326,35 +308,36 @@ def compute_return_metrics(dates, rets, starting_equity):
     rets = nan_to_zero(rets)
 
     ev = Evaluator({'dates' : dates, 'returns' : rets, 'starting_equity' : starting_equity})
-    ev.add_scalar_metric('periods_per_year', compute_periods_per_year, dependencies = ['dates'])
-    ev.add_scalar_metric('amean', compute_amean, dependencies = ['returns'])
-    ev.add_scalar_metric('std', compute_std, dependencies = ['returns'])
-    ev.add_scalar_metric('up_periods', lambda returns : len(returns[returns > 0]), dependencies = ['returns'])
-    ev.add_scalar_metric('down_periods', lambda returns : len(returns[returns < 0]), dependencies = ['returns'])
-    ev.add_scalar_metric('up_pct', lambda up_periods, down_periods : up_periods * 1.0 / (up_periods + down_periods), dependencies=['up_periods', 'down_periods'])
-    ev.add_scalar_metric('gmean', compute_gmean, dependencies=['returns', 'periods_per_year'])
-    ev.add_scalar_metric('sharpe', compute_sharpe, dependencies = ['returns', 'periods_per_year', 'amean'])
-    ev.add_scalar_metric('sortino', compute_sortino, dependencies = ['returns', 'periods_per_year', 'amean'])
-    ev.add_scalar_metric('equity', compute_equity, dependencies = ['dates', 'starting_equity', 'returns'])
+    ev.add_metric('periods_per_year', compute_periods_per_year, dependencies = ['dates'])
+    ev.add_metric('amean', compute_amean, dependencies = ['returns'])
+    ev.add_metric('std', compute_std, dependencies = ['returns'])
+    ev.add_metric('up_periods', lambda returns : len(returns[returns > 0]), dependencies = ['returns'])
+    ev.add_metric('down_periods', lambda returns : len(returns[returns < 0]), dependencies = ['returns'])
+    ev.add_metric('up_pct', lambda up_periods, down_periods : up_periods * 1.0 / (up_periods + down_periods), dependencies=['up_periods', 'down_periods'])
+    ev.add_metric('gmean', compute_gmean, dependencies=['returns', 'periods_per_year'])
+    ev.add_metric('sharpe', compute_sharpe, dependencies = ['returns', 'periods_per_year', 'amean'])
+    ev.add_metric('sortino', compute_sortino, dependencies = ['returns', 'periods_per_year', 'amean'])
+    ev.add_metric('equity', compute_equity, dependencies = ['dates', 'starting_equity', 'returns'])
     
     # Drawdowns
-    ev.add_rolling_metric('rolling_dd', compute_rolling_dd, dependencies = ['dates', 'equity'])
-    ev.add_scalar_metric('mdd_pct', compute_maxdd_pct, dependencies = ['rolling_dd'])
-    ev.add_scalar_metric('mdd_date', compute_maxdd_date, dependencies = ['rolling_dd_dates', 'rolling_dd'])
-    ev.add_scalar_metric('mdd_start', compute_maxdd_start, dependencies = ['rolling_dd_dates', 'rolling_dd', 'mdd_date'])
-    ev.add_scalar_metric('mar', compute_mar, dependencies = ['returns', 'periods_per_year', 'mdd_pct'])
+    ev.add_metric('rolling_dd', compute_rolling_dd, dependencies = ['dates', 'equity'])
+    ev.add_metric('mdd_pct', lambda rolling_dd : compute_maxdd_pct(rolling_dd[1]), dependencies = ['rolling_dd'])
+    ev.add_metric('mdd_date', lambda rolling_dd : compute_maxdd_date(rolling_dd[0], rolling_dd[1]), dependencies = ['rolling_dd'])
+    ev.add_metric('mdd_start', lambda rolling_dd, mdd_date : compute_maxdd_start(rolling_dd[0], rolling_dd[1], mdd_date), dependencies = ['rolling_dd', 'mdd_date'])
+    ev.add_metric('mar', compute_mar, dependencies = ['returns', 'periods_per_year', 'mdd_pct'])
     
-    ev.add_scalar_metric('dates_3yr', compute_dates_3yr, dependencies = ['dates'])
-    ev.add_scalar_metric('returns_3yr', compute_returns_3yr, dependencies = ['dates', 'returns'])
+    ev.add_metric('dates_3yr', compute_dates_3yr, dependencies = ['dates'])
+    ev.add_metric('returns_3yr', compute_returns_3yr, dependencies = ['dates', 'returns'])
 
-    ev.add_rolling_metric('rolling_dd_3yr', compute_rolling_dd_3yr, dependencies = ['dates', 'equity'])
-    ev.add_scalar_metric('mdd_pct_3yr', compute_maxdd_pct_3yr, dependencies = ['rolling_dd_3yr'])
-    ev.add_scalar_metric('mdd_date_3yr', compute_maxdd_date_3yr, dependencies = ['rolling_dd_3yr_dates', 'rolling_dd_3yr'])
-    ev.add_scalar_metric('mdd_start_3yr', compute_maxdd_start_3yr, dependencies = ['rolling_dd_3yr_dates', 'rolling_dd_3yr', 'mdd_date_3yr'])
-    ev.add_scalar_metric('calmar', compute_calmar, dependencies = ['returns_3yr', 'periods_per_year', 'mdd_pct_3yr'])
+    ev.add_metric('rolling_dd_3yr', compute_rolling_dd_3yr, dependencies = ['dates', 'equity'])
+    ev.add_metric('mdd_pct_3yr', lambda rolling_dd_3yr : compute_maxdd_pct_3yr(rolling_dd_3yr[1]), dependencies = ['rolling_dd_3yr'])
+    ev.add_metric('mdd_date_3yr', lambda rolling_dd_3yr : compute_maxdd_date_3yr(rolling_dd_3yr[0], rolling_dd_3yr[1]) , dependencies = ['rolling_dd_3yr'])
+    ev.add_metric('mdd_start_3yr', lambda rolling_dd_3yr, mdd_date_3yr : compute_maxdd_start_3yr(rolling_dd_3yr[0], rolling_dd_3yr[1], mdd_date_3yr), 
+                  dependencies = ['rolling_dd_3yr', 'mdd_date_3yr'])
+    ev.add_metric('calmar', compute_calmar, dependencies = ['returns_3yr', 'periods_per_year', 'mdd_pct_3yr'])
 
-    ev.add_bucketed_metric('annual_returns', compute_annual_returns, dependencies=['dates', 'returns', 'periods_per_year'])
-    ev.add_bucketed_metric('bucketed_returns', compute_bucketed_returns, dependencies=['dates', 'returns'])
+    ev.add_metric('annual_returns', compute_annual_returns, dependencies=['dates', 'returns', 'periods_per_year'])
+    ev.add_metric('bucketed_returns', compute_bucketed_returns, dependencies=['dates', 'returns'])
 
     ev.compute()
     return ev
@@ -387,8 +370,8 @@ def display_return_metrics(metrics, float_precision = 3):
     _metrics['up_dwn'] = f'{metrics["up_periods"]}/{metrics["down_periods"]}/{metrics["up_pct"]:.3g}'
     _metrics['dd_3y_dates'] = f'{str(metrics["mdd_start_3yr"])[:10]}/{str(metrics["mdd_date_3yr"])[:10]}'
     
-    years = metrics['annual_returns_buckets']
-    ann_rets = metrics['annual_returns']
+    years = metrics['annual_returns'][0]
+    ann_rets = metrics['annual_returns'][1]
     for i, year in enumerate(years):
         _metrics[str(year)] = ann_rets[i]
         
@@ -427,12 +410,12 @@ def plot_return_metrics(metrics, title = None):
                              date_lines = drawdown_lines, horizontal_lines=[HorizontalLine(metrics['starting_equity'], color = 'black')]) 
     
 
-    rolling_dd = TimeSeries('drawdowns', dates = metrics['rolling_dd_dates'], values = metrics['rolling_dd'])
+    rolling_dd = TimeSeries('drawdowns', dates = metrics['rolling_dd'][0], values = metrics['rolling_dd'][1])
     zero_line = HorizontalLine(y = 0, color = 'black')
     dd_subplot = Subplot(rolling_dd, ylabel = 'Drawdowns', height_ratio = 0.2, date_lines = drawdown_lines, horizontal_lines = [zero_line])
     
-    years = metrics['bucketed_returns_buckets']
-    ann_rets = metrics['bucketed_returns']
+    years = metrics['bucketed_returns'][0]
+    ann_rets = metrics['bucketed_returns'][1]
     ann_ret = BucketedValues('annual returns', bucket_names = years, bucket_values = ann_rets)
     ann_ret_subplot = Subplot(ann_ret, ylabel = 'Annual Returns', height_ratio = 0.2, horizontal_lines=[zero_line])
     
@@ -453,8 +436,8 @@ def test_evaluator():
     
     assert(round(ev.metric('sharpe'), 6) == 2.932954)
     assert(round(ev.metric('sortino'), 6) == 5.690878)
-    assert(ev.metric('annual_returns_buckets') == [2018])
-    assert(round(ev.metric('annual_returns')[0], 6) == [0.042643])
+    assert(ev.metric('annual_returns')[0] == [2018])
+    assert(round(ev.metric('annual_returns')[1][0], 6) == [0.042643])
     assert(ev.metric('mdd_start') == np.datetime64('2018-01-19'))
     assert(ev.metric('mdd_date') == np.datetime64('2018-01-22'))
     
