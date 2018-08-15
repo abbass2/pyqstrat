@@ -43,7 +43,7 @@ setup(
     version=__version__,
     author='sal',
     author_email='abbasi.sal@gmail.com',
-    url='http://github.com/saabbasi/pyqstrat/',
+    url='http://github.com/abbass2/pyqstrat/',
     license='BSD',
     tests_require=['pytest'],
     python_requires='>=3.6',
