@@ -14,7 +14,7 @@ from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
 
-# In[2]:
+# In[3]:
 
 
 def _sort_ohlcv(a):
@@ -135,7 +135,7 @@ class MarketData:
                     double_mask = mask | mask.shift(-1) # Add the previous row so we know the two values computing a return
                     df_tmp = df[double_mask]
                     df_tmp.insert(len(df_tmp.columns), 'ret', ret[mask])
-                    df_tmp.insert(len(df_tmp.columns), 'warning', f'{col} ret > {warn_std} std: {round(std, 6)}')
+                    df_tmp.insert(len(df_tmp.columns), 'warning', '{} ret > {} std: {}'.format(col, warn_std, round(std, 6)))
                     warnings_list.append(df_tmp)
 
         if not len(warnings_list): return None

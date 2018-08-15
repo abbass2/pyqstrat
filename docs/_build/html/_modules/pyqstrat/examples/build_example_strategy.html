@@ -1,0 +1,232 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyqstrat.examples.build_example_strategy &#8212; pyqstrat  documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyqstrat.examples.build_example_strategy</h1><div class="highlight"><pre>
+<span></span><span class="c1">#cell 0</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;numpy.dtype size changed&quot;</span><span class="p">)</span> <span class="c1"># ignore pesky warning, see https://github.com/numpy/numpy/pull/432</span>
+
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">scipy.stats</span>
+
+<span class="kn">import</span> <span class="nn">pyqstrat</span> <span class="k">as</span> <span class="nn">pq</span>
+
+<span class="n">pq</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">()</span>
+
+<div class="viewcode-block" id="sma"><a class="viewcode-back" href="../../../pyqstrat.examples.html#pyqstrat.examples.build_example_strategy.sma">[docs]</a><span class="k">def</span> <span class="nf">sma</span><span class="p">(</span><span class="n">marketdata</span><span class="p">,</span> <span class="n">lookback_period</span><span class="p">):</span> <span class="c1"># simple moving average</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">marketdata</span><span class="o">.</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">rolling</span><span class="p">(</span><span class="n">window</span> <span class="o">=</span> <span class="n">lookback_period</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">values</span></div>
+
+<div class="viewcode-block" id="band"><a class="viewcode-back" href="../../../pyqstrat.examples.html#pyqstrat.examples.build_example_strategy.band">[docs]</a><span class="k">def</span> <span class="nf">band</span><span class="p">(</span><span class="n">marketdata</span><span class="p">,</span> <span class="n">lookback_period</span><span class="p">,</span> <span class="n">num_std</span><span class="p">,</span> <span class="n">upper</span><span class="p">):</span>
+    <span class="n">std</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">marketdata</span><span class="o">.</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">rolling</span><span class="p">(</span><span class="n">window</span> <span class="o">=</span> <span class="mi">20</span><span class="p">)</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">sma</span><span class="p">(</span><span class="n">marketdata</span><span class="p">,</span> <span class="n">lookback_period</span> <span class="o">=</span> <span class="n">lookback_period</span><span class="p">)</span> <span class="o">+</span> <span class="n">num_std</span> <span class="o">*</span> <span class="n">std</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">upper</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="bollinger_band_signal"><a class="viewcode-back" href="../../../pyqstrat.examples.html#pyqstrat.examples.build_example_strategy.bollinger_band_signal">[docs]</a><span class="k">def</span> <span class="nf">bollinger_band_signal</span><span class="p">(</span><span class="n">md</span><span class="p">,</span> <span class="n">ind</span><span class="p">):</span> <span class="c1"># md is MarketData, ind is indicator values, a dictionary of indicator values</span>
+    <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">md</span><span class="o">.</span><span class="n">h</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">ind</span><span class="p">[</span><span class="s1">&#39;upper_band&#39;</span><span class="p">]),</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">md</span><span class="o">.</span><span class="n">l</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">ind</span><span class="p">[</span><span class="s1">&#39;lower_band&#39;</span><span class="p">]),</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">signal</span><span class="p">)</span>
+    <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">md</span><span class="o">.</span><span class="n">h</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">ind</span><span class="p">[</span><span class="s1">&#39;mid_band&#39;</span><span class="p">]))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">signal</span> <span class="o">==</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">signal</span><span class="p">)</span> <span class="c1"># price crossed above simple moving avg but not above upper band</span>
+    <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">md</span><span class="o">.</span><span class="n">l</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">ind</span><span class="p">[</span><span class="s1">&#39;mid_band&#39;</span><span class="p">]))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">signal</span> <span class="o">==</span> <span class="mi">0</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">signal</span><span class="p">)</span> <span class="c1"># price crossed below simple moving avg but not below lower band</span>
+    <span class="k">return</span> <span class="n">signal</span></div>
+
+<div class="viewcode-block" id="bollinger_band_trading_rule"><a class="viewcode-back" href="../../../pyqstrat.examples.html#pyqstrat.examples.build_example_strategy.bollinger_band_trading_rule">[docs]</a><span class="k">def</span> <span class="nf">bollinger_band_trading_rule</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">marketdata</span><span class="p">,</span> <span class="n">indicator_values</span><span class="p">,</span> <span class="n">signal_values</span><span class="p">,</span> <span class="n">account</span><span class="p">):</span>
+    <span class="n">curr_pos</span> <span class="o">=</span> <span class="n">account</span><span class="o">.</span><span class="n">position</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">date</span><span class="p">)</span>
+    <span class="n">signal_value</span> <span class="o">=</span> <span class="n">signal_values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="n">risk_percent</span> <span class="o">=</span> <span class="mf">0.05</span>
+
+    <span class="c1"># if we don&#39;t already have a position, check if we should enter a trade</span>
+    <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">curr_pos</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">signal_value</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">signal_value</span> <span class="o">==</span> <span class="o">-</span><span class="mi">2</span><span class="p">:</span>
+            <span class="n">curr_equity</span> <span class="o">=</span> <span class="n">account</span><span class="o">.</span><span class="n">equity</span><span class="p">(</span><span class="n">date</span><span class="p">)</span>
+            <span class="n">order_qty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">curr_equity</span> <span class="o">*</span> <span class="n">risk_percent</span> <span class="o">/</span> <span class="n">marketdata</span><span class="o">.</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">signal_value</span><span class="p">))</span>
+            <span class="n">trigger_price</span> <span class="o">=</span> <span class="n">marketdata</span><span class="o">.</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">reason_code</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">ReasonCode</span><span class="o">.</span><span class="n">ENTER_LONG</span> <span class="k">if</span> <span class="n">order_qty</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">pq</span><span class="o">.</span><span class="n">ReasonCode</span><span class="o">.</span><span class="n">ENTER_SHORT</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">pq</span><span class="o">.</span><span class="n">StopLimitOrder</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">order_qty</span><span class="p">,</span> <span class="n">trigger_price</span><span class="p">,</span> <span class="n">reason_code</span> <span class="o">=</span> <span class="n">reason_code</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span> <span class="c1"># We have a current position, so check if we should exit</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">curr_pos</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">signal_value</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">curr_pos</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">signal_value</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">order_qty</span> <span class="o">=</span> <span class="o">-</span><span class="n">curr_pos</span>
+            <span class="n">reason_code</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">ReasonCode</span><span class="o">.</span><span class="n">EXIT_LONG</span> <span class="k">if</span> <span class="n">order_qty</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">pq</span><span class="o">.</span><span class="n">ReasonCode</span><span class="o">.</span><span class="n">EXIT_SHORT</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">pq</span><span class="o">.</span><span class="n">MarketOrder</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">order_qty</span><span class="p">,</span> <span class="n">reason_code</span> <span class="o">=</span> <span class="n">reason_code</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="market_simulator"><a class="viewcode-back" href="../../../pyqstrat.examples.html#pyqstrat.examples.build_example_strategy.market_simulator">[docs]</a><span class="k">def</span> <span class="nf">market_simulator</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">orders</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">md</span><span class="p">):</span>
+    <span class="n">trades</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">o</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">o</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">md</span><span class="o">.</span><span class="n">h</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">md</span><span class="o">.</span><span class="n">l</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">md</span><span class="o">.</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">order</span> <span class="ow">in</span> <span class="n">orders</span><span class="p">:</span>
+        <span class="n">trade_price</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">pq</span><span class="o">.</span><span class="n">MarketOrder</span><span class="p">):</span>
+            <span class="n">trade_price</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">o</span> <span class="o">+</span> <span class="n">h</span><span class="p">)</span> <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">qty</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">o</span> <span class="o">+</span> <span class="n">l</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">pq</span><span class="o">.</span><span class="n">StopLimitOrder</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">qty</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">h</span> <span class="o">&gt;</span> <span class="n">order</span><span class="o">.</span><span class="n">trigger_price</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">qty</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">l</span> <span class="o">&lt;</span> <span class="n">order</span><span class="o">.</span><span class="n">trigger_price</span><span class="p">):</span> <span class="c1"># A stop order</span>
+                <span class="n">trade_price</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">trigger_price</span> <span class="o">+</span> <span class="n">h</span><span class="p">)</span> <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">qty</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">trigger_price</span> <span class="o">+</span> <span class="n">l</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;unknown order type: </span><span class="si">{order}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">trade_price</span><span class="p">):</span> <span class="k">continue</span>
+
+        <span class="n">trade</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">Trade</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">symbol</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">order</span><span class="o">.</span><span class="n">qty</span><span class="p">,</span> <span class="n">trade_price</span><span class="p">,</span> <span class="n">order</span> <span class="o">=</span> <span class="n">order</span><span class="p">,</span> <span class="n">commission</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">fee</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">order</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;filled&#39;</span>
+
+        <span class="n">trades</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">trade</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">trades</span></div>
+
+<div class="viewcode-block" id="build_example_strategy"><a class="viewcode-back" href="../../../pyqstrat.examples.html#pyqstrat.examples.build_example_strategy.build_example_strategy">[docs]</a><span class="k">def</span> <span class="nf">build_example_strategy</span><span class="p">(</span><span class="n">lookback_period</span><span class="p">,</span> <span class="n">num_std</span><span class="p">):</span>
+    
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span> <span class="o">+</span> <span class="s1">&#39;/../examples/bitcoin_1min.csv&#39;</span> <span class="c1"># If we are running from unit tests</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="s1">&#39;../examples/bitcoin_1min.csv&#39;</span>
+
+    <span class="n">prices</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="n">dates</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">prices</span><span class="o">.</span><span class="n">date</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">o</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">h</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">l</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">prices</span><span class="p">[</span><span class="s1">&#39;v.usd&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="n">md</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">MarketData</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+    <span class="n">md</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">sampling_frequency</span><span class="o">=</span><span class="s1">&#39;5 min&#39;</span><span class="p">,</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">mid_band</span> <span class="o">=</span> <span class="n">sma</span><span class="p">(</span><span class="n">md</span><span class="p">,</span> <span class="n">lookback_period</span><span class="p">)</span>
+    <span class="n">upper_band</span> <span class="o">=</span> <span class="n">band</span><span class="p">(</span><span class="n">md</span><span class="p">,</span> <span class="n">lookback_period</span><span class="p">,</span> <span class="n">num_std</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">lower_band</span> <span class="o">=</span> <span class="n">band</span><span class="p">(</span><span class="n">md</span><span class="p">,</span> <span class="n">lookback_period</span><span class="p">,</span> <span class="n">num_std</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">indicator_subplot</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">Subplot</span><span class="p">([</span><span class="n">pq</span><span class="o">.</span><span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;price&#39;</span><span class="p">,</span> <span class="n">md</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="n">md</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;blue&#39;</span><span class="p">),</span> 
+                         <span class="n">pq</span><span class="o">.</span><span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;sma&#39;</span><span class="p">,</span> <span class="n">md</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="n">mid_band</span><span class="p">,</span> <span class="n">line_type</span> <span class="o">=</span> <span class="s1">&#39;dotted&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">),</span>
+                         <span class="n">pq</span><span class="o">.</span><span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;upper band&#39;</span><span class="p">,</span> <span class="n">md</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="n">upper_band</span><span class="p">,</span> <span class="n">line_type</span> <span class="o">=</span> <span class="s1">&#39;dashed&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;green&#39;</span><span class="p">),</span>
+                         <span class="n">pq</span><span class="o">.</span><span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;lower_band&#39;</span><span class="p">,</span> <span class="n">md</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="n">lower_band</span><span class="p">,</span> <span class="n">line_type</span> <span class="o">=</span> <span class="s1">&#39;dashed&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;green&#39;</span><span class="p">)],</span>
+                         <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Indicators&#39;</span><span class="p">)</span>
+
+    <span class="n">signal</span> <span class="o">=</span> <span class="n">bollinger_band_signal</span><span class="p">(</span><span class="n">md</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;upper_band&#39;</span> <span class="p">:</span> <span class="n">upper_band</span><span class="p">,</span> <span class="s1">&#39;lower_band&#39;</span> <span class="p">:</span> <span class="n">lower_band</span><span class="p">,</span> <span class="s1">&#39;mid_band&#39;</span> <span class="p">:</span> <span class="n">mid_band</span><span class="p">})</span>
+    <span class="n">signal_subplot</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">Subplot</span><span class="p">([</span><span class="n">pq</span><span class="o">.</span><span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;signal&#39;</span><span class="p">,</span> <span class="n">md</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="n">signal</span><span class="p">)],</span> <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Signal&#39;</span><span class="p">)</span>
+
+
+    <span class="n">contract</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">Contract</span><span class="p">(</span><span class="s1">&#39;BTC&#39;</span><span class="p">,</span> <span class="n">multiplier</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span> <span class="n">marketdata</span> <span class="o">=</span> <span class="n">md</span><span class="p">)</span>
+    <span class="n">strategy</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">Strategy</span><span class="p">([</span><span class="n">contract</span><span class="p">])</span>
+
+    <span class="c1"># since pqstrat expects the indicator to take one argument, market data, and our sma function takes 2 arguments, we wrap it in a lambda </span>
+    <span class="n">strategy</span><span class="o">.</span><span class="n">add_indicator</span><span class="p">(</span><span class="s1">&#39;mid_band&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">md</span> <span class="p">:</span> <span class="n">sma</span><span class="p">(</span><span class="n">md</span><span class="p">,</span> <span class="n">lookback_period</span><span class="p">))</span>
+    <span class="n">strategy</span><span class="o">.</span><span class="n">add_indicator</span><span class="p">(</span><span class="s1">&#39;upper_band&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">md</span><span class="p">:</span> <span class="n">band</span><span class="p">(</span><span class="n">md</span><span class="p">,</span> <span class="n">lookback_period</span><span class="p">,</span> <span class="n">num_std</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="kc">True</span><span class="p">))</span>
+    <span class="n">strategy</span><span class="o">.</span><span class="n">add_indicator</span><span class="p">(</span><span class="s1">&#39;lower_band&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">md</span><span class="p">:</span> <span class="n">band</span><span class="p">(</span><span class="n">md</span><span class="p">,</span> <span class="n">lookback_period</span><span class="p">,</span> <span class="n">num_std</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="n">strategy</span><span class="o">.</span><span class="n">add_signal</span><span class="p">(</span><span class="s1">&#39;bb_signal&#39;</span><span class="p">,</span> <span class="n">bollinger_band_signal</span><span class="p">)</span>
+
+    <span class="c1"># ask pqstrat to call our trading rule when the signal has one of the values [-2, -1, 1, 2]</span>
+    <span class="n">strategy</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s1">&#39;bb_trading_rule&#39;</span><span class="p">,</span> <span class="n">bollinger_band_trading_rule</span><span class="p">,</span> 
+                      <span class="n">signal_name</span> <span class="o">=</span> <span class="s1">&#39;bb_signal&#39;</span><span class="p">,</span> <span class="n">sig_true_values</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+    <span class="n">strategy</span><span class="o">.</span><span class="n">add_market_sim</span><span class="p">(</span><span class="n">market_simulator</span><span class="p">,</span> <span class="n">symbols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;BTC&#39;</span><span class="p">])</span>
+    
+    <span class="k">return</span> <span class="n">strategy</span></div>
+
+<div class="viewcode-block" id="test_example_strategy"><a class="viewcode-back" href="../../../pyqstrat.examples.html#pyqstrat.examples.build_example_strategy.test_example_strategy">[docs]</a><span class="k">def</span> <span class="nf">test_example_strategy</span><span class="p">():</span>
+    <span class="n">strategy</span> <span class="o">=</span> <span class="n">build_example_strategy</span><span class="p">(</span><span class="n">lookback_period</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">num_std</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">portfolio</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">Portfolio</span><span class="p">()</span>
+    <span class="n">portfolio</span><span class="o">.</span><span class="n">add_strategy</span><span class="p">(</span><span class="s1">&#39;bb_strat&#39;</span><span class="p">,</span> <span class="n">strategy</span><span class="p">)</span>
+    <span class="n">portfolio</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">evaluate_returns</span><span class="p">(</span><span class="n">plot</span> <span class="o">=</span> <span class="kc">False</span><span class="p">);</span>
+    <span class="k">assert</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;gmean&#39;</span><span class="p">],</span> <span class="mi">8</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mf">0.11552376</span><span class="p">)</span></div>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">test_example_strategy</span><span class="p">()</span>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">pyqstrat</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../pyqstrat.html">pyqstrat package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Author.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

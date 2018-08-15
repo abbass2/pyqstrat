@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # pyqstrat documentation build configuration file, created by
-# sphinx-quickstart on Wed Aug  1 13:08:17 2018.
+# sphinx-quickstart on Tue Aug 14 23:12:13 2018.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
