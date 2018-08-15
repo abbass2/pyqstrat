@@ -16,13 +16,13 @@ The goals are:
 Using this framework, you can:
 
 * Construct a portfolio containing multiple strategies that run concurrently
-* Construct arbitrary indicators, trading signals and trading rules and add them to a strategy
+* Construct indicators, trading signals, trading rules and market simulators and add them to a strategy
 * Add multiple symbols representing real or "virtual" instruments to a strategy
 * Reuse existing market simulation or build your own to simulate how and when orders are filled
-* Measure well known return metrics such as sharpe, calmar and also add your own metrics.
-* Resample market data bars into lower frequencies
-* Simulate futures rolling using "roll trades"
-* Plot trades, market data, indicators and add custom subplots to give you insight into your strategy's operation.
+* Measure returns, drawdowns, common return metrics such as sharpe, calmar and also add your own metrics.
+* Explore historical market data to understand its characteristics and check for errors before using it in backtesting.
+* Simulate futures rolling.
+* Plot trades, market data, indicators and add custom subplots to give you insight into your strategy's behavior.
 * Optimize your strategy's parameters using all the CPU cores on your machine.
 
 ** NOTE: This is beta software and the API will change **
