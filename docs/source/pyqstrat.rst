@@ -68,7 +68,7 @@ pyqstrat.pyqstrat\_cpp module
     :members:
     :undoc-members:
     :show-inheritance:
-    :special-members: __init__, __call__
+    :special-members: __call__, __init__
 
 
 Module contents
