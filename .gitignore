@@ -6,4 +6,5 @@
 **/.pytest_cache/**
 **/__pycache__/**
 **/*.so
+**/var/**
 .DS_Store
