@@ -8,3 +8,4 @@
 **/*.so
 **/var/**
 .DS_Store
+clean.sh
