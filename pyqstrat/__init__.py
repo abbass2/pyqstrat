@@ -5,5 +5,5 @@ from pyqstrat.strategy import *
 from pyqstrat.optimize import *
 from pyqstrat.plot import *
 from pyqstrat.evaluator import *
-
+from pyqstrat.pyqstrat_cpp import *
 

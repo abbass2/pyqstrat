@@ -154,7 +154,5 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-
-
 import matplotlib
 matplotlib.use('agg')
