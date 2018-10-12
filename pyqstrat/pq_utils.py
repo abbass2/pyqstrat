@@ -1,12 +1,12 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[12]:
 
 
-import warnings
-warnings.filterwarnings("ignore", message="numpy.dtype size changed") # another bogus warning, see https://github.com/numpy/numpy/pull/432
+import os
 import numpy as np
+import datetime
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 SEC_PER_DAY = 3600 * 24
 
 _HAS_DISPLAY = None
+EPOCH = datetime.datetime.utcfromtimestamp(0)
 
 class ReasonCode:
     '''A class containing constants for predefined order reason codes. Prefer these predefined reason codes if they suit
@@ -228,4 +229,53 @@ def series_to_array(series):
     '''Convert a pandas series to a numpy array.  If the object is not a pandas Series return it back unchanged'''
     if type(series) == pd.Series: return series.values
     return series
+
+def to_csv(df, file_name, index = False, compress = False, *args, **kwargs):
+    """
+    Creates a temporary file then renames to the permanent file so we don't have half written files.
+    Also optionally compresses using the xz algorithm
+    """
+    compression = None
+    suffix = ''
+    if compress:
+        compression = 'xz'
+        suffix = '.xz'
+    df.to_csv(file_name + '.tmp', index = index, compression = compression, *args, **kwargs)
+    os.rename(file_name + '.tmp', file_name + suffix)
+    
+def millis_since_epoch(dt):
+    return (dt - EPOCH).total_seconds() * 1000.0
+
+def infer_compression(input_filename):
+    parts = input_filename.split('.')
+    if len(parts) <= 1: return None
+    suffix = parts[-1]
+    if suffix == 'gz': return 'gzip'
+    if suffix == 'bz2': return 'bz2'
+    if suffix =='zip': return 'zip'
+    if suffix == 'xz': return 'xz'
+    return None
+
+
+def touch(fname, mode=0o666, dir_fd=None, **kwargs):
+    '''replicate unix touch command, i.e create file if it doesn't exist, otherwise update timestamp'''
+    flags = os.O_CREAT | os.O_APPEND
+    with os.fdopen(os.open(fname, flags=flags, mode=mode, dir_fd=dir_fd)) as f:
+        os.utime(f.fileno() if os.utime in os.supports_fd else fname,
+            dir_fd=None if os.supports_fd else dir_fd, **kwargs)
+        
+def is_newer(filename, ref_filename):
+    '''whether filename ctime (modfication time) is newer than ref_filename or either file does not exist
+    >>> import time
+    >>> touch('/tmp/x.txt')
+    >>> touch('/tmp/y.txt')
+    >>> is_newer('/tmp/y.txt', '/tmp/x.txt')
+    True
+    >>> touch('/tmp/y.txt')
+    >>> touch('/tmp/x.txt')
+    >>> is_newer('/tmp/y.txt', '/tmp/x.txt')
+    False
+    ''' 
+    if not os.path.isfile(filename) or not os.path.isfile(ref_filename): return True
+    return os.path.getmtime(filename) > os.path.getmtime(ref_filename)
 

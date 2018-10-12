@@ -12,7 +12,7 @@ from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
 
-# In[12]:
+# In[2]:
 
 
 _VERBOSE = False

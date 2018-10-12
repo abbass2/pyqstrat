@@ -4,8 +4,6 @@
 # In[1]:
 
 
-import warnings
-warnings.filterwarnings("ignore", message="numpy.dtype size changed") # another bogus warning, see https://github.com/numpy/numpy/pull/432
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
