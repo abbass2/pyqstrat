@@ -5,4 +5,5 @@
 **/.eggs/**
 **/.pytest_cache/**
 **/__pycache__/**
+**/*.so
 .DS_Store
