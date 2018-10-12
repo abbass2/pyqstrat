@@ -17,7 +17,7 @@ matrix:
 before_install:
   - eval "${MATRIX_EVAL}"
   - sudo apt-get update -qq
-  - sudo apt-get install -qq libboost-all-dev g++7
+  - sudo apt-get install -qq libboost-all-dev gcc-6
     
 install: 
   - "pip3 install -r requirements.txt"
