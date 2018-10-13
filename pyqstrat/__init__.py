@@ -5,10 +5,7 @@ from pyqstrat.strategy import *
 from pyqstrat.optimize import *
 from pyqstrat.plot import *
 from pyqstrat.evaluator import *
-try:
-        from pyqstrat.pyqstrat_cpp import *
-except: 
-        pass
+from pyqstrat.pyqstrat_cpp import *
 from pyqstrat.marketdata_processor import *
 
 
