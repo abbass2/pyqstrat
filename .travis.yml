@@ -7,6 +7,11 @@ addons:
   apt:
     packages:
       - libboost-all-dev
+
+before_install:
+  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+  - sudo apt-get update -q
+  - sudo apt-get install gcc-6 -y
   
 install:
 
@@ -21,7 +26,7 @@ install:
   - conda info -a
   - conda create --channel conda-forge --override-channels -q -n test-environment python=$TRAVIS_PYTHON_VERSION arrow-cpp=0.11.*
   - source activate test-environment
-  - python3 setup.py build_ext --inplace
+  - CC=gcc-6 CXX=g++-6 python setup.py build_ext --inplace
   - pip3 install -r requirements.txt
 
 script:
