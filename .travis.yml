@@ -8,11 +8,6 @@ addons:
     packages:
       - libboost-all-dev
 
-before_install:
-  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-  - sudo apt-get update -q
-  - sudo apt-get install gcc-6 -y
-  
 install:
 
   - sudo apt-get update
@@ -30,5 +25,5 @@ install:
   - pip3 install -r requirements.txt
 
 script:
-  - python3 -m pytest pyqstrat
+  - python -m pytest pyqstrat
   

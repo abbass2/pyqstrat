@@ -145,7 +145,8 @@ setup(
                       'scipy >= 1.0.0',
 		      'ipython>=6.5.0',
                       'pybind11>=2.2',
-                      'pyarrow>=0.1.0'
+                      'pyarrow>=0.1.0',
+                      'pytest>=3.7.0'
                     ],
     description='fast / extensible library for backtesting quantitative strategies',
     long_description=long_description,

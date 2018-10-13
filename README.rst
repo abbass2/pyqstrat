@@ -9,7 +9,7 @@ This framework is designed for capable programmers who are comfortable with nump
 
 The goals are:
 
-* Speed - Performance sensitive components are written at the numpy level which can lead to performance improvement of several orders of magnitude over python code.  Where possible, we parrallelize work so you can take advantage of all the cores available on your machine.
+* Speed - Performance sensitive components are written at the numpy level, or in C++, which can lead to performance improvement of several orders of magnitude over python code.  Where possible, we parrallelize work so you can take advantage of all the cores available on your machine.
 * Transparency - If you are going to commit money to a strategy, you want to know exactly what assumptions you are making.  The code is written and documented so these are as clear as possible.
 * Extensibility - It would be impossible to think of all requirements for backtesting strategies that traders could come up with.  In addition, traders will want to measure different metrics depending on the strategy being traded.
 
@@ -24,6 +24,7 @@ Using this framework, you can:
 * Simulate futures rolling.
 * Plot trades, market data, indicators and add custom subplots to give you insight into your strategy's behavior.
 * Optimize your strategy's parameters using all the CPU cores on your machine.
+* Process large market data files into quote and trade bars using all the CPU cores on your machine
 
 ** NOTE: This is beta software and the API will change **
 
@@ -31,10 +32,13 @@ Installation
 ------------
 I would strongly recommend installing anaconda and creating an anaconda environment. See installation instructions at https://docs.anaconda.com/anaconda/install/
 
-pyqstrat relies on numpy, scipy, matplotlib and pandas which in turn use Fortran and C code that needs to be compiled.  
-Depending on your environment, using pip may not result in a smooth install of these packages
+pyqstrat relies on numpy, scipy, matplotlib and pandas which in turn use Fortran and C code that needs to be compiled.  It uses apache arrow as its market data file format and boost C++ libaries
+
 
 ::
+   conda install boost-cpp -c conda-forge
+   conda install arrow-cpp -c conda-forge
+   conda install 
 
     pip3 install -U pyqstrat
 
