@@ -43,7 +43,8 @@ ext_modules = [
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
-            get_pybind_include(user=True)
+            get_pybind_include(user=True),
+            os.environ['CONDA_PREFIX'] + '/include'
         ],
         libraries = [
             'z',
