@@ -1,4 +1,5 @@
 #include <vector>
+#include <cmath>
 #include <string>
 #include <boost/algorithm/string.hpp>
 
