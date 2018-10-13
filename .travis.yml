@@ -19,7 +19,7 @@ install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  - conda create --channel conda-forge --override-channels -q -n test-environment python=$TRAVIS_PYTHON_VERSION arrow-cpp=0.11.* pybind11=2.2.*
+  - conda create --channel conda-forge --override-channels -q -n test-environment python=$TRAVIS_PYTHON_VERSION arrow-cpp=0.11.* pybind11=2.2.* pytest
   - source activate test-environment
   - CC=clang CXX=clang python setup.py build_ext --inplace
   - pip3 install -r requirements.txt
