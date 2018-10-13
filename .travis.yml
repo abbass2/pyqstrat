@@ -3,11 +3,6 @@ language: python
 python:
   - "3.6"
 
-addons:
-  apt:
-    packages:
-      - libboost-iostreams-dev
-
 install:
 
   - sudo apt-get update
@@ -19,10 +14,9 @@ install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  - conda create --channel conda-forge --override-channels -q -n test-environment python=$TRAVIS_PYTHON_VERSION arrow-cpp=0.11.* pybind11=2.2.* pytest=3.7.*
+  - conda create --channel conda-forge --override-channels -q -n test-environment python=$TRAVIS_PYTHON_VERSION arrow-cpp>=0.11 pybind11>=2.2 pytest>=3.7 pandas>=0.22 numpy>=1.14 matplotlib>=2.2 scipy>=1.0 ipython>=6.5 pyarrow>=0.1
   - source activate test-environment
   - CC=clang CXX=clang python setup.py build_ext --inplace
-  - pip3 install -r requirements.txt
 
 script:
   - python -m pytest pyqstrat
