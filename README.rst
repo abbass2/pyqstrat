@@ -36,11 +36,9 @@ pyqstrat relies on numpy, scipy, matplotlib and pandas which in turn use Fortran
 
 
 ::
-   conda install boost-cpp -c conda-forge
-   conda install arrow-cpp -c conda-forge
-   conda install 
+   conda install boost-cpp arrow-cpp -c conda-forge
 
-    pip3 install -U pyqstrat
+   pip3 install -U pyqstrat
 
 Requirements:
 
