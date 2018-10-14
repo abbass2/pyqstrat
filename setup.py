@@ -98,9 +98,9 @@ class BuildExt(build_ext):
                 opts.append('-O0')
             if has_flag(self.compiler, '-g'):
                 opts.append('-g')
-             if has_flag(self.compiler, '-stdlib=libc++'):
+            if has_flag(self.compiler, '-stdlib=libc++'):
                 opts.append('-stdlib=libc++')
-                
+            opts.append('-Wl,--verbose')
             if has_flag(self.compiler, '-fvisibility=hidden'):
                 opts.append('-fvisibility=hidden')
         elif ct == 'msvc':
