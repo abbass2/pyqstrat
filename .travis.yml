@@ -38,7 +38,8 @@ install:
 
 script:
   - ulimit -c unlimited -S        
-  - python -m pytest pyqstrat || RESULT=$?
+  - python -v -m pytest --verbose pyqstrat || RESULT=$?
+  - ls -l /home/travis/miniconda/envs/test-environment/lib
   - ls -l
   - which python
   - if [[ ${RESULT} != 139 ]]; then echo "expected segfault and 139 exit but instead exited with ${RESULT}" && exit 1; fi;
