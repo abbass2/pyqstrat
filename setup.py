@@ -94,10 +94,13 @@ class BuildExt(build_ext):
         if ct == 'unix':
             opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
             opts.append(cpp_flag(self.compiler))
-            if has_flag(self.compiler, '-Ofast'):
-                opts.append('-Ofast')
-            if has_flag(self.compiler, '-stdlib=libc++'):
+            if has_flag(self.compiler, '-O0'):
+                opts.append('-O0')
+            if has_flag(self.compiler, '-g'):
+                opts.append('-g')
+             if has_flag(self.compiler, '-stdlib=libc++'):
                 opts.append('-stdlib=libc++')
+                
             if has_flag(self.compiler, '-fvisibility=hidden'):
                 opts.append('-fvisibility=hidden')
         elif ct == 'msvc':
