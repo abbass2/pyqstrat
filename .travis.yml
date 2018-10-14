@@ -37,10 +37,12 @@ install:
   - CC=clang CXX=clang python setup.py build_ext --inplace
 
 script:
-  - ulimit -c unlimited -S        
-  - python -v -m pytest --verbose pyqstrat || RESULT=$?
+  - ulimit -c unlimited -S
+  - which pytest
+  - more /home/travis/miniconda/envs/test-environment/bin/pytest
+  - /home/travis/miniconda/envs/test-environment/bin/pytest -v
+  - pytest --rootdir=. pyqstrat || RESULT=$?
   - ls -l /home/travis/miniconda/envs/test-environment/lib
   - ls -l
-  - which python
   - if [[ ${RESULT} != 139 ]]; then echo "expected segfault and 139 exit but instead exited with ${RESULT}" && exit 1; fi;
   - for i in $(find ./ -maxdepth 1 -name 'core*' -print); do gdb /home/travis/miniconda/envs/test-environment/bin/python core* -ex "thread apply all bt" -ex "set pagination 0" -batch; done;
