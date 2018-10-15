@@ -3,7 +3,7 @@
 **/pyqstrat.egg-info/**
 **/.ipynb_checkpoints/**
 **/.eggs/**
-**/.pyc/**
+**/.pyc
 **/.pytest_cache/**
 **/__pycache__/**
 **/*.so
