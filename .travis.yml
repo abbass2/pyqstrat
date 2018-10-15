@@ -3,11 +3,17 @@ language: python
 python:
   - "3.6"
 
+env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5
+
 addons:
   apt:
     packages:
       - gdb
+      - g++-5
       - apport
+  sources: &sources
+      - llvm-toolchain-precise-3.8
+      - ubuntu-toolchain-r-test
 
 before_install:
  # What is the current file size max for core files?
@@ -19,13 +25,8 @@ before_install:
  - cat /etc/default/apport
  - service --status-all || true
  - initctl list || true
- - export CXX="/usr/local/clang-5.0.0/bin/clang++"
- - export CC="/usr/local/clang-5.0.0/bin/clang"
- - export CPATH="/usr/local/clang-5.0.0/include/c++/v1"
- - export LD_LIBRARY_PATH="/usr/local/clang-5.0.0/lib"
 
 install:
-
   - sudo apt-get update
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -b -p $HOME/miniconda
@@ -37,7 +38,7 @@ install:
   - conda info -a
   - conda create --channel conda-forge --override-channels -q -n test-environment python=$TRAVIS_PYTHON_VERSION 'arrow-cpp>=0.11' 'pybind11>=2.2' 'pytest>=3.7' 'pandas>=0.22' 'numpy>=1.14' 'matplotlib>=2.2' 'scipy>=1.0' 'ipython>=6.5' 'pyarrow>=0.1'
   - source activate test-environment
-  - CC=clang CXX=clang python setup.py build_ext --inplace
+  - COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5 python setup.py build_ext --inplace
 
 script:
   - ulimit -c unlimited -S
