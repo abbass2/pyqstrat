@@ -188,7 +188,7 @@ def copy_dynlib_to_source():
     b.finalize_options()
     dest_dir = "./pyqstrat/"
     src_dir = './' + b.build_platlib + "/pyqstrat/*pyqstrat_cpp*"
-    print(f'source dir: {src_dir}')
+    print(f'source dir: {src_dir} dest_dir: {dest_dir}')
     for file in glob.glob(src_dir):
         print(f'copying: {file}')
         shutil.copy(file, dest_dir)
