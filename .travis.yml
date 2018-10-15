@@ -19,7 +19,10 @@ before_install:
  - cat /etc/default/apport
  - service --status-all || true
  - initctl list || true
-
+ - export CXX="/usr/local/clang-5.0.0/bin/clang++"
+ - export CC="/usr/local/clang-5.0.0/bin/clang"
+ - export CPATH="/usr/local/clang-5.0.0/include/c++/v1"
+ - export LD_LIBRARY_PATH="/usr/local/clang-5.0.0/lib"
 
 install:
 
