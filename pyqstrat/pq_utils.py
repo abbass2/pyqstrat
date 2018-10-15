@@ -263,12 +263,12 @@ def is_newer(filename, ref_filename):
     '''whether filename ctime (modfication time) is newer than ref_filename or either file does not exist
     >>> import time
     >>> touch('/tmp/x.txt')
-    >>> time.sleep(0.1)
+    >>> time.sleep(1)
     >>> touch('/tmp/y.txt')
     >>> is_newer('/tmp/y.txt', '/tmp/x.txt')
     True
     >>> touch('/tmp/y.txt')
-    >>> time.sleep(0.1)
+    >>> time.sleep(1)
     >>> touch('/tmp/x.txt')
     >>> is_newer('/tmp/y.txt', '/tmp/x.txt')
     False
