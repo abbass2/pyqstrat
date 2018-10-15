@@ -276,26 +276,3 @@ def is_newer(filename, ref_filename):
     if not os.path.isfile(filename) or not os.path.isfile(ref_filename): return True
     return os.path.getmtime(filename) > os.path.getmtime(ref_filename)
 
-#cell 1
-touch('/tmp/x.txt')
-time.sleep(0.1)
-touch('/tmp/y.txt')
-is_newer('/tmp/y.txt', '/tmp/x.txt')
-
-#cell 2
-import time
-
-#cell 3
-time.sleep(0.1)
-
-#cell 4
-    >>> touch('/tmp/y.txt')
-    >>> time.sleep(0.1)
-    >>> touch('/tmp/x.txt')
-    >>> is_newer('/tmp/y.txt', '/tmp/x.txt')
-
-
-
-#cell 5
-
-
