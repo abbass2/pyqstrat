@@ -34,7 +34,6 @@ install:
 script:
   - ulimit -c unlimited -S
   - which python3 || RESULT=$?
-  - cd pyqstrat
   - python3 -c "import pyqstrat_cpp as pc;print(pc.fast_time_milli_parser('08:00:35.123'))" || RESULT=$?
   - python3 -m pytest pyqstrat
   - if [[ ${RESULT} != 139 ]]; then echo "expected segfault and 139 exit but instead exited with ${RESULT}" && exit 1; fi;
