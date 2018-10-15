@@ -39,7 +39,7 @@ float str_to_float(const char* str, char decimal_point, char thousands_separator
         str++;
         float powerer = *str == '-'? static_cast<void>(str++), 0.1 : 10;
         
-        while (*str >= '0' && *str <= '9') {
+        while ((*str >= '0') && (*str <= '9')) {
             power *= 10;
             power += *str - '0';
             str++;
@@ -70,7 +70,7 @@ vector<string> tokenize(const char* str, const char separator) {
     vector<string> tokens;
     const char* token_start = str;
     while (true) {
-        if (*str == separator | *str == '\0') {
+        if ((*str == separator) || (*str == '\0')) {
             tokens.push_back(string(token_start, str));
             token_start = str + 1;
             if (*str == '\0') break;

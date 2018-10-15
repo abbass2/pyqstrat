@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "aggregators.hpp"
 
 using namespace std;
