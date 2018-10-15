@@ -3,31 +3,21 @@ language: python
 python:
   - "3.6"
 
-env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5
+before_install:
 
 addons:
   apt:
     packages:
       - gdb
-      - g++-5
       - apport
-  sources: &sources
-      - llvm-toolchain-precise-3.8
-      - ubuntu-toolchain-r-test
 
 before_install:
- # What is the current file size max for core files?
- # It is usually 0, which means no core file will be dumped if there is a crash 
- - ulimit -c
- - ulimit -a -S
- - ulimit -a -H
- - cat /proc/sys/kernel/core_pattern
- - cat /etc/default/apport
- - service --status-all || true
- - initctl list || true
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update -qq
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
 
 install:
-  - sudo apt-get update
+  - sudo apt-get install -qq gcc-4.8 g++-4.8
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
@@ -38,7 +28,7 @@ install:
   - conda info -a
   - conda create --channel conda-forge --override-channels -q -n test-environment python=$TRAVIS_PYTHON_VERSION 'arrow-cpp>=0.11' 'pybind11>=2.2' 'pytest>=3.7' 'pandas>=0.22' 'numpy>=1.14' 'matplotlib>=2.2' 'scipy>=1.0' 'ipython>=6.5' 'pyarrow>=0.1'
   - source activate test-environment
-  - COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5 python setup.py build_ext --inplace
+  - CXX=g++-4.8 CC=g++-4.8 python setup.py build_ext --inplace
 
 script:
   - ulimit -c unlimited -S
