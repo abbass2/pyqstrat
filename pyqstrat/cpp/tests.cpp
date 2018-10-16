@@ -34,7 +34,7 @@ void test_tick_processing() {
     auto open_interest_aggregator = AllOpenInterestAggregator(writer_creator, "/tmp/open_interest", batch_size);
     auto other_aggregator = AllOtherAggregator(writer_creator, "/tmp/other", batch_size);
     auto processor = TextFileProcessor(text_file_decompressor,
-                                       SubStringLineFilter({",T,", ",F,", ",N,", ",O,"}),
+                                       SubStringLineFilter({",T,", ",F,", ",N,", ",O,", ",X,"}),
                                        text_record_parser,
                                        PrintBadLineHandler(),
                                        {},
@@ -45,7 +45,9 @@ void test_tick_processing() {
                                        other_aggregator,
                                        1);
     auto start = high_resolution_clock::now();
-    int lines = processor("/Users/sal/Developer/coatbridge/vendor_data/algoseek/spx_dailies/w_2018-03-29.csv.gz", "gzip");    
+    //int lines = processor("/Users/sal/Developer/coatbridge/vendor_data/algoseek/spx_dailies/w_2018-03-29.csv.gz", "gzip");
+    int lines = processor("/tmp/BRKA_2018-01-01_data.gz", "gzip");
+
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
     

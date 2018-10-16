@@ -374,7 +374,6 @@ AllOtherAggregator::AllOtherAggregator(WriterCreator writer_creator, const std::
 
 void AllOtherAggregator::operator()(const OtherRecord& other, int line_number) {
     Tuple tuple;
-    tuple.add(line_number);
     tuple.add(other.id);
     tuple.add(other.timestamp);
     tuple.add(other.metadata);

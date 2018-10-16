@@ -1,4 +1,9 @@
-#cell 0
+
+# coding: utf-8
+
+# In[1]:
+
+
 import os
 import numpy as np
 import datetime
@@ -239,9 +244,22 @@ def to_csv(df, file_name, index = False, compress = False, *args, **kwargs):
     os.rename(file_name + '.tmp', file_name + suffix)
     
 def millis_since_epoch(dt):
+    """
+    Given a python datetime, return number of milliseconds between the unix epoch and the datetime.
+    Returns a float since it can contain fractions of milliseconds as well
+    >>> millis_since_epoch(datetime.datetime(2018, 1, 1))
+    1514764800000.0
+    """
     return (dt - EPOCH).total_seconds() * 1000.0
 
 def infer_compression(input_filename):
+    """
+    Infers compression for a file from its suffix.  For example, given "/tmp/hello.gz", this will return "gzip"
+    >>> infer_compression("/tmp/hello.gz")
+    'gzip'
+    >>> infer_compression("/tmp/abc.txt") is None
+    True
+    """
     parts = input_filename.split('.')
     if len(parts) <= 1: return None
     suffix = parts[-1]
@@ -263,12 +281,12 @@ def is_newer(filename, ref_filename):
     '''whether filename ctime (modfication time) is newer than ref_filename or either file does not exist
     >>> import time
     >>> touch('/tmp/x.txt')
-    >>> time.sleep(1)
+    >>> time.sleep(0.1)
     >>> touch('/tmp/y.txt')
     >>> is_newer('/tmp/y.txt', '/tmp/x.txt')
     True
     >>> touch('/tmp/y.txt')
-    >>> time.sleep(1)
+    >>> time.sleep(0.1)
     >>> touch('/tmp/x.txt')
     >>> is_newer('/tmp/y.txt', '/tmp/x.txt')
     False
