@@ -1,3 +1,2 @@
 v0.1.0, 2018-07-31 -- Initial release.
-v0.2.0, 2018-10-16 -- Added market data processing
-
+v0.2.1, 2018-10-16 -- Added market data processing
