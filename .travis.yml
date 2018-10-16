@@ -3,8 +3,6 @@ language: python
 python:
   - "3.6"
 
-before_install:
-
 addons:
   apt:
     packages:
@@ -32,10 +30,7 @@ install:
   - CXX=g++-5 CC=g++-5 python setup.py build_ext --inplace
 
 script:
-  - ulimit -c unlimited -S
-  - which python3 || RESULT=$?
-  - python3 -c "import pyqstrat.pyqstrat_cpp as pc;print(pc.fast_time_milli_parser('08:00:35.123'))" || RESULT=$?
+  - python3 -c "import pyqstrat.pyqstrat_cpp as pc;print(pc.fast_time_milli_parser('08:00:35.123'))"
   - python3 -m pytest pyqstrat
-  - if [[ ${RESULT} != 139 ]]; then echo "expected segfault and 139 exit but instead exited with ${RESULT}" && exit 1; fi;
-  - for i in $(find ./ -maxdepth 1 -name 'core*' -print); do gdb /home/travis/miniconda/envs/test-environment/bin/python core* -ex "bt full" -ex "set pagination 0" -ex "info sharedlibrary" -batch; done;
+
   
