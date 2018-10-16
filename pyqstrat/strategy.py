@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import warnings
 warnings.filterwarnings("ignore", message="numpy.dtype size changed") # another bogus warning, see https://github.com/numpy/numpy/pull/432
 import numpy as np
@@ -25,10 +20,7 @@ from pyqstrat.orders import *
 from pyqstrat.plot import *
 from pyqstrat.evaluator import *
 
-
-# In[3]:
-
-
+#cell 1
 def _calc_pnl(open_trades, new_trades, ending_close, multiplier):
     '''
     >>> from collections import deque
@@ -275,8 +267,8 @@ class ContractPNL:
         self.realized = np.empty(len(self.dates), dtype = np.float) * np.nan; self.realized[0] = 0
         
         #TODO: Add commission and fee from trades
-        self.commission = np.empty(len(self.dates), dtype = np.float) * 0; self.commission[0] = 0
-        self.fee = np.empty(len(self.dates), dtype = np.float) * 0; self.fee[0] = 0
+        self.commission = np.zeros(len(self.dates), dtype = np.float);
+        self.fee = np.zeros(len(self.dates), dtype = np.float);
         
         self.net_pnl = np.empty(len(self.dates), dtype = np.float) * np.nan; self.net_pnl[0] = 0
         self.position = np.empty(len(self.dates), dtype = np.float) * np.nan; self.position[0] = 0
@@ -311,6 +303,8 @@ class ContractPNL:
         trade_qty = sum([trade.qty for trade in calc_trades])
         self.position[i] = self.position[prev_i] + trade_qty
         self.net_pnl[i] = self.realized[i] + self.unrealized[i] - self.commission[i] - self.fee[i]
+        if np.isnan(self.net_pnl[i]):
+            raise Exception(f'net_pnl: nan i: {i} realized: {self.realized[i]} unrealized: {self.unrealized[i]} commission: {self.commission[i]} fee: {self.fee[i]}')
         
     def trades(self, start_date = None, end_date = None):
         '''Get a list of trades
@@ -412,7 +406,7 @@ class Account:
                 calc_index = calc_indices[idx]
                 symbol_pnl.calc(prev_calc_index, calc_index)
                 self._equity[calc_index] = self._equity[prev_calc_index] + symbol_pnl.net_pnl[calc_index] - symbol_pnl.net_pnl[prev_calc_index]
-                #print(f'prev_calc_index: {prev_calc_index} calc_index: {calc_index} prev_equity: {self._equity[prev_calc_index]} net_pnl: {symbol_pnl.net_pnl[calc_index]} prev_net_pnl: {symbol_pnl.net_pnl[prev_calc_index]}')
+                # print(f'prev_calc_index: {prev_calc_index} calc_index: {calc_index} prev_equity: {self._equity[prev_calc_index]} net_pnl: {symbol_pnl.net_pnl[calc_index]} prev_net_pnl: {symbol_pnl.net_pnl[prev_calc_index]}')
                 prev_calc_index = calc_index
                 
         self.current_calc_index = i
