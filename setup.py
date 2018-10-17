@@ -115,7 +115,7 @@ def read(*filenames, **kwargs):
             buf.append(f.read())
     return sep.join(buf)
 
-long_description = read('README.rst', 'CHANGES.txt')
+long_description = read('README.rst')
 
 class PyTest(TestCommand):
     def finalize_options(self):
