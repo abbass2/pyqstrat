@@ -170,23 +170,3 @@ setup(
     cmdclass = {'test': PyTest, 'build_ext' : BuildExt},
     zip_safe = False
 )
-
-
-def copy_dynlib_to_source():
-    import distutils.command.build
-    from distutils.dist import Distribution
-    import glob
-    import shutil
-    
-    b = distutils.command.build.build(Distribution())
-    b.initialize_options()
-    b.finalize_options()
-    dest_dir = "./pyqstrat/"
-    src_dir = './' + b.build_platlib + "/pyqstrat/*pyqstrat_cpp*"
-    print(f'source dir: {src_dir} dest_dir: {dest_dir}')
-    for file in glob.glob(src_dir):
-        print(f'copying: {file}')
-        shutil.copy(file, dest_dir)
-
-# We need to copy C++ dlls to the source dir so sphinx can generate documentation
-copy_dynlib_to_source()

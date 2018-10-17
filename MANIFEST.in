@@ -1,5 +1,5 @@
 global-include *.txt *.cpp *.hpp *.py *.ipynb *.html
 recursive-exclude pyqstrat/notebooks *.py
 prune dist
-graft docs
+prune docs
 
