@@ -1,2 +1,5 @@
-include *.txt
-recursive-include docs *.txt
+global-include *.txt *.cpp *.hpp *.py *.ipynb *.html
+recursive-exclude pyqstrat/notebooks *.py
+prune dist
+graft docs
+
