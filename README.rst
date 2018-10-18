@@ -1,4 +1,4 @@
-|PyVersion| |Status| |License| |Docs|
+|PyVersion| |Status| |License|
 
 Introduction
 ============
@@ -52,7 +52,7 @@ The best way to get started is to go through this Jupyter notebook: `Building St
 
 `Jupyter Notebooks <https://github.com/abbass2/pyqstrat/tree/master/pyqstrat/notebooks>`_ 
 
-`API docs <https://pyqstrat.readthedocs.io>`_
+`API docs <https://abbass2.github.io/pyqstrat>`_
 
 Discussion
 ----------
@@ -95,5 +95,3 @@ The software is provided on the conditions of the simplified BSD license.
 .. |License| image:: https://img.shields.io/badge/license-BSD-blue.svg
    :alt:
    
-.. |Docs| image:: https://readthedocs.org/projects/pyqstrat/badge/
-   :alt:
