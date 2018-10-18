@@ -1,0 +1,884 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyqstrat.plot &#8212; pyqstrat 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyqstrat.plot</h1><div class="highlight"><pre>
+<span></span>
+<span class="c1"># coding: utf-8</span>
+
+<span class="c1"># In[1]:</span>
+
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;numpy.dtype size changed&quot;</span><span class="p">)</span> <span class="c1"># another bogus warning, see https://github.com/numpy/numpy/pull/432</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">reduce</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">matplotlib.dates</span> <span class="k">as</span> <span class="nn">mdates</span>
+<span class="kn">import</span> <span class="nn">matplotlib.ticker</span> <span class="k">as</span> <span class="nn">mtick</span>
+<span class="kn">import</span> <span class="nn">matplotlib.lines</span> <span class="k">as</span> <span class="nn">mlines</span>
+<span class="kn">import</span> <span class="nn">matplotlib.patches</span> <span class="k">as</span> <span class="nn">mptch</span>
+<span class="kn">import</span> <span class="nn">matplotlib.gridspec</span> <span class="k">as</span> <span class="nn">gridspec</span>
+<span class="kn">import</span> <span class="nn">matplotlib.path</span> <span class="k">as</span> <span class="nn">path</span>
+<span class="kn">from</span> <span class="nn">mpl_toolkits</span> <span class="k">import</span> <span class="n">mplot3d</span>
+<span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="k">import</span> <span class="n">Axes3D</span>
+<span class="kn">import</span> <span class="nn">matplotlib.cm</span> <span class="k">as</span> <span class="nn">cm</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="k">import</span> <span class="n">griddata</span>
+
+<span class="kn">from</span> <span class="nn">mpl_toolkits.axes_grid1</span> <span class="k">import</span> <span class="n">make_axes_locatable</span>
+<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="k">import</span> <span class="n">display</span>
+<span class="kn">from</span> <span class="nn">pyqstrat.pq_utils</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="n">set_defaults</span><span class="p">()</span>
+
+
+<span class="c1"># In[2]:</span>
+
+
+
+<span class="n">_VERBOSE</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="DateFormatter"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.DateFormatter">[docs]</a><span class="k">class</span> <span class="nc">DateFormatter</span><span class="p">(</span><span class="n">mtick</span><span class="o">.</span><span class="n">Formatter</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Formats dates on plot axes.  See matplotlib Formatter</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dates</span><span class="p">,</span> <span class="n">fmt</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dates</span> <span class="o">=</span> <span class="n">dates</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fmt</span> <span class="o">=</span> <span class="n">fmt</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">pos</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="s1">&#39;Return the label for time x at position pos&#39;</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">ind</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dates</span><span class="p">)</span> <span class="ow">or</span> <span class="n">ind</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">mdates</span><span class="o">.</span><span class="n">num2date</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dates</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fmt</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="HorizontalLine"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.HorizontalLine">[docs]</a><span class="k">class</span> <span class="nc">HorizontalLine</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;Draws a horizontal line on a subplot&#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">line_type</span> <span class="o">=</span> <span class="s1">&#39;dashed&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_type</span> <span class="o">=</span> <span class="n">line_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">color</span></div>
+    
+<div class="viewcode-block" id="VerticalLine"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.VerticalLine">[docs]</a><span class="k">class</span> <span class="nc">VerticalLine</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;Draws a vertical line on a subplot where x axis is not a date-time axis&#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">line_type</span> <span class="o">=</span> <span class="s1">&#39;dashed&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_type</span> <span class="o">=</span> <span class="n">line_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">color</span></div>
+    
+<div class="viewcode-block" id="DateLine"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.DateLine">[docs]</a><span class="k">class</span> <span class="nc">DateLine</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;Draw a vertical line on a plot with a datetime x-axis&#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">line_type</span> <span class="o">=</span> <span class="s1">&#39;dashed&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">date</span> <span class="o">=</span> <span class="n">date</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_type</span> <span class="o">=</span> <span class="n">line_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">color</span></div>
+        
+        
+<div class="viewcode-block" id="BucketedValues"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.BucketedValues">[docs]</a><span class="k">class</span> <span class="nc">BucketedValues</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;Data in a subplot where x axis is a categorical we summarize properties of a numpy array.  For example, drawing a boxplot with percentiles.&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="BucketedValues.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.BucketedValues.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bucket_names</span><span class="p">,</span> <span class="n">bucket_values</span><span class="p">,</span> <span class="n">proportional_widths</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">show_means</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">show_all</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">show_outliers</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">notched</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: name used for this data in a plot legend</span>
+<span class="sd">            bucket_names: list of strings used on x axis labels</span>
+<span class="sd">            bucket_values: list of numpy arrays that are summarized in this plot</span>
+<span class="sd">            proportional_widths: if set to True, the width each box in the boxplot will be proportional to the number of items in its corresponding array</span>
+<span class="sd">            show_means: Whether to display a marker where the mean is for each array</span>
+<span class="sd">            show_outliers: Whether to show markers for outliers that are outside the whiskers.  </span>
+<span class="sd">              Box is at Q1 = 25%, Q3 = 75% quantiles, whiskers are at Q1 - 1.5 * (Q3 - Q1), Q3 + 1.5 * (Q3 - Q1)</span>
+<span class="sd">            notched: Whether to show notches indicating the confidence interval around the median</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bucket_names</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bucket_values</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">bucket_names</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">bucket_values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bucket_names</span> <span class="o">=</span> <span class="n">bucket_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bucket_values</span> <span class="o">=</span> <span class="n">series_to_array</span><span class="p">(</span><span class="n">bucket_values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">=</span> <span class="s1">&#39;boxplot&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proportional_widths</span> <span class="o">=</span> <span class="n">proportional_widths</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">show_means</span> <span class="o">=</span> <span class="n">show_means</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">show_all</span> <span class="o">=</span> <span class="n">show_all</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">show_outliers</span> <span class="o">=</span> <span class="n">show_outliers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notched</span> <span class="o">=</span> <span class="n">notched</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_plot</span> <span class="o">=</span> <span class="kc">False</span></div></div>
+        
+<div class="viewcode-block" id="XYData"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.XYData">[docs]</a><span class="k">class</span> <span class="nc">XYData</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Data in a subplot that has x and y values that are both arrays of floats</span>
+<span class="sd">    </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<div class="viewcode-block" id="XYData.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.XYData.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">plot_type</span> <span class="o">=</span> <span class="s1">&#39;line&#39;</span><span class="p">,</span> <span class="n">line_type</span> <span class="o">=</span> <span class="s1">&#39;solid&#39;</span><span class="p">,</span> <span class="n">line_width</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">marker_size</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+                 <span class="n">marker_color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            x: pandas series or numpy array of floats</span>
+<span class="sd">            y: pandas series or numpy arry of floats</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">series_to_array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">series_to_array</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">=</span> <span class="n">plot_type</span>
+        <span class="k">if</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;scatter&#39;</span> <span class="ow">and</span> <span class="n">marker</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;X&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_type</span> <span class="o">=</span> <span class="n">line_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_width</span> <span class="o">=</span> <span class="n">line_width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">color</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marker</span> <span class="o">=</span> <span class="n">marker</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marker_size</span> <span class="o">=</span> <span class="n">marker_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marker_color</span> <span class="o">=</span> <span class="n">marker_color</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_plot</span> <span class="o">=</span> <span class="kc">False</span></div></div>
+        
+<div class="viewcode-block" id="XYZData"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.XYZData">[docs]</a><span class="k">class</span> <span class="nc">XYZData</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;Data in a subplot that has x, y and z values that are all floats&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="XYZData.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.XYZData.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">plot_type</span> <span class="o">=</span> <span class="s1">&#39;surface&#39;</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="n">marker_size</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">marker_color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">interpolation</span> <span class="o">=</span> <span class="s1">&#39;linear&#39;</span><span class="p">,</span>  <span class="n">cmap</span> <span class="o">=</span> <span class="s1">&#39;viridis&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            x: pandas series or numpy array of floats</span>
+<span class="sd">            y: pandas series or numpy array of floats</span>
+<span class="sd">            z: pandas series or numpy array of floats</span>
+<span class="sd">            plot_type: surface or contour (default surface)</span>
+<span class="sd">            marker: Adds a marker to each point in x, y, z to show the actual data used for interpolation.  You can set this to None to turn markers off.</span>
+<span class="sd">            interpolation: Can be ‘linear’, ‘nearest’ or ‘cubic’ for plotting z points between the ones passed in.  See scipy.interpolate.griddata for details</span>
+<span class="sd">            cmap: Colormap to use (default viridis).  See matplotlib colormap for details</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">z</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">=</span> <span class="n">plot_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marker</span> <span class="o">=</span> <span class="n">marker</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marker_size</span> <span class="o">=</span> <span class="n">marker_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marker_color</span> <span class="o">=</span> <span class="n">marker_color</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interpolation</span> <span class="o">=</span> <span class="n">interpolation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cmap</span> <span class="o">=</span> <span class="n">cmap</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_plot</span> <span class="o">=</span> <span class="kc">False</span></div></div>
+    
+<div class="viewcode-block" id="TimeSeries"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.TimeSeries">[docs]</a><span class="k">class</span> <span class="nc">TimeSeries</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;Data in a subplot where x is an array of numpy datetimes and y is a numpy array of floats&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="TimeSeries.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.TimeSeries.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">dates</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">plot_type</span> <span class="o">=</span> <span class="s1">&#39;line&#39;</span><span class="p">,</span> <span class="n">line_type</span> <span class="o">=</span> <span class="s1">&#39;solid&#39;</span><span class="p">,</span> <span class="n">line_width</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">marker_size</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+                 <span class="n">marker_color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Args:</span>
+<span class="sd">            name: Name to show in plot legend</span>
+<span class="sd">            dates: pandas Series or numpy array of datetime64</span>
+<span class="sd">            values: pandas Series or numpy array of floats</span>
+<span class="sd">            plot_type: &#39;line&#39; or &#39;scatter&#39;</span>
+<span class="sd">            marker: If set, show a marker at each value in values.  See matplotlib marker types</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dates</span> <span class="o">=</span> <span class="n">series_to_array</span><span class="p">(</span><span class="n">dates</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">series_to_array</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">=</span> <span class="n">plot_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_type</span> <span class="o">=</span> <span class="n">line_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">color</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_width</span> <span class="o">=</span> <span class="n">line_width</span>
+        <span class="k">if</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;scatter&#39;</span> <span class="ow">and</span> <span class="n">marker</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;marker must be set for plot_type scatter&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marker</span> <span class="o">=</span> <span class="n">marker</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marker_size</span> <span class="o">=</span> <span class="n">marker_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marker_color</span> <span class="o">=</span> <span class="n">marker_color</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_plot</span> <span class="o">=</span> <span class="kc">True</span></div>
+        
+<div class="viewcode-block" id="TimeSeries.reindex"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.TimeSeries.reindex">[docs]</a>    <span class="k">def</span> <span class="nf">reindex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dates</span><span class="p">,</span> <span class="n">fill</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Reindex this series given a new array of dates, forward filling holes if fill is set to True&#39;&#39;&#39;</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dates</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s1">&#39;ffill&#39;</span> <span class="k">if</span> <span class="n">fill</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dates</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">values</span></div></div>
+        
+<div class="viewcode-block" id="OHLC"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.OHLC">[docs]</a><span class="k">class</span> <span class="nc">OHLC</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Data in a subplot that contains open, high, low, close, volume bars.  volume is optional.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<div class="viewcode-block" id="OHLC.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.OHLC.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">dates</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">colorup</span><span class="o">=</span><span class="s1">&#39;darkgreen&#39;</span><span class="p">,</span> <span class="n">colordown</span><span class="o">=</span><span class="s1">&#39;#F2583E&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: Name to show in a legend</span>
+<span class="sd">            colorup: Color for bars where close &gt;= open.  Default &quot;darkgreen&quot;</span>
+<span class="sd">            colordown: Color for bars where open &lt; close.  Default &quot;#F2583E&quot;</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dates</span> <span class="o">=</span> <span class="n">dates</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">o</span> <span class="o">=</span> <span class="n">o</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="n">h</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">l</span> <span class="o">=</span> <span class="n">l</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c</span> <span class="o">=</span> <span class="n">c</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dates</span><span class="p">),</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">v</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">=</span> <span class="s1">&#39;candlestick&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">colorup</span> <span class="o">=</span> <span class="n">colorup</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">colordown</span> <span class="o">=</span> <span class="n">colordown</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_plot</span> <span class="o">=</span> <span class="kc">True</span></div>
+        
+<div class="viewcode-block" id="OHLC.df"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.OHLC.df">[docs]</a>    <span class="k">def</span> <span class="nf">df</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;o&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">o</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">l</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">},</span> <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dates</span><span class="p">)[[</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span><span class="p">]]</span></div>
+        
+<div class="viewcode-block" id="OHLC.reindex"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.OHLC.reindex">[docs]</a>    <span class="k">def</span> <span class="nf">reindex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">all_dates</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">()</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">all_dates</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dates</span> <span class="o">=</span> <span class="n">all_dates</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span></div></div>
+                
+<div class="viewcode-block" id="TradeSet"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.TradeSet">[docs]</a><span class="k">class</span> <span class="nc">TradeSet</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;Data for subplot that contains a set of trades along with marker properties for these trades&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="TradeSet.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.TradeSet.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">trades</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="n">marker_color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">marker_size</span> <span class="o">=</span> <span class="mi">50</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: String to display in a subplot legend</span>
+<span class="sd">            trades: List of Trade objects to plot</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span> <span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trades</span> <span class="o">=</span> <span class="n">trades</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">=</span> <span class="s1">&#39;scatter&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marker</span> <span class="o">=</span> <span class="n">marker</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marker_color</span> <span class="o">=</span> <span class="n">marker_color</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marker_size</span> <span class="o">=</span> <span class="n">marker_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">trade</span><span class="o">.</span><span class="n">date</span> <span class="k">for</span> <span class="n">trade</span> <span class="ow">in</span> <span class="n">trades</span><span class="p">],</span> <span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;M8[ns]&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">trade</span><span class="o">.</span><span class="n">price</span> <span class="k">for</span> <span class="n">trade</span> <span class="ow">in</span> <span class="n">trades</span><span class="p">],</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_plot</span> <span class="o">=</span> <span class="kc">True</span></div>
+        
+<div class="viewcode-block" id="TradeSet.reindex"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.TradeSet.reindex">[docs]</a>    <span class="k">def</span> <span class="nf">reindex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">all_dates</span><span class="p">,</span> <span class="n">fill</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dates</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">all_dates</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s1">&#39;ffill&#39;</span> <span class="k">if</span> <span class="n">fill</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dates</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">values</span></div>
+        
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">trade</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">trades</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{trade.date}</span><span class="s1"> </span><span class="si">{trade.qty}</span><span class="s1"> </span><span class="si">{trade.price}</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="k">return</span> <span class="n">s</span></div>
+    
+<div class="viewcode-block" id="draw_poly"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.draw_poly">[docs]</a><span class="k">def</span> <span class="nf">draw_poly</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">bottom</span><span class="p">,</span> <span class="n">top</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">facecolor</span><span class="p">,</span> <span class="n">edgecolor</span><span class="p">,</span> <span class="n">zorder</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Draw a set of polygrams given parrallel numpy arrays of left, bottom, top, right points&#39;&#39;&#39;</span>
+    <span class="n">XY</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">left</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">right</span><span class="p">],</span> <span class="p">[</span><span class="n">bottom</span><span class="p">,</span> <span class="n">top</span><span class="p">,</span> <span class="n">top</span><span class="p">,</span> <span class="n">bottom</span><span class="p">]])</span><span class="o">.</span><span class="n">T</span>
+
+    <span class="n">barpath</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">make_compound_path_from_polys</span><span class="p">(</span><span class="n">XY</span><span class="p">)</span>
+    
+    <span class="c1"># Clean path to get rid of 0, 0 points.  Seems to be a matplotlib bug.  If we don&#39;t ylim lower bound is set to 0</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">barpath</span><span class="o">.</span><span class="n">iter_segments</span><span class="p">():</span>
+        <span class="n">vertices</span><span class="p">,</span> <span class="n">command</span> <span class="o">=</span> <span class="n">seg</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mf">0.</span> <span class="ow">and</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mf">0.</span><span class="p">):</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">vertices</span><span class="p">)</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+    <span class="n">cleaned_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+
+    <span class="n">patch</span> <span class="o">=</span> <span class="n">mptch</span><span class="o">.</span><span class="n">PathPatch</span><span class="p">(</span><span class="n">cleaned_path</span><span class="p">,</span> <span class="n">facecolor</span> <span class="o">=</span> <span class="n">facecolor</span><span class="p">,</span> <span class="n">edgecolor</span> <span class="o">=</span> <span class="n">edgecolor</span><span class="p">,</span> <span class="n">zorder</span> <span class="o">=</span> <span class="n">zorder</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="draw_candlestick"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.draw_candlestick">[docs]</a><span class="k">def</span> <span class="nf">draw_candlestick</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">colorup</span><span class="o">=</span><span class="s1">&#39;darkgreen&#39;</span><span class="p">,</span> <span class="n">colordown</span><span class="o">=</span><span class="s1">&#39;#F2583E&#39;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Draw candlesticks given parrallel numpy arrays of o, h, l, c, v values.  v is optional.  See OHLC class __init__ for argument descriptions.&#39;&#39;&#39;</span>
+    <span class="n">width</span> <span class="o">=</span> <span class="mf">0.5</span>
+                
+    <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span> <span class="c1"># Have to do volume first because of a mpl bug with axes fonts if we use make_axes_locatable after plotting on top axis</span>
+        <span class="n">divider</span> <span class="o">=</span> <span class="n">make_axes_locatable</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+        <span class="n">vol_ax</span> <span class="o">=</span> <span class="n">divider</span><span class="o">.</span><span class="n">append_axes</span><span class="p">(</span><span class="s1">&#39;bottom&#39;</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="s1">&#39;25%&#39;</span><span class="p">,</span> <span class="n">sharex</span> <span class="o">=</span> <span class="n">ax</span><span class="p">)</span>
+        <span class="n">_c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">_o</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">_c</span> <span class="o">&gt;=</span> <span class="n">_o</span>
+        <span class="n">neg</span> <span class="o">=</span> <span class="n">_c</span> <span class="o">&lt;</span> <span class="n">_o</span>
+        <span class="n">vol_ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="n">pos</span><span class="p">],</span> <span class="n">v</span><span class="p">[</span><span class="n">pos</span><span class="p">],</span> <span class="n">color</span> <span class="o">=</span> <span class="n">colorup</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">width</span><span class="p">)</span>
+        <span class="n">vol_ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="n">neg</span><span class="p">],</span> <span class="n">v</span><span class="p">[</span><span class="n">neg</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span> <span class="n">colordown</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">width</span><span class="p">)</span>
+    
+    <span class="n">offset</span> <span class="o">=</span> <span class="n">width</span> <span class="o">/</span> <span class="mf">2.0</span>
+    
+    <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+    <span class="n">mask</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">&amp;=</span> <span class="n">c</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">o</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+    
+    <span class="n">left</span> <span class="o">=</span> <span class="n">index</span> <span class="o">-</span> <span class="n">offset</span>
+    <span class="n">bottom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="n">left</span> <span class="o">+</span> <span class="n">width</span>
+    
+    <span class="n">draw_poly</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">left</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">bottom</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">top</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">right</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">colordown</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">draw_poly</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">left</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">],</span> <span class="n">bottom</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">],</span> <span class="n">top</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">],</span> <span class="n">right</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">],</span> <span class="n">colorup</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">draw_poly</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">left</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">left</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></div>
+    
+        
+<div class="viewcode-block" id="draw_boxplot"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.draw_boxplot">[docs]</a><span class="k">def</span> <span class="nf">draw_boxplot</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">proportional_widths</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">notched</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">show_outliers</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">show_means</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">show_all</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Draw a boxplot.  See BucketedValues class for explanation of arguments&#39;&#39;&#39;</span>
+    <span class="n">outliers</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">show_outliers</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">meanpointprops</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">marker</span><span class="o">=</span><span class="s1">&#39;D&#39;</span><span class="p">)</span>
+    <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">))</span>
+    <span class="n">widths</span> <span class="o">=</span> <span class="kc">None</span>
+    
+    <span class="k">if</span> <span class="n">show_all</span><span class="p">:</span>
+        <span class="n">all_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">all_values</span><span class="p">)</span>
+        <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">proportional_widths</span><span class="p">:</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">counts</span><span class="p">))</span>
+        <span class="n">cases</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+        <span class="n">widths</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">/</span><span class="n">total</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">]</span>  
+    
+    <span class="n">ax</span><span class="o">.</span><span class="n">boxplot</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">notch</span> <span class="o">=</span> <span class="n">notched</span><span class="p">,</span> <span class="n">sym</span> <span class="o">=</span> <span class="n">outliers</span><span class="p">,</span> <span class="n">showmeans</span> <span class="o">=</span> <span class="n">show_means</span><span class="p">,</span> <span class="n">meanprops</span><span class="o">=</span><span class="n">meanpointprops</span><span class="p">,</span> <span class="n">widths</span> <span class="o">=</span> <span class="n">widths</span><span class="p">)</span> <span class="c1">#, widths = proportional_widths);</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">names</span><span class="p">);</span></div>
+    
+    
+<div class="viewcode-block" id="draw_3d_plot"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.draw_3d_plot">[docs]</a><span class="k">def</span> <span class="nf">draw_3d_plot</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">plot_type</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="n">marker_size</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">marker_color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">,</span>
+                <span class="n">interpolation</span> <span class="o">=</span> <span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="n">cmap</span> <span class="o">=</span> <span class="s1">&#39;viridis&#39;</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;Draw a 3d plot.  See XYZData class for explanation of arguments</span>
+<span class="sd">    </span>
+<span class="sd">    &gt;&gt;&gt; points = np.random.rand(1000, 2)</span>
+<span class="sd">    &gt;&gt;&gt; x = np.random.rand(10)</span>
+<span class="sd">    &gt;&gt;&gt; y = np.random.rand(10)</span>
+<span class="sd">    &gt;&gt;&gt; z = x ** 2 + y ** 2</span>
+<span class="sd">    &gt;&gt;&gt; if has_display():</span>
+<span class="sd">    ...    fig, ax = plt.subplots()</span>
+<span class="sd">    ...    draw_3d_plot(ax, x = x, y = y, z = z, plot_type = &#39;contour&#39;, interpolation = &#39;linear&#39;)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">xi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="n">yi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">)</span>
+    <span class="n">Z</span> <span class="o">=</span> <span class="n">griddata</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">z</span><span class="p">,</span> <span class="p">(</span><span class="n">xi</span><span class="p">[</span><span class="kc">None</span><span class="p">,:],</span> <span class="n">yi</span><span class="p">[:,</span><span class="kc">None</span><span class="p">]),</span> <span class="n">method</span><span class="o">=</span><span class="n">interpolation</span><span class="p">)</span>
+    <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;surface&#39;</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot_surface</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">cmap</span> <span class="o">=</span> <span class="n">cmap</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">marker</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="n">marker</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">marker_size</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">marker_color</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;contour&#39;</span><span class="p">:</span>
+        <span class="n">cs</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">linewidths</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">clabel</span><span class="p">(</span><span class="n">cs</span><span class="p">,</span> <span class="n">cs</span><span class="o">.</span><span class="n">levels</span><span class="p">[::</span><span class="mi">2</span><span class="p">],</span> <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.3g</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">cmap</span> <span class="o">=</span> <span class="n">cmap</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">marker</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="n">marker</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">marker_size</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">marker_color</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;unknown plot type: </span><span class="si">{plot_type}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="n">m</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">ScalarMappable</span><span class="p">(</span><span class="n">cmap</span> <span class="o">=</span> <span class="n">cmap</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">set_array</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span><span class="p">)</span></div>
+    
+<span class="k">def</span> <span class="nf">_adjust_axis_limit</span><span class="p">(</span><span class="n">lim</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;If values + 10% buffer are outside current xlim or ylim, return expanded xlim or ylim for subplot&#39;&#39;&#39;</span>
+    <span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">values</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+    <span class="n">lim_min</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">-</span> <span class="o">.</span><span class="mi">1</span> <span class="o">*</span> <span class="p">(</span><span class="n">max_val</span> <span class="o">-</span> <span class="n">min_val</span><span class="p">)</span>
+    <span class="n">lim_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">+</span> <span class="o">.</span><span class="mi">1</span> <span class="o">*</span> <span class="p">(</span><span class="n">max_val</span> <span class="o">-</span> <span class="n">min_val</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">lim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lim_min</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">lim</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">lim_max</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">_plot_data</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+    
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">time_plot</span><span class="p">:</span>
+        <span class="n">dates</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">dates</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dates</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">):</span> <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">x</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;values&#39;</span><span class="p">):</span> <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">):</span> <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">y</span>
+        
+    <span class="n">line</span> <span class="o">=</span> <span class="kc">None</span>
+    
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;line&#39;</span><span class="p">:</span>
+        <span class="n">line</span><span class="p">,</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">line_type</span><span class="p">,</span> <span class="n">linewidth</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">line_width</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">color</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">marker</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">marker</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">marker_color</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">marker_size</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">data</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;scatter&#39;</span><span class="p">:</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">marker</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">marker_color</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">marker_size</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">data</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;bar&#39;</span><span class="p">:</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">color</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">data</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;filled_line&#39;</span><span class="p">:</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">pos_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">y</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">neg_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">pos_values</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">step</span> <span class="o">=</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="n">linewidth</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">neg_values</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">step</span> <span class="o">=</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="n">linewidth</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="c1">#ax.set_ylim(max(ylim[0], np.max(y) * 1.1), min(ylim[1], np.min(y) * 1.1))</span>
+    <span class="k">elif</span> <span class="n">data</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;candlestick&#39;</span><span class="p">:</span>
+        <span class="n">draw_candlestick</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">o</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">l</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">v</span><span class="p">,</span> <span class="n">colorup</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">colorup</span><span class="p">,</span> <span class="n">colordown</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">colordown</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">data</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;boxplot&#39;</span><span class="p">:</span>
+        <span class="n">draw_boxplot</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">bucket_names</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">bucket_values</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">proportional_widths</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">notched</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">show_outliers</span><span class="p">,</span> 
+                     <span class="n">data</span><span class="o">.</span><span class="n">show_means</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">show_all</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">data</span><span class="o">.</span><span class="n">plot_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;contour&#39;</span><span class="p">,</span> <span class="s1">&#39;surface&#39;</span><span class="p">]:</span>
+        <span class="n">draw_3d_plot</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">z</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">plot_type</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">marker</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">marker_size</span><span class="p">,</span>
+                     <span class="n">data</span><span class="o">.</span><span class="n">marker_color</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">interpolation</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">cmap</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;unknown plot type: </span><span class="si">{data.plot_type}</span><span class="s1">&#39;</span><span class="p">)</span>
+        
+    <span class="c1"># For scatter and filled line, xlim and ylim does not seem to get set automatically</span>
+    <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">_adjust_axis_limit</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">(),</span> <span class="n">x</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">_adjust_axis_limit</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">(),</span> <span class="n">y</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">line</span>
+
+<span class="k">def</span> <span class="nf">_draw_date_gap_lines</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">plot_dates</span><span class="p">):</span>
+    <span class="n">dates</span> <span class="o">=</span> <span class="n">mdates</span><span class="o">.</span><span class="n">date2num</span><span class="p">(</span><span class="n">plot_dates</span><span class="p">)</span>
+    <span class="n">freq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">dates</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">freq</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;could not infer date frequency&#39;</span><span class="p">)</span>
+    <span class="n">date_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dates</span><span class="p">))</span>
+    <span class="n">date_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">dates</span><span class="p">)</span>
+    
+    <span class="n">xs</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">date_index</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">date_diff</span><span class="p">)</span> <span class="ow">and</span> <span class="n">date_diff</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">freq</span> <span class="o">+</span> <span class="mf">0.000000001</span><span class="p">):</span>
+            <span class="n">xs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span>
+            
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">20</span><span class="p">:</span>
+        <span class="k">return</span> <span class="c1"># Too many lines will clutter the graph</span>
+    
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;dashed&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;0.5&#39;</span><span class="p">)</span>
+            
+<div class="viewcode-block" id="draw_date_line"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.draw_date_line">[docs]</a><span class="k">def</span> <span class="nf">draw_date_line</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">plot_dates</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">linestyle</span><span class="p">,</span> <span class="n">color</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Draw vertical line on a subplot with datetime x axis&#39;&#39;&#39;</span>
+    <span class="n">date_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">plot_dates</span><span class="p">))</span>
+    <span class="n">closest_index</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">plot_dates</span> <span class="o">-</span> <span class="n">date</span><span class="p">))</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">closest_index</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="n">linestyle</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="n">color</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="draw_horizontal_line"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.draw_horizontal_line">[docs]</a><span class="k">def</span> <span class="nf">draw_horizontal_line</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">linestyle</span><span class="p">,</span> <span class="n">color</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Draw horizontal line on a subplot&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="n">linestyle</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="n">color</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="draw_vertical_line"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.draw_vertical_line">[docs]</a><span class="k">def</span> <span class="nf">draw_vertical_line</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">linestyle</span><span class="p">,</span> <span class="n">color</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Draw vertical line on a subplot&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="n">linestyle</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="n">color</span><span class="p">)</span></div>
+           
+<div class="viewcode-block" id="get_date_formatter"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.get_date_formatter">[docs]</a><span class="k">def</span> <span class="nf">get_date_formatter</span><span class="p">(</span><span class="n">plot_dates</span><span class="p">,</span> <span class="n">date_format</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Create an appropriate DateFormatter for x axis labels.  </span>
+<span class="sd">    If date_format is set to None, figures out an appropriate date format based on the range of dates passed in&#39;&#39;&#39;</span>
+    <span class="n">num_dates</span> <span class="o">=</span> <span class="n">mdates</span><span class="o">.</span><span class="n">date2num</span><span class="p">(</span><span class="n">plot_dates</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">date_format</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">DateFormatter</span><span class="p">(</span><span class="n">num_dates</span><span class="p">,</span> <span class="nb">format</span> <span class="o">=</span> <span class="n">date_format</span><span class="p">)</span>
+    <span class="n">date_range</span> <span class="o">=</span> <span class="n">num_dates</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">num_dates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">date_range</span> <span class="o">&gt;</span> <span class="mi">252</span><span class="p">:</span>
+        <span class="n">date_format</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1">-%b-%Y&#39;</span>
+    <span class="k">elif</span> <span class="n">date_range</span> <span class="o">&gt;</span> <span class="mi">7</span><span class="p">:</span>
+        <span class="n">date_format</span> <span class="o">=</span> <span class="s1">&#39;%b </span><span class="si">%d</span><span class="s1">&#39;</span>
+    <span class="k">elif</span> <span class="n">date_range</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">date_format</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1"> %H:%M&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">date_format</span> <span class="o">=</span> <span class="s1">&#39;%H:%M:%S&#39;</span>
+        
+    <span class="n">formatter</span> <span class="o">=</span> <span class="n">DateFormatter</span><span class="p">(</span><span class="n">num_dates</span><span class="p">,</span> <span class="n">fmt</span> <span class="o">=</span> <span class="n">date_format</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">formatter</span></div>
+    
+<div class="viewcode-block" id="Subplot"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.Subplot">[docs]</a><span class="k">class</span> <span class="nc">Subplot</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;A top level plot contains a list of subplots, each of which contain a list of data objects to draw&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="Subplot.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.Subplot.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_list</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">xlabel</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ylabel</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">zlabel</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">date_lines</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">horizontal_lines</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">vertical_lines</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">xlim</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ylim</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+                 <span class="n">height_ratio</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">display_legend</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">legend_loc</span> <span class="o">=</span> <span class="s1">&#39;best&#39;</span><span class="p">,</span> <span class="n">log_y</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">y_tick_format</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            data_list: A list of objects to draw.  Each element can contain XYData, XYZData, TimeSeries, OHLC, BucketedValues or TradeSet</span>
+<span class="sd">            title: Title to show for this subplot. Default None</span>
+<span class="sd">            zlabel: Only applicable to 3d subplots.  Default None</span>
+<span class="sd">            date_lines: A list of DateLine objects to draw as vertical lines.  Only applicable when x axis is datetime.  Default None</span>
+<span class="sd">            horizontal_lines: A list of HorizontalLine objects to draw on the plot.  Default None</span>
+<span class="sd">            vertical_lines: A list of VerticalLine objects to draw on the plot</span>
+<span class="sd">            xlim: x limits for the plot as a tuple of numpy datetime objects when x-axis is datetime, or tuple of floats. Default None</span>
+<span class="sd">            ylim: y limits for the plot.  Tuple of floats.  Default None</span>
+<span class="sd">            height_ratio: If you have more than one subplot on a plot, use height ratio to determine how high each subplot should be.</span>
+<span class="sd">                For example, if you set height_ratio = 0.75 for the first subplot and 0.25 for the second, </span>
+<span class="sd">                the first will be 3 times taller than the second one. Default 1.0</span>
+<span class="sd">            display_legend: Whether to show a legend on the plot.  Default True</span>
+<span class="sd">            legend_loc: Location for the legend. Default &#39;best&#39;</span>
+<span class="sd">            log_y: whether the y axis should be logarithmic.  Default False</span>
+<span class="sd">            y_tick_format: Format string to use for y axis labels.  For example, you can decide to </span>
+<span class="sd">              use fixed notation instead of scientific notation or change number of decimal places shown.  Default None</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_list</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span> <span class="n">data_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">data_list</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_plot</span> <span class="o">=</span> <span class="nb">all</span><span class="p">([</span><span class="n">data</span><span class="o">.</span><span class="n">time_plot</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">data_list</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_plot</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">([</span><span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">time_plot</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">data_list</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;cannot add a non date subplot on a subplot which has time series plots&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_plot</span> <span class="ow">and</span> <span class="n">date_lines</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> 
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;date lines can only be specified on a time series subplot&#39;</span><span class="p">)</span>
+            
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_3d</span> <span class="o">=</span> <span class="nb">any</span><span class="p">([</span><span class="n">data</span><span class="o">.</span><span class="n">plot_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;surface&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">data_list</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_3d</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">([</span><span class="n">data</span><span class="o">.</span><span class="n">plot_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;surface&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">data_list</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;cannot add a 2d plot on a subplot which has a 3d plot&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_list</span> <span class="o">=</span> <span class="n">data_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">date_lines</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">date_lines</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">date_lines</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">horizontal_lines</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">horizontal_lines</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">horizontal_lines</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vertical_lines</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">vertical_lines</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">vertical_lines</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">title</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xlabel</span> <span class="o">=</span> <span class="n">xlabel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ylabel</span> <span class="o">=</span> <span class="n">ylabel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zlabel</span> <span class="o">=</span> <span class="n">zlabel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span> <span class="o">=</span> <span class="n">ylim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">height_ratio</span> <span class="o">=</span> <span class="n">height_ratio</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">display_legend</span> <span class="o">=</span> <span class="n">display_legend</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">legend_loc</span> <span class="o">=</span> <span class="n">legend_loc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_y</span> <span class="o">=</span> <span class="n">log_y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_tick_format</span> <span class="o">=</span> <span class="n">y_tick_format</span></div>
+        
+    <span class="k">def</span> <span class="nf">_resample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="p">):</span>
+        <span class="n">dates</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_list</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">TimeSeries</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">TradeSet</span><span class="p">):</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">resample_ts</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">OHLC</span><span class="p">):</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">o</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">l</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="n">resample_ohlc</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">o</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">l</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">v</span><span class="p">,</span> <span class="n">sampling_frequency</span> <span class="o">=</span> <span class="n">sampling_frequency</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;unknown type: </span><span class="si">{data}</span><span class="s1">&#39;</span><span class="p">)</span>
+        
+<div class="viewcode-block" id="Subplot.get_all_dates"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.Subplot.get_all_dates">[docs]</a>    <span class="k">def</span> <span class="nf">get_all_dates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date_range</span><span class="p">):</span>
+        <span class="n">dates_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">dates</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_list</span><span class="p">]</span>
+        <span class="n">all_dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">reduce</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">union1d</span><span class="p">,</span> <span class="n">dates_list</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">date_range</span><span class="p">:</span> <span class="n">all_dates</span> <span class="o">=</span> <span class="n">all_dates</span><span class="p">[(</span><span class="n">all_dates</span> <span class="o">&gt;=</span> <span class="n">date_range</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">all_dates</span> <span class="o">&lt;=</span> <span class="n">date_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+        <span class="k">return</span> <span class="n">all_dates</span></div>
+    
+    <span class="k">def</span> <span class="nf">_reindex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">all_dates</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">OHLC</span><span class="p">):</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">all_dates</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">fill</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">TradeSet</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;bar&#39;</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">all_dates</span><span class="p">,</span> <span class="n">fill</span> <span class="o">=</span> <span class="n">fill</span><span class="p">)</span>
+            
+    <span class="k">def</span> <span class="nf">_draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">plot_dates</span><span class="p">,</span> <span class="n">date_formatter</span><span class="p">):</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_plot</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reindex</span><span class="p">(</span><span class="n">plot_dates</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">date_formatter</span><span class="p">)</span>
+            <span class="n">date_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">plot_dates</span><span class="p">))</span>
+        
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">_VERBOSE</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;plotting data: </span><span class="si">{data.name}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">line</span>  <span class="o">=</span> <span class="n">_plot_data</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            
+        <span class="k">for</span> <span class="n">date_line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_lines</span><span class="p">:</span> <span class="c1"># vertical lines on time plot</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">draw_date_line</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">plot_dates</span><span class="p">,</span> <span class="n">date_line</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="n">date_line</span><span class="o">.</span><span class="n">line_type</span><span class="p">,</span> <span class="n">date_line</span><span class="o">.</span><span class="n">color</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">date_line</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                
+        <span class="k">for</span> <span class="n">horizontal_line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">horizontal_lines</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">draw_horizontal_line</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">horizontal_line</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">horizontal_line</span><span class="o">.</span><span class="n">line_type</span><span class="p">,</span> <span class="n">horizontal_line</span><span class="o">.</span><span class="n">color</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">horizontal_line</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                
+        <span class="k">for</span> <span class="n">vertical_line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vertical_lines</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">draw_vertical_line</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">vertical_line</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">vertical_line</span><span class="o">.</span><span class="n">line_type</span><span class="p">,</span> <span class="n">vertical_line</span><span class="o">.</span><span class="n">color</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">vertical_line</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+          
+        <span class="bp">self</span><span class="o">.</span><span class="n">legend_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_list</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">legend_names</span> <span class="o">+=</span> <span class="p">[</span><span class="n">date_line</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">date_line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_lines</span> <span class="k">if</span> <span class="n">date_line</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">legend_names</span> <span class="o">+=</span> <span class="p">[</span><span class="n">horizontal_line</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">horizontal_line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">horizontal_lines</span> <span class="k">if</span> <span class="n">horizontal_line</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">legend_names</span> <span class="o">+=</span> <span class="p">[</span><span class="n">vertical_line</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">vertical_line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vertical_lines</span> <span class="k">if</span> <span class="n">vertical_line</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span><span class="p">:</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ylim</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">date_lines</span><span class="p">))</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_legend</span><span class="p">:</span> 
+            <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span> <span class="k">if</span> <span class="n">line</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">],</span>
+                      <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">legend_names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="k">if</span> <span class="n">line</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">],</span> <span class="n">loc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">legend_loc</span><span class="p">)</span>
+            
+ 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_y</span><span class="p">:</span> 
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">mtick</span><span class="o">.</span><span class="n">AutoLocator</span><span class="p">())</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_tick_format</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">mtick</span><span class="o">.</span><span class="n">StrMethodFormatter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_tick_format</span><span class="p">))</span>
+            
+        <span class="n">ax</span><span class="o">.</span><span class="n">relim</span><span class="p">()</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">autoscale_view</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">:</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlabel</span><span class="p">:</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xlabel</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylabel</span><span class="p">:</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ylabel</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zlabel</span><span class="p">:</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_zlabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zlabel</span><span class="p">)</span></div>
+            
+<div class="viewcode-block" id="Plot"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.Plot">[docs]</a><span class="k">class</span> <span class="nc">Plot</span><span class="p">:</span>
+    
+    <span class="sd">&#39;&#39;&#39;Top level plot containing a list of subplots to draw&#39;&#39;&#39;</span>
+    
+<div class="viewcode-block" id="Plot.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.Plot.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subplot_list</span><span class="p">,</span>  <span class="n">title</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span> <span class="n">date_range</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">date_format</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+                 <span class="n">sampling_frequency</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">show_grid</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">show_date_gaps</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">hspace</span> <span class="o">=</span> <span class="mf">0.15</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            subplot_list: List of Subplot objects to draw</span>
+<span class="sd">            title: Title for this plot.  Default None</span>
+<span class="sd">            figsize: Figure size.  Default (15, 8)</span>
+<span class="sd">            date_range: Tuple of strings or numpy datetime64 limiting dates to draw.  e.g. (&quot;2018-01-01 14:00&quot;, &quot;2018-01-05&quot;). Default None</span>
+<span class="sd">            date_format: Date format to use for x-axis</span>
+<span class="sd">            sampling_frequency: Set this to downsample subplots that have a datetime x axis.  </span>
+<span class="sd">              For example, if you have minute bar data, you might want to subsample to hours if the plot is too crowded.</span>
+<span class="sd">              See pandas time frequency strings for possible values.  Default None</span>
+<span class="sd">            show_grid: If set to True, show a grid on the subplots.  Default True</span>
+<span class="sd">            show_date_gaps: If set to True, then when there is a gap between dates will draw a dashed vertical line. </span>
+<span class="sd">              For example, you may have minute bars and a gap between end of trading day and beginning of next day. </span>
+<span class="sd">              Even if set to True, this will turn itself off if there are too many gaps to avoid clutter.  Default True</span>
+<span class="sd">            hspace: Height (vertical) space between subplots.  Default 0.15</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subplot_list</span><span class="p">,</span> <span class="n">Subplot</span><span class="p">):</span> <span class="n">subplot_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">subplot_list</span><span class="p">]</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">subplot_list</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subplot_list</span> <span class="o">=</span> <span class="n">subplot_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">title</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">figsize</span> <span class="o">=</span> <span class="n">figsize</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">date_range</span> <span class="o">=</span> <span class="n">strtup2date</span><span class="p">(</span><span class="n">date_range</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">date_format</span> <span class="o">=</span> <span class="n">date_format</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sampling_frequency</span> <span class="o">=</span> <span class="n">sampling_frequency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">show_date_gaps</span> <span class="o">=</span> <span class="n">show_date_gaps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">show_grid</span> <span class="o">=</span> <span class="n">show_grid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hspace</span> <span class="o">=</span> <span class="n">hspace</span></div>
+        
+    <span class="k">def</span> <span class="nf">_get_plot_dates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dates_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">subplot</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subplot_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">subplot</span><span class="o">.</span><span class="n">time_plot</span><span class="p">:</span> <span class="k">continue</span>
+            <span class="n">subplot</span><span class="o">.</span><span class="n">_resample</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_frequency</span><span class="p">)</span>
+            <span class="n">dates_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subplot</span><span class="o">.</span><span class="n">get_all_dates</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">date_range</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">dates_list</span><span class="p">):</span> <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">plot_dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">reduce</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">union1d</span><span class="p">,</span> <span class="n">dates_list</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">plot_dates</span>
+        
+
+<div class="viewcode-block" id="Plot.draw"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.Plot.draw">[docs]</a>    <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">check_data_size</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Draw the subplots.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            check_data_size: If set to True, will not plot if there are &gt; 100K points to avoid locking up your computer for a long time.</span>
+<span class="sd">              Default True</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">has_display</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;no display found, cannot plot&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+        
+        <span class="n">plot_dates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_plot_dates</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">check_data_size</span> <span class="ow">and</span> <span class="n">plot_dates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">plot_dates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">100000</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;trying to plot large data set with {len(plot_dates)} points, reduce date range or turn check_data_size flag off&#39;</span><span class="p">)</span>
+            
+        <span class="n">date_formatter</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">plot_dates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> 
+            <span class="n">date_formatter</span> <span class="o">=</span> <span class="n">get_date_formatter</span><span class="p">(</span><span class="n">plot_dates</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_format</span><span class="p">)</span>
+        <span class="n">height_ratios</span> <span class="o">=</span> <span class="p">[</span><span class="n">subplot</span><span class="o">.</span><span class="n">height_ratio</span> <span class="k">for</span> <span class="n">subplot</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subplot_list</span><span class="p">]</span>
+        
+        
+        
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">figsize</span><span class="p">)</span>
+        <span class="n">gs</span> <span class="o">=</span> <span class="n">gridspec</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subplot_list</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">height_ratios</span><span class="o">=</span> <span class="n">height_ratios</span><span class="p">,</span> <span class="n">hspace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hspace</span><span class="p">)</span>
+        <span class="n">axes</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">subplot</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subplot_list</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">subplot</span><span class="o">.</span><span class="n">is_3d</span><span class="p">:</span>
+                <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;3d&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">axes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+            
+        <span class="n">time_axes</span> <span class="o">=</span> <span class="p">[</span><span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subplot_list</span><span class="p">)</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">time_plot</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">time_axes</span><span class="p">):</span>
+            <span class="n">time_axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_shared_x_axes</span><span class="p">()</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="o">*</span><span class="n">time_axes</span><span class="p">)</span>
+            
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">subplot</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subplot_list</span><span class="p">):</span>
+            <span class="n">subplot</span><span class="o">.</span><span class="n">_draw</span><span class="p">(</span><span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">plot_dates</span><span class="p">,</span> <span class="n">date_formatter</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">:</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">)</span>
+
+        <span class="c1"># We may have added new axes in candlestick plot so get list of axes again</span>
+        <span class="n">ax_list</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">axes</span>
+        <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">ax_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_grid</span><span class="p">:</span> <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;dotted&#39;</span><span class="p">)</span> <span class="c1">#, color = &#39;grey&#39;, which = &#39;both&#39;, alpha = 0.5)</span>
+                
+        <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">ax_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ax</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">axes</span><span class="p">:</span> <span class="n">time_axes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+                
+        <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">time_axes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_date_gaps</span> <span class="ow">and</span> <span class="n">plot_dates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="n">_draw_date_gap_lines</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">plot_dates</span><span class="p">)</span>
+                
+        <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">ax_list</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">relim</span><span class="p">()</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">autoscale_view</span><span class="p">()</span></div></div>
+                
+<span class="k">def</span> <span class="nf">_group_trades_by_reason_code</span><span class="p">(</span><span class="n">trades</span><span class="p">):</span>
+    <span class="n">trade_groups</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">trade</span> <span class="ow">in</span> <span class="n">trades</span><span class="p">:</span>
+        <span class="n">trade_groups</span><span class="p">[</span><span class="n">trade</span><span class="o">.</span><span class="n">order</span><span class="o">.</span><span class="n">reason_code</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">trade</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">trade_groups</span>
+
+<div class="viewcode-block" id="trade_sets_by_reason_code"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.trade_sets_by_reason_code">[docs]</a><span class="k">def</span> <span class="nf">trade_sets_by_reason_code</span><span class="p">(</span><span class="n">trades</span><span class="p">,</span> <span class="n">marker_props</span> <span class="o">=</span> <span class="n">ReasonCode</span><span class="o">.</span><span class="n">MARKER_PROPERTIES</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns a list of TradeSet objects.  Each TradeSet contains trades with a different reason code.  The markers for each TradeSet</span>
+<span class="sd">    are set by looking up marker properties for each reason code using the marker_props argument:</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        trades: List of Trade objects, each containing an order attribute which in turn contains a reason_code attribute</span>
+<span class="sd">        marker_props: Dictionary from reason code string -&gt; dictionary of marker properties.  See ReasonCode.MARKER_PROPERTIES for example.</span>
+<span class="sd">          Default ReasonCode.MARKER_PROPERTIES</span>
+<span class="sd">     &#39;&#39;&#39;</span>
+    <span class="n">trade_groups</span> <span class="o">=</span> <span class="n">_group_trades_by_reason_code</span><span class="p">(</span><span class="n">trades</span><span class="p">)</span>
+    <span class="n">tradesets</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">reason_code</span><span class="p">,</span> <span class="n">trades</span> <span class="ow">in</span> <span class="n">trade_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">reason_code</span> <span class="ow">in</span> <span class="n">marker_props</span><span class="p">:</span>
+            <span class="n">mp</span> <span class="o">=</span> <span class="n">marker_props</span><span class="p">[</span><span class="n">reason_code</span><span class="p">]</span>
+            <span class="n">tradeset</span> <span class="o">=</span> <span class="n">TradeSet</span><span class="p">(</span><span class="n">reason_code</span><span class="p">,</span> <span class="n">trades</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="n">mp</span><span class="p">[</span><span class="s1">&#39;symbol&#39;</span><span class="p">],</span> <span class="n">marker_color</span> <span class="o">=</span> <span class="n">mp</span><span class="p">[</span><span class="s1">&#39;color&#39;</span><span class="p">],</span> <span class="n">marker_size</span> <span class="o">=</span> <span class="n">mp</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tradeset</span> <span class="o">=</span> <span class="n">TradeSet</span><span class="p">(</span><span class="n">reason_code</span><span class="p">,</span> <span class="n">trades</span><span class="p">)</span>
+        <span class="n">tradesets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tradeset</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tradesets</span> </div>
+
+<div class="viewcode-block" id="test_plot"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.plot.test_plot">[docs]</a><span class="k">def</span> <span class="nf">test_plot</span><span class="p">():</span>
+    
+    <span class="k">class</span> <span class="nc">MockOrder</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reason_code</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reason_code</span> <span class="o">=</span> <span class="n">reason_code</span>
+    
+    <span class="k">class</span> <span class="nc">MockTrade</span><span class="p">:</span>
+            
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">qty</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">reason_code</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">date</span> <span class="o">=</span> <span class="n">date</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qty</span> <span class="o">=</span> <span class="n">qty</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">price</span> <span class="o">=</span> <span class="n">price</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">MockOrder</span><span class="p">(</span><span class="n">reason_code</span><span class="p">)</span> 
+            
+        <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.date}</span><span class="s1"> </span><span class="si">{self.qty}</span><span class="s1"> </span><span class="si">{self.price}</span><span class="s1">&#39;</span>
+        
+    <span class="n">set_defaults</span><span class="p">()</span>
+            
+    <span class="n">md_dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;2018-01-08 15:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-09 15:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-10 15:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-11 15:00:00&#39;</span><span class="p">],</span> <span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;M8[ns]&#39;</span><span class="p">)</span>
+    <span class="n">pnl_dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;2018-01-08 15:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-09 14:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-10 15:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-15 15:00:00&#39;</span><span class="p">],</span> <span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;M8[ns]&#39;</span><span class="p">)</span>
+    
+    <span class="n">positions</span> <span class="o">=</span> <span class="p">(</span><span class="n">pnl_dates</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span><span class="o">-</span><span class="mf">10.</span><span class="p">]))</span>
+    
+    <span class="n">trade_dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;2018-01-09 14:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-10 15:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-15 15:00:00&#39;</span><span class="p">],</span> <span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;M8[ns]&#39;</span><span class="p">)</span>
+    <span class="n">trade_price</span> <span class="o">=</span> <span class="p">[</span><span class="mf">9.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">]</span>
+    <span class="n">trade_qty</span> <span class="o">=</span>  <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">]</span>
+    <span class="n">reason_codes</span> <span class="o">=</span> <span class="p">[</span><span class="n">ReasonCode</span><span class="o">.</span><span class="n">ENTER_LONG</span><span class="p">,</span> <span class="n">ReasonCode</span><span class="o">.</span><span class="n">EXIT_LONG</span><span class="p">,</span> <span class="n">ReasonCode</span><span class="o">.</span><span class="n">ENTER_SHORT</span><span class="p">]</span>
+    <span class="n">trades</span> <span class="o">=</span> <span class="p">[</span><span class="n">MockTrade</span><span class="p">(</span><span class="n">trade_dates</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">trade_qty</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">trade_price</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">reason_codes</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">trade_dates</span><span class="p">)]</span>
+
+    <span class="n">ind_subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">([</span><span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;slow_support&#39;</span><span class="p">,</span> <span class="n">dates</span> <span class="o">=</span> <span class="n">md_dates</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.9</span><span class="p">,</span> <span class="mf">8.9</span><span class="p">,</span> <span class="mf">9.1</span><span class="p">,</span> <span class="mf">9.1</span><span class="p">]),</span> <span class="n">line_type</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">),</span>
+                           <span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;fast_support&#39;</span><span class="p">,</span> <span class="n">dates</span> <span class="o">=</span> <span class="n">md_dates</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.9</span><span class="p">,</span> <span class="mf">9.0</span><span class="p">,</span> <span class="mf">9.1</span><span class="p">,</span> <span class="mf">9.2</span><span class="p">]),</span> <span class="n">line_type</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">),</span>
+                           <span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;slow_resistance&#39;</span><span class="p">,</span> <span class="n">dates</span> <span class="o">=</span> <span class="n">md_dates</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">9.2</span><span class="p">,</span> <span class="mf">9.2</span><span class="p">,</span> <span class="mf">9.4</span><span class="p">,</span> <span class="mf">9.4</span><span class="p">]),</span> <span class="n">line_type</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">),</span>
+                           <span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;fast_resistance&#39;</span><span class="p">,</span> <span class="n">dates</span> <span class="o">=</span> <span class="n">md_dates</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">9.2</span><span class="p">,</span> <span class="mf">9.3</span><span class="p">,</span> <span class="mf">9.4</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">]),</span> <span class="n">line_type</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">),</span> 
+                           <span class="n">OHLC</span><span class="p">(</span><span class="s1">&#39;price&#39;</span><span class="p">,</span> <span class="n">dates</span> <span class="o">=</span> <span class="n">md_dates</span><span class="p">,</span> 
+                                <span class="n">o</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.9</span><span class="p">,</span> <span class="mf">9.1</span><span class="p">,</span> <span class="mf">9.3</span><span class="p">,</span> <span class="mf">8.6</span><span class="p">]),</span>
+                                <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">9.0</span><span class="p">,</span> <span class="mf">9.3</span><span class="p">,</span> <span class="mf">9.4</span><span class="p">,</span> <span class="mf">8.7</span><span class="p">]),</span>
+                                <span class="n">l</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.8</span><span class="p">,</span> <span class="mf">9.0</span><span class="p">,</span> <span class="mf">9.2</span><span class="p">,</span> <span class="mf">8.4</span><span class="p">]),</span>
+                                <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.95</span><span class="p">,</span> <span class="mf">9.2</span><span class="p">,</span> <span class="mf">9.35</span><span class="p">,</span> <span class="mf">8.5</span><span class="p">]),</span>
+                                <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">200</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">300</span><span class="p">]))</span>
+                          <span class="p">]</span> <span class="o">+</span> <span class="n">trade_sets_by_reason_code</span><span class="p">(</span><span class="n">trades</span><span class="p">),</span> <span class="n">ylabel</span> <span class="o">=</span> <span class="s2">&quot;Price&quot;</span><span class="p">,</span> <span class="n">height_ratio</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">)</span>
+    
+    <span class="n">sig_subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">(</span><span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;trend&#39;</span><span class="p">,</span> <span class="n">dates</span> <span class="o">=</span> <span class="n">md_dates</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])),</span> <span class="n">height_ratio</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">ylabel</span> <span class="o">=</span> <span class="s1">&#39;Trend&#39;</span><span class="p">)</span>
+    
+    <span class="n">equity_subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">(</span><span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;equity&#39;</span><span class="p">,</span> <span class="n">dates</span><span class="o">=</span> <span class="n">pnl_dates</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0e6</span><span class="p">,</span> <span class="mf">1.1e6</span><span class="p">,</span> <span class="mf">1.2e6</span><span class="p">,</span> <span class="mf">1.3e6</span><span class="p">]),</span> <span class="n">height_ratio</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">ylabel</span> <span class="o">=</span> <span class="s1">&#39;Equity&#39;</span><span class="p">,</span> <span class="n">date_lines</span> <span class="o">=</span> 
+                            <span class="p">[</span><span class="n">DateLine</span><span class="p">(</span><span class="n">date</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;2018-01-09 14:00:00&#39;</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;drawdown&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">),</span>
+                             <span class="n">DateLine</span><span class="p">(</span><span class="n">date</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;2018-01-10 15:00:00&#39;</span><span class="p">),</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">)],</span> 
+                             <span class="n">horizontal_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">HorizontalLine</span><span class="p">(</span><span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;zero&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;green&#39;</span><span class="p">)])</span>
+    
+    <span class="n">pos_subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">(</span><span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;position&#39;</span><span class="p">,</span> <span class="n">dates</span> <span class="o">=</span> <span class="n">positions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">values</span> <span class="o">=</span> <span class="n">positions</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">plot_type</span> <span class="o">=</span> <span class="s1">&#39;filled_line&#39;</span><span class="p">),</span> <span class="n">height_ratio</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">ylabel</span> <span class="o">=</span> <span class="s1">&#39;Position&#39;</span><span class="p">)</span>
+    
+    <span class="n">annual_returns_subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">(</span><span class="n">BucketedValues</span><span class="p">(</span><span class="s1">&#39;annual returns&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;2017&#39;</span><span class="p">,</span> <span class="s1">&#39;2018&#39;</span><span class="p">],</span> 
+                                                    <span class="n">bucket_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">250</span><span class="p">,)),</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">500</span><span class="p">,))]),</span>
+                                                   <span class="n">height_ratio</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">ylabel</span> <span class="o">=</span> <span class="s1">&#39;Annual Returns&#39;</span><span class="p">)</span>
+    
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">xy_subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">(</span><span class="n">XYData</span><span class="p">(</span><span class="s1">&#39;2d test&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">plot_type</span> <span class="o">=</span> <span class="s1">&#39;scatter&#39;</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;X&#39;</span><span class="p">),</span> <span class="n">xlabel</span> <span class="o">=</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">ylabel</span> <span class="o">=</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">height_ratio</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;XY Plot&#39;</span><span class="p">)</span>
+    
+    <span class="n">z</span> <span class="o">=</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">y</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">xyz_subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">(</span><span class="n">XYZData</span><span class="p">(</span><span class="s1">&#39;3d test&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="p">),</span> <span class="n">xlabel</span> <span class="o">=</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">ylabel</span> <span class="o">=</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">zlabel</span> <span class="o">=</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">height_ratio</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">)</span>
+    
+    
+    <span class="n">subplot_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">ind_subplot</span><span class="p">,</span> <span class="n">sig_subplot</span><span class="p">,</span> <span class="n">pos_subplot</span><span class="p">,</span> <span class="n">equity_subplot</span><span class="p">,</span> <span class="n">annual_returns_subplot</span><span class="p">,</span> <span class="n">xy_subplot</span><span class="p">,</span> <span class="n">xyz_subplot</span><span class="p">]</span>
+    <span class="n">plot</span> <span class="o">=</span> <span class="n">Plot</span><span class="p">(</span><span class="n">subplot_list</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">20</span><span class="p">),</span> <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Plot Test&#39;</span><span class="p">,</span> <span class="n">hspace</span> <span class="o">=</span> <span class="mf">0.35</span><span class="p">)</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
+    
+    
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">test_plot</span><span class="p">()</span>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyqstrat</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">pyqstrat</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Sal Abbasi.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
