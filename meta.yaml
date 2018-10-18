@@ -6,7 +6,7 @@ package:
   version: {{ version }}
 
 source:
-  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz 
   sha256: 5abe0ab00b28945f4467c6dcc671fcb6ad81c05e9ded3eb1cab1cb79ca615862
 
 build:
@@ -34,7 +34,7 @@ requirements:
   run:
     - python
     - pandas
-    - {{ pin_compatible('numpy') }}
+    - numpy
     - matplotlib
     - scipy
     - ipython
@@ -42,6 +42,8 @@ requirements:
     - pyarrow
     - arrow-cpp
     - boost-cpp
+
+# - {{ pin_compatible('numpy') }}
 
 test:
   requires:
