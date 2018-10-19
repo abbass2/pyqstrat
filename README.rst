@@ -34,8 +34,8 @@ I would strongly recommend installing anaconda and creating an anaconda environm
 
 pyqstrat relies on numpy, scipy, matplotlib and pandas which in turn use Fortran and C code that needs to be compiled.  It uses apache arrow as its market data file format and boost C++ libaries
 
-
 ::
+
    conda install boost-cpp arrow-cpp -c conda-forge
 
    pip3 install -U pyqstrat
