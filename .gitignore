@@ -10,3 +10,4 @@
 **/var/**
 .DS_Store
 clean.sh
+.buildinfo
