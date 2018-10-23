@@ -39,6 +39,7 @@ ext_modules = [
             'pyqstrat/cpp/tests.cpp',
             'pyqstrat/cpp/text_file_processor.cpp',
             'pyqstrat/cpp/pybind.cpp',
+            'pyqstrat/cpp/py_import_call_execute.cpp'
         ],
         include_dirs=[
             # Path to pybind11 headers

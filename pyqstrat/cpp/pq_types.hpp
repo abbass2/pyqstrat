@@ -141,6 +141,7 @@ template <typename Return, typename... Args>
 class Function<Return(Args...)> {
 public:
     virtual Return call(Args... xs) = 0;
+    virtual ~Function() {};
 };
 
 using WriterCreator = Function<std::shared_ptr<Writer>(const std::string&, const Schema&, bool, int)>;
