@@ -9,15 +9,6 @@ struct ParseException : public std::runtime_error {
     ParseException(const char* m);
 };
 
-/*struct Record {
-    enum RecordType {
-        QUOTE,
-        TRADE,
-        OPEN_INTEREST,
-        OTHER
-    };
-    inline virtual ~Record() {}
-}; */
 
 struct Record {
     virtual ~Record() {}
@@ -139,5 +130,39 @@ struct Writer {
     virtual void close(bool success = true) = 0;
     virtual ~Writer() {};
 };
+
+
+// Base class for functions to avoid using pybind11 binding for functions which has a ton of overhead
+// through the pybind1::cpp_function class
+template <typename Signature>
+class Function;
+
+template <typename Return, typename... Args>
+class Function<Return(Args...)> {
+public:
+    virtual Return call(Args... xs) = 0;
+};
+
+using WriterCreator = Function<std::shared_ptr<Writer>(const std::string&, const Schema&, bool, int)>;
+using CheckFields = Function<bool(const std::vector<std::string>&)>;
+using TimestampParser = Function<int64_t(const std::string&)>;
+using QuoteParser = Function<std::shared_ptr<QuoteRecord> (const std::vector<std::string>&)>;
+using TradeParser = Function<std::shared_ptr<TradeRecord>(const std::vector<std::string>&)>;
+using OpenInterestParser = Function<std::shared_ptr<OpenInterestRecord>(const std::vector<std::string>&)>;
+using OtherParser = Function<std::shared_ptr<OtherRecord>(const std::vector<std::string>&)>;
+using RecordParser = Function<std::shared_ptr<Record>(const std::string&)>;
+using QuoteAggregator = Function<void(const QuoteRecord&, int)>;
+using TradeAggregator = Function<void(const TradeRecord&, int)>;
+using OpenInterestAggregator = Function<void(const OpenInterestRecord&, int)>;
+using OtherAggregator = Function<void(const OtherRecord&, int)>;
+using MissingDataHandler = Function<void(std::shared_ptr<Record>)>;
+using BadLineHandler = Function<std::shared_ptr<Record>(int, const std::string&, const std::exception&)>;
+using LineFilter = Function<bool(const std::string&)>;
+using CheckFields = Function<bool(const std::vector<std::string>&)>;
+class StreamHolder;
+using RecordGenerator = Function<std::shared_ptr<StreamHolder>(const std::string&, const std::string&)>;
+using FileProcessor = Function<int(const std::string&, const std::string& compression)>;
+using RecordFilter = Function<bool (const Record &)>;
+
 
 #endif // record_types_hpp
