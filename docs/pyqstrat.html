@@ -2242,7 +2242,7 @@ order: A reference to the order that created this trade. Default None</p>
 <dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.AllOpenInterestAggregator">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">AllOpenInterestAggregator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.AllOpenInterestAggregator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.OpenInterestAggregator" title="pyqstrat.pyqstrat_cpp.OpenInterestAggregator"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.OpenInterestAggregator</span></code></a></p>
 <p>Writes out all open interest records</p>
 <dl class="method">
 <dt id="pyqstrat.pyqstrat_cpp.AllOpenInterestAggregator.__call__">
@@ -2289,7 +2289,7 @@ Defaults to Schema.TIMESTAMP_MILLI</li>
 <dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.AllOtherAggregator">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">AllOtherAggregator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.AllOtherAggregator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.OtherAggregator" title="pyqstrat.pyqstrat_cpp.OtherAggregator"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.OtherAggregator</span></code></a></p>
 <p>Writes out any records that are not trades, quotes or open interest</p>
 <dl class="method">
 <dt id="pyqstrat.pyqstrat_cpp.AllOtherAggregator.__call__">
@@ -2336,7 +2336,7 @@ Defaults to Schema.TIMESTAMP_MILLI</li>
 <dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.AllQuoteAggregator">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">AllQuoteAggregator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.AllQuoteAggregator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.QuoteAggregator" title="pyqstrat.pyqstrat_cpp.QuoteAggregator"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.QuoteAggregator</span></code></a></p>
 <p>Writes out every quote we see</p>
 <dl class="method">
 <dt id="pyqstrat.pyqstrat_cpp.AllQuoteAggregator.__call__">
@@ -2381,7 +2381,7 @@ of data and format the file creates.  E.g. “/tmp/output_file_1”</li>
 <dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.AllTradeAggregator">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">AllTradeAggregator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.AllTradeAggregator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.TradeAggregator" title="pyqstrat.pyqstrat_cpp.TradeAggregator"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.TradeAggregator</span></code></a></p>
 <p>Writes out every trade we see</p>
 <dl class="method">
 <dt id="pyqstrat.pyqstrat_cpp.AllTradeAggregator.__call__">
@@ -2504,9 +2504,123 @@ later retrieve just this batch of records without reading the whole file.</p>
 </dd></dl>
 
 <dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.ArrowWriterCreator">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">ArrowWriterCreator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.ArrowWriterCreator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.WriterCreator" title="pyqstrat.pyqstrat_cpp.WriterCreator"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.WriterCreator</span></code></a></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.ArrowWriterCreator.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.ArrowWriterCreator.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.ArrowWriterCreator.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.ArrowWriterCreator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.BadLineHandler">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">BadLineHandler</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.BadLineHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.BadLineHandler.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.BadLineHandler.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.BadLineHandler.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.BadLineHandler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.CheckFields">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">CheckFields</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.CheckFields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.CheckFields.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.CheckFields.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.CheckFields.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.CheckFields.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.FastTimeMicroParser">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">FastTimeMicroParser</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.FastTimeMicroParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.TimestampParser" title="pyqstrat.pyqstrat_cpp.TimestampParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.TimestampParser</span></code></a></p>
+<p>A helper class that takes a string formatted as HH:MM:SS.xxxxxx and parses it into number of micorseconds since the beginning of the day</p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.FastTimeMicroParser.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.FastTimeMicroParser.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Args:
+time (str):  A string like “08:35:22.132385”</p>
+<p>Returns:
+int: Millis since beginning of day</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.FastTimeMicroParser.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.FastTimeMicroParser.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.FastTimeMilliParser">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">FastTimeMilliParser</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.FastTimeMilliParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.TimestampParser" title="pyqstrat.pyqstrat_cpp.TimestampParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.TimestampParser</span></code></a></p>
+<p>A helper class that takes a string formatted as HH:MM:SS.xxx and parses it into number of milliseconds since the beginning of the day</p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.FastTimeMilliParser.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.FastTimeMilliParser.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>time</strong> (<em>str</em>) – A string like “08:35:22.132”</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Millis since beginning of day</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">int</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.FastTimeMilliParser.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.FastTimeMilliParser.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.FileProcessor">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">FileProcessor</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.FileProcessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.FileProcessor.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.FileProcessor.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.FileProcessor.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.FileProcessor.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.FormatTimestampParser">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">FormatTimestampParser</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.FormatTimestampParser" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.TimestampParser" title="pyqstrat.pyqstrat_cpp.TimestampParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.TimestampParser</span></code></a></p>
 <dl class="docutils">
 <dt>Helper class that parses timestamps according to the strftime format string passed in.  strftime is slow so use fast_milli_time_parser</dt>
 <dd>or fast_time_micro_parser if your timestamps are in “HH:MM:SS….” format</dd>
@@ -2547,6 +2661,109 @@ Defaults to True</li>
 </tbody>
 </table>
 </dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.IsFieldInList">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">IsFieldInList</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.IsFieldInList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.CheckFields" title="pyqstrat.pyqstrat_cpp.CheckFields"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.CheckFields</span></code></a></p>
+<p>Simple utility class to check whether the value of fields[flag_idx] is in any of flag_values</p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.IsFieldInList.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.IsFieldInList.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>flag_values</strong> – a vector of strings containing possible values for the field</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a boolean</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.IsFieldInList.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.IsFieldInList.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>fields</strong> – a vector of strings</li>
+<li><strong>flag_idx</strong> – the index of fields to check</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.LineFilter">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">LineFilter</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.LineFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.LineFilter.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.LineFilter.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.LineFilter.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.LineFilter.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.MissingDataHandler">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">MissingDataHandler</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.MissingDataHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.MissingDataHandler.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.MissingDataHandler.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.MissingDataHandler.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.MissingDataHandler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.OpenInterestAggregator">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">OpenInterestAggregator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OpenInterestAggregator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.OpenInterestAggregator.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OpenInterestAggregator.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.OpenInterestAggregator.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OpenInterestAggregator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.OpenInterestParser">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">OpenInterestParser</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OpenInterestParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.OpenInterestParser.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OpenInterestParser.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.OpenInterestParser.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OpenInterestParser.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -2608,6 +2825,38 @@ put or call to uniquely identify the instrument</p>
 </dd></dl>
 
 <dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.OtherAggregator">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">OtherAggregator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OtherAggregator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.OtherAggregator.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OtherAggregator.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.OtherAggregator.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OtherAggregator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.OtherParser">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">OtherParser</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OtherParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.OtherParser.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OtherParser.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.OtherParser.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OtherParser.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.OtherRecord">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">OtherRecord</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OtherRecord" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Record" title="pyqstrat.pyqstrat_cpp.Record"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.Record</span></code></a></p>
@@ -2655,9 +2904,35 @@ put or call to uniquely identify the instrument</p>
 </dd></dl>
 
 <dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.PriceQtyMissingDataHandler">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">PriceQtyMissingDataHandler</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.PriceQtyMissingDataHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.MissingDataHandler" title="pyqstrat.pyqstrat_cpp.MissingDataHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.MissingDataHandler</span></code></a></p>
+<p>A helper class that takes a Record as an input, checks whether its a trade or a quote or any open interest record, and if any of
+the prices or quantities are 0, sets them to NAN</p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.PriceQtyMissingDataHandler.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.PriceQtyMissingDataHandler.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>record</strong> – Any subclass of <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Record" title="pyqstrat.pyqstrat_cpp.Record"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Record</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.PriceQtyMissingDataHandler.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.PriceQtyMissingDataHandler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.PrintBadLineHandler">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">PrintBadLineHandler</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.PrintBadLineHandler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.BadLineHandler" title="pyqstrat.pyqstrat_cpp.BadLineHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.BadLineHandler</span></code></a></p>
 <p>A helper class that takes in lines we cannot parse and either prints them and continues or raises an Exception</p>
 <dl class="method">
 <dt id="pyqstrat.pyqstrat_cpp.PrintBadLineHandler.__call__">
@@ -2689,6 +2964,38 @@ put or call to uniquely identify the instrument</p>
 </tbody>
 </table>
 </dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.QuoteAggregator">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">QuoteAggregator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.QuoteAggregator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.QuoteAggregator.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.QuoteAggregator.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.QuoteAggregator.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.QuoteAggregator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.QuoteParser">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">QuoteParser</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.QuoteParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.QuoteParser.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.QuoteParser.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.QuoteParser.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.QuoteParser.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -2774,7 +3081,7 @@ put or call to uniquely identify the instrument</p>
 <dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.QuoteTOBAggregator">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">QuoteTOBAggregator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.QuoteTOBAggregator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.QuoteAggregator" title="pyqstrat.pyqstrat_cpp.QuoteAggregator"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.QuoteAggregator</span></code></a></p>
 <p>Aggregate top of book quotes to top of book records.  If you specify a frequency such as “5m”, we will calculate a record
 every 5 minutes which has the top of book at the end of that bar.  If no frequency is specified, we will create a top of book
 every time a quote comes in.  We assume that the quotes are all top of book quotes and are written in pairs so we have a bid quote
@@ -2844,9 +3151,57 @@ Defaults to Schema.TIMESTAMP_MILLI</li>
 </dd></dl>
 
 <dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.RecordFilter">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">RecordFilter</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.RecordFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.RecordFilter.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.RecordFilter.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.RecordFilter.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.RecordFilter.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.RecordGenerator">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">RecordGenerator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.RecordGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.RecordGenerator.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.RecordGenerator.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.RecordGenerator.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.RecordGenerator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.RecordParser">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">RecordParser</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.RecordParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.RecordParser.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.RecordParser.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.RecordParser.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.RecordParser.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.RegExLineFilter">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">RegExLineFilter</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.RegExLineFilter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.LineFilter" title="pyqstrat.pyqstrat_cpp.LineFilter"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.LineFilter</span></code></a></p>
 <p>A helper class that filters lines from the input file based on a regular expression.  Note that regular expressions are slow, so
 if you just need to match specific strings, use a string matching filter instead.</p>
 <dl class="method">
@@ -2998,7 +3353,7 @@ if you just need to match specific strings, use a string matching filter instead
 <dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.SubStringLineFilter">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">SubStringLineFilter</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.SubStringLineFilter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.LineFilter" title="pyqstrat.pyqstrat_cpp.LineFilter"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.LineFilter</span></code></a></p>
 <p>A helper class that will check if a line matches any of a set of strings</p>
 <dl class="method">
 <dt id="pyqstrat.pyqstrat_cpp.SubStringLineFilter.__call__">
@@ -3033,9 +3388,42 @@ if you just need to match specific strings, use a string matching filter instead
 </dd></dl>
 
 <dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.TextFileDecompressor">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">TextFileDecompressor</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TextFileDecompressor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.RecordGenerator" title="pyqstrat.pyqstrat_cpp.RecordGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.RecordGenerator</span></code></a></p>
+<p>A helper function that takes a filename and its compression type, and returns a function that we can use to iterate over lines in that file</p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.TextFileDecompressor.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TextFileDecompressor.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filename</strong> (<em>str</em>) – The file to read</li>
+<li><strong>compression</strong> (<em>str</em>) – One of “” for uncompressed files, “gzip”, “bz2” or “lzip”</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A function that takes an empty string as input, and fills in that string.  The function should return False EOF has been reached, True otherwise</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.TextFileDecompressor.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TextFileDecompressor.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.TextFileProcessor">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">TextFileProcessor</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TextFileProcessor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.FileProcessor" title="pyqstrat.pyqstrat_cpp.FileProcessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.FileProcessor</span></code></a></p>
+<p>A helper class that takes text based market data files and creates parsed and aggregated quote, trade, open interest, and other files from them.</p>
 <dl class="method">
 <dt id="pyqstrat.pyqstrat_cpp.TextFileProcessor.__call__">
 <code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TextFileProcessor.__call__" title="Permalink to this definition">¶</a></dt>
@@ -3062,8 +3450,7 @@ if you just need to match specific strings, use a string matching filter instead
 <dl class="method">
 <dt id="pyqstrat.pyqstrat_cpp.TextFileProcessor.__init__">
 <code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TextFileProcessor.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>A helper class that takes text based market data files and creates parsed and aggregated quote, trade, open interest, and other files from them.</p>
-<table class="docutils field-list" frame="void" rules="none">
+<dd><table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
@@ -3092,7 +3479,7 @@ can use to iterate over lines in that file</li>
 <dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.TextOpenInterestParser">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">TextOpenInterestParser</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TextOpenInterestParser" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.OpenInterestParser" title="pyqstrat.pyqstrat_cpp.OpenInterestParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.OpenInterestParser</span></code></a></p>
 <p>Helper class that parses an open interest record from a list of fields (strings)</p>
 <dl class="method">
 <dt id="pyqstrat.pyqstrat_cpp.TextOpenInterestParser.__call__">
@@ -3141,7 +3528,7 @@ These fields will be concatenated with a separator and placed in the id field in
 <dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.TextOtherParser">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">TextOtherParser</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TextOtherParser" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.OtherParser" title="pyqstrat.pyqstrat_cpp.OtherParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.OtherParser</span></code></a></p>
 <p>Helper class that parses a record that contains information other than a quote, trade or open interest record</p>
 <dl class="method">
 <dt id="pyqstrat.pyqstrat_cpp.TextOtherParser.__call__">
@@ -3189,7 +3576,7 @@ These fields will be concatenated with a separator and placed in the id field in
 <dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.TextQuoteParser">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">TextQuoteParser</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TextQuoteParser" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.QuoteParser" title="pyqstrat.pyqstrat_cpp.QuoteParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.QuoteParser</span></code></a></p>
 <p>Helper class that parses a quote from a list of fields (strings)</p>
 <dl class="method">
 <dt id="pyqstrat.pyqstrat_cpp.TextQuoteParser.__call__">
@@ -3244,7 +3631,7 @@ Defaults to 1.0</li>
 <dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.TextRecordParser">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">TextRecordParser</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TextRecordParser" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.RecordParser" title="pyqstrat.pyqstrat_cpp.RecordParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.RecordParser</span></code></a></p>
 <p>A helper class that takes in a text line, separates it into a list of fields based on a delimiter, and then uess the parsers
 passed in to try and parse the line as a quote, trade, open interest record or any other info</p>
 <dl class="method">
@@ -3285,7 +3672,7 @@ passed in to try and parse the line as a quote, trade, open interest record or a
 <dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.TextTradeParser">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">TextTradeParser</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TextTradeParser" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.TradeParser" title="pyqstrat.pyqstrat_cpp.TradeParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.TradeParser</span></code></a></p>
 <p>Helper class that parses a trade from a list of fields (strings)</p>
 <dl class="method">
 <dt id="pyqstrat.pyqstrat_cpp.TextTradeParser.__call__">
@@ -3335,9 +3722,41 @@ Defaults to 1.0</li>
 </dd></dl>
 
 <dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.TimestampParser">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">TimestampParser</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TimestampParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.TimestampParser.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TimestampParser.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.TimestampParser.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TimestampParser.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.TradeAggregator">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">TradeAggregator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TradeAggregator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.TradeAggregator.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TradeAggregator.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.TradeAggregator.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TradeAggregator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.TradeBarAggregator">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">TradeBarAggregator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TradeBarAggregator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.TradeAggregator" title="pyqstrat.pyqstrat_cpp.TradeAggregator"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.TradeAggregator</span></code></a></p>
 <dl class="docutils">
 <dt>Aggregate trade records to create trade bars, given a frequency.  Calculates open, high, low, close, volume, vwap as well as last_update_time</dt>
 <dd>which is timestamp of the last trade that we processed before the bar ended.</dd>
@@ -3391,6 +3810,22 @@ Defaults to Schema.TIMESTAMP_MILLI</li>
 <code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TradeBarAggregator.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Flush all unwritten records to the Writer, which writes them to disk when its close function is called</p>
 </dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.TradeParser">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">TradeParser</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TradeParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.TradeParser.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TradeParser.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.TradeParser.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TradeParser.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -3504,98 +3939,31 @@ later retrieve just this batch of records without reading the whole file</p>
 
 </dd></dl>
 
-<dl class="function">
-<dt id="pyqstrat.pyqstrat_cpp.fast_time_micro_parser">
-<code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">fast_time_micro_parser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.fast_time_micro_parser" title="Permalink to this definition">¶</a></dt>
-<dd><p>A helper function that takes a string formatted as HH:MM:SS.xxxxxx and parses it into number of microseconds since the beginning of the day</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>time</strong> (<em>str</em>) – A string like “08:35:22.132876”</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Microseconds since beginning of day</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">int</td>
-</tr>
-</tbody>
-</table>
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.WriterCreator">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">WriterCreator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.WriterCreator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.WriterCreator.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.WriterCreator.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.WriterCreator.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.WriterCreator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
-<dl class="function">
-<dt id="pyqstrat.pyqstrat_cpp.fast_time_milli_parser">
-<code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">fast_time_milli_parser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.fast_time_milli_parser" title="Permalink to this definition">¶</a></dt>
-<dd><p>A helper function that takes a string formatted as HH:MM:SS.xxx and parses it into number of milliseconds since the beginning of the day</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>time</strong> (<em>str</em>) – A string like “08:35:22.132”</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Millis since beginning of day</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">int</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
+<dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.ostream_redirect">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">ostream_redirect</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.ostream_redirect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_builtins.pybind11_object</span></code></p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.ostream_redirect.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>self: pyqstrat.pyqstrat_cpp.ostream_redirect</em>, <em>stdout: bool=True</em>, <em>stderr: bool=True</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyqstrat.pyqstrat_cpp.ostream_redirect.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
-<dl class="function">
-<dt id="pyqstrat.pyqstrat_cpp.is_field_in_list">
-<code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">is_field_in_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.is_field_in_list" title="Permalink to this definition">¶</a></dt>
-<dd><p>Simple utility function to check whether the value of fields[flag_idx] is in any of flag_values</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>fields</strong> – a vector of strings</li>
-<li><strong>flag_idx</strong> – the index of fields to check</li>
-<li><strong>flag_values</strong> – a vector of strings containing possible values for the field</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a boolean</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="pyqstrat.pyqstrat_cpp.price_qty_missing_data_handler">
-<code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">price_qty_missing_data_handler</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.price_qty_missing_data_handler" title="Permalink to this definition">¶</a></dt>
-<dd><p>A helper function that takes a Record as an input, checks whether its a trade or a quote or any open interest record, and if any of
-the prices or quantities are 0, sets them to NAN</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>record</strong> – Any subclass of <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Record" title="pyqstrat.pyqstrat_cpp.Record"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Record</span></code></a></td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="pyqstrat.pyqstrat_cpp.text_file_decompressor">
-<code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">text_file_decompressor</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.text_file_decompressor" title="Permalink to this definition">¶</a></dt>
-<dd><p>A helper function that takes a filename and its compression type, and returns a function that we can use to iterate over lines in that file</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>filename</strong> (<em>str</em>) – The file to read</li>
-<li><strong>compression</strong> (<em>str</em>) – One of “” for uncompressed files, “gzip”, “bz2” or “lzip”</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A function that takes an empty string as input, and fills in that string.  The function should return False EOF has been reached, True otherwise</p>
-</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 </div>

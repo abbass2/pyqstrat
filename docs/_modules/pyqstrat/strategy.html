@@ -32,7 +32,12 @@
           <div class="body" role="main">
             
   <h1>Source code for pyqstrat.strategy</h1><div class="highlight"><pre>
-<span></span><span class="c1">#cell 0</span>
+<span></span>
+<span class="c1"># coding: utf-8</span>
+
+<span class="c1"># In[1]:</span>
+
+
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;numpy.dtype size changed&quot;</span><span class="p">)</span> <span class="c1"># another bogus warning, see https://github.com/numpy/numpy/pull/432</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -54,7 +59,10 @@
 <span class="kn">from</span> <span class="nn">pyqstrat.plot</span> <span class="k">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">pyqstrat.evaluator</span> <span class="k">import</span> <span class="o">*</span>
 
-<span class="c1">#cell 1</span>
+
+<span class="c1"># In[3]:</span>
+
+
 <span class="k">def</span> <span class="nf">_calc_pnl</span><span class="p">(</span><span class="n">open_trades</span><span class="p">,</span> <span class="n">new_trades</span><span class="p">,</span> <span class="n">ending_close</span><span class="p">,</span> <span class="n">multiplier</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    &gt;&gt;&gt; from collections import deque</span>
