@@ -1,5 +1,3 @@
-#pragma clang diagnostic ignored "-Wvarargs"
-
 #include "arrow_writer.hpp"
 #include "aggregators.hpp"
 #include <iostream>
