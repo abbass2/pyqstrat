@@ -4,7 +4,7 @@
 #include <pybind11/chrono.h>
 #include <pybind11/iostream.h>
 
-#include "types.hpp"
+#include "pq_types.hpp"
 #include "arrow_writer.hpp"
 #include "aggregators.hpp"
 #include "text_file_parsers.hpp"
@@ -12,12 +12,90 @@
 
 namespace py = pybind11;
 using namespace pybind11::literals;
+using namespace std;
+
+// Template for trampoline classes.  See https://pybind11.readthedocs.io/en/stable/advanced/classes.html
+
+template <typename Signature>
+class PyFunction;
+
+template <typename Return, typename... Args>
+class PyFunction<Return(Args...)> : public Function<Return(Args...)> {
+public:
+    using Function<Return(Args...)>::Function;
+    Return call(Args... args) override {
+        PYBIND11_OVERLOAD_PURE_NAME(
+                                    Return,
+                                    Function<Return(Args...)>,
+                                    "__call__",
+                                    call,
+                                    std::forward<Args>(args)...
+                                    );
+    }
+};
+
+#define TRAMPOLINE(type) \
+py::class_<type, Py##type> function_##type (m, #type); \
+function_##type \
+.def(py::init<>()) \
+.def("__call__", & type ::call )
+
 
 PYBIND11_MODULE(pyqstrat_cpp, m) {
+    
+    
+    py::add_ostream_redirect(m, "ostream_redirect");
+
+
     m.attr("__name__") = "pyqstrat.pyqstrat_cpp";
     py::options options;
     options.disable_function_signatures();
     
+#define FUNCTION_PROTO(type) \
+py::class_<type>(m, #type) \
+.def("__call__", &type::call)
+    
+
+    // Create Trampoline classes
+    using PyWriterCreator = PyFunction<std::shared_ptr<Writer>(const std::string&, const Schema&, bool, int)>;
+    using PyCheckFields = PyFunction<bool(const std::vector<std::string>&)>;
+    using PyTimestampParser = PyFunction<int64_t(const std::string&)>;
+    using PyQuoteParser = PyFunction<std::shared_ptr<QuoteRecord> (const std::vector<std::string>&)>;
+    using PyTradeParser = PyFunction<std::shared_ptr<TradeRecord>(const std::vector<std::string>&)>;
+    using PyOpenInterestParser = PyFunction<std::shared_ptr<OpenInterestRecord>(const std::vector<std::string>&)>;
+    using PyOtherParser = PyFunction<std::shared_ptr<OtherRecord>(const std::vector<std::string>&)>;
+    using PyRecordParser = PyFunction<std::shared_ptr<Record>(const std::string&)>;
+    using PyQuoteAggregator = PyFunction<void(const QuoteRecord&, int)>;
+    using PyTradeAggregator = PyFunction<void(const TradeRecord&, int)>;
+    using PyOpenInterestAggregator = PyFunction<void(const OpenInterestRecord&, int)>;
+    using PyOtherAggregator = PyFunction<void(const OtherRecord&, int)>;
+    using PyMissingDataHandler = PyFunction<void(std::shared_ptr<Record>)>;
+    using PyBadLineHandler = PyFunction<std::shared_ptr<Record>(int, const std::string&, const std::exception&)>;
+    using PyLineFilter = PyFunction<bool(const std::string&)>;
+    using PyCheckFields = PyFunction<bool(const std::vector<std::string>&)>;
+    using PyRecordGenerator = PyFunction<std::shared_ptr<StreamHolder>(const std::string&, const std::string&)>;
+    using PyFileProcessor = PyFunction<int(const std::string&, const std::string& compression)>;
+    using PyRecordFilter = PyFunction<bool (const Record &)>;
+    
+    TRAMPOLINE(TimestampParser);
+    TRAMPOLINE(QuoteParser);
+    TRAMPOLINE(TradeParser);
+    TRAMPOLINE(OpenInterestParser);
+    TRAMPOLINE(OtherParser);
+    TRAMPOLINE(RecordParser);
+    TRAMPOLINE(QuoteAggregator);
+    TRAMPOLINE(TradeAggregator);
+    TRAMPOLINE(OpenInterestAggregator);
+    TRAMPOLINE(OtherAggregator);
+    TRAMPOLINE(MissingDataHandler);
+    TRAMPOLINE(BadLineHandler);
+    TRAMPOLINE(LineFilter);
+    TRAMPOLINE(CheckFields);
+    TRAMPOLINE(RecordGenerator);
+    TRAMPOLINE(FileProcessor);
+    TRAMPOLINE(RecordFilter);
+    TRAMPOLINE(WriterCreator);
+
     //py::add_ostream_redirect(m, "ostream_redirect");
     
     py::class_<Schema> schema(m, "Schema",
@@ -116,6 +194,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
     .def_readwrite("timestamp", &OtherRecord::timestamp)
     .def_readwrite("metadata", &OtherRecord::metadata);
     
+    
     py::class_<Writer, std::shared_ptr<Writer>>(m, "Writer",
         R"pqdoc(
         An abstract class that you subclass to provide an object that can write to disk
@@ -188,13 +267,17 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
                 not indicate the file was written successfully, for example by renaming a temp file to the actual filename.  Defaults to True
         )pqdoc");
     
-    py::class_<TradeBarAggregator>(m, "TradeBarAggregator",
+    py::class_<ArrowWriterCreator, WriterCreator>(m, "ArrowWriterCreator")
+    .def(py::init<>())
+    .def("__call__", &ArrowWriterCreator::call);
+    
+    py::class_<TradeBarAggregator, TradeAggregator>(m, "TradeBarAggregator",
     R"pqdoc(
         Aggregate trade records to create trade bars, given a frequency.  Calculates open, high, low, close, volume, vwap as well as last_update_time
           which is timestamp of the last trade that we processed before the bar ended.
     )pqdoc")
     
-    .def(py::init<WriterCreator, const std::string&, const std::string&, bool, int, Schema::Type>(),
+    .def(py::init<WriterCreator*, const std::string&, const std::string&, bool, int, Schema::Type>(),
          "writer_creator"_a,
          "output_file_prefix"_a,
          "frequency"_a = "5m",
@@ -216,7 +299,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
                     Defaults to Schema.TIMESTAMP_MILLI
                 )pqdoc")
     
-    .def("__call__", &TradeBarAggregator::operator(), "trade"_a, "line_number"_a,
+    .def("__call__", &TradeBarAggregator::call, "trade"_a, "line_number"_a,
         R"pqdoc(
             Add a trade record to be written to disk at some point
          
@@ -231,14 +314,14 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
         )pqdoc");
     
 
-    py::class_<QuoteTOBAggregator>(m, "QuoteTOBAggregator",
+    py::class_<QuoteTOBAggregator, QuoteAggregator>(m, "QuoteTOBAggregator",
         R"pqdoc(
         Aggregate top of book quotes to top of book records.  If you specify a frequency such as "5m", we will calculate a record
         every 5 minutes which has the top of book at the end of that bar.  If no frequency is specified, we will create a top of book
         every time a quote comes in.  We assume that the quotes are all top of book quotes and are written in pairs so we have a bid quote
         followed by a offer quote with the same timestamp or vice versa
         )pqdoc")
-    .def(py::init<WriterCreator, const std::string&, const std::string&, bool, int, Schema::Type>(),
+    .def(py::init<WriterCreator*, const std::string&, const std::string&, bool, int, Schema::Type>(),
          "writer_creator"_a,
          "output_file_prefix"_a,
          "frequency"_a = "5m",
@@ -260,7 +343,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
                 Defaults to Schema.TIMESTAMP_MILLI
             )pqdoc")
          
-    .def("__call__", &QuoteTOBAggregator::operator(), "quote"_a, "line_number"_a,
+    .def("__call__", &QuoteTOBAggregator::call, "quote"_a, "line_number"_a,
          R"pqdoc(
          Add a quote record to be written to disk at some point
          
@@ -274,11 +357,11 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
          )pqdoc");
 
     
-    py::class_<AllQuoteAggregator>(m, "AllQuoteAggregator",
+    py::class_<AllQuoteAggregator, QuoteAggregator>(m, "AllQuoteAggregator",
     R"pqdoc(
     Writes out every quote we see
     )pqdoc")
-    .def(py::init<WriterCreator, const std::string&, int, Schema::Type>(),
+    .def(py::init<WriterCreator*, const std::string&, int, Schema::Type>(),
          "writer_creator"_a,
          "output_file_prefix"_a,
          "batch_size"_a = 10000,
@@ -294,7 +377,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
                     Defaults to Schema.TIMESTAMP_MILLI
          )pqdoc")
 
-    .def("__call__", &AllQuoteAggregator::operator(),  "quote"_a, "line_number"_a,
+    .def("__call__", &AllQuoteAggregator::call,  "quote"_a, "line_number"_a,
          R"pqdoc(
          Add a quote record to be written to disk at some point
          
@@ -303,11 +386,11 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
              line_number (int): The line number of the source file that this trade came from.  Used for debugging
         )pqdoc");
    
-    py::class_<AllTradeAggregator>(m, "AllTradeAggregator",
+    py::class_<AllTradeAggregator, TradeAggregator>(m, "AllTradeAggregator",
     R"pqdoc(
     Writes out every trade we see
     )pqdoc")
-    .def(py::init<WriterCreator, const std::string&, int, Schema::Type>(),
+    .def(py::init<WriterCreator*, const std::string&, int, Schema::Type>(),
          "writer_creator"_a,
          "output_file_prefix"_a,
          "batch_size"_a = 10000,
@@ -323,7 +406,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
             Defaults to Schema.TIMESTAMP_MILLI
     )pqdoc")
 
-    .def("__call__", &AllTradeAggregator::operator(),  "trade"_a, "line_number"_a,
+    .def("__call__", &AllTradeAggregator::call,  "trade"_a, "line_number"_a,
          R"pqdoc(
          Add a trade record to be written to disk at some point
          
@@ -332,11 +415,11 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
              line_number (int): The line number of the source file that this trade came from.  Used for debugging
          )pqdoc");
     
-    py::class_<AllOpenInterestAggregator>(m, "AllOpenInterestAggregator",
+    py::class_<AllOpenInterestAggregator, OpenInterestAggregator>(m, "AllOpenInterestAggregator",
         R"pqdoc(
         Writes out all open interest records
         )pqdoc")
-        .def(py::init<WriterCreator, const std::string&, int, Schema::Type>(),
+        .def(py::init<WriterCreator*, const std::string&, int, Schema::Type>(),
              "writer_creator"_a,
              "output_file_prefix"_a,
              "batch_size"_a = 10000,
@@ -352,7 +435,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
             Defaults to Schema.TIMESTAMP_MILLI
      )pqdoc")
     
-    .def("__call__", &AllOpenInterestAggregator::operator(),  "oi"_a, "line_number"_a,
+    .def("__call__", &AllOpenInterestAggregator::call,  "oi"_a, "line_number"_a,
         R"pqdoc(
         Add an open interest record to be written to disk at some point
          
@@ -361,11 +444,11 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
              line_number (int): The line number of the source file that this trade came from.  Used for debugging
         )pqdoc");
     
-    py::class_<AllOtherAggregator>(m, "AllOtherAggregator",
+    py::class_<AllOtherAggregator, OtherAggregator>(m, "AllOtherAggregator",
     R"pqdoc(
     Writes out any records that are not trades, quotes or open interest
     )pqdoc")
-    .def(py::init<WriterCreator, const std::string&, int, Schema::Type>(),
+    .def(py::init<WriterCreator*, const std::string&, int, Schema::Type>(),
          "writer_creator"_a,
          "output_file_prefix"_a,
          "batch_size"_a = 10000,
@@ -381,7 +464,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
                 Defaults to Schema.TIMESTAMP_MILLI
          )pqdoc")
     
-    .def("__call__", &AllOtherAggregator::operator(),  "other"_a, "line_number"_a,
+    .def("__call__", &AllOtherAggregator::call,  "other"_a, "line_number"_a,
         R"pqdoc(
         Add a record to be written to disk at some point
          
@@ -390,7 +473,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
             line_number (int): The line number of the source file that this trade came from.  Used for debugging
         )pqdoc");
     
-    py::class_<FormatTimestampParser>(m, "FormatTimestampParser",
+    py::class_<FormatTimestampParser, TimestampParser>(m, "FormatTimestampParser",
         R"pqdoc(
             Helper class that parses timestamps according to the strftime format string passed in.  strftime is slow so use fast_milli_time_parser
                 or fast_time_micro_parser if your timestamps are in "HH:MM:SS...." format
@@ -411,7 +494,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
                     Defaults to True
              )pqdoc")
     
-    .def("__call__", &FormatTimestampParser::operator(), "time"_a,
+    .def("__call__", &FormatTimestampParser::call, "time"_a,
         R"pqdoc(
              Args:
                 time (str): The timestamp to parse
@@ -420,13 +503,13 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
                 int: Number of millis or micros since epoch
         )pqdoc");
     
-    py::class_<TextQuoteParser, std::shared_ptr<TextQuoteParser>>(m, "TextQuoteParser",
+    py::class_<TextQuoteParser, QuoteParser>(m, "TextQuoteParser",
         R"pqdoc(
           Helper class that parses a quote from a list of fields (strings)
         )pqdoc")
     
     .def(py::init<
-         IsRecordFunc,
+         CheckFields*,
          int64_t,
          int,
          int,
@@ -434,7 +517,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
          int,
          const std::vector<int>&,
          const std::vector<int>&,
-         TimestampParser,
+         TimestampParser*,
          const std::string&,
          const std::string&,
          float,
@@ -474,7 +557,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
                 strip_meta (bool, optional):  if we want to strip any whitespace from the meta fields before concatenating them.  Defaults to True
              )pqdoc")
     
-        .def("__call__", &TextQuoteParser::operator(), "fields"_a,
+        .def("__call__", &TextQuoteParser::call, "fields"_a,
         R"pqdoc(
              Args:
                 fields (list of str): A list of fields representing the record
@@ -483,15 +566,15 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
                 QuoteRecord: Or None if this field is not a quote
              )pqdoc");
     
-    py::class_<TextTradeParser, std::shared_ptr<TextTradeParser>>(m, "TextTradeParser",
+    py::class_<TextTradeParser, TradeParser>(m, "TextTradeParser",
         R"pqdoc(
         Helper class that parses a trade from a list of fields (strings)
         )pqdoc")
     
-    .def(py::init<IsRecordFunc, int64_t, int, int, int,
+    .def(py::init<CheckFields*, int64_t, int, int, int,
          const std::vector<int>&,
          const std::vector<int>&,
-         TimestampParser,
+         TimestampParser*,
          float,
          bool,
          bool>(),
@@ -523,7 +606,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
              strip_meta (bool, optional):  If we want to strip any whitespace from the meta fields before concatenating them.  Defaults to True
     )pqdoc")
          
-    .def("__call__", &TextTradeParser::operator(), "fields"_a,
+    .def("__call__", &TextTradeParser::call, "fields"_a,
     R"pqdoc(
          Args:
             fields (list of str): A list of fields representing the record
@@ -532,15 +615,15 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
             TradeRecord: or None if this record is not a trade
     )pqdoc");
     
-    py::class_<TextOpenInterestParser, std::shared_ptr<TextOpenInterestParser>>(m, "TextOpenInterestParser",
+    py::class_<TextOpenInterestParser, OpenInterestParser>(m, "TextOpenInterestParser",
         R"pqdoc(
         Helper class that parses an open interest record from a list of fields (strings)
         )pqdoc")
     
-    .def(py::init<IsRecordFunc, int64_t, int, int,
+    .def(py::init<CheckFields*, int64_t, int, int,
          const std::vector<int>&,
          const std::vector<int>&,
-         TimestampParser,
+         TimestampParser*,
          bool,
          bool>(),
          "is_open_interest"_a,
@@ -566,7 +649,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
              strip_id (bool, optional): If we want to strip any whitespace from the id fields before concatenating them.  Defaults to True
              strip_meta (bool, optional):  If we want to strip any whitespace from the meta fields before concatenating them.  Defaults to True
          )pqdoc")
-    .def("__call__", &TextOpenInterestParser::operator(), "fields"_a,
+    .def("__call__", &TextOpenInterestParser::call, "fields"_a,
          R"pqdoc(
          Args:
             fields (list of str): A list of fields representing the record
@@ -575,16 +658,16 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
             OpenInterestRecord: or None if this record is not an open interest record
          )pqdoc");
     
-    py::class_<TextOtherParser, std::shared_ptr<TextOtherParser>>(m, "TextOtherParser",
+    py::class_<TextOtherParser, OtherParser>(m, "TextOtherParser",
     R"pqdoc(
         Helper class that parses a record that contains information other than a quote, trade or open interest record
         )pqdoc")
-    .def(py::init<IsRecordFunc,
+    .def(py::init<CheckFields*,
          int64_t,
          int,
          const std::vector<int>&,
          const std::vector<int>&,
-         TimestampParser,
+         TimestampParser*,
          bool,
          bool>(),
          "is_other"_a,
@@ -608,7 +691,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
                  strip_meta (bool, optional):  If we want to strip any whitespace from the meta fields before concatenating them.  Defaults to True
            )pqdoc")
     
-    .def("__call__", &TextOtherParser::operator(), "fields"_a,
+    .def("__call__", &TextOtherParser::call, "fields"_a,
          R"pqdoc(
          Args:
             fields (list of str): a list of fields representing the record
@@ -617,16 +700,16 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
             OtherRecord:
          )pqdoc");
     
-    py::class_<TextRecordParser>(m, "TextRecordParser",
+    py::class_<TextRecordParser, RecordParser>(m, "TextRecordParser",
         R"pqdoc(
         A helper class that takes in a text line, separates it into a list of fields based on a delimiter, and then uess the parsers
         passed in to try and parse the line as a quote, trade, open interest record or any other info
         )pqdoc")
     .def(py::init<
-         std::shared_ptr<TextQuoteParser>,
-         std::shared_ptr<TextTradeParser>,
-         std::shared_ptr<TextOpenInterestParser>,
-         std::shared_ptr<TextOtherParser>,
+         TextQuoteParser*,
+         TextTradeParser*,
+         TextOpenInterestParser*,
+         TextOtherParser*,
          char>(),
          "quote_parser"_a,
          "trade_parser"_a,
@@ -641,13 +724,13 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
              other_parser: A function that takes a list of strings as input and returns an :obj:`OtherRecord` or None
              separator (str, optional):  A single character string.  This is the delimiter we use to separate fields from the text passed in
          )pqdoc")
-    .def("__call__", &TextRecordParser::operator(), "line"_a,
+    .def("__call__", &TextRecordParser::call, "line"_a,
          R"pqdoc(
          Args:
              line (str): The line we need to parse
          )pqdoc");
     
-    py::class_<PrintBadLineHandler>(m, "PrintBadLineHandler",
+    py::class_<PrintBadLineHandler, BadLineHandler>(m, "PrintBadLineHandler",
         R"pqdoc(
         A helper class that takes in lines we cannot parse and either prints them and continues or raises an Exception
         )pqdoc")
@@ -657,7 +740,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
             raise (bool, optional): Whether to raise an exception every time this is called or just print debugging info.  Defaults to False
          )pqdoc")
     
-    .def("__call__", &PrintBadLineHandler::operator(), "line_number"_a, "line"_a, "exception"_a,
+    .def("__call__", &PrintBadLineHandler::call, "line_number"_a, "line"_a, "exception"_a,
          R"pqdoc(
          Args:
              line_number (int): Line number of the input file that corresponds to this line (for debugging)
@@ -665,11 +748,12 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
              exception (Exception): The exception that caused us to fail to parse this line.
          )pqdoc");
   
-    py::class_<RegExLineFilter>(m, "RegExLineFilter",
+    py::class_<RegExLineFilter, LineFilter>(m, "RegExLineFilter",
         R"pqdoc(
         A helper class that filters lines from the input file based on a regular expression.  Note that regular expressions are slow, so
         if you just need to match specific strings, use a string matching filter instead.
         )pqdoc")
+    
                                 
     .def(py::init<const std::string&>(), "pattern"_a,
          R"pqdoc(
@@ -677,7 +761,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
             pattern (str): The regex pattern to match.  This follows C++ std::regex pattern matching rules as opposed to python
         )pqdoc")
     
-    .def("__call__", &RegExLineFilter::operator(), "line"_a,
+    .def("__call__", &RegExLineFilter::call, "line"_a,
          R"pqdoc(
          Args:
             line (str): The string that the regular expression should match.
@@ -686,7 +770,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
             bool: Whether the regex matched
          )pqdoc");
     
-    py::class_<SubStringLineFilter>(m, "SubStringLineFilter",
+    py::class_<SubStringLineFilter, LineFilter>(m, "SubStringLineFilter",
         R"pqdoc(
         A helper class that will check if a line matches any of a set of strings
         )pqdoc")
@@ -697,7 +781,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
             patterns (list of str): The list of strings to match against
          )pqdoc")
     
-    .def("__call__", &SubStringLineFilter::operator(), "line"_a,
+    .def("__call__", &SubStringLineFilter::call, "line"_a,
          R"pqdoc(
          Args:
             line (str): We check if any of the patterns are present in this string
@@ -706,24 +790,25 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
             bool: Whether any of the patterns were present
          )pqdoc");
     
-    m.def("price_qty_missing_data_handler", price_qty_missing_data_handler, "record"_a,
+    py::class_<PriceQtyMissingDataHandler, MissingDataHandler>(m, "PriceQtyMissingDataHandler",
           R"pqdoc(
-          A helper function that takes a Record as an input, checks whether its a trade or a quote or any open interest record, and if any of
+          A helper class that takes a Record as an input, checks whether its a trade or a quote or any open interest record, and if any of
           the prices or quantities are 0, sets them to NAN
-          
+        )pqdoc")
+        .def(py::init<>())
+        .def("__call__", &PriceQtyMissingDataHandler::call,  "record"_a,
+          R"pqdoc(
           Args:
             record:  Any subclass of :obj:`Record`
           )pqdoc");
     
-    /* m.def("is_quote", is_quote, "fields"_a);
-    m.def("is_trade", is_trade, "fields"_a);
-    m.def("is_open_interest", is_open_interest, "fields"_a);
-    m.def("is_other", is_other, "fields"_a); */
-    
-    m.def("fast_time_milli_parser", fast_time_milli_parser, "time"_a,
+    py::class_<FastTimeMilliParser, TimestampParser>(m, "FastTimeMilliParser",
           R"pqdoc(
-          A helper function that takes a string formatted as HH:MM:SS.xxx and parses it into number of milliseconds since the beginning of the day
-          
+          A helper class that takes a string formatted as HH:MM:SS.xxx and parses it into number of milliseconds since the beginning of the day
+          )pqdoc")
+          .def(py::init<>())
+          .def("__call__", &FastTimeMilliParser::call, "time"_a,
+          R"pqdoc(
           Args:
             time (str):  A string like "08:35:22.132"
           
@@ -731,34 +816,47 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
             int: Millis since beginning of day
           )pqdoc");
 
-    m.def("fast_time_micro_parser", fast_time_micro_parser, "time"_a,
-          R"pqdoc(
-          A helper function that takes a string formatted as HH:MM:SS.xxxxxx and parses it into number of microseconds since the beginning of the day
-          
-          Args:
-            time (str):  A string like "08:35:22.132876"
-          
-          Returns:
-            int: Microseconds since beginning of day
-          )pqdoc");
+    py::class_<FastTimeMicroParser, TimestampParser>(m, "FastTimeMicroParser",
+        R"pqdoc(
+        A helper class that takes a string formatted as HH:MM:SS.xxxxxx and parses it into number of micorseconds since the beginning of the day
+        )pqdoc")
+        .def(py::init<>())
+        .def("__call__", &FastTimeMicroParser::call, "time"_a,
+         R"pqdoc(
+         Args:
+         time (str):  A string like "08:35:22.132385"
+         
+         Returns:
+         int: Millis since beginning of day
+         )pqdoc");
     
-    m.def("is_field_in_list", is_field_in_list, "fields"_a, "flag_idx"_a, "flag_values"_a,
-          R"pqdoc(
-          Simple utility function to check whether the value of fields[flag_idx] is in any of flag_values
-          
+    py::class_<IsFieldInList, CheckFields>(m, "IsFieldInList",
+      R"pqdoc(
+      Simple utility class to check whether the value of fields[flag_idx] is in any of flag_values
+      )pqdoc")
+      .def(py::init<int, vector<string>>(), "flag_idx"_a, "flag_values"_a,
+      R"pqdoc(
           Args:
-            fields: a vector of strings
-            flag_idx: the index of fields to check
+             fields: a vector of strings
+             flag_idx: the index of fields to check
+          )pqdoc")
+          .def("__call__", &IsFieldInList::call, "_fields"_a,
+          R"pqdoc(
+          Args:
             flag_values: a vector of strings containing possible values for the field
           
           Returns:
             a boolean
           )pqdoc");
     
-    m.def("text_file_decompressor", text_file_decompressor, "filename"_a, "compression"_a,
+    py::class_<TextFileDecompressor, RecordGenerator>(m, "TextFileDecompressor",
+         R"pqdoc(
+         A helper function that takes a filename and its compression type, and returns a function that we can use to iterate over lines in that file
+         )pqdoc")
+         .def(py::init<>())
+         .def("__call__", &TextFileDecompressor::call,
+          "filename"_a, "compression"_a,
           R"pqdoc(
-          A helper function that takes a filename and its compression type, and returns a function that we can use to iterate over lines in that file
-          
           Args:
               filename (str):  The file to read
               compression (str): One of "" for uncompressed files, "gzip", "bz2" or "lzip"
@@ -767,19 +865,23 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
               A function that takes an empty string as input, and fills in that string.  The function should return False EOF has been reached, True otherwise
           )pqdoc");
           
-    py::class_<TextFileProcessor>(m, "TextFileProcessor")
+    py::class_<TextFileProcessor, FileProcessor>(m, "TextFileProcessor",
+      R"pqdoc(
+      A helper class that takes text based market data files and creates parsed and aggregated quote, trade, open interest, and other files from them.
+      )pqdoc")
+
     .def(py::init<
-        std::function<std::shared_ptr<StreamHolder>(const std::string&, const std::string&)>,
-        std::function<bool (const std::string&)>,
-        std::function<std::shared_ptr<Record> (const std::string&)>,
-        std::function<std::shared_ptr<Record> (int, const std::string&, const std::exception&)>,
-        std::function<bool (const Record&)>,
-        std::function<void (std::shared_ptr<Record>)>,
-        std::function<void (const QuoteRecord&, int)>,
-        std::function<void (const TradeRecord&, int)>,
-        std::function<void (const OpenInterestRecord&, int)>,
-        std::function<void (const OtherRecord&, int)>,
-        int>(),
+         RecordGenerator*,
+         LineFilter*,
+         RecordParser*,
+         BadLineHandler*,
+         RecordFilter*,
+         MissingDataHandler*,
+         QuoteAggregator*,
+         TradeAggregator*,
+         OpenInterestAggregator*,
+         OtherAggregator*,
+         int>(),
         "record_generator"_a,
         "line_filter"_a,
         "record_parser"_a,
@@ -792,8 +894,6 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
         "other_aggregator"_a,
         "skip_rows"_a = 1,
          R"pqdoc(
-         A helper class that takes text based market data files and creates parsed and aggregated quote, trade, open interest, and other files from them.
-         
          Args:
             record_generator: A function that takes a filename and its compression type, and returns a function that we
                 can use to iterate over lines in that file
@@ -809,7 +909,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
             skip_rows (int, optional): Number of rows to skip in the file before starting to read it.  Defaults to 1 to ignore a header line
             )pqdoc")
          
-    .def("__call__", &TextFileProcessor::operator(), "input_filename"_a, "compression"_a,
+    .def("__call__", &TextFileProcessor::call, "input_filename"_a, "compression"_a,
          py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
          R"pqdoc(
          Args:

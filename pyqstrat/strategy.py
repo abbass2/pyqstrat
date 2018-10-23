@@ -1,4 +1,9 @@
-#cell 0
+
+# coding: utf-8
+
+# In[1]:
+
+
 import warnings
 warnings.filterwarnings("ignore", message="numpy.dtype size changed") # another bogus warning, see https://github.com/numpy/numpy/pull/432
 import numpy as np
@@ -20,7 +25,10 @@ from pyqstrat.orders import *
 from pyqstrat.plot import *
 from pyqstrat.evaluator import *
 
-#cell 1
+
+# In[3]:
+
+
 def _calc_pnl(open_trades, new_trades, ending_close, multiplier):
     '''
     >>> from collections import deque

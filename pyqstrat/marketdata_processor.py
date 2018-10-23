@@ -183,8 +183,8 @@ def base_date_filename_mapper(input_file_path):
     base_date = dateutil.parser.parse(filename, fuzzy=True)
     return round(millis_since_epoch(base_date))
 
-def arrow_writer_creator(output_file_prefix, schema, create_batch_id_file, batch_size):
-    return ArrowWriter(output_file_prefix, schema, create_batch_id_file, batch_size)
+#def arrow_writer_creator(output_file_prefix, schema, create_batch_id_file, batch_size):
+#    return ArrowWriter(output_file_prefix, schema, create_batch_id_file, batch_size)
 
 def create_text_file_processor(record_generator, line_filter, record_parser, bad_line_handler, record_filter, missing_data_handler,
                                 quote_aggregator, trade_aggregator, open_interest_aggregator, other_aggregator, skip_rows = 1): 
@@ -234,11 +234,11 @@ def process_marketdata_file(input_filename,
                  file_processor_creator = create_text_file_processor,
                  header_parser_creator = lambda record_generator :  TextHeaderParser(record_generator),
                  header_record_generator = text_file_record_generator,
-                 record_generator = text_file_decompressor,
+                 record_generator = TextFileDecompressor(),
                  bad_line_handler = PrintBadLineHandler(),
                  record_filter = None,
-                 missing_data_handler = price_qty_missing_data_handler, 
-                 writer_creator = arrow_writer_creator):
+                 missing_data_handler = PriceQtyMissingDataHandler(), 
+                 writer_creator = ArrowWriterCreator()):
     
     """
     Processes a single market data file

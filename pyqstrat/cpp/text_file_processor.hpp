@@ -9,36 +9,47 @@
 #include <fstream>
 #include <boost/iostreams/filtering_stream.hpp>
 
-#include "types.hpp"
+#include "pq_types.hpp"
 
-void price_qty_missing_data_handler(std::shared_ptr<Record> record);
 
-class PrintBadLineHandler {
+
+struct PriceQtyMissingDataHandler :  public MissingDataHandler {
+    //PriceQtyMissingDataHandler() {}
+    void call(std::shared_ptr<Record> record) override;
+};
+
+class PrintBadLineHandler : public BadLineHandler {
 public:
     PrintBadLineHandler(bool raise = false);
-    std::shared_ptr<Record> operator()(int line_number, const std::string& line, const std::exception& ex);
+    std::shared_ptr<Record> call(int line_number, const std::string& line, const std::exception& ex) override;
 private:
     bool _raise;
 };
 
-class RegExLineFilter {
+class RegExLineFilter : public LineFilter {
 public:
     RegExLineFilter(const std::string& pattern);
-    bool operator()(const std::string& line);
+    bool call(const std::string& line) override;
 private:
     std::regex _pattern;
 };
 
-class SubStringLineFilter {
+class SubStringLineFilter : public LineFilter {
 public:
     SubStringLineFilter(const std::vector<std::string>& patterns);
-    bool operator()(const std::string& line);
+    bool call(const std::string& line) override;
 private:
     std::vector<std::string> _patterns;
 };
 
-bool is_field_in_list(const std::vector<std::string>& fields, int flag_idx, const std::vector<std::string>& flag_values);
-
+class IsFieldInList : public CheckFields {
+public:
+    IsFieldInList(int flag_idx, const std::vector<std::string>& flag_values);
+    bool call(const std::vector<std::string>& fields) override;
+private:
+    int _flag_idx;
+    std::vector<std::string> _flag_values;
+};
 
 class StreamHolder {
 public:
@@ -58,33 +69,37 @@ private:
     std::shared_ptr<std::istream> _istream;
 };
 
-std::shared_ptr<StreamHolder> text_file_decompressor(const std::string& filename, const std::string& compression);
+struct TextFileDecompressor : public Function<std::shared_ptr<StreamHolder>(const std::string&, const std::string&)> {
+    std::shared_ptr<StreamHolder> call(const std::string& filename, const std::string& compression) override;
+};
 
-class TextFileProcessor {
+class TextFileProcessor : public FileProcessor {
 public:
-    TextFileProcessor(std::function<std::shared_ptr<StreamHolder>(const std::string&, const std::string&)> record_generator,
-                      std::function<bool (const std::string&)> line_filter,
-                      std::function<std::shared_ptr<Record>(const std::string&)> record_parser,
-                      std::function<std::shared_ptr<Record>(int, const std::string&, const std::exception&)> bad_line_handler,
-                      std::function<bool (const Record&)> record_filter,
-                      std::function<void (std::shared_ptr<Record>)> missing_data_handler,
-                      std::function<void (const QuoteRecord&, int)> quote_aggregator,
-                      std::function<void (const TradeRecord&, int)> trade_aggregator,
-                      std::function<void (const OpenInterestRecord&, int)> open_interest_aggregator,
-                      std::function<void (const OtherRecord&, int)> other_aggregator,
-                      int skip_rows = 1);
-    int operator()(const std::string& input_filename, const std::string& compression);
+    TextFileProcessor(
+                      RecordGenerator* record_generator,
+                      LineFilter* line_filter,
+                      RecordParser* record_parser,
+                      BadLineHandler* bad_line_handler,
+                      RecordFilter* record_filter,
+                      MissingDataHandler* missing_data_handler,
+                      QuoteAggregator* quote_aggregator,
+                      TradeAggregator* trade_aggregator,
+                      OpenInterestAggregator* open_interest_aggregator,
+                      OtherAggregator* other_aggregator,
+                      int skip_rows);
+
+    int call(const std::string& input_filename, const std::string& compression);
 private:
-    std::function<std::shared_ptr<StreamHolder>(const std::string&, const std::string&)> _record_generator;
-    std::function<bool (const std::string&)> _line_filter;
-    std::function<std::shared_ptr<Record>(const std::string&)> _record_parser;
-    std::function<std::shared_ptr<Record>(int, const std::string&, const std::exception&)> _bad_line_handler;
-    std::function<bool (const Record&)> _record_filter;
-    std::function<void (std::shared_ptr<Record>)> _missing_data_handler;
-    std::function<void (const QuoteRecord&, int)> _quote_aggregator;
-    std::function<void (const TradeRecord&, int)> _trade_aggregator;
-    std::function<void (const OpenInterestRecord&, int)> _open_interest_aggregator;
-    std::function<void (const OtherRecord&, int)> _other_aggregator;
+    Function<std::shared_ptr<StreamHolder>(const std::string&, const std::string&)>* _record_generator;
+    Function<bool (const std::string&)>* _line_filter;
+    Function<std::shared_ptr<Record> (const std::string&)>* _record_parser;
+    Function<std::shared_ptr<Record> (int, const std::string&, const std::exception&)>* _bad_line_handler;
+    Function<bool (const Record&)>* _record_filter;
+    Function<void (std::shared_ptr<Record>)>* _missing_data_handler;
+    Function<void (const QuoteRecord&, int)>* _quote_aggregator;
+    Function<void (const TradeRecord&, int)>* _trade_aggregator;
+    Function<void (const OpenInterestRecord&, int)>* _open_interest_aggregator;
+    Function<void (const OtherRecord&, int)>* _other_aggregator;
     int _skip_rows;
 };
 

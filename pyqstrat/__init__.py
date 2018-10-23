@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use("Agg")
+
 from pyqstrat.pq_utils import *
 from pyqstrat.marketdata import *
 from pyqstrat.orders import *

@@ -10,7 +10,7 @@
 #include <pybind11/pybind11.h>
 
 #include "utils.hpp"
-#include "types.hpp"
+#include "pq_types.hpp"
 
 #define check_arrow(s) check_arrow_status((s), __FILE__, __LINE__)
 
@@ -63,6 +63,10 @@ private:
     std::shared_ptr<arrow::io::OutputStream> _output_stream;
     std::vector<void*> _arrays;
     bool _closed;
+};
+
+struct ArrowWriterCreator : public WriterCreator {
+    std::shared_ptr<Writer> call(const std::string& output_file_prefix, const Schema& schema, bool create_batch_id_file, int batch_size) override;
 };
 
 /*inline std::shared_ptr<Writer> arrow_writer_creator(const std::string& output_file_prefix, const Schema& schema, bool create_batch_id_file, int batch_size) {

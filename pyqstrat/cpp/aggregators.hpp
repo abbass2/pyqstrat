@@ -7,11 +7,10 @@
 #include <tuple>
 
 #include "utils.hpp"
-#include "types.hpp"
+#include "pq_types.hpp"
+
 
 int64_t parse_frequency(const std::string& frequency_str);
-
-typedef std::function<std::shared_ptr<Writer>(const std::string&, const Schema&, bool, int)> WriterCreator;
 
 class SymbolTradeBar final {
 public:
@@ -45,12 +44,12 @@ private:
     bool _closed;
 };
 
-class TradeBarAggregator final {
+class TradeBarAggregator final : public TradeAggregator {
 public:
-    TradeBarAggregator(WriterCreator, const std::string& output_file_prefix, const std::string& frequency = "5m",
+    TradeBarAggregator(WriterCreator*, const std::string& output_file_prefix, const std::string& frequency = "5m",
                        bool batch_by_id = true, int batch_size = std::numeric_limits<int>::max(),
                        Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
-    void operator()(const TradeRecord& trade, int line_number);
+    void call(const TradeRecord& trade, int line_number) override;
     void close();
     ~TradeBarAggregator();
 private:
@@ -91,13 +90,13 @@ private:
     bool _closed;
 };
 
-class QuoteTOBAggregator final {
+class QuoteTOBAggregator final : public QuoteAggregator {
 public:
     //Assumes quotes are processed in time order.  Set frequency to "" to create bid / offer every time TOB changes.
-    QuoteTOBAggregator(WriterCreator, const std::string& output_file_prefix, const std::string& frequency = "5m",
+    QuoteTOBAggregator(WriterCreator*, const std::string& output_file_prefix, const std::string& frequency = "5m",
                        bool batch_by_id = true, int batch_size = std::numeric_limits<int>::max(),
                        Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
-    void operator()(const QuoteRecord& quote, int line_number);
+    void call(const QuoteRecord& quote, int line_number) override;
     void close();
     virtual ~QuoteTOBAggregator();
 private:
@@ -109,41 +108,41 @@ private:
     std::map<std::string, std::shared_ptr<SymbolQuoteTOB>> _tob_by_symbol;
 };
 
-class AllQuoteAggregator final {
+class AllQuoteAggregator final : public QuoteAggregator {
 public:
-    AllQuoteAggregator(WriterCreator, const std::string& output_file_prefix,
+    AllQuoteAggregator(WriterCreator*, const std::string& output_file_prefix,
                        int batch_size = 10000, Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
-    void operator()(const QuoteRecord& quote, int line_number);
+    void call(const QuoteRecord& quote, int line_number) override;
 private:
     std::shared_ptr<Writer> _writer;
     std::string _id;
 };
 
-class AllTradeAggregator final {
+class AllTradeAggregator final : public TradeAggregator {
 public:
-    AllTradeAggregator(WriterCreator, const std::string& output_file_prefix, int batch_size = 10000,
+    AllTradeAggregator(WriterCreator*, const std::string& output_file_prefix, int batch_size = 10000,
                        Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
-    void operator()(const TradeRecord& trade, int line_number);
+    void call(const TradeRecord& trade, int line_number) override;
 private:
     std::shared_ptr<Writer> _writer;
     std::string _id;
 };
 
-class AllOpenInterestAggregator final {
+class AllOpenInterestAggregator final : public OpenInterestAggregator {
 public:
-    AllOpenInterestAggregator(WriterCreator, const std::string& output_file_prefix,int batch_size = 10000,
+    AllOpenInterestAggregator(WriterCreator*, const std::string& output_file_prefix,int batch_size = 10000,
                               Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
-    void operator()(const OpenInterestRecord& oi, int line_number);
+    void call(const OpenInterestRecord& oi, int line_number) override;
 private:
     std::shared_ptr<Writer> _writer;
     std::string _id;
 };
 
-class AllOtherAggregator final {
+class AllOtherAggregator final : public OtherAggregator {
 public:
-    AllOtherAggregator(WriterCreator, const std::string& output_file_prefix, int batch_size = 10000,
+    AllOtherAggregator(WriterCreator*, const std::string& output_file_prefix, int batch_size = 10000,
                        Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
-    void operator()(const OtherRecord& other, int line_number);
+    void call(const OtherRecord& other, int line_number) override;
 private:
     std::shared_ptr<Writer> _writer;
     std::string _id;

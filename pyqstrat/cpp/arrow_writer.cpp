@@ -302,3 +302,7 @@ void test_arrow_writer() {
     //writer.write_batch();
     writer.close();
 }
+
+std::shared_ptr<Writer> ArrowWriterCreator::call(const std::string& output_file_prefix, const Schema& schema, bool create_batch_id_file, int batch_size) {
+    return shared_ptr<Writer>(new ArrowWriter(output_file_prefix, schema, create_batch_id_file, batch_size));
+}

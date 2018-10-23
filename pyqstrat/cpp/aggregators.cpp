@@ -116,11 +116,12 @@ SymbolTradeBar::~SymbolTradeBar() {
     close();
 }
 
-TradeBarAggregator::TradeBarAggregator(WriterCreator writer_creator, const std::string& output_file_prefix,
+TradeBarAggregator::TradeBarAggregator(WriterCreator* writer_creator, const std::string& output_file_prefix,
                                        const std::string& frequency, bool batch_by_id, int batch_size, Schema::Type timestamp_unit) :
 _batch_by_id(batch_by_id),
 _batch_size(batch_size),
 _record_num(0) {
+    if (!writer_creator) error("writer creator must be specified");
     if (batch_by_id && batch_size != std::numeric_limits<int>::max()) error("cannot batch by id if batch size is set");
     if (frequency.empty()) error("frequency must be specified");
     _frequency = parse_frequency(frequency);
@@ -136,10 +137,10 @@ _record_num(0) {
         std::make_pair("v", Schema::FLOAT32),
         std::make_pair("vwap", Schema::FLOAT32)
     };
-    _writer = writer_creator(output_file_prefix + "." + frequency, schema, batch_by_id, batch_size);
+    _writer = writer_creator->call(output_file_prefix + "." + frequency, schema, batch_by_id, batch_size);
 }
     
-void TradeBarAggregator::operator()(const TradeRecord& trade, int line_number) {
+void TradeBarAggregator::call(const TradeRecord& trade, int line_number) {
     if (_trade_bars_by_symbol.find(trade.id) == _trade_bars_by_symbol.end()) {
         _trade_bars_by_symbol.insert(std::make_pair(trade.id, std::shared_ptr<SymbolTradeBar>(
             new SymbolTradeBar(_writer, trade.id, _batch_by_id, _frequency))));
@@ -248,7 +249,7 @@ SymbolQuoteTOB::~SymbolQuoteTOB() {
     
 
 //Assumes quotes are processed in time order.  Set frequency to "" to create bid / offer every time TOB changes.
-QuoteTOBAggregator::QuoteTOBAggregator(WriterCreator writer_creator, const std::string& output_file_prefix,
+QuoteTOBAggregator::QuoteTOBAggregator(WriterCreator* writer_creator, const std::string& output_file_prefix,
                                        const std::string& frequency, bool batch_by_id, int batch_size,
                                        Schema::Type timestamp_unit) :
 _batch_by_id(batch_by_id),
@@ -264,11 +265,11 @@ _frequency(-1) {
     schema.types.push_back(std::make_pair("bid_size", Schema::FLOAT32));
     schema.types.push_back(std::make_pair("ask", Schema::FLOAT32));
     schema.types.push_back(std::make_pair("ask_size", Schema::FLOAT32));
-    _writer = writer_creator(output_file_prefix + "." + frequency, schema, batch_by_id, batch_size);
+    _writer = writer_creator->call(output_file_prefix + "." + frequency, schema, batch_by_id, batch_size);
     _record_num = 0;
 }
 
-void QuoteTOBAggregator::operator()(const QuoteRecord& quote, int line_number) {
+void QuoteTOBAggregator::call(const QuoteRecord& quote, int line_number) {
     if (_tob_by_symbol.find(quote.id) == _tob_by_symbol.end()) {
         _tob_by_symbol.insert(std::make_pair(quote.id, std::shared_ptr<SymbolQuoteTOB>(
             new SymbolQuoteTOB(_writer, quote.id, _batch_by_id, _frequency))));
@@ -291,8 +292,9 @@ QuoteTOBAggregator::~QuoteTOBAggregator() {
     close();
 }
 
-AllQuoteAggregator::AllQuoteAggregator(WriterCreator writer_creator, const std::string& output_file_prefix,
+AllQuoteAggregator::AllQuoteAggregator(WriterCreator* writer_creator, const std::string& output_file_prefix,
                        int batch_size, Schema::Type timestamp_unit)  {
+    if (!writer_creator) error("writer creator must be specified");
     Schema schema;
     schema.types = {
         std::make_pair("id", Schema::STRING),
@@ -302,10 +304,10 @@ AllQuoteAggregator::AllQuoteAggregator(WriterCreator writer_creator, const std::
         std::make_pair("price", Schema::FLOAT32),
         std::make_pair("meta", Schema::STRING),
     };
-    _writer = writer_creator(output_file_prefix, schema, false, batch_size);
+    _writer = writer_creator->call(output_file_prefix, schema, false, batch_size);
 }
 
-void AllQuoteAggregator::operator()(const QuoteRecord& quote, int line_number) {
+void AllQuoteAggregator::call(const QuoteRecord& quote, int line_number) {
     Tuple tuple;
     tuple.add(quote.id);
     tuple.add(quote.timestamp);
@@ -317,8 +319,9 @@ void AllQuoteAggregator::operator()(const QuoteRecord& quote, int line_number) {
 }
 
 
-AllTradeAggregator::AllTradeAggregator(WriterCreator writer_creator, const std::string& output_file_prefix, int batch_size,
+AllTradeAggregator::AllTradeAggregator(WriterCreator* writer_creator, const std::string& output_file_prefix, int batch_size,
                                        Schema::Type timestamp_unit) {
+    if (!writer_creator) error("writer creator must be specified");
     Schema schema;
     schema.types = {
         std::make_pair("id", Schema::STRING),
@@ -327,10 +330,10 @@ AllTradeAggregator::AllTradeAggregator(WriterCreator writer_creator, const std::
         std::make_pair("price", Schema::FLOAT32),
         std::make_pair("meta", Schema::STRING),
     };
-    _writer = writer_creator(output_file_prefix, schema, false, batch_size);
+    _writer = writer_creator->call(output_file_prefix, schema, false, batch_size);
 }
 
-void AllTradeAggregator::operator()(const TradeRecord& trade, int line_number) {
+void AllTradeAggregator::call(const TradeRecord& trade, int line_number) {
     Tuple tuple;
     tuple.add(trade.id);
     tuple.add(trade.timestamp);
@@ -340,8 +343,9 @@ void AllTradeAggregator::operator()(const TradeRecord& trade, int line_number) {
     _writer->add_record(line_number, tuple);
 }
 
-AllOpenInterestAggregator::AllOpenInterestAggregator(WriterCreator writer_creator, const std::string& output_file_prefix,
+AllOpenInterestAggregator::AllOpenInterestAggregator(WriterCreator* writer_creator, const std::string& output_file_prefix,
                                                      int batch_size, Schema::Type timestamp_unit) {
+    if (!writer_creator) error("writer creator must be specified");
     Schema schema;
     schema.types = {
         std::make_pair("id", Schema::STRING),
@@ -349,10 +353,10 @@ AllOpenInterestAggregator::AllOpenInterestAggregator(WriterCreator writer_creato
         std::make_pair("qty", Schema::FLOAT32),
         std::make_pair("meta", Schema::STRING),
     };
-    _writer = writer_creator(output_file_prefix, schema, false, batch_size);
+    _writer = writer_creator->call(output_file_prefix, schema, false, batch_size);
 }
 
-void AllOpenInterestAggregator::operator()(const OpenInterestRecord& oi, int line_number) {
+void AllOpenInterestAggregator::call(const OpenInterestRecord& oi, int line_number) {
     Tuple tuple;
     tuple.add(oi.id);
     tuple.add(oi.timestamp);
@@ -361,18 +365,19 @@ void AllOpenInterestAggregator::operator()(const OpenInterestRecord& oi, int lin
     _writer->add_record(line_number, tuple);
 }
 
-AllOtherAggregator::AllOtherAggregator(WriterCreator writer_creator, const std::string& output_file_prefix,
+AllOtherAggregator::AllOtherAggregator(WriterCreator* writer_creator, const std::string& output_file_prefix,
                                        int batch_size, Schema::Type timestamp_unit) {
+    if (!writer_creator) error("writer creator must be specified");
     Schema schema;
     schema.types = {
         std::make_pair("id", Schema::STRING),
         std::make_pair("timestamp", timestamp_unit),
         std::make_pair("meta", Schema::STRING),
     };
-    _writer = writer_creator(output_file_prefix, schema, false, batch_size);
+    _writer = writer_creator->call(output_file_prefix, schema, false, batch_size);
 }
 
-void AllOtherAggregator::operator()(const OtherRecord& other, int line_number) {
+void AllOtherAggregator::call(const OtherRecord& other, int line_number) {
     Tuple tuple;
     tuple.add(other.id);
     tuple.add(other.timestamp);
