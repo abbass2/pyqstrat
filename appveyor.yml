@@ -39,7 +39,7 @@ test_script:
   - "%CONDA_ROOT%\\Scripts\\activate test-environment"
   - echo CONDA_PREFIX %CONDA_PREFIX%
   - echo PATH %PATH%
-  - pip install pep257 yapf==0.6.2 flake8==2.6.2
+  - pip install pep257 yapf==0.6.2 flake8==2.6.2 scipy
   - if "%PYTHON_VERSION%" == "3.6" pip install ruamel.yaml
   - conda list
   - conda info -a
