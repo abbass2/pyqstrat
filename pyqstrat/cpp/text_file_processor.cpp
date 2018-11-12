@@ -7,6 +7,9 @@
 #include <boost/iostreams/filter/lzma.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
+#include <sys/types.h>
+#include<iostream>
+
 
 #include "utils.hpp"
 #include "text_file_processor.hpp"
@@ -119,7 +122,7 @@ _other_aggregator(other_aggregator),
 _skip_rows(skip_rows){}
 
 int TextFileProcessor::call(const std::string& input_filename, const std::string& compression) {
-    cout << "processing:" << input_filename << " process id: " << ::getpid() << endl;
+    cout << "processing file: " << input_filename << " process id: " << getpid() << endl;
     shared_ptr<StreamHolder> istr = _record_generator->call(input_filename, compression);
     string line;
     int line_number = 0;
