@@ -1,11 +1,13 @@
 language: python
 
-os:
-  - linux
-  - windows
-
-python:
-  - "3.6"
+matrix:
+    include:
+        - os: linux
+          python: 3.6
+          env: TOXENV=py36
+        - os: windows
+          language: generic
+          env: TOXENV=py36
 
 addons:
   apt:
