@@ -19,7 +19,6 @@ environment:
   matrix:
     - PYTHON_VERSION: "3.6"
 
-
 platform:
   -x64
 
@@ -38,7 +37,7 @@ install:
   - "%CONDA_ROOT%\\Scripts\\activate root"
   - echo CONDA_PREFIX %CONDA_PREFIX%
   - conda info -a
-  - conda create --channel conda-forge --override-channels -q -n test-environment python=%PYTHON_VERSION% keyring pip notebook bokeh ruamel_yaml anaconda-client requests tornado coverage pytest pytest-cov arrow-cpp pybind11 pandas numpy matplotlib ipython pyarrow
+  - conda create --channel conda-forge --override-channels -q -n test-environment python=%PYTHON_VERSION% anaconda-client arrow-cpp pybind11 pandas numpy matplotlib ipython pyarrow pytest
 
 # Not a .NET project, we build in the install step instead
 build: false
@@ -48,8 +47,7 @@ test_script:
   - "%CONDA_ROOT%\\Scripts\\activate test-environment"
   - echo CONDA_PREFIX %CONDA_PREFIX%
   - echo PATH %PATH%
-  - pip install pep257 yapf==0.6.2 flake8==2.6.2 scipy
-  - if "%PYTHON_VERSION%" == "3.6" pip install ruamel.yaml
+  - pip install scipy
   - conda list
   - conda info -a
   - python -c "import sys; print(sys.version)"
