@@ -9,7 +9,9 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <sys/types.h>
 #include<iostream>
-
+#ifdef _WIN32
+#include <process.h>
+#endif
 
 #include "utils.hpp"
 #include "text_file_processor.hpp"
@@ -122,7 +124,11 @@ _other_aggregator(other_aggregator),
 _skip_rows(skip_rows){}
 
 int TextFileProcessor::call(const std::string& input_filename, const std::string& compression) {
+#ifdef _WIN32
+    cout << "processing file: " << input_filename << " process id: " << _getpid() << endl;
+#else
     cout << "processing file: " << input_filename << " process id: " << getpid() << endl;
+#endif
     shared_ptr<StreamHolder> istr = _record_generator->call(input_filename, compression);
     string line;
     int line_number = 0;
