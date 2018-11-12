@@ -29,7 +29,7 @@ install:
   - "%CONDA_ROOT%\\Scripts\\activate root"
   - echo CONDA_PREFIX %CONDA_PREFIX%
   - conda info -a
-  - conda create --channel conda-forge --override-channels -q -n test-environment python=%PYTHON_VERSION% keyring pip notebook bokeh ruamel_yaml anaconda-client requests tornado coverage pytest pytest-cov "arrow-cpp>=0.11" "pybind11>=2.2" "pytest>=3.7" "pandas>=0.22" "numpy>=1.14" "matplotlib>=2.2" "scipy>=1.0" "ipython>=6.5" "pyarrow>=0.1"
+  - conda create --channel conda-forge --override-channels -q -n test-environment python=%PYTHON_VERSION% keyring pip notebook bokeh ruamel_yaml anaconda-client requests tornado coverage pytest pytest-cov arrow-cpp pybind11 pandas numpy matplotlib scipy ipython pyarrow
 
 # Not a .NET project, we build in the install step instead
 build: false
