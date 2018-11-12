@@ -19,6 +19,7 @@ environment:
   matrix:
     - PYTHON_VERSION: "3.6"
 
+
 platform:
   -x64
 
