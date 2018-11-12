@@ -54,9 +54,10 @@ if 'CONDA_PREFIX' in os.environ:
         conda_lib_dirs = [os.environ['CONDA_PREFIX'] + '/lib']
 
     library_dirs = conda_lib_dirs
-    link_dirs = ','.join(conda_lib_dirs)
-    
-    extra_link_args=[f'-Wl,-rpath,{link_dirs}']
+    link_dirs = ',-rpath,'.join(conda_lib_dirs)
+
+    extra_link_args = None
+    if sys.platform == 'darwin': extra_link_args=[f'-Wl,-rpath,{link_dirs}']
 
 ext_modules = [
     Extension(
