@@ -129,6 +129,9 @@ class BuildExt(build_ext):
                 opts.append('-fvisibility=hidden')
         elif ct == 'msvc':
             opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
+            opts.append('/DARROW_CXXFLAGS="/WX /MP"')
+            opts.append('/DARROW_PARQUET=on')
+            opts.append('/DARROW_PYTHON=on')
         for ext in self.extensions:
             ext.extra_compile_args = opts
         build_ext.build_extensions(self)
