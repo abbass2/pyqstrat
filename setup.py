@@ -28,6 +28,21 @@ class get_pybind_include(object):
         import pybind11
         return pybind11.get_include(self.user)
 
+include_dirs=[
+    # Path to pybind11 headers
+    get_pybind_include(),
+    get_pybind_include(user=True)
+]
+
+library_dirs = []
+extra_link_args=[]
+
+if 'CONDA_PREFIX' in os.environ:
+    include_dirs.append(os.environ['CONDA_PREFIX'] + '/include')
+    conda_lib_dir = os.environ['CONDA_PREFIX'] + '/lib'
+    library_dirs = [conda_lib_dir]
+    extra_link_args=[f'-Wl,-rpath,{conda_lib_dir}']
+
 ext_modules = [
     Extension(
         'pyqstrat.pyqstrat_cpp',
@@ -41,18 +56,15 @@ ext_modules = [
             'pyqstrat/cpp/pybind.cpp',
             'pyqstrat/cpp/py_import_call_execute.cpp'
         ],
-        include_dirs=[
-            # Path to pybind11 headers
-            get_pybind_include(),
-            get_pybind_include(user=True),
-            os.environ['CONDA_PREFIX'] + '/include'
-        ],
+        include_dirs=include_dirs,
+        library_dirs=library_dirs,
         libraries = [
             'z',
             'arrow',
             'boost_iostreams',
         ],
-        language='c++'
+        language='c++',
+        extra_link_args=extra_link_args
     ),
 ]
 
