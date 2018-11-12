@@ -38,10 +38,24 @@ library_dirs = []
 extra_link_args=[]
 
 if 'CONDA_PREFIX' in os.environ:
-    include_dirs.append(os.environ['CONDA_PREFIX'] + '/include')
-    conda_lib_dir = os.environ['CONDA_PREFIX'] + '/lib'
-    library_dirs = [conda_lib_dir]
-    extra_link_args=[f'-Wl,-rpath,{conda_lib_dir}']
+
+    if sys.platform.startswith("win"):
+        include_dirs += [os.environ['CONDA_PREFIX'] + '\\include',
+                         os.environ['CONDA_PREFIX'] + '\\Library\\include')
+    else:
+        include_dirs.append(os.environ['CONDA_PREFIX'] + '/include')
+
+    if sys.platform.startswith("win"):
+        conda_lib_dirs = [os.environ['CONDA_PREFIX'] + '\\lib',
+                         os.environ['CONDA_PREFIX'] + '\\Library\\lib',
+                         os.environ['CONDA_PREFIX'] + '\\bin',
+                         os.environ['CONDA_PREFIX'] + '\\Library\\bin']
+    else:
+        conda_lib_dirs = os.environ['CONDA_PREFIX'] + '/lib'
+
+    library_dirs = [conda_lib_dirs]
+    
+    extra_link_args=[f'-Wl,-rpath,{conda_lib_dirs}']
 
 ext_modules = [
     Extension(
