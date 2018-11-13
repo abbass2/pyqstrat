@@ -58,7 +58,7 @@ if 'CONDA_PREFIX' in os.environ:
 
     extra_link_args = None
     if sys.platform == 'darwin': extra_link_args=[f'-Wl,-rpath,{link_dirs}']
-    elif sys.platform.startswith("win"):  extra_link_args=['-DBOOST_ZLIB_BINARY=kernel32']
+    elif sys.platform.startswith("win"):  extra_link_args=['/DBOOST_ZLIB_BINARY=kernel32']
 
 ext_modules = [
     Extension(
