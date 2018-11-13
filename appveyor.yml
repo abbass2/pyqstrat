@@ -37,7 +37,7 @@ install:
   - "%CONDA_ROOT%\\Scripts\\activate root"
   - echo CONDA_PREFIX %CONDA_PREFIX%
   - conda info -a
-  - conda create --channel conda-forge --override-channels -q -n test-environment python=%PYTHON_VERSION% arrow-cpp boost-cpp pybind11 pandas numpy matplotlib pyarrow pytest
+  - conda create --channel conda-forge --override-channels -q -n test-environment python=%PYTHON_VERSION% arrow-cpp boost pybind11 pandas numpy matplotlib pyarrow pytest
 
 # Not a .NET project, we build in the install step instead
 build: false
