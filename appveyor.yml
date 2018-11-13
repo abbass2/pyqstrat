@@ -19,28 +19,38 @@ environment:
                       # of 32 bit and 64 bit builds are needed, move this
                       # to the matrix section.
   matrix:
-    - APPVEYOR_BUILD_WORKER_IMAGE: 'Visual Studio 2017'
-      PLATFORM: x64
-      VCVARSALL: '%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat'
-      ARCHITECTURE: x86_amd64
+    - PYTHON_VERSION: 3.6
+      CONDA: C:\Miniconda36
+
+version: '{build}'
+image: Visual Studio 2017
+
+platofrm:
+- x64
 
 init:
  - cd %VCPKG_DIR%
  - echo.set(VCPKG_BUILD_TYPE release)>> %VCPKG_DIR%\triplets\%PLATFORM%-windows.cmake
  - vcpkg version
  - cd %APPVEYOR_BUILD_FOLDER%
+ - ps: if ($Env:PLATFORM -eq "x64") { $Env:CONDA = "${Env:CONDA}-x64" }
 
 install:
+  # Make sure the compiler is accessible
+  - '"%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" %PLATFORM%'
+
   - vcpkg install 
       boost-iostreams
       --triplet %PLATFORM%-windows
-
   - vcpkg list
   - set PATH=%VCPKG_DIR%\installed\%PLATFORM%-windows\bin;%PATH%
+  
   - if "%PYTHON_VERSION%" == "3.6" set "BASE_PYTHON_VERSION=3"
   - if "%PYTHON_ARCH%" == "64" set "ARCH_LABEL=-x64"
+  
+  - '"%CONDA%\Scripts\activate.bat"'
+  - conda config --set always_yes yes --set changeps1 no
   - conda info -a
-  - conda config --set always_yes yes
   - conda create --channel conda-forge --override-channels -q -n test-environment python=%PYTHON_VERSION% arrow-cpp pybind11 pandas numpy matplotlib pyarrow pytest
 
 build_script:
