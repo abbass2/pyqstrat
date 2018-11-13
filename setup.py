@@ -41,7 +41,7 @@ if 'CONDA_PREFIX' in os.environ:
 
     if sys.platform.startswith("win"):
         if 'VCPKG_DIR' in os.environ and 'PLATFORM' in os.environ:
-            include_dirs.append(f'{os.environ["VCPKG_DIR")}\\installed\\{os.environ["PLATFORM"]}-windows\include')
+            include_dirs.append(f'{os.environ["VCPKG_DIR"]}\\installed\\{os.environ["PLATFORM"]}-windows\include')
          
         include_dirs += [os.environ['CONDA_PREFIX'] + '\\include',
                          os.environ['CONDA_PREFIX'] + '\\Library\\include']
@@ -50,7 +50,7 @@ if 'CONDA_PREFIX' in os.environ:
 
     if sys.platform.startswith("win"):
         if 'VCPKG_DIR' in os.environ and 'PLATFORM' in os.environ:
-            library_dirs.append(f'{os.environ["VCPKG_DIR")}\\installed\\{os.environ["PLATFORM"]}-windows\lib')
+            library_dirs.append(f'{os.environ["VCPKG_DIR"]}\\installed\\{os.environ["PLATFORM"]}-windows\lib')
             
         library_dirs += [os.environ['CONDA_PREFIX'] + '\\lib',
                          os.environ['CONDA_PREFIX'] + '\\Library\\lib',
