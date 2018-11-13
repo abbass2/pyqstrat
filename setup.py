@@ -58,6 +58,7 @@ if 'CONDA_PREFIX' in os.environ:
 
     extra_link_args = None
     if sys.platform == 'darwin': extra_link_args=[f'-Wl,-rpath,{link_dirs}']
+    elif sys.platform.startswith("win"):  extra_link_args=['-DBOOST_ZLIB_BINARY=kernel32']
 
 ext_modules = [
     Extension(
@@ -132,7 +133,7 @@ class BuildExt(build_ext):
             #opts.append('/DARROW_CXXFLAGS="/WX /MP"')
             #opts.append('/DARROW_PARQUET=on')
             #opts.append('/DARROW_PYTHON=on')
-            opts.append('-DBOOST_ZLIB_BINARY=kernel32')
+            opts.append('/DBOOST_ZLIB_BINARY=kernel32')
         for ext in self.extensions:
             ext.extra_compile_args = opts
         build_ext.build_extensions(self)
