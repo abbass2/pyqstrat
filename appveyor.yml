@@ -1,5 +1,7 @@
-matrix:
-  fast_finish: true
+cache:
+- C:\Tools\vcpkg\installed
+
+configuration: Release
 
 notifications:
   - provider: Email
@@ -11,10 +13,9 @@ notifications:
     
 environment:
   VCPKG_DIR: C:\Tools\vcpkg
-  global:
-    PYTHON: "C:\\conda"
-    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci-helpers\\appveyor\\windows_sdk.cmd"
-    PYTHON_ARCH: "64" # needs to be set for CMD_IN_ENV to succeed. If a mix
+  PYTHON: "C:\\conda"
+  CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci-helpers\\appveyor\\windows_sdk.cmd"
+  PYTHON_ARCH: "64" # needs to be set for CMD_IN_ENV to succeed. If a mix
                       # of 32 bit and 64 bit builds are needed, move this
                       # to the matrix section.
   matrix:
@@ -23,47 +24,31 @@ environment:
       VCVARSALL: '%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat'
       ARCHITECTURE: x86_amd64
 
-
-
-platform:
-  -x64
-
-cache:
-  - C:\Tools\vcpkg\installed\
-  
-configuration: Release
-
 init:
  - cd %VCPKG_DIR%
  - echo.set(VCPKG_BUILD_TYPE release)>> %VCPKG_DIR%\triplets\%PLATFORM%-windows.cmake
  - vcpkg version
+ - cd %APPVEYOR_BUILD_FOLDER%
 
 install:
   - vcpkg install 
       boost-iostreams
-  - call "%VCVARSALL%" %ARCHITECTURE%
+      --triplet %PLATFORM%-windows
+
+  - vcpkg list
   - set PATH=%VCPKG_DIR%\installed\%PLATFORM%-windows\bin;%PATH%
   - if "%PYTHON_VERSION%" == "3.6" set "BASE_PYTHON_VERSION=3"
   - if "%PYTHON_ARCH%" == "64" set "ARCH_LABEL=-x64"
-  # These are already installed on appveyor.  Update them.
-  - set "CONDA_ROOT=C:\Miniconda%BASE_PYTHON_VERSION%%ARCH_LABEL%"
-  - set "PATH=%CONDA_ROOT%;%CONDA_ROOT%\Scripts;%CONDA_ROOT%\Library\bin;%PATH%"
-  - set PATH
-  - echo CONDA_PREFIX %CONDA_PREFIX%
-  - conda config --set always_yes yes
-  # Use the latest conda
-  - conda install -n root -q conda --no-pin
-  # activate with newer conda, may set different variables
-  - "%CONDA_ROOT%\\Scripts\\activate root"
-  - echo CONDA_PREFIX %CONDA_PREFIX%
   - conda info -a
+  - conda config --set always_yes yes
   - conda create --channel conda-forge --override-channels -q -n test-environment python=%PYTHON_VERSION% arrow-cpp pybind11 pandas numpy matplotlib pyarrow pytest
 
-# Not a .NET project, we build in the install step instead
-build: false
+build:
+  parrallel: false
 
-test_script:
-  - echo CONDA_PREFIX %CONDA_PREFIX%
+build_script:
+  - call "%VCVARSALL%" %ARCHITECTURE%
+  - cd %APPVEYOR_BUILD_FOLDER%
   - "%CONDA_ROOT%\\Scripts\\activate test-environment"
   - echo CONDA_PREFIX %CONDA_PREFIX%
   - echo PATH %PATH%
