@@ -25,7 +25,7 @@ environment:
 version: '{build}'
 image: Visual Studio 2017
 
-platofrm:
+platform:
 - x64
 
 init:
