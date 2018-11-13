@@ -27,10 +27,14 @@ environment:
 platform:
   -x64
 
+cache:
+  - C:\Tools\vcpkg\installed\
+  
+configuration: Release
+
 init:
  - cd %VCPKG_DIR%
  - echo.set(VCPKG_BUILD_TYPE release)>> %VCPKG_DIR%\triplets\%PLATFORM%-windows.cmake
- - .\bootstrap-vcpkg.bat
  - vcpkg version
 
 install:
