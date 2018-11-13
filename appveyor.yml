@@ -18,10 +18,11 @@ environment:
                       # of 32 bit and 64 bit builds are needed, move this
                       # to the matrix section.
   matrix:
-    - PYTHON_VERSION: "3.6"
-      PLATFORM: x86
-      VCVARSALL: '%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat'
-      ARCHITECTURE: x86
+    - APPVEYOR_BUILD_WORKER_IMAGE: 'Visual Studio 2017'
+      PLATFORM: x64
+      VCVARSALL: '%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat'
+      ARCHITECTURE: x86_amd64
+
 
 
 platform:
