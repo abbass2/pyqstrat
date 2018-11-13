@@ -1,5 +1,5 @@
 cache:
-- C:\Tools\vcpkg\installed
+  - C:\Tools\vcpkg\installed
 
 configuration: Release
 
@@ -26,14 +26,14 @@ version: '{build}'
 image: Visual Studio 2017
 
 platform:
-- x64
+  - x64
 
 init:
- - cd %VCPKG_DIR%
- - echo.set(VCPKG_BUILD_TYPE release)>> %VCPKG_DIR%\triplets\%PLATFORM%-windows.cmake
- - vcpkg version
- - cd %APPVEYOR_BUILD_FOLDER%
- - ps: if ($Env:PLATFORM -eq "x64") { $Env:CONDA = "${Env:CONDA}-x64" }
+  - cd %VCPKG_DIR%
+  - echo.set(VCPKG_BUILD_TYPE release)>> %VCPKG_DIR%\triplets\%PLATFORM%-windows.cmake
+  - vcpkg version
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - ps: if ($Env:PLATFORM -eq "x64") { $Env:CONDA = "${Env:CONDA}-x64" }
 
 install:
   # Make sure the compiler is accessible
@@ -54,7 +54,6 @@ install:
   - conda create --channel conda-forge --override-channels -q -n test-environment python=%PYTHON_VERSION% arrow-cpp pybind11 pandas numpy matplotlib pyarrow pytest
 
 build_script:
-  - call "%VCVARSALL%" %ARCHITECTURE%
   - cd %APPVEYOR_BUILD_FOLDER%
   - "%CONDA_ROOT%\\Scripts\\activate test-environment"
   - echo CONDA_PREFIX %CONDA_PREFIX%
@@ -68,5 +67,3 @@ build_script:
   - python --version
   - python setup.py build_ext --inplace
   - python -m pytest pyqstrat
-
-  
