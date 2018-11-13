@@ -1,6 +1,10 @@
 #ifndef arrow_writer_hpp
 #define arrow_writer_hpp
 
+#if _MSC_VER >= 1900
+#undef timezone
+#endif
+
 #include <arrow/api.h>
 #include <arrow/io/interfaces.h>
 #include <arrow/io/file.h>
