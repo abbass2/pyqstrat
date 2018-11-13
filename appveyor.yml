@@ -1,6 +1,3 @@
-environment:
-  VCPKG_DIR: C:\Tools\vcpkg
-
 matrix:
   fast_finish: true
 
@@ -13,6 +10,7 @@ notifications:
     on_build_status_changed: true
     
 environment:
+  VCPKG_DIR: C:\Tools\vcpkg
   global:
     PYTHON: "C:\\conda"
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci-helpers\\appveyor\\windows_sdk.cmd"
