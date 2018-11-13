@@ -43,22 +43,25 @@ install:
       boost-iostreams
       --triplet %PLATFORM%-windows
   - vcpkg list
+
+  - set "PATH=%CONDA_ROOT%;%CONDA_ROOT%\Scripts;%CONDA_ROOT%\Library\bin;%PATH%"
   - set PATH=%VCPKG_DIR%\installed\%PLATFORM%-windows\bin;%PATH%
+  - set "CONDA_ROOT=C:\Miniconda%BASE_PYTHON_VERSION%%ARCH_LABEL%"
   
   - if "%PYTHON_VERSION%" == "3.6" set "BASE_PYTHON_VERSION=3"
   - if "%PYTHON_ARCH%" == "64" set "ARCH_LABEL=-x64"
-  
-  - '"%CONDA%\Scripts\activate.bat"'
+
   - conda config --set always_yes yes --set changeps1 no
   - conda info -a
   - conda create --channel conda-forge --override-channels -q -n test-environment python=%PYTHON_VERSION% arrow-cpp pybind11 pandas numpy matplotlib pyarrow pytest
 
 build_script:
+ 
+  - echo %CONDA_ROOT%
+  - cd %CONDA_ROOT
+  - "%CONDA_ROOT%\\Scripts\\activate .\envs\test-environment"
   - echo %APPVEYOR_BUILD_FOLDER%
   - cd %APPVEYOR_BUILD_FOLDER%
-  - set "CONDA_ROOT=C:\Miniconda%BASE_PYTHON_VERSION%%ARCH_LABEL%"
-  - echo %CONDA_ROOT%
-  - "%CONDA_ROOT%\\Scripts\\activate test-environment"
   - echo CONDA_PREFIX %CONDA_PREFIX%
   - echo PATH %PATH%
   - pip install scipy
