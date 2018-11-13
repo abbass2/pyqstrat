@@ -44,9 +44,10 @@ install:
       --triplet %PLATFORM%-windows
   - vcpkg list
 
+  - set "CONDA_ROOT=C:\Miniconda%BASE_PYTHON_VERSION%%ARCH_LABEL%"
   - set "PATH=%CONDA_ROOT%;%CONDA_ROOT%\Scripts;%CONDA_ROOT%\Library\bin;%PATH%"
   - set PATH=%VCPKG_DIR%\installed\%PLATFORM%-windows\bin;%PATH%
-  - set "CONDA_ROOT=C:\Miniconda%BASE_PYTHON_VERSION%%ARCH_LABEL%"
+
   
   - if "%PYTHON_VERSION%" == "3.6" set "BASE_PYTHON_VERSION=3"
   - if "%PYTHON_ARCH%" == "64" set "ARCH_LABEL=-x64"
