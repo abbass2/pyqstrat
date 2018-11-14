@@ -54,13 +54,17 @@ install:
 
   - conda config --set always_yes yes --set changeps1 no
   - conda info -a
+
+  - conda install -n root -q conda --no-pin
+  # activate with newer conda, may set different variables
+  - "%CONDA_ROOT%\\Scripts\\activate root"
   - conda create --channel conda-forge --override-channels -q -n test-environment python=%PYTHON_VERSION% arrow-cpp pybind11 pandas numpy matplotlib pyarrow pytest
 
 build_script:
  
   - echo %CONDA_ROOT%
   - cd %CONDA_ROOT
-  - "%CONDA_ROOT%\\Scripts\\activate .\envs\test-environment"
+  - "%CONDA_ROOT%\\Scripts\\activate test-environment"
   - echo %APPVEYOR_BUILD_FOLDER%
   - cd %APPVEYOR_BUILD_FOLDER%
   - echo CONDA_PREFIX %CONDA_PREFIX%
