@@ -99,6 +99,6 @@ int run_python() {
 }
 
 int main() {
-    //test_tick_processing();
-    run_python();
+    test_tick_processing();
+    //run_python();
 }

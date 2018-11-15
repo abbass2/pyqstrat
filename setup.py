@@ -39,19 +39,13 @@ extra_link_args=[]
 
 if 'CONDA_PREFIX' in os.environ:
 
-    if sys.platform.startswith("win"):
-        if 'VCPKG_DIR' in os.environ and 'PLATFORM' in os.environ:
-            include_dirs.append(f'{os.environ["VCPKG_DIR"]}\\installed\\{os.environ["PLATFORM"]}-windows\include')
-         
+    if sys.platform in ["win32", "cygwin"]:
         include_dirs += [os.environ['CONDA_PREFIX'] + '\\include',
                          os.environ['CONDA_PREFIX'] + '\\Library\\include']
     else:
         include_dirs.append(os.environ['CONDA_PREFIX'] + '/include')
 
-    if sys.platform.startswith("win"):
-        if 'VCPKG_DIR' in os.environ and 'PLATFORM' in os.environ:
-            library_dirs.append(f'{os.environ["VCPKG_DIR"]}\\installed\\{os.environ["PLATFORM"]}-windows\lib')
-            
+    if sys.platform in ["win32", "cygwin"]:
         library_dirs += [os.environ['CONDA_PREFIX'] + '\\lib',
                          os.environ['CONDA_PREFIX'] + '\\Library\\lib',
                          os.environ['CONDA_PREFIX'] + '\\bin',
@@ -60,14 +54,18 @@ if 'CONDA_PREFIX' in os.environ:
     else:
         library_dirs = [os.environ['CONDA_PREFIX'] + '/lib']
 
-
-
     extra_link_args = None
     if sys.platform == 'darwin':
         link_dirs = ',-rpath,'.join(library_dirs)
         extra_link_args=[f'-Wl,-rpath,{link_dirs}']
-    elif sys.platform.startswith("win"):
-        extra_link_args=['/LIBPATH:{}']
+
+libraries = [
+    'z',
+    'arrow',
+]
+
+if sys.platform not in ["win32", "cygwin"]:
+    libraries.append('boost_iostreams') # Problems with linking to iostreams in windows with conda and vcpkg 
 
 ext_modules = [
     Extension(
@@ -84,11 +82,7 @@ ext_modules = [
         ],
         include_dirs=include_dirs,
         library_dirs=library_dirs,
-        libraries = [
-            'z',
-            'arrow',
-            'boost_iostreams',
-        ],
+        libraries = libraries,
         language='c++',
         extra_link_args=extra_link_args
     ),
@@ -139,10 +133,6 @@ class BuildExt(build_ext):
                 opts.append('-fvisibility=hidden')
         elif ct == 'msvc':
             opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
-            #opts.append('/DARROW_CXXFLAGS="/WX /MP"')
-            #opts.append('/DARROW_PARQUET=on')
-            #opts.append('/DARROW_PYTHON=on')
-            #opts.append('/DBOOST_ZLIB_BINARY=kernel32')
         for ext in self.extensions:
             ext.extra_compile_args = opts
         build_ext.build_extensions(self)

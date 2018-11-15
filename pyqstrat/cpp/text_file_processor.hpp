@@ -7,11 +7,9 @@
 #include <cmath>
 #include <istream>
 #include <fstream>
-#include <boost/iostreams/filtering_stream.hpp>
+
 
 #include "pq_types.hpp"
-
-
 
 struct PriceQtyMissingDataHandler :  public MissingDataHandler {
     //PriceQtyMissingDataHandler() {}
@@ -53,19 +51,21 @@ private:
 
 class StreamHolder {
 public:
-    inline StreamHolder(std::shared_ptr<boost::iostreams::filtering_streambuf<boost::iostreams::input>> buf, std::shared_ptr<std::istream> file, std::shared_ptr<std::istream> istream) :
-    _buf(buf),
+    inline StreamHolder(std::shared_ptr<std::istream> file,
+                        std::shared_ptr<std::streambuf> buf = nullptr,
+                        std::shared_ptr<std::istream> istream = nullptr) :
     _file(file),
+    _buf(buf),
     _istream(istream) {}
     bool operator()(std::string& line) {
         std::istream& istr = std::getline(*_istream, line);
         if (istr) return true;
         return false;
     }
-    virtual ~StreamHolder();
+    virtual ~StreamHolder() = default;
 private:
-    std::shared_ptr<boost::iostreams::filtering_streambuf<boost::iostreams::input>> _buf;
     std::shared_ptr<std::istream> _file;
+    std::shared_ptr<std::streambuf> _buf;
     std::shared_ptr<std::istream> _istream;
 };
 
