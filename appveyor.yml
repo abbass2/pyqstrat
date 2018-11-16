@@ -1,7 +1,5 @@
-cache:
-  - C:\Tools\vcpkg\installed
-
-configuration: Release
+matrix:
+  fast_finish: true
 
 notifications:
   - provider: Email
@@ -10,66 +8,47 @@ notifications:
     on_build_success: true
     on_build_failure: true
     on_build_status_changed: true
-    
+
 environment:
-  VCPKG_DIR: C:\Tools\vcpkg
-  PYTHON: "C:\\conda"
-  CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci-helpers\\appveyor\\windows_sdk.cmd"
-  PYTHON_ARCH: "64" # needs to be set for CMD_IN_ENV to succeed. If a mix
+  global:
+    PYTHON: "C:\\conda"
+    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci-helpers\\appveyor\\windows_sdk.cmd"
+    PYTHON_ARCH: "64" # needs to be set for CMD_IN_ENV to succeed. If a mix
                       # of 32 bit and 64 bit builds are needed, move this
                       # to the matrix section.
   matrix:
-    - PYTHON_VERSION: 3.6
-      CONDA: C:\Miniconda36
-
-version: '{build}'
-image: Visual Studio 2017
+    - PYTHON_VERSION: "3.6"
 
 platform:
-  - x64
-
-init:
-  - cd %VCPKG_DIR%
-  - echo.set(VCPKG_BUILD_TYPE release)>> %VCPKG_DIR%\triplets\%PLATFORM%-windows.cmake
-  - vcpkg version
-  - cd %APPVEYOR_BUILD_FOLDER%
-  - ps: if ($Env:PLATFORM -eq "x64") { $Env:CONDA = "${Env:CONDA}-x64" }
+  -x64
 
 install:
-  # Make sure the compiler is accessible
-  - '"%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" %PLATFORM%'
-
-  - vcpkg install 
-      boost-iostreams
-      --triplet %PLATFORM%-windows
-  - vcpkg list
-
-  - set "CONDA_ROOT=C:\Miniconda%BASE_PYTHON_VERSION%%ARCH_LABEL%"
-  - set "PATH=%CONDA_ROOT%;%CONDA_ROOT%\Scripts;%CONDA_ROOT%\Library\bin;%PATH%"
-  - set PATH=%VCPKG_DIR%\installed\%PLATFORM%-windows\bin;%PATH%
-
-  
   - if "%PYTHON_VERSION%" == "3.6" set "BASE_PYTHON_VERSION=3"
   - if "%PYTHON_ARCH%" == "64" set "ARCH_LABEL=-x64"
-
-  - conda config --set always_yes yes --set changeps1 no
-  - conda info -a
-
+  # These are already installed on appveyor.  Update them.
+  - set "CONDA_ROOT=C:\Miniconda%BASE_PYTHON_VERSION%%ARCH_LABEL%"
+  # we can't "activate root" with sufficiently-old conda which appveyor has (?)
+  # - "%CONDA_ROOT%\\Scripts\\activate root"
+  - set "PATH=%CONDA_ROOT%;%CONDA_ROOT%\Scripts;%CONDA_ROOT%\Library\bin;%PATH%"
+  - set PATH
+  - echo CONDA_PREFIX %CONDA_PREFIX%
+  - conda config --set always_yes yes
+  # Use the latest conda
   - conda install -n root -q conda --no-pin
   # activate with newer conda, may set different variables
   - "%CONDA_ROOT%\\Scripts\\activate root"
-  - conda create --channel conda-forge --override-channels -q -n test-environment python=%PYTHON_VERSION% arrow-cpp pybind11 pandas numpy matplotlib pyarrow pytest
+  - echo CONDA_PREFIX %CONDA_PREFIX%
+  - conda info -a
+  - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% arrow-cpp pybind11 pandas numpy matplotlib pyarrow pytest
 
-build_script:
- 
-  - echo %CONDA_ROOT%
-  - cd %CONDA_ROOT
+# Not a .NET project, we build in the install step instead
+build: false
+
+test_script:
+  - echo CONDA_PREFIX %CONDA_PREFIX%
   - "%CONDA_ROOT%\\Scripts\\activate test-environment"
-  - echo %APPVEYOR_BUILD_FOLDER%
-  - cd %APPVEYOR_BUILD_FOLDER%
   - echo CONDA_PREFIX %CONDA_PREFIX%
   - echo PATH %PATH%
-  - pip install scipy
   - conda list
   - conda info -a
   - python -c "import sys; print(sys.version)"
@@ -78,3 +57,7 @@ build_script:
   - python --version
   - python setup.py build_ext --inplace
   - python -m pytest pyqstrat
+
+
+
+

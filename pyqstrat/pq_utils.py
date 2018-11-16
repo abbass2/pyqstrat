@@ -280,15 +280,17 @@ def touch(fname, mode=0o666, dir_fd=None, **kwargs):
 def is_newer(filename, ref_filename):
     '''whether filename ctime (modfication time) is newer than ref_filename or either file does not exist
     >>> import time
-    >>> touch('/tmp/x.txt')
+    >>> import tempfile
+    >>> temp_dir = tempfile.gettempdir()
+    >>> touch(f'{temp_dir}/x.txt')
     >>> time.sleep(0.1)
-    >>> touch('/tmp/y.txt')
-    >>> is_newer('/tmp/y.txt', '/tmp/x.txt')
+    >>> touch(f'{temp_dir}/y.txt')
+    >>> is_newer(f'{temp_dir}/y.txt', f'{temp_dir}/x.txt')
     True
-    >>> touch('/tmp/y.txt')
+    >>> touch(f'{temp_dir}/y.txt')
     >>> time.sleep(0.1)
-    >>> touch('/tmp/x.txt')
-    >>> is_newer('/tmp/y.txt', '/tmp/x.txt')
+    >>> touch(f'{temp_dir}/x.txt')
+    >>> is_newer(f'{temp_dir}/y.txt', f'{temp_dir}/x.txt')
     False
     ''' 
     if not os.path.isfile(filename) or not os.path.isfile(ref_filename): return True
