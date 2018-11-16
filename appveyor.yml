@@ -55,6 +55,7 @@ test_script:
   - python -c "import sys; print(sys.executable)"
   - python -c "import sys; print(sys.prefix)"
   - python --version
+  - pip install scipy
   - python setup.py build_ext --inplace
   - python -m pytest pyqstrat
 
