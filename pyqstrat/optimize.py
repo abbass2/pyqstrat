@@ -97,6 +97,9 @@ class Optimizer:
             raise_on_error: If set to True, even if we are running a multiprocess optimization, any Exceptions will bubble up and stop the Optimizer.
               This can be useful for debugging to see stack traces for Exceptions.
         '''
+        import sys
+        if sys.platform in ['win32', 'cygwin'] and self.max_processes != 1:
+            raise Exception("max_processes > 1 not supported on Windows")
         if self.max_processes == 1: self._run_single_process()
         else: self._run_multi_process(raise_on_error)
         

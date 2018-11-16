@@ -338,6 +338,18 @@ def process_marketdata(input_filename_provider, file_processor, num_processes = 
     """
     
     input_filenames = input_filename_provider()
+
+    import sys
+
+    if sys.platform in ['win32', 'cygwin'] and num_processes is not None and num_processes != 1:
+        raise Exception("num_processes > 1 not supported on Windows")
+
+    if num_processes is not None and num_processes == 1:
+        for input_filename in input_filenames:
+            file_processor(input_filename)
+
+        return
+        
     with concurrent.futures.ProcessPoolExecutor(num_processes) as executor:
         fut_filename_map = {}
         for input_filename in input_filenames:
