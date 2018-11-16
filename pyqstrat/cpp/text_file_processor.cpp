@@ -66,7 +66,7 @@ shared_ptr<StreamHolder> TextFileDecompressor::call(const string& input_filename
 #endif
     } else {
         std::shared_ptr<ifstream> file = shared_ptr<ifstream>(new ifstream(input_filename, std::ios_base::in));
-        return shared_ptr<StreamHolder>(new StreamHolder(file));
+        return shared_ptr<StreamHolder>(new StreamHolder(nullptr, nullptr, file));
     }
 #ifndef _WIN32
     std::shared_ptr<ifstream> file = shared_ptr<ifstream>(new ifstream(input_filename, std::ios_base::in | std::ios_base::binary));
