@@ -1,4 +1,5 @@
 matrix:
+  # Finish when first job fails
   fast_finish: true
 
 notifications:
@@ -13,11 +14,10 @@ environment:
   global:
     PYTHON: "C:\\conda"
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci-helpers\\appveyor\\windows_sdk.cmd"
-    PYTHON_ARCH: "64" # needs to be set for CMD_IN_ENV to succeed. If a mix
-                      # of 32 bit and 64 bit builds are needed, move this
-                      # to the matrix section.
-  matrix:
-    - PYTHON_VERSION: "3.6"
+    PYTHON_ARCH: "64" 
+
+matrix:
+  - PYTHON_VERSION: "3.6"
 
 platform:
   -x64
@@ -39,7 +39,7 @@ install:
   - "%CONDA_ROOT%\\Scripts\\activate root"
   - echo CONDA_PREFIX %CONDA_PREFIX%
   - conda info -a
-  - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% arrow-cpp pybind11 pandas numpy matplotlib pyarrow pytest
+  - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% arrow-cpp pybind11 pandas numpy matplotlib pyarrow pytest ipython
 
 # Not a .NET project, we build in the install step instead
 build: false
