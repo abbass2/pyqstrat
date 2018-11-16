@@ -16,8 +16,8 @@ environment:
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci-helpers\\appveyor\\windows_sdk.cmd"
     PYTHON_ARCH: "64" 
 
-matrix:
-  - PYTHON_VERSION: "3.6"
+  matrix:
+    - PYTHON_VERSION: "3.6"
 
 platform:
   -x64
