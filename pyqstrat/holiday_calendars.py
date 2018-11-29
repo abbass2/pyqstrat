@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[3]:
+# In[1]:
 
 
 import numpy as np
@@ -126,8 +126,8 @@ class Calendar(object):
         >>> nyse = Calendar.get_calendar(Calendar.NYSE)
         >>> nyse.is_trading_day('2017-04-01') # Weekend
         False
-        >>> nyse.is_trading_day(np.arange('2017-04-01', '2017-04-09', dtype = np.datetime64))
-        array([False, False,  True,  True,  True,  True,  True, False], dtype=bool)
+        >>> nyse.is_trading_day(np.arange('2017-04-01', '2017-04-09', dtype = np.datetime64)) # doctest:+ELLIPSIS
+        array([False, False,  True,  True,  True,  True,  True, False]...)
         '''
         if isinstance(dates, str) or isinstance(dates, datetime.date): dates = np.datetime64(dates)
         return np.is_busday(dates, busdaycal = self.bus_day_cal)
