@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import collections
 import datetime
+import os
 
 def _as_np_date(val):
     '''
@@ -81,7 +82,7 @@ def read_holidays(calendar_name):
     '''
     Reads a csv with a holidays column containing holidays (not including weekends)
     '''
-    df = pd.read_csv(f'./refdata/holiday_calendars/{calendar_name}.csv')
+    df = pd.read_csv(f"{os.path.dirname(os.path.realpath('__file__'))}/refdata/holiday_calendars/{calendar_name}.csv")
     holidays = pd.to_datetime(df.holidays, format='%Y-%m-%d').values.astype('M8[D]')
     return holidays
 
