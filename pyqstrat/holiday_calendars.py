@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[3]:
 
 
 import numpy as np
@@ -82,7 +82,15 @@ def read_holidays(calendar_name):
     '''
     Reads a csv with a holidays column containing holidays (not including weekends)
     '''
-    df = pd.read_csv(f"{os.path.dirname(os.path.realpath('__file__'))}/refdata/holiday_calendars/{calendar_name}.csv")
+    dirname = os.path.dirname(os.path.realpath('__file__'))
+    
+    if not os.path.isdir(dirname + '/refdata'):
+        if os.path.isdir(dirname + '/pyqstrat/refdata'):
+            dirname = dirname + '/pyqstrat'
+        else:
+            raise Exception(f'path {dirname}/refdata and {dirname}/pyqstrat/refdata do not exist')
+                         
+    df = pd.read_csv(f'{dirname}/refdata/holiday_calendars/{calendar_name}.csv')
     holidays = pd.to_datetime(df.holidays, format='%Y-%m-%d').values.astype('M8[D]')
     return holidays
 
@@ -253,4 +261,10 @@ class Calendar(object):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
+
+
+# In[ ]:
+
+
+
 
