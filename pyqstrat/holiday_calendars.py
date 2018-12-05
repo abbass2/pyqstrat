@@ -9,6 +9,7 @@ import pandas as pd
 import collections
 import datetime
 import os
+import inspect
 
 def _as_np_date(val):
     '''
@@ -82,7 +83,8 @@ def read_holidays(calendar_name):
     '''
     Reads a csv with a holidays column containing holidays (not including weekends)
     '''
-    dirname = os.path.dirname(os.path.realpath('__file__'))
+    #dirname = os.path.dirname(os.path.realpath('__file__'))
+    dirname = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
     
     if not os.path.isdir(dirname + '/refdata'):
         if os.path.isdir(dirname + '/pyqstrat/refdata'):
@@ -261,10 +263,4 @@ class Calendar(object):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-
-
-# In[ ]:
-
-
-
 
