@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import os
 import numpy as np
 import datetime
@@ -141,40 +136,69 @@ def date_2_num(d):
             dt = np.nan
     return dt
 
-def resample_ohlc(dates, o, h, l, c, v, sampling_frequency):
+def resample_vwap(df, sampling_frequency):
+    '''
+    Compute weighted average of vwap given higher frequency vwap and volume
+    '''
+    if 'v' not in df.columns: return None
+    sum_1 = df.vwap * df.v
+    sum_2 = sum_1.resample(sampling_frequency).agg(np.sum)
+    volume_sum = df.v.resample(sampling_frequency).agg(np.sum)
+    vwap = sum_2 / volume_sum
+    return vwap
+
+def resample_ohlc(df, sampling_frequency, resample_funcs = None):
     '''Downsample OHLCV data using sampling frequency
     
     Args:
-        o: open price, downsampling uses the first point in the bin
-        h: high price, downsampling uses the max
-        l: low price, downsampling uses the min
-        c: close price, downsampling uses the last point
-        v: volume, downsampling uses the sum
-        sampling_frequency: See pandas frequency strings
-        
+        df (pd.DataFrame): Must contain an index of numpy datetime64 type which is monotonically increasing
+        sampling_frequency (str): See pandas frequency strings
+        resample_funcs (dict of str : int) : a dictionary of column name -> resampling function for any columns that are custom defined.  Default None.
+            If there is no entry for a custom column, defaults to 'last' for that column
     Returns:
-        A tuple of arrays, corresponding to each array passed in that was not None.  
-          For example, if l and v were passed in as None, the tuple will not contain these.
+        pd.DataFrame: Resampled dataframe
         
-    >>> dates = np.array(['2018-01-08 15:00:00', '2018-01-09 15:00:00', '2018-01-09 15:00:00', '2018-01-11 15:00:00'], dtype = 'M8[ns]')
-    >>> o = np.array([8.9, 9.1, 9.3, 8.6])
-    >>> h = np.array([9.0, 9.3, 9.4, 8.7])
-    >>> l = np.array([8.8, 9.0, 9.2, 8.4])
-    >>> c = np.array([8.95, 9.2, 9.35, 8.5])
-    >>> v = np.array([200, 100, 150, 300])
-    >>> resample_ohlc(dates, o, h, l, c, None, sampling_frequency = 'D')
-    (array(['2018-01-08T00:00:00.000000000', '2018-01-09T00:00:00.000000000',
-            '2018-01-10T00:00:00.000000000', '2018-01-11T00:00:00.000000000'], dtype='datetime64[ns]'), 
-            array([8.9, 9.1, nan, 8.6]), array([9. , 9.4, nan, 8.7]), array([8.8, 9. , nan, 8.4]), array([8.95, 9.35,  nan, 8.5 ]), None)
+    >>> df = pd.DataFrame({'date' : np.array(['2018-01-08 15:00:00', '2018-01-09 13:30:00', '2018-01-09 15:00:00', '2018-01-11 15:00:00'], dtype = 'M8[ns]'),
+    ...           'o' : np.array([8.9, 9.1, 9.3, 8.6]), 
+    ...           'h' : np.array([9.0, 9.3, 9.4, 8.7]), 
+    ...           'l' : np.array([8.8, 9.0, 9.2, 8.4]), 
+    ...           'c' : np.array([8.95, 9.2, 9.35, 8.5]),
+    ...           'v' : np.array([200, 100, 150, 300]),
+    ...           'x' : np.array([300, 200, 100, 400])
+    ...          })
+    >>> df['vwap'] =  0.5 * (df.l + df.h)
+    >>> df.set_index('dates', inplace = True)
+    >>> resample_ohlc(df, sampling_frequency = 'D', resample_funcs={'x' : lambda df, sampling_frequency : df.x.resample(sampling_frequency).agg(np.mean)})
+            date    o    h    l     c    v      x  vwap
+    0 2018-01-08  8.9  9.0  8.8  8.95  200  300.0  8.90
+    1 2018-01-09  9.1  9.4  9.0  9.35  250  150.0  9.24
+    2 2018-01-10  NaN  NaN  NaN   NaN    0    NaN   NaN
+    3 2018-01-11  8.6  8.7  8.4  8.50  300  400.0  8.55
     '''
-    if sampling_frequency is None: return dates, o, h, l, c, v
-    df = pd.DataFrame({'date' : dates, 'o' : o, 'h' : h, 'l' : l, 'c' : c, 'v' : v}).set_index('date')
-    df = df.resample(sampling_frequency).agg({'o': 'first', 'h': 'max', 'l': 'min', 'c': 'last', 'v' : 'sum'}).dropna(how = 'all')
+    if sampling_frequency is None: return df
     
-    col_list = [df.index.values]
-    for col in [(o, 'o'), (h, 'h'), (l, 'l'), (c, 'c'), (v, 'v')]:
-        col_list.append(None if col[0] is None else df[col[1]].values)
-    return tuple(col_list)
+    if resample_funcs is None: resample_funcs = {}
+    if 'vwap' in df.columns: resample_funcs.update({'vwap' : resample_vwap})
+    
+    funcs = {'o': 'first', 'h': 'max', 'l': 'min', 'c': 'last', 'v' : 'sum'}
+    
+    agg_dict = {}
+    
+    for col in df.columns:
+        if col in funcs:
+            agg_dict[col] = funcs[col]
+            continue
+        if col not in resample_funcs:
+            agg_dict[col] = 'last'
+    
+    resampled = df.resample(sampling_frequency).agg(agg_dict).dropna(how = 'all')
+    
+    for k, v in resample_funcs.items():
+        res = v(df, sampling_frequency)
+        if res is not None: resampled[k] = res
+            
+    resampled.reset_index(inplace = True)
+    return resampled
 
 def resample_ts(dates, values, sampling_frequency):
     '''Downsample a pair of dates and values using sampling frequency, using the last value if it does not exist at bin edge.  See pandas.Series.resample
@@ -295,4 +319,46 @@ def is_newer(filename, ref_filename):
     ''' 
     if not os.path.isfile(filename) or not os.path.isfile(ref_filename): return True
     return os.path.getmtime(filename) > os.path.getmtime(ref_filename)
+
+def get_empty_np_value(np_dtype):
+    '''
+    Get empty value for a given numpy datatype
+    >>> a = np.array(['2018-01-01', '2018-01-03'], dtype = 'M8[D]')
+    >>> get_empty_np_value(a.dtype)
+    numpy.datetime64('NaT')
+    '''
+    kind = np_dtype.kind
+    if kind == 'f': return np.nan # float
+    if kind == 'b': return False # bool
+    if kind ==  'i' or kind == 'u': return 0 # signed or unsigned int
+    if kind == 'M': return np.datetime64('NaT') # datetime
+    if kind == 'O' or kind == 'S' or kind == 'U': return '' # object or string or unicode
+    raise Exception(f'unknown dtype: {dtype}')
+    
+FUTURE_CODES_INT = {'F' : 1, 'G' : 2, 'H' : 3, 'J' : 4, 'K' : 5, 'M' : 6, 'N' : 7, 'Q' : 8, 'U' : 9, 'V' : 10, 'X' : 11, 'Z' : 12}
+FUTURE_CODES_STR = {'F' : 'jan', 'G' : 'feb', 'H' : 'mar', 'J' : 'apr', 'K' : 'may', 'M' : 'jun', 'N' : 'jul', 'Q' : 'aug', 'U' : 'sep', 'V' : 'oct', 'X' : 'nov', 'Z' : 'dec'}
+
+def decode_future_code(future_code, as_str = True):
+    '''
+    Given a future code such as "X", return either the month number (from 1 - 12) or the month abbreviation, such as "nov"
+    
+    Args:
+        future_code (str): the one letter future code
+        as_str (bool, optional): If set, we return the abbreviation, if not, we return the month number
+        
+    >>> decode_future_code('X', as_str = False)
+    11
+    >>> decode_future_code('X', as_str = False)
+    nov
+    '''
+    
+    if len(future_code) != 1: raise Exception("Future code must be a single character")
+    if as_str:
+        if future_code not in FUTURE_CODES_STR: raise Exception(f'unknown future code: {future_code}')
+        return FUTURE_CODES_STR[future_code]
+    
+    if future_code not in FUTURE_CODES_INT: raise Exception(f'unknown future code: {future_code}')
+    return FUTURE_CODES_INT[future_code]
+
+
 
