@@ -1,7 +1,7 @@
 #include <vector>
 #include <cmath>
 #include <string>
-#include <boost/algorithm/string.hpp>
+#include <algorithm>
 
 #include "date.hpp"
 #include "utils.hpp"
@@ -80,6 +80,46 @@ vector<string> tokenize(const char* str, const char separator) {
     return tokens;
 }
 
+// The following string trim functions are from https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
+// trim from start (in place)
+static inline void ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
+        return !std::isspace(ch);
+    }));
+}
+
+// trim from end (in place)
+static inline void rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+        return (ch == ' ' | ch == '\n' || ch == '\r');
+    }).base(), s.end());
+}
+
+// trim from both ends (in place)
+static inline void trim(std::string &s) {
+    ltrim(s);
+    rtrim(s);
+}
+
+// trim from start (copying)
+static inline std::string ltrim_copy(std::string s) {
+    ltrim(s);
+    return s;
+}
+
+// trim from end (copying)
+static inline std::string rtrim_copy(std::string s) {
+    rtrim(s);
+    return s;
+}
+
+// trim from both ends (copying)
+static inline std::string trim_copy(std::string s) {
+    trim(s);
+    return s;
+}
+
+
 std::string join_fields(const vector<string>& fields, const vector<int>& indices, char separator, bool strip) {
     stringstream ss;
     bool first = true;
@@ -88,7 +128,7 @@ std::string join_fields(const vector<string>& fields, const vector<int>& indices
         if (!str.size()) continue;
         if (first) {
             if (strip) {
-                std::string stripped = boost::trim_copy_if(str, boost::is_any_of("\n\r "));
+                std::string stripped = trim_copy(str);
                 if (stripped.size()) ss << stripped;
             } else {
                 ss << str;
@@ -96,7 +136,7 @@ std::string join_fields(const vector<string>& fields, const vector<int>& indices
             first = false;
         } else {
             if (strip) {
-                std::string stripped = boost::trim_copy_if(str, boost::is_any_of("\n\r "));
+                std::string stripped = trim_copy(str);
                 if (stripped.size()) ss << separator << stripped;
             } else {
                 ss << separator << str;

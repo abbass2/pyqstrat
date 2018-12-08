@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import numpy as np
 import pandas as pd
 import collections
@@ -30,8 +25,11 @@ def _as_np_date(val):
     '''
     if isinstance(val, np.datetime64): 
         return val.astype('M8[D]')
-    if isinstance(val, str) or isinstance(val, datetime.date) or isinstance(val, datetime.datetime): 
-        return np.datetime64(val).astype('M8[D]')
+    if isinstance(val, str) or isinstance(val, datetime.date) or isinstance(val, datetime.datetime):
+        np_date = np.datetime64(val).astype('M8[D]')
+        if isinstance(np_date.astype(datetime.datetime), int): # User can pass in a string like 20180101 which gets parsed as a year
+            raise Exception(f'invalid date: {val}')
+        return np_date
     if isinstance(val, pd.Timestamp): 
         return timestamp.to_datetime64().astype('M8[D]')
     if isinstance(val, pd.Series) or isinstance(val, pd.DatetimeIndex):
@@ -130,7 +128,10 @@ class Calendar(object):
         >>> nyse.is_trading_day(np.arange('2017-04-01', '2017-04-09', dtype = np.datetime64)) # doctest:+ELLIPSIS
         array([False, False,  True,  True,  True,  True,  True, False]...)
         '''
-        if isinstance(dates, str) or isinstance(dates, datetime.date): dates = np.datetime64(dates)
+        if isinstance(dates, str) or isinstance(dates, datetime.date): 
+            dates = np.datetime64(dates)
+            if isinstance(dates.astype(datetime.datetime), int): # User can pass in a string like 20180101 which gets parsed as a year
+                raise Exception(f'invalid date: {dates}')
         return np.is_busday(dates, busdaycal = self.bus_day_cal)
     
     def num_trading_days(self, start, end, include_first = False, include_last = True):
@@ -262,4 +263,5 @@ class Calendar(object):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
+
 
