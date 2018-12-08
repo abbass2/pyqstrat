@@ -38,9 +38,8 @@ library_dirs = []
 extra_link_args=[]
 
 # Don't know what the difference is but sometimes one is set to the active environment, other times the other one is
-if 'CONDA_PREFIX' in os.environ or 'CONDA_PREFIX_1' in os.environ: 
-
-    if 'CONDA_PREFIX_1' in os.environ:
+if 'CONDA_PREFIX' in os.environ or 'CONDA_PREFIX_1' in os.environ:
+    if 'CONDA_PREFIX_1' in os.environ and 'envs' in os.environ['CONDA_PREFIX_1']:
         conda_prefix = os.environ['CONDA_PREFIX_1']
     else:
         conda_prefix = os.environ['CONDA_PREFIX']
@@ -64,6 +63,8 @@ if 'CONDA_PREFIX' in os.environ or 'CONDA_PREFIX_1' in os.environ:
     if sys.platform == 'darwin':
         link_dirs = ',-rpath,'.join(library_dirs)
         extra_link_args=[f'-Wl,-rpath,{link_dirs}']
+else:
+    print(f'CONDA_PREFIX or CONDA_PREFIX_1 environment variables not found for including and linking to boost and arrow header files.')
 
 libraries = [
     'z',

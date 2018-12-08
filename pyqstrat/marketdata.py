@@ -119,8 +119,11 @@ class MarketData:
         >>> print(md.dates)
         ['2018-01-05T00:00:00.000000000' '2018-01-07T00:00:00.000000000'
          '2018-01-09T00:00:00.000000000' '2018-01-10T00:00:00.000000000']
-        >>> print(md.o, md.c, md.x)
-        [ 9. nan 10. 11.] [8.1 nan 8.2 8.3] [5.1 0.  5.3 5.5]
+        >>> from pprint import pprint
+        >>> pprint((md.o, md.c, md.x)) # doctest: +NORMALIZE_WHITESPACE
+        (array([  9.,  nan,  10.,  11.]),
+         array([ 8.1,  nan,  8.2,  8.3]),
+         array([ 5.1,  0. ,  5.3,  5.5]))
         '''
         if dates is None or len(dates) == 0: return
         dates = np.unique(dates)

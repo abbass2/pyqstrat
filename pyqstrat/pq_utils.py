@@ -239,7 +239,7 @@ def infer_frequency(dates):
     Args:
         dates: A numpy array of monotonically increasing datetime64
     >>> dates = np.array(['2018-01-01 11:00:00', '2018-01-01 11:15:00', '2018-01-01 11:30:00', '2018-01-01 11:35:00'], dtype = 'M8[ns]')
-    >>> infer_frequency(dates)
+    >>> print(round(infer_frequency(dates), 8))
     0.01041667
     '''
     assert(monotonically_increasing(dates))

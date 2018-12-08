@@ -12,7 +12,7 @@ using namespace std;
 float str_to_float(const char* str, char decimal_point, char thousands_separator) {
     // convert a string to a float
     float result = 0;
-    float sign = *str == '-' ? static_cast<void>(str++), -1 : 1;
+    float sign = *str == '-' ? static_cast<void>(str++), -1.0f : 1.0f;
     while ((*str >= '0' && *str <= '9') || (*str == thousands_separator)) {
         if (*str == thousands_separator) {
             str++;
@@ -23,7 +23,7 @@ float str_to_float(const char* str, char decimal_point, char thousands_separator
         str++;
     }
     
-    float multiplier = 0.1;
+    float multiplier = 0.1f;
     if (*str == decimal_point) {
         str++;
         while (*str >= '0' && *str <= '9') {
@@ -33,11 +33,11 @@ float str_to_float(const char* str, char decimal_point, char thousands_separator
         }
     }
     
-    float power = 0;
+    float power = 0.0f;
     result *= sign;
     if (*str == 'e' || *str == 'E') {
         str++;
-        float powerer = *str == '-'? static_cast<void>(str++), 0.1 : 10;
+        float powerer = *str == '-'? static_cast<void>(str++), 0.1f : 10.0f;
         
         while ((*str >= '0') && (*str <= '9')) {
             power *= 10;
@@ -79,46 +79,6 @@ vector<string> tokenize(const char* str, const char separator) {
     }
     return tokens;
 }
-
-// The following string trim functions are from https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
-// trim from start (in place)
-static inline void ltrim(std::string &s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
-        return !std::isspace(ch);
-    }));
-}
-
-// trim from end (in place)
-static inline void rtrim(std::string &s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
-        return (ch == ' ' | ch == '\n' || ch == '\r');
-    }).base(), s.end());
-}
-
-// trim from both ends (in place)
-static inline void trim(std::string &s) {
-    ltrim(s);
-    rtrim(s);
-}
-
-// trim from start (copying)
-static inline std::string ltrim_copy(std::string s) {
-    ltrim(s);
-    return s;
-}
-
-// trim from end (copying)
-static inline std::string rtrim_copy(std::string s) {
-    rtrim(s);
-    return s;
-}
-
-// trim from both ends (copying)
-static inline std::string trim_copy(std::string s) {
-    trim(s);
-    return s;
-}
-
 
 std::string join_fields(const vector<string>& fields, const vector<int>& indices, char separator, bool strip) {
     stringstream ss;

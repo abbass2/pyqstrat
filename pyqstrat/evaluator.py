@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import warnings
 warnings.filterwarnings("ignore", message="numpy.dtype size changed") # another bogus warning, see https://github.com/numpy/numpy/pull/432
 import pandas as pd
@@ -12,9 +7,7 @@ from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
 
-# In[2]:
-
-
+#cell 1
 _VERBOSE = False
 
 def compute_amean(returns):
@@ -82,7 +75,7 @@ def compute_sortino(returns, amean, periods_per_year):
         amean: arithmetic mean of returns
         periods_per_year: number of trading periods per year
         
-    >>> round(compute_sortino(np.array([0.001, -0.001, 0.002]), 0.001, 252), 6)
+    >>> print(round(compute_sortino(np.array([0.001, -0.001, 0.002]), 0.001, 252), 6))
     33.674916
     '''
     if not len(returns) or not np.isfinite(amean) or periods_per_year <= 0: return np.nan
@@ -445,8 +438,6 @@ if __name__ == "__main__":
     test_evaluator()
 
 
-# In[ ]:
-
-
+#cell 2
 
 
