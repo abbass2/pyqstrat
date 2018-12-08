@@ -1,7 +1,6 @@
 #include <vector>
 #include <cmath>
 #include <string>
-#include <algorithm>
 
 #include "date.hpp"
 #include "utils.hpp"
