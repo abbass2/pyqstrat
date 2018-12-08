@@ -37,9 +37,13 @@ include_dirs=[
 library_dirs = []
 extra_link_args=[]
 
-if 'CONDA_PREFIX_1' in os.environ:
+# Don't know what the difference is but sometimes one is set to the active environment, other times the other one is
+if 'CONDA_PREFIX' in os.environ or 'CONDA_PREFIX_1' in os.environ: 
 
-    conda_prefix = os.environ['CONDA_PREFIX_1']
+    if 'CONDA_PREFIX_1' in os.environ:
+        conda_prefix = os.environ['CONDA_PREFIX_1']
+    else:
+        conda_prefix = os.environ['CONDA_PREFIX']
 
     if sys.platform in ["win32", "cygwin"]:
         include_dirs += [conda_prefix + '\\include',
