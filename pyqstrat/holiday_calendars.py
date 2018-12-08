@@ -1,4 +1,9 @@
-#cell 0
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 import numpy as np
 import pandas as pd
 import collections
@@ -263,5 +268,4 @@ class Calendar(object):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-
 

@@ -106,8 +106,9 @@ def build_example_strategy(lookback_period, num_std):
     signal_subplot = pq.Subplot([pq.TimeSeries('signal', md.dates, signal)], title = 'Signal')
 
 
-    contract = pq.Contract('BTC', multiplier = 1., marketdata = md)
-    strategy = pq.Strategy([contract])
+    contract = pq.Contract('BTC', multiplier = 1.)
+    marketdata_collection = pq.MarketDataCollection(['BTC'], [md])
+    strategy = pq.Strategy([contract], marketdata_collection)
 
     # since pqstrat expects the indicator to take one argument, market data, and our sma function takes 2 arguments, we wrap it in a lambda 
     strategy.add_indicator('mid_band', lambda md : sma(md, lookback_period))

@@ -1,4 +1,9 @@
-#cell 0
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 import warnings
 warnings.filterwarnings("ignore", message="numpy.dtype size changed") # another bogus warning, see https://github.com/numpy/numpy/pull/432
 import pandas as pd
@@ -7,7 +12,9 @@ from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
 
-#cell 1
+# In[2]:
+
+
 _VERBOSE = False
 
 def compute_amean(returns):
@@ -438,6 +445,8 @@ if __name__ == "__main__":
     test_evaluator()
 
 
-#cell 2
+# In[ ]:
+
+
 
 

@@ -1,11 +1,19 @@
-#cell 0
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 from collections import defaultdict, deque
 import pandas as pd
 import numpy as np
 from copy import copy
 from pyqstrat.pq_utils import str2date
 
-#cell 1
+
+# In[2]:
+
+
 def _calc_pnl(open_trades, new_trades, ending_close, multiplier):
     '''
     >>> from collections import deque

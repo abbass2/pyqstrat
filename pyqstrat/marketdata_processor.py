@@ -343,7 +343,7 @@ def process_marketdata(input_filename_provider, file_processor, num_processes = 
     if sys.platform in ["win32", "cygwin"] and num_processes > 1:
         raise Exception("num_processes > 1 not supported on windows")
      
-    if num_processes == 1 or platform in ["win32", "cygwin"]:
+    if num_processes == 1 or sys.platform in ["win32", "cygwin"]:
         for input_filename in input_filenames:
             try:
                 file_processor(input_filename)
