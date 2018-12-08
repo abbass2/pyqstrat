@@ -37,22 +37,24 @@ include_dirs=[
 library_dirs = []
 extra_link_args=[]
 
-if 'CONDA_PREFIX' in os.environ:
+if 'CONDA_PREFIX_1' in os.environ:
+
+    conda_prefix = os.environ['CONDA_PREFIX_1']
 
     if sys.platform in ["win32", "cygwin"]:
-        include_dirs += [os.environ['CONDA_PREFIX'] + '\\include',
-                         os.environ['CONDA_PREFIX'] + '\\Library\\include']
+        include_dirs += [conda_prefix + '\\include',
+                         conda_prefix + '\\Library\\include']
     else:
-        include_dirs.append(os.environ['CONDA_PREFIX'] + '/include')
+        include_dirs.append(conda_prefix + '/include')
 
     if sys.platform in ["win32", "cygwin"]:
-        library_dirs += [os.environ['CONDA_PREFIX'] + '\\lib',
-                         os.environ['CONDA_PREFIX'] + '\\Library\\lib',
-                         os.environ['CONDA_PREFIX'] + '\\bin',
-                         os.environ['CONDA_PREFIX'] + '\\Library\\bin']
+        library_dirs += [conda_prefix + '\\lib',
+                         conda_prefix + '\\Library\\lib',
+                         conda_prefix + '\\bin',
+                         conda_prefix + '\\Library\\bin']
         
     else:
-        library_dirs = [os.environ['CONDA_PREFIX'] + '/lib']
+        library_dirs = [conda_prefix + '/lib']
 
     extra_link_args = None
     if sys.platform == 'darwin':
