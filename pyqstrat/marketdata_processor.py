@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 # coding: utf-8
 
 # In[1]:
@@ -6,6 +6,7 @@
 
 import glob
 import os
+import sys
 import re
 import datetime
 import dateutil
@@ -14,10 +15,11 @@ import concurrent
 import pyarrow as pa
 import pathlib
 from timeit import default_timer as timer
+
 from pyqstrat import *
 
 
-# In[9]:
+# In[2]:
 
 
 VERBOSE = False
@@ -80,7 +82,7 @@ class SingleDirectoryFileNameMapper:
         if not os.path.isdir(dirname): raise Exception(f'{dirname} does not exist')
      
         input_filename = os.path.basename(input_filepath)
-        exts = '\.txt$|\.gz$|\.bzip2$|\.bz$|\.tar$|\.zip$|\.csv$'
+        exts = r'\.txt$|\.gz$|\.bzip2$|\.bz$|\.tar$|\.zip$|\.csv$'
         while (re.search(exts, input_filename)):
             input_filename = '.'.join(input_filename.split('.')[:-1])
             if VERBOSE: print(f'got input file: {input_filename}')
@@ -117,10 +119,12 @@ class TextHeaderParser:
             list of str: column headers
         """
         
+        decode_needed = (compression is not None and compression != "")
+        
         with self.record_generator(input_filename, compression) as f:
             headers = None
             for line_num, line in enumerate(f):
-                line = line.decode()
+                if decode_needed: line = line.decode()
                 if line_num < self.skip_rows: continue
                 headers = line.split(self.separator)
                 headers = [re.sub('[^A-Za-z0-9 ]+', '', header) for header in headers]
@@ -142,7 +146,7 @@ def text_file_record_generator(filename, compression):
         filename (str): The input filename
         compression (str): The compression type of the input file or None if its not compressed    
     """
-    if compression is None: compression = infer_compression(self.filename)
+    if compression is None: compression = infer_compression(filename)
     if compression == None or compression == '':
         return open(filename, 'r')
     if compression == 'gzip':
@@ -182,9 +186,6 @@ def base_date_filename_mapper(input_file_path):
     filename = os.path.basename(input_file_path)
     base_date = dateutil.parser.parse(filename, fuzzy=True)
     return round(millis_since_epoch(base_date))
-
-#def arrow_writer_creator(output_file_prefix, schema, create_batch_id_file, batch_size):
-#    return ArrowWriter(output_file_prefix, schema, create_batch_id_file, batch_size)
 
 def create_text_file_processor(record_generator, line_filter, record_parser, bad_line_handler, record_filter, missing_data_handler,
                                 quote_aggregator, trade_aggregator, open_interest_aggregator, other_aggregator, skip_rows = 1): 
@@ -317,11 +318,12 @@ def process_marketdata_file(input_filename,
     )
 
     start = timer()
+    if compression is None: compression = ""
     lines_processed = file_processor(input_filename, compression)
     end = timer()
     duration = round((end - start) * 1000)
     touch(output_file_prefix + '.done')
-    print(f"processed {input_filename} {lines_processed} lines in {duration} milliseconds")
+    print(f"processed: {input_filename} {lines_processed} lines in {duration} milliseconds")
                     
 def process_marketdata(input_filename_provider, file_processor, num_processes = None, raise_on_error = True):
     """
@@ -338,27 +340,13 @@ def process_marketdata(input_filename_provider, file_processor, num_processes = 
     """
     
     input_filenames = input_filename_provider()
-
-    import sys
-
-    if sys.platform in ['win32', 'cygwin'] and num_processes is not None and num_processes != 1:
-        raise Exception("num_processes > 1 not supported on Windows")
-
-    if num_processes is not None and num_processes == 1:
+    if sys.platform in ["win32", "cygwin"] and num_processes > 1:
+        raise Exception("num_processes > 1 not supported on windows")
+     
+    if num_processes == 1 or platform in ["win32", "cygwin"]:
         for input_filename in input_filenames:
-            file_processor(input_filename)
-
-        return
-        
-    with concurrent.futures.ProcessPoolExecutor(num_processes) as executor:
-        fut_filename_map = {}
-        for input_filename in input_filenames:
-            fut = executor.submit(file_processor, input_filename)
-            fut_filename_map[fut] = input_filename
-        for fut in concurrent.futures.as_completed(fut_filename_map):
             try:
-                fut.result()
-                if VERBOSE: print(f'done filename: {fut_filename_map[fut]}')
+                file_processor(input_filename)
             except Exception as e:
                 new_exc = type(e)(f'Exception: {str(e)}').with_traceback(sys.exc_info()[2])
                 if raise_on_error: 
@@ -366,4 +354,21 @@ def process_marketdata(input_filename_provider, file_processor, num_processes = 
                 else: 
                     print(str(new_exc))
                     continue
+    else:
+        with concurrent.futures.ProcessPoolExecutor(num_processes) as executor:
+            fut_filename_map = {}
+            for input_filename in input_filenames:
+                fut = executor.submit(file_processor, input_filename)
+                fut_filename_map[fut] = input_filename
+            for fut in concurrent.futures.as_completed(fut_filename_map):
+                try:
+                    fut.result()
+                    if VERBOSE: print(f'done filename: {fut_filename_map[fut]}')
+                except Exception as e:
+                    new_exc = type(e)(f'Exception: {str(e)}').with_traceback(sys.exc_info()[2])
+                    if raise_on_error: 
+                        raise new_exc
+                    else: 
+                        print(str(new_exc))
+                        continue
 

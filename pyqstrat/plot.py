@@ -1,11 +1,8 @@
-
+#!/usr/bin/env python
 # coding: utf-8
 
 # In[1]:
 
-
-import warnings
-warnings.filterwarnings("ignore", message="numpy.dtype size changed") # another bogus warning, see https://github.com/numpy/numpy/pull/432
 
 from collections import defaultdict
 from functools import reduce
@@ -30,7 +27,7 @@ from pyqstrat.pq_utils import *
 set_defaults()
 
 
-# In[2]:
+# In[9]:
 
 
 
@@ -186,7 +183,7 @@ class OHLC:
     '''
     Data in a subplot that contains open, high, low, close, volume bars.  volume is optional.
     '''
-    def __init__(self, name, dates, o, h, l, c, v = None, colorup='darkgreen', colordown='#F2583E'):
+    def __init__(self, name, dates, o, h, l, c, v = None, vwap = None, colorup='darkgreen', colordown='#F2583E'):
         '''
         Args:
             name: Name to show in a legend
@@ -199,14 +196,15 @@ class OHLC:
         self.h = h
         self.l = l
         self.c = c
-        self.v = np.empty(len(self.dates), dtype = np.float64) * np.nan if v is None else v
+        self.v = np.ones(len(self.dates), dtype = np.float64) * np.nan if v is None else v
+        self.vwap = np.ones(len(self.dates), dtype = np.float64) * np.nan if vwap is None else vwap
         self.plot_type = 'candlestick'
         self.colorup = colorup
         self.colordown = colordown
         self.time_plot = True
         
     def df(self):
-        return pd.DataFrame({'o' : self.o, 'h' : self.h, 'l' : self.l, 'c' : self.c, 'v' : self.v}, index = self.dates)[['o', 'h', 'l', 'c', 'v']]
+        return pd.DataFrame({'o' : self.o, 'h' : self.h, 'l' : self.l, 'c' : self.c, 'v' : self.v, 'vwap' : self.vwap}, index = self.dates)[['o', 'h', 'l', 'c', 'v', 'vwap']]
         
     def reindex(self, all_dates):
         df = self.df()
@@ -265,7 +263,7 @@ def draw_poly(ax, left, bottom, top, right, facecolor, edgecolor, zorder):
     ax.add_patch(patch)
 
 
-def draw_candlestick(ax, index, o, h, l, c, v, colorup='darkgreen', colordown='#F2583E'):
+def draw_candlestick(ax, index, o, h, l, c, v, vwap, colorup='darkgreen', colordown='#F2583E'):
     '''Draw candlesticks given parrallel numpy arrays of o, h, l, c, v values.  v is optional.  See OHLC class __init__ for argument descriptions.'''
     width = 0.5
                 
@@ -292,7 +290,8 @@ def draw_candlestick(ax, index, o, h, l, c, v, colorup='darkgreen', colordown='#
     draw_poly(ax, left[mask], bottom[mask], top[mask], right[mask], colordown, 'k', 100)
     draw_poly(ax, left[~mask], bottom[~mask], top[~mask], right[~mask], colorup, 'k', 100)
     draw_poly(ax, left + offset, l, h, left + offset, 'k', 'k', 1)
-    
+    if vwap is not None:
+        ax.scatter(index, vwap, marker = 'o', color = 'orange', zorder = 110)
         
 def draw_boxplot(ax, names, values, proportional_widths = True, notched = False, show_outliers = True, show_means = True, show_all = True):
     '''Draw a boxplot.  See BucketedValues class for explanation of arguments'''
@@ -389,7 +388,7 @@ def _plot_data(ax, data):
         ax.fill_between(x, neg_values, color='red', step = 'post', linewidth = 0.0)
         #ax.set_ylim(max(ylim[0], np.max(y) * 1.1), min(ylim[1], np.min(y) * 1.1))
     elif data.plot_type == 'candlestick':
-        draw_candlestick(ax, x, data.o, data.h, data.l, data.c, data.v, colorup = data.colorup, colordown = data.colordown)
+        draw_candlestick(ax, x, data.o, data.h, data.l, data.c, data.v, data.vwap, colorup = data.colorup, colordown = data.colordown)
     elif data.plot_type == 'boxplot':
         draw_boxplot(ax, data.bucket_names, data.bucket_values, data.proportional_widths, data.notched, data.show_outliers, 
                      data.show_means, data.show_all)
@@ -481,14 +480,12 @@ class Subplot:
             y_tick_format: Format string to use for y axis labels.  For example, you can decide to 
               use fixed notation instead of scientific notation or change number of decimal places shown.  Default None
         '''
-        
         if not isinstance(data_list, list): data_list = [data_list]
         self.time_plot = all([data.time_plot for data in data_list])
         if self.time_plot and any([not data.time_plot for data in data_list]):
             raise Exception('cannot add a non date subplot on a subplot which has time series plots')
         if not self.time_plot and date_lines is not None: 
             raise Exception('date lines can only be specified on a time series subplot')
-            
         
         self.is_3d = any([data.plot_type in ['surface'] for data in data_list])
         if self.is_3d and any([data.plot_type not in ['surface'] for data in data_list]):
@@ -516,7 +513,20 @@ class Subplot:
             if isinstance(data, TimeSeries) or isinstance(data, TradeSet):
                 data.dates, data.values = resample_ts(data.dates, data.values, sampling_frequency)
             elif isinstance(data, OHLC):
-                data.dates, data.o, data.h, data.l, data.c, data.v = resample_ohlc(data.dates, data.o, data.h, data.l, data.c, data.v, sampling_frequency = sampling_frequency)
+                df_dict = {}
+                cols = ['dates', 'o', 'h', 'l' , 'c', 'v', 'vwap']
+                for col in cols:
+                    val = getattr(data, col)
+                    if val is not None:
+                        df_dict[col] = val
+                for k, v in df_dict.items():
+                    print(f'{k} len: {len(v)}')
+                df = pd.DataFrame(df_dict)
+                df.set_index('dates', inplace = True)
+                df = resample_ohlc(df, sampling_frequency)
+                for col in cols:
+                    if col in df:
+                        setattr(data, col, df[col].values)
             else:
                 raise Exception(f'unknown type: {data}')
         
@@ -564,13 +574,11 @@ class Subplot:
         self.legend_names += [date_line.name for date_line in self.date_lines if date_line.name is not None]
         self.legend_names += [horizontal_line.name for horizontal_line in self.horizontal_lines if horizontal_line.name is not None]
         self.legend_names += [vertical_line.name for vertical_line in self.vertical_lines if vertical_line.name is not None]
-
         
         if self.ylim: ax.set_ylim(self.ylim)
         if (len(self.data_list) > 1 or len(self.date_lines)) and self.display_legend: 
             ax.legend([line for line in lines if line is not None],
                       [self.legend_names[i] for i, line in enumerate(lines) if line is not None], loc = self.legend_loc)
-            
  
         if self.log_y: 
             ax.set_yscale('log')
@@ -650,8 +658,6 @@ class Plot:
         if plot_dates is not None: 
             date_formatter = get_date_formatter(plot_dates, self.date_format)
         height_ratios = [subplot.height_ratio for subplot in self.subplot_list]
-        
-        
         
         fig = plt.figure(figsize = self.figsize)
         gs = gridspec.GridSpec(len(self.subplot_list), 1, height_ratios= height_ratios, hspace = self.hspace)
@@ -754,7 +760,8 @@ def test_plot():
                                 h = np.array([9.0, 9.3, 9.4, 8.7]),
                                 l = np.array([8.8, 9.0, 9.2, 8.4]),
                                 c = np.array([8.95, 9.2, 9.35, 8.5]),
-                                v = np.array([200, 100, 150, 300]))
+                                v = np.array([200, 100, 150, 300]),
+                                vwap = np.array([8.9, 9.15, 9.3, 8.55]))
                           ] + trade_sets_by_reason_code(trades), ylabel = "Price", height_ratio = 0.3)
     
     sig_subplot = Subplot(TimeSeries('trend', dates = md_dates, values = np.array([1, 1, -1, -1])), height_ratio=0.1, ylabel = 'Trend')

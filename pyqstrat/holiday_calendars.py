@@ -79,19 +79,18 @@ def _normalize(start, end, include_first, include_last):
 
     return s,e
 
-def read_holidays(calendar_name):
+def read_holidays(calendar_name, dirname = None):
     '''
     Reads a csv with a holidays column containing holidays (not including weekends)
     '''
-    #dirname = os.path.dirname(os.path.realpath('__file__'))
-    dirname = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    if dirname is None: dirname = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
     
     if not os.path.isdir(dirname + '/refdata'):
-        if os.path.isdir(dirname + '/pyqstrat/refdata'):
-            dirname = dirname + '/pyqstrat'
-        else:
-            raise Exception(f'path {dirname}/refdata and {dirname}/pyqstrat/refdata do not exist')
-                         
+        #if os.path.isdir(dirname + '/pyqstrat/refdata'):
+        #    dirname = dirname + '/pyqstrat'
+        #else:
+        #    raise Exception(f'path {dirname}/refdata and {dirname}/pyqstrat/refdata do not exist')
+        raise Exception(f'path {dirname}/refdata does not exist')
     df = pd.read_csv(f'{dirname}/refdata/holiday_calendars/{calendar_name}.csv')
     holidays = pd.to_datetime(df.holidays, format='%Y-%m-%d').values.astype('M8[D]')
     return holidays
@@ -203,16 +202,16 @@ class Calendar(object):
         Args:
             start: np.datetime64 or str or datetime
             num_days (int): number of trading days to add
-            roll (str, optional): {‘raise’, ‘nat’, ‘forward’, ‘following’, ‘backward’, ‘preceding’, ‘modifiedfollowing’, ‘modifiedpreceding’}
+            roll (str, optional): one of 'raise', 'nat', 'forward', 'following', 'backward', 'preceding', 'modifiedfollowing', 'modifiedpreceding'}
                 From numpy documentation: 
                 How to treat dates that do not fall on a valid day. The default is ‘raise’.
-                ‘raise’ means to raise an exception for an invalid day.
-                ‘nat’ means to return a NaT (not-a-time) for an invalid day.
-                ‘forward’ and ‘following’ mean to take the first valid day later in time.
-                ‘backward’ and ‘preceding’ mean to take the first valid day earlier in time.
-                ‘modifiedfollowing’ means to take the first valid day later in time unless it is across a Month boundary, 
+                'raise' means to raise an exception for an invalid day.
+                'nat' means to return a NaT (not-a-time) for an invalid day.
+                'forward' and 'following’ mean to take the first valid day later in time.
+                'backward' and 'preceding' mean to take the first valid day earlier in time.
+                'modifiedfollowing' means to take the first valid day later in time unless it is across a Month boundary, 
                 in which case to take the first valid day earlier in time.
-                ‘modifiedpreceding’ means to take the first valid day earlier in time unless it is across a Month boundary, 
+                'modifiedpreceding' means to take the first valid day earlier in time unless it is across a Month boundary, 
                 in which case to take the first valid day later in time.
         
         Return:

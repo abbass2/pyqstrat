@@ -1,11 +1,9 @@
-
+#!/usr/bin/env python
 # coding: utf-8
 
 # In[1]:
 
 
-import warnings
-warnings.filterwarnings("ignore", message="numpy.dtype size changed") # another bogus warning, see https://github.com/numpy/numpy/pull/432
 import pandas as pd
 import numpy as np
 import IPython.display as dsp
@@ -14,28 +12,71 @@ from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
 
-# In[3]:
+# In[28]:
 
 
-def _sort_ohlcv(a):
-    l = ['o', 'h', 'l', 'c', 'v']
+def sort_ohlcv_key(a):
+    l = ['date', 'o', 'h', 'l', 'c', 'v', 'vwap']
     if a in l:
         return l.index(a)
     else:
-        return -1
+        return len(l)
+    
+def sort_ohlcv(columns):
+    columns = sorted(list(columns)) # Use stable sort to sort columns that we don't know about alphabetically
+    return sorted(columns, key = sort_ohlcv_key)
 
+class MarketDataCollection:
+    '''
+    Used to store a set of market data linking symbol -> MarketData 
+    '''
+    def __init__(self, symbols = None, marketdata_list = None):
+        '''
+        Args:
+            symbols (list of str, optional): Symbols we want to store market data for.  Default None
+            marketdata_list (list of MarketData): Corresponding MarketData object.  Default None
+        '''
+        if symbols is not None or marketdata_list is not None:
+            if symbols is None or marketdata_list is None:
+                raise Exception('symbols and marketdata must either both be None or not None')
+            if len(symbols) != len(marketdata_list):
+                raise Exception('symbols and marketdata_list must contain the same number of elements')
+            self.marketdata = dict(zip(symbols, marketdata_list))
+        else:
+            self.marketdata = {}
+        
+    def add_marketdata(self, symbol, marketdata):
+        self.marketdata[symbol] = marketdata
+        
+    def add_dates(self, dates):
+        for md in self.marketdata.values(): md.add_dates(dates)
+            
+    def dates(self):
+        if len(self.marketdata) == 0:
+            return np.array([], dtype = np.datetime64)
+        else:
+            return list(self.marketdata.values())[0].dates
+        
+    def items(self):
+        return self.marketdata.items()
+    
 class MarketData:
-    '''Used to store OHLCV bars.  You must at least supply dates and close prices.  All other fields are optional.
+    '''Used to store OHLCV bars, and any additional time series data you want to use to simulate orders and executions.
+        You must at least supply dates and close prices.  All other fields are optional.
     
     Attributes:
         dates: A numpy datetime array with the datetime for each bar.  Must be monotonically increasing.
         c:     A numpy float array with close prices for the bar.
-        o:     A numpy float array with open prices 
-        h:     A numpy float array with high prices
-        l:     A numpy float array with high prices
-        v:     A numpy integer array with volume for the bar
+        o:     A numpy float array with open prices . Default None
+        h:     A numpy float array with high prices. Default None
+        l:     A numpy float array with high prices. Default None
+        v:     A numpy integer array with volume for the bar. Default None
+        vwap:  A numpy float array with the volume weighted average price for the bar.  Default None
+        additional_arrays: A dictionary of name -> numpy array you want to add.  Default None
+        resample_funcs: A dictionary of functions for resampling each additional array.  Default None.
+        fill_funcs: A dictionary of functions for filling empty rows when we add dates.  Default None.
     '''
-    def __init__(self, dates, c, o = None, h = None, l = None, v = None):
+    def __init__(self, dates, c, o = None, h = None, l = None, v = None, vwap = None, additional_arrays = None, resample_funcs = None, fill_values = None):
         '''Zeroes in o, h, l, c are set to nan'''
         assert(len(dates) > 1)
         assert(len(c) == len(dates))
@@ -43,6 +84,17 @@ class MarketData:
         assert(h is None or len(h) == len(dates))
         assert(l is None or len(l) == len(dates))
         assert(v is None or len(v) == len(dates))
+        assert(vwap is None or len(vwap) == len(dates))
+        
+        additional_arrays = {} if additional_arrays is None else additional_arrays
+        
+        for k, arr in additional_arrays.items():
+            assert(len(arr) == len(dates))
+            setattr(self, k, arr)
+            
+        self.additional_col_names = list(additional_arrays.keys())
+        self.resample_funcs = {} if resample_funcs is None else resample_funcs
+        self.fill_values = {} if fill_values is None else fill_values
         
         if not np.all(np.diff(dates).astype(np.float) > 0): # check for monotonically increasing dates
             raise Exception('marketdata dates must be unique monotonically increasing')
@@ -53,15 +105,67 @@ class MarketData:
         self.l = zero_to_nan(l)
         self.c = zero_to_nan(c)
         self.v = v
+        self.vwap = vwap
         self._set_valid_rows()
         
+    def add_dates(self, dates):
+        '''
+        Adds new dates to a market data object.  If fill_values was specified we use that to fill in values for any columns 
+        for new dates that are not the same as the old dates.
+        
+        Args:
+            dates (np.array of np.datetime64): New dates to add.  Does not have to be sorted or unique
+        
+        >>> dates = np.array(['2018-01-05', '2018-01-09', '2018-01-10'], dtype = 'M8[ns]')
+        >>> c = [8.1, 8.2, 8.3]
+        >>> o = [9, 10, 11]
+        >>> additional_arrays = {'x' : [5.1, 5.3, 5.5]}
+        >>> fill_values = {'x' : 0}
+        >>> md = MarketData(dates, c, o, additional_arrays = additional_arrays, fill_values = fill_values)
+        >>> new_dates = np.array(['2018-01-07', '2018-01-09'], dtype = 'M8[ns]')
+        >>> md.add_dates(new_dates)
+        >>> print(md.dates)
+        ['2018-01-05T00:00:00.000000000' '2018-01-07T00:00:00.000000000'
+         '2018-01-09T00:00:00.000000000' '2018-01-10T00:00:00.000000000']
+        >>> print(md.o, md.c, md.x)
+        [  9.  nan  10.  11.] [ 8.1  nan  8.2  8.3] [ 5.1  0.   5.3  5.5]
+        '''
+        if dates is None or len(dates) == 0: return
+        dates = np.unique(dates)
+        new_dates = np.setdiff1d(dates, self.dates, assume_unique = True)
+        all_dates = np.concatenate([self.dates, new_dates])
+        col_list = ['o', 'h', 'l', 'c', 'vwap'] + self.additional_col_names
+        sort_index = all_dates.argsort()
+        for col in col_list:
+            print(col)
+            v = getattr(self, col)
+            if v is None: continue
+            dtype = getattr(self, col).dtype
+            fill_value = self.fill_values[col] if col in self.fill_values else get_empty_np_value(dtype)
+            v = np.concatenate([v, np.full(len(new_dates), fill_value, dtype = dtype)])
+            v = v[sort_index]
+            setattr(self, col, v)
+        self.dates = np.sort(all_dates)
+        self._set_valid_rows
+        
+    def _get_fill_value(self, col_name):
+        dtype = getattr(self, col_name).dtype
+        return get_empty_np_value(dtype)
+        
     def _set_valid_rows(self):
-        nans = np.any(np.isnan([self.o, self.h, self.l, self.c]), axis = 0)
+        col_list = [col for col in [self.o, self.h, self.l, self.c, self.vwap] if col is not None]
+        nans = np.any(np.isnan(col_list), axis = 0)
         self.valid_rows = ~nans
     
     def valid_row(self, i):
         '''Return True if the row with index i has no nans in it.'''
         return self.valid_rows[i]
+    
+    def get_additional_arrays(self):
+        ret = {}
+        for key in self.additional_col_names:
+            ret[key] = getattr(self, key)
+        return ret
     
     def resample(self, sampling_frequency, inplace = False):
         '''
@@ -71,19 +175,26 @@ class MarketData:
             sampling_frequency: See sampling frequency in pandas
             inplace: If set to False, don't modify this object, return a new object instead.
         '''
-        if sampling_frequency is None: return self
+        if sampling_frequency is None:
+            if inplace: return None
+            return self
+        
         df = self.df()
-        orig_columns = df.columns
-        df = df.resample(sampling_frequency).agg({'o': 'first', 'h': 'max', 'l': 'min', 'c': 'last', 'v' : 'sum'}).dropna(how = 'all')
-        if not inplace:
-            md = MarketData(self.dates, self.c, self.o, self.h, self.l, self.v)
-        else:
+        # Rename index from date to dates since our internal variable is called "dates" but the df() function returns a column "date"
+        df.index.name = 'dates'
+
+        df = resample_ohlc(df, sampling_frequency, self.resample_funcs)
+              
+        if inplace:
             md = self
-        for col in ['o', 'h', 'l', 'c', 'v']:
-            if col in orig_columns: setattr(md, col, df[col].values)
-        md.dates = df.index.values
+        else:
+            # Create a dummy object, will replace everything (except additional arrays and resample funcs) later
+            md = MarketData(self.dates, self.c, self.o, self.h, self.l, self.v, self.vwap, self.get_additional_arrays(), self.resample_funcs)
+            
+        for col in df.columns: setattr(md, col, df[col].values)
         md._set_valid_rows()
-        return md
+        
+        return None if inplace else md
     
     def errors(self, display = True):
         '''Returns a dataframe indicating any highs that are lower than opens, closes, lows or lows that are higher than other columns
@@ -103,7 +214,7 @@ class MarketData:
                 errors_list.append(bad_lows)
 
         neg_values_mask = (df.c < 0)
-        for col in ['o', 'h', 'l', 'c', 'v']:
+        for col in ['o', 'h', 'l', 'c', 'v', 'vwap']:
             if col in df.columns:
                 neg_values_mask |= (df[col] < 0)
         neg_values = df[neg_values_mask]
@@ -114,6 +225,8 @@ class MarketData:
         if not len(errors_list): return None
             
         df = pd.concat(errors_list)
+        df = df[sort_ohlcv(df.columns)]
+        
         if display: dsp.display(df)
         return df
     
@@ -127,7 +240,7 @@ class MarketData:
         df = self.df()
         warnings_list = []
 
-        for col in ['o', 'h', 'l', 'c']:
+        for col in ['o', 'h', 'l', 'c', 'vwap']:
             if col in df.columns:
                 data = df[col]
                 ret = np.abs(df[col].pct_change())
@@ -138,11 +251,12 @@ class MarketData:
                     double_mask = mask | mask.shift(-1) # Add the previous row so we know the two values computing a return
                     df_tmp = df[double_mask]
                     df_tmp.insert(len(df_tmp.columns), 'ret', ret[mask])
-                    df_tmp.insert(len(df_tmp.columns), 'warning', '{} ret > {} std: {}'.format(col, warn_std, round(std, 6)))
+                    df_tmp.insert(len(df_tmp.columns), 'warning', f'{col} ret > {warn_std} * std: {std:.5g}')
                     warnings_list.append(df_tmp)
 
         if not len(warnings_list): return None
         df = pd.concat(warnings_list)
+        df = df[sort_ohlcv(df.columns)]
         if display: dsp.display(df)
         return df
                               
@@ -155,8 +269,7 @@ class MarketData:
         df = self.df().reset_index()
         df_overview = pd.DataFrame({'count': len(df), 'num_missing' : df.isnull().sum(), 'pct_missing': df.isnull().sum() / len(df), 'min' : df.min(), 'max' : df.max()})
         df_overview = df_overview.T
-        columns = sorted(list(df_overview.columns), key = _sort_ohlcv)
-        df_overview = df_overview[columns]
+        df_overview = df_overview[sort_ohlcv(df_overview.columns)]
         if display: dsp.display(df_overview)
         return df_overview
        
@@ -258,7 +371,7 @@ class MarketData:
         '''
         date_range = strtup2date(date_range)
         if self.is_ohlc():
-            data = OHLC('price', self.dates, self.o, self.h, self.l, self.c, self.v)
+            data = OHLC('price', self.dates, self.o, self.h, self.l, self.c, self.v, self.vwap)
         else:
             data = TimeSeries('price', self.dates, self.c)
         subplot = Subplot(data)
@@ -267,7 +380,7 @@ class MarketData:
                               
     def df(self, start_date = None, end_date = None):
         df = pd.DataFrame({'date' : self.dates, 'c' : self.c}).set_index('date')
-        for tup in [('o', self.o), ('h', self.h), ('l', self.l), ('v', self.v)]:
+        for tup in [('o', self.o), ('h', self.h), ('l', self.l), ('v', self.v), ('vwap', self.vwap)]:
             if tup[1] is not None: df.insert(0, tup[0], tup[1])
         if start_date: df = df[df.index.values >= start_date]
         if end_date: df = df[df.index.values <= end_date]
@@ -372,9 +485,10 @@ def test_marketdata():
     h = np.round(c * (1. + np.abs(np.random.random(size = len(dates)) / 1000.)), 2)
     o = np.round(l + (h - l) * np.random.random(size = len(dates)), 2)
     v = np.abs(np.round(np.random.normal(size = len(dates)) * 1000))
+    vwap = 0.5 * (l + h)
     c[18] = np.nan
     l[85] = 1000
-    md = MarketData(dates, c, o, h, l, v)
+    md = MarketData(dates, c, o, h, l, v, vwap)
     md.describe()
     md.plot(date_range = ('2018-01-02', '2018-01-02 12:00'))
 
