@@ -1,22 +1,15 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 from collections import defaultdict, deque
 import pandas as pd
 import numpy as np
 from copy import copy
 from pyqstrat.pq_utils import str2date
 
-
-# In[2]:
-
-
+#cell 1
 def _calc_pnl(open_trades, new_trades, ending_close, multiplier):
     '''
     >>> from collections import deque
+    >>> from pyqstrat.pq_types import Trade
     >>> trades = deque([Trade('IBM', np.datetime64('2018-01-01 10:15:00'), 3, 51.),
     ...              Trade('IBM', np.datetime64('2018-01-01 10:20:00'), 10, 50.),
     ...              Trade('IBM', np.datetime64('2018-01-02 11:20:00'), -5, 45.)])
@@ -141,7 +134,7 @@ class Account:
         >>> dates = np.array(['2018-01-01', '2018-01-02'], dtype = 'M8[D]')
         >>> account = Account([Contract("IBM")], MarketDataCollection(["IBM"], [MarketData(dates, [8.1, 8.2])]))
         >>> print(account.marketdata['IBM'].c)
-        [ 8.1  8.2]
+        [8.1 8.2]
         '''
         if calc_frequency != 'D': raise Exception('unknown calc frequency: {}'.format(calc_frequency))
         self.calc_freq = calc_frequency

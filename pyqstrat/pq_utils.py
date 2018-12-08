@@ -169,11 +169,11 @@ def resample_ohlc(df, sampling_frequency, resample_funcs = None):
     >>> df['vwap'] =  0.5 * (df.l + df.h)
     >>> df.set_index('date', inplace = True)
     >>> resample_ohlc(df, sampling_frequency = 'D', resample_funcs={'x' : lambda df, sampling_frequency : df.x.resample(sampling_frequency).agg(np.mean)})
-            date    o    h    l     c    v      x  vwap
-    0 2018-01-08  8.9  9.0  8.8  8.95  200  300.0  8.90
-    1 2018-01-09  9.1  9.4  9.0  9.35  250  150.0  9.24
-    2 2018-01-10  NaN  NaN  NaN   NaN    0    NaN   NaN
-    3 2018-01-11  8.6  8.7  8.4  8.50  300  400.0  8.55
+            date   o   h   l    c    v   x  vwap
+    0 2018-01-08 8.9   9 8.8 8.95  200 300   8.9
+    1 2018-01-09 9.1 9.4   9 9.35  250 150  9.24
+    2 2018-01-10 nan nan nan  nan    0 nan   nan
+    3 2018-01-11 8.6 8.7 8.4  8.5  300 400  8.55
     '''
     if sampling_frequency is None: return df
     
@@ -349,7 +349,7 @@ def decode_future_code(future_code, as_str = True):
     >>> decode_future_code('X', as_str = False)
     11
     >>> decode_future_code('X')
-    nov
+    'nov'
     '''
     
     if len(future_code) != 1: raise Exception("Future code must be a single character")

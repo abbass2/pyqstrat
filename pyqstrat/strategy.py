@@ -158,7 +158,7 @@ class Strategy:
         >>> symbols = ['IBM', 'AAPL']
         >>> start_date = np.datetime64('2018-01-01')
         >>> end_date = np.datetime64('2018-02-05')
-        >>> dates, orders_iter, trades_iter = _get_iteration_indices(MockStrat(), rule_names, symbols, start_date, end_date)
+        >>> dates, orders_iter, trades_iter = Strategy._get_iteration_indices(MockStrat(), rule_names, symbols, start_date, end_date)
         >>> assert(len(trades_iter[1]) == 0)
         >>> assert(trades_iter[2][1][1] == "AAPL")
         >>> assert(trades_iter[2][2][1] == "IBM")

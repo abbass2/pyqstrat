@@ -1,16 +1,8 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
+#cell 0
 import pandas as pd
 import numpy as np
 
-
-# In[ ]:
-
-
+#cell 1
 class Trade:
     def __init__(self, symbol, date, qty, price, fee = 0., commission = 0., order = None):
         '''Args:

@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import pandas as pd
 import numpy as np
 import IPython.display as dsp
@@ -11,10 +6,7 @@ import matplotlib.dates as mdates
 from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
-
-# In[28]:
-
-
+#cell 1
 def sort_ohlcv_key(a):
     l = ['date', 'o', 'h', 'l', 'c', 'v', 'vwap']
     if a in l:
@@ -117,9 +109,9 @@ class MarketData:
             dates (np.array of np.datetime64): New dates to add.  Does not have to be sorted or unique
         
         >>> dates = np.array(['2018-01-05', '2018-01-09', '2018-01-10'], dtype = 'M8[ns]')
-        >>> c = [8.1, 8.2, 8.3]
-        >>> o = [9, 10, 11]
-        >>> additional_arrays = {'x' : [5.1, 5.3, 5.5]}
+        >>> c = np.array([8.1, 8.2, 8.3])
+        >>> o = np.array([9, 10, 11])
+        >>> additional_arrays = {'x' : np.array([5.1, 5.3, 5.5])}
         >>> fill_values = {'x' : 0}
         >>> md = MarketData(dates, c, o, additional_arrays = additional_arrays, fill_values = fill_values)
         >>> new_dates = np.array(['2018-01-07', '2018-01-09'], dtype = 'M8[ns]')
@@ -128,7 +120,7 @@ class MarketData:
         ['2018-01-05T00:00:00.000000000' '2018-01-07T00:00:00.000000000'
          '2018-01-09T00:00:00.000000000' '2018-01-10T00:00:00.000000000']
         >>> print(md.o, md.c, md.x)
-        [  9.  nan  10.  11.] [ 8.1  nan  8.2  8.3] [ 5.1  0.   5.3  5.5]
+        [ 9. nan 10. 11.] [8.1 nan 8.2 8.3] [5.1 0.  5.3 5.5]
         '''
         if dates is None or len(dates) == 0: return
         dates = np.unique(dates)
@@ -137,7 +129,6 @@ class MarketData:
         col_list = ['o', 'h', 'l', 'c', 'vwap'] + self.additional_col_names
         sort_index = all_dates.argsort()
         for col in col_list:
-            print(col)
             v = getattr(self, col)
             if v is None: continue
             dtype = getattr(self, col).dtype

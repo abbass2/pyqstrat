@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[5]:
-
-
+#cell 0
 import pandas as pd
 import numpy as np
 from functools import reduce
@@ -14,9 +9,7 @@ from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, p
 from pyqstrat.strategy import Strategy
 
 
-# In[6]:
-
-
+#cell 1
 class Portfolio:
     '''A portfolio contains one or more strategies that run concurrently so you can test running strategies that are uncorrelated together.'''
     def __init__(self, name = 'main'):
@@ -59,25 +52,25 @@ class Portfolio:
     def _get_iterations(self, strategies, start_date, end_date):
         '''
         >>> class Strategy:
-        >>>    def __init__(self, num): 
-        >>>        self.num = num
-        >>>        self.dates = [
-        >>>            np.array(['2018-01-01', '2018-01-02', '2018-01-03'], dtype = 'M8[D]'),
-        >>>            np.array(['2018-01-02', '2018-01-03', '2018-01-04'], dtype = 'M8[D]')]
-        >>>    def _check_for_orders(self, args): pass
-        >>>    def _check_for_trades(self, args): pass
-        >>>    def _get_iteration_indices(self, start_date, end_date):
-        >>>        i = self.num
-        >>>        return self.dates[self.num - 1], [f'oarg_1_{1}', f'oarg_2_{i}', f'oarg_3_{i}'], [f'targ_1_{i}', f'targ_2_{i}', f'targ_3_{i}']
-        >>>    def __repr__(self):
-        >>>        return f'{self.num}'
+        ...    def __init__(self, num): 
+        ...        self.num = num
+        ...        self.dates = [
+        ...            np.array(['2018-01-01', '2018-01-02', '2018-01-03'], dtype = 'M8[D]'),
+        ...            np.array(['2018-01-02', '2018-01-03', '2018-01-04'], dtype = 'M8[D]')]
+        ...    def _check_for_orders(self, args): pass
+        ...    def _check_for_trades(self, args): pass
+        ...    def _get_iteration_indices(self, start_date, end_date):
+        ...        i = self.num
+        ...        return self.dates[self.num - 1], [f'oarg_1_{1}', f'oarg_2_{i}', f'oarg_3_{i}'], [f'targ_1_{i}', f'targ_2_{i}', f'targ_3_{i}']
+        ...    def __repr__(self):
+        ...        return f'{self.num}'
 
-        >>> orders_iter, trades_iter = _get_iterations(None, [Strategy(1), Strategy(2)], None, None)
+        >>> orders_iter, trades_iter = Portfolio._get_iterations(None, [Strategy(1), Strategy(2)], None, None)
         >>> assert(len(orders_iter) == 4)
         >>> assert(len(trades_iter) == 4)
-        >>> print(orders_iter[2])
-        [(<function Strategy._check_for_orders at ...>, (1, 2, 'oarg_3_1')), (<function Strategy._check_for_orders at 0x11a4447b8>, (2, 1, 'oarg_2_2'))]
-        >>> print(trades_iter[3])
+        >>> print(orders_iter[2]) #doctest: +ELLIPSIS
+        [(<function Strategy._check_for_orders at ...>, (1, 2, 'oarg_3_1')), (<function Strategy._check_for_orders at ...>, (2, 1, 'oarg_2_2'))]
+        >>> print(trades_iter[3]) #doctest: +ELLIPSIS
         [(<function Strategy._check_for_trades at ...>, (2, 2, 'targ_3_2'))]
         '''
         orders_iter_list = []
@@ -209,4 +202,7 @@ class Portfolio:
         
     def __repr__(self):
         return f'{self.name} {self.strategies.keys()}'
+
+#cell 2
+
 
