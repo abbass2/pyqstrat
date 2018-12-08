@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[7]:
-
-
+#cell 0
 import os
 import numpy as np
 import datetime
@@ -172,7 +167,7 @@ def resample_ohlc(df, sampling_frequency, resample_funcs = None):
     ...           'x' : np.array([300, 200, 100, 400])
     ...          })
     >>> df['vwap'] =  0.5 * (df.l + df.h)
-    >>> df.set_index('dates', inplace = True)
+    >>> df.set_index('date', inplace = True)
     >>> resample_ohlc(df, sampling_frequency = 'D', resample_funcs={'x' : lambda df, sampling_frequency : df.x.resample(sampling_frequency).agg(np.mean)})
             date    o    h    l     c    v      x  vwap
     0 2018-01-08  8.9  9.0  8.8  8.95  200  300.0  8.90
@@ -353,7 +348,7 @@ def decode_future_code(future_code, as_str = True):
         
     >>> decode_future_code('X', as_str = False)
     11
-    >>> decode_future_code('X', as_str = False)
+    >>> decode_future_code('X')
     nov
     '''
     
@@ -364,4 +359,6 @@ def decode_future_code(future_code, as_str = True):
     
     if future_code not in FUTURE_CODES_INT: raise Exception(f'unknown future code: {future_code}')
     return FUTURE_CODES_INT[future_code]
+
+
 

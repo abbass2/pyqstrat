@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import numpy as np
 import pandas as pd
 import sys
@@ -16,10 +11,7 @@ from pyqstrat.marketdata import *
 from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, plot_return_metrics
 from pyqstrat.account import Account
 
-
-# In[2]:
-
-
+#cell 1
 class Strategy:
     def __init__(self, contracts, marketdata_collection, starting_equity = 1.0e6, calc_frequency = 'D', additional_order_dates = None, additional_trade_dates = None):
         '''
@@ -161,13 +153,11 @@ class Strategy:
         >>> def market_sim_ibm(): pass
         >>> def rule_a(): pass
         >>> def rule_b(): pass
-
-        >>>dates = np.array(['2018-01-01', '2018-01-02', '2018-01-03'], dtype = 'M8[D]')
+        >>> dates = np.array(['2018-01-01', '2018-01-02', '2018-01-03'], dtype = 'M8[D]')
         >>> rule_names = ['rule_a', 'rule_b']
         >>> symbols = ['IBM', 'AAPL']
         >>> start_date = np.datetime64('2018-01-01')
         >>> end_date = np.datetime64('2018-02-05')
-
         >>> dates, orders_iter, trades_iter = _get_iteration_indices(MockStrat(), rule_names, symbols, start_date, end_date)
         >>> assert(len(trades_iter[1]) == 0)
         >>> assert(trades_iter[2][1][1] == "AAPL")
