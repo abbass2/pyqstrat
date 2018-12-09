@@ -4,10 +4,27 @@ pyqstrat package
 Submodules
 ----------
 
-pyqstrat.evaluator module
+
+pyqstrat.pq\_utils module
 -------------------------
 
-.. automodule:: pyqstrat.evaluator
+.. automodule:: pyqstrat.pq_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyqstrat.pq\_types module
+-------------------------
+
+.. automodule:: pyqstrat.pq_types
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyqstrat.holiday\_calendars module
+----------------------------------
+
+.. automodule:: pyqstrat.holiday_calendars
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,10 +37,10 @@ pyqstrat.marketdata module
     :undoc-members:
     :show-inheritance:
 
-pyqstrat.optimize module
-------------------------
+pyqstrat.account module
+-----------------------
 
-.. automodule:: pyqstrat.optimize
+.. automodule:: pyqstrat.account
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,6 +53,32 @@ pyqstrat.orders module
     :undoc-members:
     :show-inheritance:
 
+pyqstrat.strategy module
+-------------------------
+
+.. automodule:: pyqstrat.strategy
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyqstrat.portfolio module
+-------------------------
+
+.. automodule:: pyqstrat.portfolio
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+pyqstrat.optimize module
+------------------------
+
+.. automodule:: pyqstrat.optimize
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 pyqstrat.plot module
 --------------------
 
@@ -44,18 +87,10 @@ pyqstrat.plot module
     :undoc-members:
     :show-inheritance:
 
-pyqstrat.pq\_utils module
+pyqstrat.evaluator module
 -------------------------
 
-.. automodule:: pyqstrat.pq_utils
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pyqstrat.strategy module
-------------------------
-
-.. automodule:: pyqstrat.strategy
+.. automodule:: pyqstrat.evaluator
     :members:
     :undoc-members:
     :show-inheritance:
@@ -65,6 +100,16 @@ pyqstrat.pyqstrat\_cpp module
 -----------------------------
 
 .. automodule:: pyqstrat.pyqstrat_cpp
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :special-members: __call__, __init__
+
+
+pyqstrat.marketdata\_processor module
+-------------------------------------
+
+.. automodule:: pyqstrat.marketdata_processor
     :members:
     :undoc-members:
     :show-inheritance:

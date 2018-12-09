@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import glob
 import os
 import sys
@@ -18,22 +13,20 @@ from timeit import default_timer as timer
 
 from pyqstrat import *
 
-
-# In[2]:
-
-
+#cell 1
 VERBOSE = False
 
 class PathFileNameProvider:
     """A helper class that, given a pattern such as such as "/tmp/abc*.gz" and an optional include and exclude pattern, 
-    returns names of all files that match"""
+    returns names of all files that match
+    """
     def __init__(self, path, include_pattern = None, exclude_pattern = None):
-        """
+        '''
         Args:
             path (str): A pattern such as "/tmp/abc*.gz"
             include_pattern (str): Given a pattern such as "xzy", will return only filenames that contain xyz
             exclude_pattern (str): Given a pattern such as "_tmp", will exclude all filenames containing _tmp
-        """
+        '''
         self.path = path
         self.include_pattern = include_pattern
         self.exclude_pattern = exclude_pattern
@@ -97,11 +90,11 @@ class TextHeaderParser:
         """
         Args:
         
-        record_generator: A function that takes a filename and its compression type and returns an object
-            that we can use to iterate through lines in that file
-        skip_rows (int, optional): Number of rows to skip before starting to read the file.  Default is 0
-        separator (str, optional): Separator for headers.  Defaults to ,
-        make_lowercase (bool, optional): Whether to convert headers to lowercase before returning them
+            record_generator: A function that takes a filename and its compression type and returns an object
+                that we can use to iterate through lines in that file
+            skip_rows (int, optional): Number of rows to skip before starting to read the file.  Default is 0
+            separator (str, optional): Separator for headers.  Defaults to ,
+            make_lowercase (bool, optional): Whether to convert headers to lowercase before returning them
         """
         self.record_generator = record_generator
         self.skip_rows = 0
@@ -245,32 +238,31 @@ def process_marketdata_file(input_filename,
     Processes a single market data file
     
     Args:
-    
-    input_filename (str):
-    output_file_prefix_mapper: A function that takes an input filename and returns the corresponding output filename we want
-    quote_parser_creator: A function that takes a date and a list of headers and returns a function that parses quotes
-    trade_parser_creator: A function that takes a date and a list of headers and returns a function that parses trades
-    open_interest_parser_creator: A function that takes a date and a list of headers and returns a function that parses open interest
-    other_parser_creator:  A function that takes a date and a list of headers and returns a function that parses lines that are not quotes, 
-        trades, or open_interest
-    record_parser_creator:  A function that takes a quote parser, trade parser, open interest parser and other parser and returns a 
-        function that can take a list of fields and return a quote, trade, open interest or other record
-    line_filter (optional): A function that takes a line and decides whether we want to keep it or discard it.  Defaults to None
-    compression (str, optional): Compression type for the input file.  Defaults to None
-    base_date_mapper (optional): A function that takes an input filename and returns the date implied by the filename, 
-        represented as millis since epoch.  Defaults to helper :obj:`function base_date_filename_mapper`
-    file_processor_creator (optional): A function that returns an object that we can use to iterate through lines in a file.  Defaults to
-        helper function :obj:`create_text_file_processor`
-    bad_line_handler (optional): A function that takes a line that we could not parse, and either parses it or does something else
-        like recording debugging info, or stopping the processing by raising an exception.  Defaults to helper function 
-        :obj:`PrintBadLineHandler`
-    record_filter (optional): A function that takes a parsed TradeRecord, QuoteRecord, OpenInterestRecord or OtherRecord and decides whether we
-        want to keep it or discard it.  Defaults to None
-    missing_data_handler (optional):  A function that takes a parsed TradeRecord, QuoteRecord, OpenInterestRecord or OtherRecord, and decides
-        deals with any data that is missing in those records.  For example, 0 for bid could be replaced by NAN.  Defaults to helper function:
-        :obj:`price_qty_missing_data_handler`
-    writer_creator (optional): A function that takes an output_file_prefix, schema, whether to create a batch id file, and batch_size
-        and returns a subclass of :obj:`Writer`.  Defaults to helper function: :obj:`arrow_writer_creator`
+        input_filename (str):
+        output_file_prefix_mapper: A function that takes an input filename and returns the corresponding output filename we want
+        quote_parser_creator: A function that takes a date and a list of headers and returns a function that parses quotes
+        trade_parser_creator: A function that takes a date and a list of headers and returns a function that parses trades
+        open_interest_parser_creator: A function that takes a date and a list of headers and returns a function that parses open interest
+        other_parser_creator:  A function that takes a date and a list of headers and returns a function that parses lines that are not quotes, 
+            trades, or open_interest
+        record_parser_creator:  A function that takes a quote parser, trade parser, open interest parser and other parser and returns a 
+            function that can take a list of fields and return a quote, trade, open interest or other record
+        line_filter (optional): A function that takes a line and decides whether we want to keep it or discard it.  Defaults to None
+        compression (str, optional): Compression type for the input file.  Defaults to None
+        base_date_mapper (optional): A function that takes an input filename and returns the date implied by the filename, 
+            represented as millis since epoch.  Defaults to helper :obj:`function base_date_filename_mapper`
+        file_processor_creator (optional): A function that returns an object that we can use to iterate through lines in a file.  Defaults to
+            helper function :obj:`create_text_file_processor`
+        bad_line_handler (optional): A function that takes a line that we could not parse, and either parses it or does something else
+            like recording debugging info, or stopping the processing by raising an exception.  Defaults to helper function 
+            :obj:`PrintBadLineHandler`
+        record_filter (optional): A function that takes a parsed TradeRecord, QuoteRecord, OpenInterestRecord or OtherRecord and decides whether we
+            want to keep it or discard it.  Defaults to None
+        missing_data_handler (optional):  A function that takes a parsed TradeRecord, QuoteRecord, OpenInterestRecord or OtherRecord, and decides
+            deals with any data that is missing in those records.  For example, 0 for bid could be replaced by NAN.  Defaults to helper function:
+            :obj:`price_qty_missing_data_handler`
+        writer_creator (optional): A function that takes an output_file_prefix, schema, whether to create a batch id file, and batch_size
+            and returns a subclass of :obj:`Writer`.  Defaults to helper function: :obj:`arrow_writer_creator`
     """
     
     output_file_prefix = output_file_prefix_mapper(input_filename)
@@ -330,13 +322,12 @@ def process_marketdata(input_filename_provider, file_processor, num_processes = 
     Top level function to process a set of market data files
     
     Args:
-    
-    input_filename_provider: A function that returns a list of filenames (incl path) we need to process.
-    file_processor: A function that takes an input filename and processes it, returning number of lines processed. 
-    num_processes (int, optional): The number of processes to run to parse these files.  If set to None, we use the number of cores
-        present on your machine.  Defaults to None
-    raise_on_error (bool, optional): If set, we raise an exception when there is a problem with parsing a file, so we can see a stack
-        trace and diagnose the problem.  If not set, we print the error and continue.  Defaults to True
+        input_filename_provider: A function that returns a list of filenames (incl path) we need to process.
+        file_processor: A function that takes an input filename and processes it, returning number of lines processed. 
+        num_processes (int, optional): The number of processes to run to parse these files.  If set to None, we use the number of cores
+            present on your machine.  Defaults to None
+        raise_on_error (bool, optional): If set, we raise an exception when there is a problem with parsing a file, so we can see a stack
+            trace and diagnose the problem.  If not set, we print the error and continue.  Defaults to True
     """
     
     input_filenames = input_filename_provider()
