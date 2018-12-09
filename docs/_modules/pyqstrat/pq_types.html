@@ -1,0 +1,168 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyqstrat.pq_types &#8212; pyqstrat 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyqstrat.pq_types</h1><div class="highlight"><pre>
+<span></span>
+<span class="c1"># coding: utf-8</span>
+
+<span class="c1"># In[ ]:</span>
+
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<span class="c1"># In[ ]:</span>
+
+
+<div class="viewcode-block" id="Trade"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Trade">[docs]</a><span class="k">class</span> <span class="nc">Trade</span><span class="p">:</span>
+<div class="viewcode-block" id="Trade.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Trade.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">qty</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">fee</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">commission</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">order</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Args:</span>
+<span class="sd">            symbol: a string</span>
+<span class="sd">            date: Trade execution datetime</span>
+<span class="sd">            qty: Number of contracts or shares filled</span>
+<span class="sd">            price: Trade price</span>
+<span class="sd">            fee: Fees paid to brokers or others. Default 0</span>
+<span class="sd">            commision: Commission paid to brokers or others. Default 0</span>
+<span class="sd">            order: A reference to the order that created this trade. Default None</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">qty</span><span class="p">))</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">price</span><span class="p">))</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">fee</span><span class="p">))</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">commission</span><span class="p">))</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span> <span class="o">=</span> <span class="n">symbol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">date</span> <span class="o">=</span> <span class="n">date</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qty</span> <span class="o">=</span> <span class="n">qty</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">price</span> <span class="o">=</span> <span class="n">price</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fee</span> <span class="o">=</span> <span class="n">fee</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">commission</span> <span class="o">=</span> <span class="n">commission</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span></div>
+        
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> {:%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M} qty: </span><span class="si">{}</span><span class="s1"> prc: </span><span class="si">{}{}{}</span><span class="s1"> order: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">symbol</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">)</span><span class="o">.</span><span class="n">to_pydatetime</span><span class="p">(),</span> 
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">qty</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">price</span><span class="p">,</span> 
+                                                <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fee</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fee</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> 
+                                                <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">commission</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">commission</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> 
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Contract"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Contract">[docs]</a><span class="k">class</span> <span class="nc">Contract</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;A Contract can be a real or virtual instrument. For example, for futures you may wish to create a single continous contract instead of</span>
+<span class="sd">       a contract for each future series</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<div class="viewcode-block" id="Contract.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Contract.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">multiplier</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            symbol: A unique string reprenting this contract. e.g IBM or WTI_FUTURE</span>
+<span class="sd">            multiplier: If you have to multiply price to get price per contract, set that multiplier there.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">multiplier</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span> <span class="o">=</span> <span class="n">symbol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">multiplier</span> <span class="o">=</span> <span class="n">multiplier</span></div>
+        
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.symbol}</span><span class="s1"> multiplier: </span><span class="si">{self.multiplier}</span><span class="s1">&#39;</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyqstrat</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">pyqstrat</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Sal Abbasi.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
