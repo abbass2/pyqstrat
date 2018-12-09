@@ -13,6 +13,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="pyqstrat" href="modules.html" />
@@ -364,7 +365,7 @@ Otherwise, you can just use the output of the evaluator using the metrics functi
 </tr>
 </tbody>
 </table>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">round</span><span class="p">(</span><span class="n">compute_sortino</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.001</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.002</span><span class="p">]),</span> <span class="mf">0.001</span><span class="p">,</span> <span class="mi">252</span><span class="p">),</span> <span class="mi">6</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">compute_sortino</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.001</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.002</span><span class="p">]),</span> <span class="mf">0.001</span><span class="p">,</span> <span class="mi">252</span><span class="p">),</span> <span class="mi">6</span><span class="p">))</span>
 <span class="go">33.674916</span>
 </pre></div>
 </div>
@@ -408,9 +409,12 @@ Otherwise, you can just use the output of the evaluator using the metrics functi
 <span id="pyqstrat-marketdata-module"></span><h2>pyqstrat.marketdata module<a class="headerlink" href="#module-pyqstrat.marketdata" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyqstrat.marketdata.MarketData">
-<em class="property">class </em><code class="descclassname">pyqstrat.marketdata.</code><code class="descname">MarketData</code><span class="sig-paren">(</span><em>dates</em>, <em>c</em>, <em>o=None</em>, <em>h=None</em>, <em>l=None</em>, <em>v=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#MarketData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.MarketData" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyqstrat.marketdata.</code><code class="descname">MarketData</code><span class="sig-paren">(</span><em>dates</em>, <em>c</em>, <em>o=None</em>, <em>h=None</em>, <em>l=None</em>, <em>v=None</em>, <em>vwap=None</em>, <em>additional_arrays=None</em>, <em>resample_funcs=None</em>, <em>fill_values=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#MarketData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.MarketData" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Used to store OHLCV bars.  You must at least supply dates and close prices.  All other fields are optional.</p>
+<dl class="docutils">
+<dt>Used to store OHLCV bars, and any additional time series data you want to use to simulate orders and executions.</dt>
+<dd>You must at least supply dates and close prices.  All other fields are optional.</dd>
+</dl>
 <dl class="attribute">
 <dt id="pyqstrat.marketdata.MarketData.dates">
 <code class="descname">dates</code><a class="headerlink" href="#pyqstrat.marketdata.MarketData.dates" title="Permalink to this definition">¶</a></dt>
@@ -426,31 +430,86 @@ Otherwise, you can just use the output of the evaluator using the metrics functi
 <dl class="attribute">
 <dt id="pyqstrat.marketdata.MarketData.o">
 <code class="descname">o</code><a class="headerlink" href="#pyqstrat.marketdata.MarketData.o" title="Permalink to this definition">¶</a></dt>
-<dd><p>A numpy float array with open prices</p>
+<dd><p>A numpy float array with open prices . Default None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.marketdata.MarketData.h">
 <code class="descname">h</code><a class="headerlink" href="#pyqstrat.marketdata.MarketData.h" title="Permalink to this definition">¶</a></dt>
-<dd><p>A numpy float array with high prices</p>
+<dd><p>A numpy float array with high prices. Default None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.marketdata.MarketData.l">
 <code class="descname">l</code><a class="headerlink" href="#pyqstrat.marketdata.MarketData.l" title="Permalink to this definition">¶</a></dt>
-<dd><p>A numpy float array with high prices</p>
+<dd><p>A numpy float array with high prices. Default None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.marketdata.MarketData.v">
 <code class="descname">v</code><a class="headerlink" href="#pyqstrat.marketdata.MarketData.v" title="Permalink to this definition">¶</a></dt>
-<dd><p>A numpy integer array with volume for the bar</p>
+<dd><p>A numpy integer array with volume for the bar. Default None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyqstrat.marketdata.MarketData.vwap">
+<code class="descname">vwap</code><a class="headerlink" href="#pyqstrat.marketdata.MarketData.vwap" title="Permalink to this definition">¶</a></dt>
+<dd><p>A numpy float array with the volume weighted average price for the bar.  Default None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyqstrat.marketdata.MarketData.additional_arrays">
+<code class="descname">additional_arrays</code><a class="headerlink" href="#pyqstrat.marketdata.MarketData.additional_arrays" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dictionary of name -&gt; numpy array you want to add.  Default None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyqstrat.marketdata.MarketData.resample_funcs">
+<code class="descname">resample_funcs</code><a class="headerlink" href="#pyqstrat.marketdata.MarketData.resample_funcs" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dictionary of functions for resampling each additional array.  Default None.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyqstrat.marketdata.MarketData.fill_funcs">
+<code class="descname">fill_funcs</code><a class="headerlink" href="#pyqstrat.marketdata.MarketData.fill_funcs" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dictionary of functions for filling empty rows when we add dates.  Default None.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pyqstrat.marketdata.MarketData.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>dates</em>, <em>c</em>, <em>o=None</em>, <em>h=None</em>, <em>l=None</em>, <em>v=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#MarketData.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.MarketData.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>dates</em>, <em>c</em>, <em>o=None</em>, <em>h=None</em>, <em>l=None</em>, <em>v=None</em>, <em>vwap=None</em>, <em>additional_arrays=None</em>, <em>resample_funcs=None</em>, <em>fill_values=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#MarketData.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.MarketData.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Zeroes in o, h, l, c are set to nan</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.marketdata.MarketData.add_dates">
+<code class="descname">add_dates</code><span class="sig-paren">(</span><em>dates</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#MarketData.add_dates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.MarketData.add_dates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds new dates to a market data object.  If fill_values was specified we use that to fill in values for any columns
+for new dates that are not the same as the old dates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dates</strong> (<em>np.array of np.datetime64</em>) – New dates to add.  Does not have to be sorted or unique</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;2018-01-05&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-09&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-10&#39;</span><span class="p">],</span> <span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;M8[ns]&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.1</span><span class="p">,</span> <span class="mf">8.2</span><span class="p">,</span> <span class="mf">8.3</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">o</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">additional_arrays</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.1</span><span class="p">,</span> <span class="mf">5.3</span><span class="p">,</span> <span class="mf">5.5</span><span class="p">])}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fill_values</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">md</span> <span class="o">=</span> <span class="n">MarketData</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">additional_arrays</span> <span class="o">=</span> <span class="n">additional_arrays</span><span class="p">,</span> <span class="n">fill_values</span> <span class="o">=</span> <span class="n">fill_values</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;2018-01-07&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-09&#39;</span><span class="p">],</span> <span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;M8[ns]&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">md</span><span class="o">.</span><span class="n">add_dates</span><span class="p">(</span><span class="n">new_dates</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">md</span><span class="o">.</span><span class="n">dates</span><span class="p">)</span>
+<span class="go">[&#39;2018-01-05T00:00:00.000000000&#39; &#39;2018-01-07T00:00:00.000000000&#39;</span>
+<span class="go"> &#39;2018-01-09T00:00:00.000000000&#39; &#39;2018-01-10T00:00:00.000000000&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">formatter</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;float&#39;</span> <span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span> <span class="p">:</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{x:.4f}</span><span class="s1">&#39;</span><span class="p">})</span>  <span class="c1"># After numpy 1.13 positive floats don&#39;t have a leading space for sign</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">md</span><span class="o">.</span><span class="n">o</span><span class="p">,</span> <span class="n">md</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="n">md</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+<span class="go">[9.0000 nan 10.0000 11.0000] [8.1000 nan 8.2000 8.3000] [5.1000 0.0000 5.3000 5.5000]</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -488,6 +547,11 @@ Also includes any ohlcv values that are negative</p>
 <dl class="method">
 <dt id="pyqstrat.marketdata.MarketData.freq_str">
 <code class="descname">freq_str</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#MarketData.freq_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.MarketData.freq_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.marketdata.MarketData.get_additional_arrays">
+<code class="descname">get_additional_arrays</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#MarketData.get_additional_arrays"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.MarketData.get_additional_arrays" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -594,6 +658,50 @@ Also includes any ohlcv values that are negative</p>
 
 </dd></dl>
 
+<dl class="class">
+<dt id="pyqstrat.marketdata.MarketDataCollection">
+<em class="property">class </em><code class="descclassname">pyqstrat.marketdata.</code><code class="descname">MarketDataCollection</code><span class="sig-paren">(</span><em>symbols=None</em>, <em>marketdata_list=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#MarketDataCollection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.MarketDataCollection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Used to store a set of market data linking symbol -&gt; MarketData</p>
+<dl class="method">
+<dt id="pyqstrat.marketdata.MarketDataCollection.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>symbols=None</em>, <em>marketdata_list=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#MarketDataCollection.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.MarketDataCollection.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>symbols</strong> (<em>list of str</em><em>, </em><em>optional</em>) – Symbols we want to store market data for.  Default None</li>
+<li><strong>marketdata_list</strong> (<em>list of MarketData</em>) – Corresponding MarketData object.  Default None</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.marketdata.MarketDataCollection.add_dates">
+<code class="descname">add_dates</code><span class="sig-paren">(</span><em>dates</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#MarketDataCollection.add_dates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.MarketDataCollection.add_dates" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.marketdata.MarketDataCollection.add_marketdata">
+<code class="descname">add_marketdata</code><span class="sig-paren">(</span><em>symbol</em>, <em>marketdata</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#MarketDataCollection.add_marketdata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.MarketDataCollection.add_marketdata" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.marketdata.MarketDataCollection.dates">
+<code class="descname">dates</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#MarketDataCollection.dates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.MarketDataCollection.dates" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.marketdata.MarketDataCollection.items">
+<code class="descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#MarketDataCollection.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.MarketDataCollection.items" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <dl class="function">
 <dt id="pyqstrat.marketdata.roll_futures">
 <code class="descclassname">pyqstrat.marketdata.</code><code class="descname">roll_futures</code><span class="sig-paren">(</span><em>md</em>, <em>date_func</em>, <em>condition_func</em>, <em>expiries=None</em>, <em>return_full_df=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#roll_futures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.roll_futures" title="Permalink to this definition">¶</a></dt>
@@ -647,6 +755,16 @@ the date and roll condition functions are met.</p>
 </pre></div>
 </div>
 </dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.marketdata.sort_ohlcv">
+<code class="descclassname">pyqstrat.marketdata.</code><code class="descname">sort_ohlcv</code><span class="sig-paren">(</span><em>columns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#sort_ohlcv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.sort_ohlcv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.marketdata.sort_ohlcv_key">
+<code class="descclassname">pyqstrat.marketdata.</code><code class="descname">sort_ohlcv_key</code><span class="sig-paren">(</span><em>a</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata.html#sort_ohlcv_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata.sort_ohlcv_key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="function">
 <dt id="pyqstrat.marketdata.test_marketdata">
@@ -1001,12 +1119,12 @@ Box is at Q1 = 25%, Q3 = 75% quantiles, whiskers are at Q1 - 1.5 * (Q3 - Q1), Q3
 
 <dl class="class">
 <dt id="pyqstrat.plot.OHLC">
-<em class="property">class </em><code class="descclassname">pyqstrat.plot.</code><code class="descname">OHLC</code><span class="sig-paren">(</span><em>name</em>, <em>dates</em>, <em>o</em>, <em>h</em>, <em>l</em>, <em>c</em>, <em>v=None</em>, <em>colorup='darkgreen'</em>, <em>colordown='#F2583E'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#OHLC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.OHLC" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyqstrat.plot.</code><code class="descname">OHLC</code><span class="sig-paren">(</span><em>name</em>, <em>dates</em>, <em>o</em>, <em>h</em>, <em>l</em>, <em>c</em>, <em>v=None</em>, <em>vwap=None</em>, <em>colorup='darkgreen'</em>, <em>colordown='#F2583E'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#OHLC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.OHLC" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Data in a subplot that contains open, high, low, close, volume bars.  volume is optional.</p>
 <dl class="method">
 <dt id="pyqstrat.plot.OHLC.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>name</em>, <em>dates</em>, <em>o</em>, <em>h</em>, <em>l</em>, <em>c</em>, <em>v=None</em>, <em>colorup='darkgreen'</em>, <em>colordown='#F2583E'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#OHLC.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.OHLC.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>name</em>, <em>dates</em>, <em>o</em>, <em>h</em>, <em>l</em>, <em>c</em>, <em>v=None</em>, <em>vwap=None</em>, <em>colorup='darkgreen'</em>, <em>colordown='#F2583E'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#OHLC.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.OHLC.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1263,7 +1381,7 @@ marker: If set, show a marker at each value in values.  See matplotlib marker ty
 
 <dl class="function">
 <dt id="pyqstrat.plot.draw_candlestick">
-<code class="descclassname">pyqstrat.plot.</code><code class="descname">draw_candlestick</code><span class="sig-paren">(</span><em>ax</em>, <em>index</em>, <em>o</em>, <em>h</em>, <em>l</em>, <em>c</em>, <em>v</em>, <em>colorup='darkgreen'</em>, <em>colordown='#F2583E'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#draw_candlestick"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.draw_candlestick" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyqstrat.plot.</code><code class="descname">draw_candlestick</code><span class="sig-paren">(</span><em>ax</em>, <em>index</em>, <em>o</em>, <em>h</em>, <em>l</em>, <em>c</em>, <em>v</em>, <em>vwap</em>, <em>colorup='darkgreen'</em>, <em>colordown='#F2583E'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#draw_candlestick"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.draw_candlestick" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draw candlesticks given parrallel numpy arrays of o, h, l, c, v values.  v is optional.  See OHLC class __init__ for argument descriptions.</p>
 </dd></dl>
 
@@ -1305,7 +1423,7 @@ If date_format is set to None, figures out an appropriate date format based on t
 
 <dl class="function">
 <dt id="pyqstrat.plot.trade_sets_by_reason_code">
-<code class="descclassname">pyqstrat.plot.</code><code class="descname">trade_sets_by_reason_code</code><span class="sig-paren">(</span><em>trades</em>, <em>marker_props={'backtest end': {'symbol': '*'</em>, <em>'color': 'green'</em>, <em>'size': 50}</em>, <em>'enter long': {'symbol': 'P'</em>, <em>'color': 'blue'</em>, <em>'size': 50}</em>, <em>'enter short': {'symbol': 'P'</em>, <em>'color': 'red'</em>, <em>'size': 50}</em>, <em>'exit long': {'symbol': 'X'</em>, <em>'color': 'blue'</em>, <em>'size': 50}</em>, <em>'exit short': {'symbol': 'X'</em>, <em>'color': 'red'</em>, <em>'size': 50}</em>, <em>'none': {'symbol': 'o'</em>, <em>'color': 'green'</em>, <em>'size': 50}</em>, <em>'roll future': {'symbol': '&gt;'</em>, <em>'color': 'green'</em>, <em>'size': 50}}</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#trade_sets_by_reason_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.trade_sets_by_reason_code" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyqstrat.plot.</code><code class="descname">trade_sets_by_reason_code</code><span class="sig-paren">(</span><em>trades</em>, <em>marker_props={'backtest end': {'color': 'green'</em>, <em>'size': 50</em>, <em>'symbol': '*'}</em>, <em>'enter long': {'color': 'blue'</em>, <em>'size': 50</em>, <em>'symbol': 'P'}</em>, <em>'enter short': {'color': 'red'</em>, <em>'size': 50</em>, <em>'symbol': 'P'}</em>, <em>'exit long': {'color': 'blue'</em>, <em>'size': 50</em>, <em>'symbol': 'X'}</em>, <em>'exit short': {'color': 'red'</em>, <em>'size': 50</em>, <em>'symbol': 'X'}</em>, <em>'none': {'color': 'green'</em>, <em>'size': 50</em>, <em>'symbol': 'o'}</em>, <em>'roll future': {'color': 'green'</em>, <em>'size': 50</em>, <em>'symbol': '&gt;'}}</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#trade_sets_by_reason_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.trade_sets_by_reason_code" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of TradeSet objects.  Each TradeSet contains trades with a different reason code.  The markers for each TradeSet
 are set by looking up marker properties for each reason code using the marker_props argument:</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1359,7 +1477,7 @@ the reason you are creating your order.  Otherwise, use your own string.</p>
 
 <dl class="attribute">
 <dt id="pyqstrat.pq_utils.ReasonCode.MARKER_PROPERTIES">
-<code class="descname">MARKER_PROPERTIES</code><em class="property"> = {'backtest end': {'symbol': '*', 'color': 'green', 'size': 50}, 'enter long': {'symbol': 'P', 'color': 'blue', 'size': 50}, 'enter short': {'symbol': 'P', 'color': 'red', 'size': 50}, 'exit long': {'symbol': 'X', 'color': 'blue', 'size': 50}, 'exit short': {'symbol': 'X', 'color': 'red', 'size': 50}, 'none': {'symbol': 'o', 'color': 'green', 'size': 50}, 'roll future': {'symbol': '&gt;', 'color': 'green', 'size': 50}}</em><a class="headerlink" href="#pyqstrat.pq_utils.ReasonCode.MARKER_PROPERTIES" title="Permalink to this definition">¶</a></dt>
+<code class="descname">MARKER_PROPERTIES</code><em class="property"> = {'backtest end': {'color': 'green', 'size': 50, 'symbol': '*'}, 'enter long': {'color': 'blue', 'size': 50, 'symbol': 'P'}, 'enter short': {'color': 'red', 'size': 50, 'symbol': 'P'}, 'exit long': {'color': 'blue', 'size': 50, 'symbol': 'X'}, 'exit short': {'color': 'red', 'size': 50, 'symbol': 'X'}, 'none': {'color': 'green', 'size': 50, 'symbol': 'o'}, 'roll future': {'color': 'green', 'size': 50, 'symbol': '&gt;'}}</em><a class="headerlink" href="#pyqstrat.pq_utils.ReasonCode.MARKER_PROPERTIES" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -1378,6 +1496,39 @@ the reason you are creating your order.  Otherwise, use your own string.</p>
 <dt id="pyqstrat.pq_utils.date_2_num">
 <code class="descclassname">pyqstrat.pq_utils.</code><code class="descname">date_2_num</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#date_2_num"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.date_2_num" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adopted from matplotlib.mdates.date2num so we don’t have to add a dependency on matplotlib here</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pq_utils.decode_future_code">
+<code class="descclassname">pyqstrat.pq_utils.</code><code class="descname">decode_future_code</code><span class="sig-paren">(</span><em>future_code</em>, <em>as_str=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#decode_future_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.decode_future_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a future code such as “X”, return either the month number (from 1 - 12) or the month abbreviation, such as “nov”</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>future_code</strong> (<em>str</em>) – the one letter future code</li>
+<li><strong>as_str</strong> (<em>bool</em><em>, </em><em>optional</em>) – If set, we return the abbreviation, if not, we return the month number</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">decode_future_code</span><span class="p">(</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="n">as_str</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+<span class="go">11</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">decode_future_code</span><span class="p">(</span><span class="s1">&#39;X&#39;</span><span class="p">)</span>
+<span class="go">&#39;nov&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pq_utils.get_empty_np_value">
+<code class="descclassname">pyqstrat.pq_utils.</code><code class="descname">get_empty_np_value</code><span class="sig-paren">(</span><em>np_dtype</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#get_empty_np_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.get_empty_np_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get empty value for a given numpy datatype
+&gt;&gt;&gt; a = np.array([‘2018-01-01’, ‘2018-01-03’], dtype = ‘M8[D]’)
+&gt;&gt;&gt; get_empty_np_value(a.dtype)
+numpy.datetime64(‘NaT’)</p>
 </dd></dl>
 
 <dl class="function">
@@ -1402,7 +1553,7 @@ True</p>
 <dd><p>Returns most common frequency of date differences as a fraction of days
 :param dates: A numpy array of monotonically increasing datetime64</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;2018-01-01 11:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-01 11:15:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-01 11:30:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-01 11:35:00&#39;</span><span class="p">],</span> <span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;M8[ns]&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">infer_frequency</span><span class="p">(</span><span class="n">dates</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">infer_frequency</span><span class="p">(</span><span class="n">dates</span><span class="p">),</span> <span class="mi">8</span><span class="p">))</span>
 <span class="go">0.01041667</span>
 </pre></div>
 </div>
@@ -1413,15 +1564,17 @@ True</p>
 <code class="descclassname">pyqstrat.pq_utils.</code><code class="descname">is_newer</code><span class="sig-paren">(</span><em>filename</em>, <em>ref_filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#is_newer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.is_newer" title="Permalink to this definition">¶</a></dt>
 <dd><p>whether filename ctime (modfication time) is newer than ref_filename or either file does not exist
 &gt;&gt;&gt; import time
-&gt;&gt;&gt; touch(‘/tmp/x.txt’)
+&gt;&gt;&gt; import tempfile
+&gt;&gt;&gt; temp_dir = tempfile.gettempdir()
+&gt;&gt;&gt; touch(f’{temp_dir}/x.txt’)
 &gt;&gt;&gt; time.sleep(0.1)
-&gt;&gt;&gt; touch(‘/tmp/y.txt’)
-&gt;&gt;&gt; is_newer(‘/tmp/y.txt’, ‘/tmp/x.txt’)
+&gt;&gt;&gt; touch(f’{temp_dir}/y.txt’)
+&gt;&gt;&gt; is_newer(f’{temp_dir}/y.txt’, f’{temp_dir}/x.txt’)
 True
-&gt;&gt;&gt; touch(‘/tmp/y.txt’)
+&gt;&gt;&gt; touch(f’{temp_dir}/y.txt’)
 &gt;&gt;&gt; time.sleep(0.1)
-&gt;&gt;&gt; touch(‘/tmp/x.txt’)
-&gt;&gt;&gt; is_newer(‘/tmp/y.txt’, ‘/tmp/x.txt’)
+&gt;&gt;&gt; touch(f’{temp_dir}/x.txt’)
+&gt;&gt;&gt; is_newer(f’{temp_dir}/y.txt’, f’{temp_dir}/x.txt’)
 False</p>
 </dd></dl>
 
@@ -1460,42 +1613,44 @@ Returns a float since it can contain fractions of milliseconds as well
 
 <dl class="function">
 <dt id="pyqstrat.pq_utils.resample_ohlc">
-<code class="descclassname">pyqstrat.pq_utils.</code><code class="descname">resample_ohlc</code><span class="sig-paren">(</span><em>dates</em>, <em>o</em>, <em>h</em>, <em>l</em>, <em>c</em>, <em>v</em>, <em>sampling_frequency</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#resample_ohlc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.resample_ohlc" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyqstrat.pq_utils.</code><code class="descname">resample_ohlc</code><span class="sig-paren">(</span><em>df</em>, <em>sampling_frequency</em>, <em>resample_funcs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#resample_ohlc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.resample_ohlc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Downsample OHLCV data using sampling frequency</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>o</strong> – open price, downsampling uses the first point in the bin</li>
-<li><strong>h</strong> – high price, downsampling uses the max</li>
-<li><strong>l</strong> – low price, downsampling uses the min</li>
-<li><strong>c</strong> – close price, downsampling uses the last point</li>
-<li><strong>v</strong> – volume, downsampling uses the sum</li>
-<li><strong>sampling_frequency</strong> – See pandas frequency strings</li>
+<li><strong>df</strong> (<em>pd.DataFrame</em>) – Must contain an index of numpy datetime64 type which is monotonically increasing</li>
+<li><strong>sampling_frequency</strong> (<em>str</em>) – See pandas frequency strings</li>
+<li><strong>(</strong><strong>dict of str</strong> (<em>resample_funcs</em>) – int) : a dictionary of column name -&gt; resampling function for any columns that are custom defined.  Default None.
+If there is no entry for a custom column, defaults to ‘last’ for that column</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><dl class="docutils">
-<dt>A tuple of arrays, corresponding to each array passed in that was not None.</dt>
-<dd><p class="first last">For example, if l and v were passed in as None, the tuple will not contain these.</p>
-</dd>
-</dl>
-</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Resampled dataframe</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">pd.DataFrame</p>
 </td>
 </tr>
 </tbody>
 </table>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;2018-01-08 15:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-09 15:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-09 15:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-11 15:00:00&#39;</span><span class="p">],</span> <span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;M8[ns]&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">o</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.9</span><span class="p">,</span> <span class="mf">9.1</span><span class="p">,</span> <span class="mf">9.3</span><span class="p">,</span> <span class="mf">8.6</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">9.0</span><span class="p">,</span> <span class="mf">9.3</span><span class="p">,</span> <span class="mf">9.4</span><span class="p">,</span> <span class="mf">8.7</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">l</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.8</span><span class="p">,</span> <span class="mf">9.0</span><span class="p">,</span> <span class="mf">9.2</span><span class="p">,</span> <span class="mf">8.4</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.95</span><span class="p">,</span> <span class="mf">9.2</span><span class="p">,</span> <span class="mf">9.35</span><span class="p">,</span> <span class="mf">8.5</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">200</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">300</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">resample_ohlc</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">sampling_frequency</span> <span class="o">=</span> <span class="s1">&#39;D&#39;</span><span class="p">)</span>
-<span class="go">(array([&#39;2018-01-08T00:00:00.000000000&#39;, &#39;2018-01-09T00:00:00.000000000&#39;,</span>
-<span class="go">        &#39;2018-01-10T00:00:00.000000000&#39;, &#39;2018-01-11T00:00:00.000000000&#39;], dtype=&#39;datetime64[ns]&#39;),</span>
-<span class="go">        array([8.9, 9.1, nan, 8.6]), array([9. , 9.4, nan, 8.7]), array([8.8, 9. , nan, 8.4]), array([8.95, 9.35,  nan, 8.5 ]), None)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;date&#39;</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;2018-01-08 15:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-09 13:30:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-09 15:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-11 15:00:00&#39;</span><span class="p">],</span> <span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;M8[ns]&#39;</span><span class="p">),</span>
+<span class="gp">... </span>          <span class="s1">&#39;o&#39;</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.9</span><span class="p">,</span> <span class="mf">9.1</span><span class="p">,</span> <span class="mf">9.3</span><span class="p">,</span> <span class="mf">8.6</span><span class="p">]),</span>
+<span class="gp">... </span>          <span class="s1">&#39;h&#39;</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">9.0</span><span class="p">,</span> <span class="mf">9.3</span><span class="p">,</span> <span class="mf">9.4</span><span class="p">,</span> <span class="mf">8.7</span><span class="p">]),</span>
+<span class="gp">... </span>          <span class="s1">&#39;l&#39;</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.8</span><span class="p">,</span> <span class="mf">9.0</span><span class="p">,</span> <span class="mf">9.2</span><span class="p">,</span> <span class="mf">8.4</span><span class="p">]),</span>
+<span class="gp">... </span>          <span class="s1">&#39;c&#39;</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.95</span><span class="p">,</span> <span class="mf">9.2</span><span class="p">,</span> <span class="mf">9.35</span><span class="p">,</span> <span class="mf">8.5</span><span class="p">]),</span>
+<span class="gp">... </span>          <span class="s1">&#39;v&#39;</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">200</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">300</span><span class="p">]),</span>
+<span class="gp">... </span>          <span class="s1">&#39;x&#39;</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">300</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">400</span><span class="p">])</span>
+<span class="gp">... </span>         <span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;vwap&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">l</span> <span class="o">+</span> <span class="n">df</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;date&#39;</span><span class="p">,</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">resample_ohlc</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">sampling_frequency</span> <span class="o">=</span> <span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="n">resample_funcs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;x&#39;</span> <span class="p">:</span> <span class="k">lambda</span> <span class="n">df</span><span class="p">,</span> <span class="n">sampling_frequency</span> <span class="p">:</span> <span class="n">df</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">sampling_frequency</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)})</span>
+<span class="go">        date   o   h   l    c    v   x  vwap</span>
+<span class="go">0 2018-01-08 8.9   9 8.8 8.95  200 300   8.9</span>
+<span class="go">1 2018-01-09 9.1 9.4   9 9.35  250 150  9.24</span>
+<span class="go">2 2018-01-10 nan nan nan  nan    0 nan   nan</span>
+<span class="go">3 2018-01-11 8.6 8.7 8.4  8.5  300 400  8.55</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -1517,6 +1672,12 @@ Returns a float since it can contain fractions of milliseconds as well
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pq_utils.resample_vwap">
+<code class="descclassname">pyqstrat.pq_utils.</code><code class="descname">resample_vwap</code><span class="sig-paren">(</span><em>df</em>, <em>sampling_frequency</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#resample_vwap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.resample_vwap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute weighted average of vwap given higher frequency vwap and volume</p>
 </dd></dl>
 
 <dl class="function">
@@ -1603,341 +1764,22 @@ Also optionally compresses using the xz algorithm</p>
 <div class="section" id="module-pyqstrat.strategy">
 <span id="pyqstrat-strategy-module"></span><h2>pyqstrat.strategy module<a class="headerlink" href="#module-pyqstrat.strategy" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="pyqstrat.strategy.Account">
-<em class="property">class </em><code class="descclassname">pyqstrat.strategy.</code><code class="descname">Account</code><span class="sig-paren">(</span><em>contracts</em>, <em>starting_equity=1000000.0</em>, <em>calc_frequency='D'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Account"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Account" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>An Account calculates pnl for a set of contracts</p>
-<dl class="method">
-<dt id="pyqstrat.strategy.Account.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>contracts</em>, <em>starting_equity=1000000.0</em>, <em>calc_frequency='D'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Account.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Account.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>contracts</strong> – A list of Contract objects</li>
-<li><strong>starting_equity</strong> – Starting equity in account currency.  Default 1.e6</li>
-<li><strong>calc_frequency</strong> – Account will calculate pnl at this frequency.  Default ‘D’ for daily</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Account.add_contract">
-<code class="descname">add_contract</code><span class="sig-paren">(</span><em>contract</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Account.add_contract"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Account.add_contract" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Account.calc">
-<code class="descname">calc</code><span class="sig-paren">(</span><em>i</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Account.calc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Account.calc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes P&amp;L and stores it internally for all contracts.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>i</strong> – Index to compute P&amp;L at.  Account remembers the last index it computed P&amp;L up to and will compute P&amp;L between these two indices</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Account.df_pnl">
-<code class="descname">df_pnl</code><span class="sig-paren">(</span><em>symbol=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Account.df_pnl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Account.df_pnl" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a dataframe with P&amp;L columns.  If symbol is set to None (default), sums up P&amp;L across symbols</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Account.df_trades">
-<code class="descname">df_trades</code><span class="sig-paren">(</span><em>symbol=None</em>, <em>start_date=None</em>, <em>end_date=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Account.df_trades"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Account.df_trades" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a dataframe with data from trades with the given symbol and with trade date between (and including) start date and end date
-if they are specified.  If symbol is None, trades for all symbols are returned</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Account.equity">
-<code class="descname">equity</code><span class="sig-paren">(</span><em>date</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Account.equity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Account.equity" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns equity in this account in Account currency.  Will cause calculation if Account has not previously calculated up to this date</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Account.find_index_before">
-<code class="descname">find_index_before</code><span class="sig-paren">(</span><em>date</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Account.find_index_before"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Account.find_index_before" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the market data index before or at date</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Account.position">
-<code class="descname">position</code><span class="sig-paren">(</span><em>symbol</em>, <em>date</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Account.position"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Account.position" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns position for a symbol at a given date in number of contracts or shares.  Will cause calculation if Account has not previously calculated
-up to this date</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Account.symbols">
-<code class="descname">symbols</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Account.symbols"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Account.symbols" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Account.trades">
-<code class="descname">trades</code><span class="sig-paren">(</span><em>symbol=None</em>, <em>start_date=None</em>, <em>end_date=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Account.trades"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Account.trades" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a list of trades with the given symbol and with trade date between (and including) start date and end date if they are specified.
-If symbol is None trades for all symbols are returned</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Account.transfer_cash">
-<code class="descname">transfer_cash</code><span class="sig-paren">(</span><em>date</em>, <em>amount</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Account.transfer_cash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Account.transfer_cash" title="Permalink to this definition">¶</a></dt>
-<dd><p>Move cash from one portfolio to another</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pyqstrat.strategy.Contract">
-<em class="property">class </em><code class="descclassname">pyqstrat.strategy.</code><code class="descname">Contract</code><span class="sig-paren">(</span><em>symbol</em>, <em>marketdata</em>, <em>multiplier=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Contract"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Contract" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>A Contract can be a real or virtual instrument. For example, for futures you may wish to create a single continous contract instead of
-a contract for each future series</p>
-<dl class="method">
-<dt id="pyqstrat.strategy.Contract.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>symbol</em>, <em>marketdata</em>, <em>multiplier=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Contract.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Contract.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>symbol</strong> – A unique string reprenting this contract. e.g IBM or WTI_FUTURE</li>
-<li><strong>multiplier</strong> – If you have to multiply price to get price per contract, set that multiplier there.</li>
-<li><strong>marketdata</strong> – A MarketData object containing prices for this contract.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pyqstrat.strategy.ContractPNL">
-<em class="property">class </em><code class="descclassname">pyqstrat.strategy.</code><code class="descname">ContractPNL</code><span class="sig-paren">(</span><em>contract</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#ContractPNL"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.ContractPNL" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Computes pnl for a single contract over time given trades and market data</p>
-<dl class="method">
-<dt id="pyqstrat.strategy.ContractPNL.add_trades">
-<code class="descname">add_trades</code><span class="sig-paren">(</span><em>trades</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#ContractPNL.add_trades"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.ContractPNL.add_trades" title="Permalink to this definition">¶</a></dt>
-<dd><p>Args:
-trades: A list of Trade objects</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.ContractPNL.calc">
-<code class="descname">calc</code><span class="sig-paren">(</span><em>prev_i</em>, <em>i</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#ContractPNL.calc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.ContractPNL.calc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute pnl and store it internally</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>prev_i</strong> – Start index to compute pnl from</li>
-<li><strong>i</strong> – End index to compute pnl to</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.ContractPNL.df">
-<code class="descname">df</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#ContractPNL.df"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.ContractPNL.df" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a pandas dataframe with pnl data, indexed by date</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.ContractPNL.trades">
-<code class="descname">trades</code><span class="sig-paren">(</span><em>start_date=None</em>, <em>end_date=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#ContractPNL.trades"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.ContractPNL.trades" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a list of trades</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>start_date</strong> – A string or numpy datetime64.  Trades with trade dates &gt;= start_date will be returned.  Default None</li>
-<li><strong>end_date</strong> – A string or numpy datetime64.  Trades with trade dates &lt;= end_date will be returned.  Default None</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pyqstrat.strategy.Portfolio">
-<em class="property">class </em><code class="descclassname">pyqstrat.strategy.</code><code class="descname">Portfolio</code><span class="sig-paren">(</span><em>name='main'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Portfolio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Portfolio" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>A portfolio contains one or more strategies that run concurrently so you can test running strategies that are uncorrelated together.</p>
-<dl class="method">
-<dt id="pyqstrat.strategy.Portfolio.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>name='main'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Portfolio.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Portfolio.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Args:
-name: String used for displaying this portfolio</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Portfolio.add_strategy">
-<code class="descname">add_strategy</code><span class="sig-paren">(</span><em>name</em>, <em>strategy</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Portfolio.add_strategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Portfolio.add_strategy" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>name</strong> – Name of the strategy</li>
-<li><strong>strategy</strong> – Strategy object</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Portfolio.df_returns">
-<code class="descname">df_returns</code><span class="sig-paren">(</span><em>sampling_frequency='D'</em>, <em>strategy_names=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Portfolio.df_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Portfolio.df_returns" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return dataframe containing equity and returns with a date index.  Equity and returns are combined from all strategies passed in.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>sampling_frequency</strong> – Date frequency for rows.  Default ‘D’ for daily so we will have one row per day</li>
-<li><strong>strategy_names</strong> – A list of strategy names.  By default this is set to None and we use all strategies.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Portfolio.evaluate_returns">
-<code class="descname">evaluate_returns</code><span class="sig-paren">(</span><em>sampling_frequency='D'</em>, <em>strategy_names=None</em>, <em>plot=True</em>, <em>float_precision=4</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Portfolio.evaluate_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Portfolio.evaluate_returns" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a dictionary of common return metrics.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>sampling_frequency</strong> – Date frequency.  Default ‘D’ for daily so we downsample to daily returns before computing metrics</li>
-<li><strong>strategy_names</strong> – A list of strategy names.  By default this is set to None and we use all strategies.</li>
-<li><strong>plot</strong> – If set to True, display plots of equity, drawdowns and returns.  Default False</li>
-<li><strong>float_precision</strong> – Number of significant figures to show in returns.  Default 4</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Portfolio.plot">
-<code class="descname">plot</code><span class="sig-paren">(</span><em>sampling_frequency='D'</em>, <em>strategy_names=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Portfolio.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Portfolio.plot" title="Permalink to this definition">¶</a></dt>
-<dd><p>Display plots of equity, drawdowns and returns</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>sampling_frequency</strong> – Date frequency.  Default ‘D’ for daily so we downsample to daily returns before computing metrics</li>
-<li><strong>strategy_names</strong> – A list of strategy names.  By default this is set to None and we use all strategies.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Portfolio.run">
-<code class="descname">run</code><span class="sig-paren">(</span><em>strategy_names=None</em>, <em>start_date=None</em>, <em>end_date=None</em>, <em>run_first=False</em>, <em>run_last=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Portfolio.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Portfolio.run" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run indicators, signals and rules.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>strategy_names</strong> – A list of strategy names.  By default this is set to None and we use all strategies.</li>
-<li><strong>start_date</strong> – Run rules starting from this date.
-Sometimes we have a few strategies in a portfolio that need different lead times before they are ready to trade
-so you can set this so they are all ready by this date.  Default None</li>
-<li><strong>end_date</strong> – Don’t run rules after this date.  Default None</li>
-<li><strong>run_first</strong> – Force running rules on the first bar even if signals do not require this.  Default False</li>
-<li><strong>run_last</strong> – Force running rules on penultimate bar even if signals do not require this.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Portfolio.run_indicators">
-<code class="descname">run_indicators</code><span class="sig-paren">(</span><em>strategy_names=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Portfolio.run_indicators"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Portfolio.run_indicators" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute indicators for the strategies specified</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>strategy_names</strong> – A list of strategy names.  By default this is set to None and we use all strategies.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Portfolio.run_rules">
-<code class="descname">run_rules</code><span class="sig-paren">(</span><em>strategy_names=None</em>, <em>start_date=None</em>, <em>end_date=None</em>, <em>run_first=False</em>, <em>run_last=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Portfolio.run_rules"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Portfolio.run_rules" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run rules for the strategies specified.  Must be called after run_indicators and run_signals.
-See run function for argument descriptions</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.strategy.Portfolio.run_signals">
-<code class="descname">run_signals</code><span class="sig-paren">(</span><em>strategy_names=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Portfolio.run_signals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Portfolio.run_signals" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute signals for the strategies specified.  Must be called after run_indicators</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>strategy_names</strong> – A list of strategy names.  By default this is set to None and we use all strategies.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
 <dt id="pyqstrat.strategy.Strategy">
-<em class="property">class </em><code class="descclassname">pyqstrat.strategy.</code><code class="descname">Strategy</code><span class="sig-paren">(</span><em>contracts</em>, <em>starting_equity=1000000.0</em>, <em>calc_frequency='D'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Strategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Strategy" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyqstrat.strategy.</code><code class="descname">Strategy</code><span class="sig-paren">(</span><em>contracts</em>, <em>marketdata_collection</em>, <em>starting_equity=1000000.0</em>, <em>calc_frequency='D'</em>, <em>additional_order_dates=None</em>, <em>additional_trade_dates=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Strategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Strategy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="pyqstrat.strategy.Strategy.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>contracts</em>, <em>starting_equity=1000000.0</em>, <em>calc_frequency='D'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Strategy.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Strategy.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>contracts</em>, <em>marketdata_collection</em>, <em>starting_equity=1000000.0</em>, <em>calc_frequency='D'</em>, <em>additional_order_dates=None</em>, <em>additional_trade_dates=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Strategy.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Strategy.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>contracts</strong> – A list of contract objects</li>
-<li><strong>starting_equity</strong> – Starting equity in Strategy currency.  Default 1.e6</li>
-<li><strong>calc_frequency</strong> – How often P&amp;L is calculated.  Default is ‘D’ for daily</li>
+<li><strong>contracts</strong> (<em>list of Contract</em>) – The contracts we will potentially trade</li>
+<li><strong>starting_equity</strong> (<em>float</em><em>, </em><em>optional</em>) – Starting equity in Strategy currency.  Default 1.e6</li>
+<li><strong>calc_frequency</strong> (<em>str</em><em>, </em><em>optional</em>) – How often P&amp;L is calculated.  Default is ‘D’ for daily</li>
+<li><strong>additional_account_dates</strong> (<em>np.array of np.datetime64</em><em>, </em><em>optional</em>) – If present, we check for orders on these dates.  Default None</li>
+<li><strong>additional_tradedates</strong> (<em>np.array of np.datetime64</em><em>, </em><em>optional</em>) – If present, we check for trades on these dates.  Default None</li>
 </ul>
 </td>
 </tr>
@@ -1983,17 +1825,18 @@ containing indicator values.  The return array must have the same length as the 
 
 <dl class="method">
 <dt id="pyqstrat.strategy.Strategy.add_rule">
-<code class="descname">add_rule</code><span class="sig-paren">(</span><em>name</em>, <em>rule_function</em>, <em>signal_name</em>, <em>sig_true_values</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Strategy.add_rule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Strategy.add_rule" title="Permalink to this definition">¶</a></dt>
+<code class="descname">add_rule</code><span class="sig-paren">(</span><em>name</em>, <em>rule_function</em>, <em>signal_name</em>, <em>sig_true_values=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Strategy.add_rule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Strategy.add_rule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a trading rule</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>name</strong> – Name of the trading rule</li>
-<li><strong>rule_function</strong> – A trading rule function that returns a list of Orders</li>
-<li><strong>signal_name</strong> – The strategy will call the trading rule function when the signal with this name matches sig_true_values</li>
-<li><strong>sig_true_values</strong> – A numpy array of values.  If the signal value at a bar is equal to one of these, the Strategy will call the trading rule function</li>
+<li><strong>name</strong> (<em>str</em>) – Name of the trading rule</li>
+<li><strong>rule_function</strong> (<em>function</em>) – A trading rule function that returns a list of Orders</li>
+<li><strong>signal_name</strong> (<em>str</em>) – The strategy will call the trading rule function when the signal with this name matches sig_true_values</li>
+<li><strong>sig_true_values</strong> (<em>numpy array</em><em>, </em><em>optional</em>) – If the signal value at a bar is equal to one of these values, the Strategy will call the trading rule function.
+Default [TRUE]</li>
 </ul>
 </td>
 </tr>
@@ -2086,10 +1929,9 @@ if they are specified.  If symbol is None, trades for all symbols are returned</
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>sampling_frequency</strong> – Date frequency.  Default ‘D’ for daily so we downsample to daily returns before computing metrics</li>
-<li><strong>strategy_names</strong> – A list of strategy names.  By default this is set to None and we use all strategies.</li>
-<li><strong>plot</strong> – If set to True, display plots of equity, drawdowns and returns.  Default False</li>
-<li><strong>float_precision</strong> – Number of significant figures to show in returns.  Default 4</li>
+<li><strong>symbol</strong> (<em>str</em>) – Date frequency.  Default ‘D’ for daily so we downsample to daily returns before computing metrics</li>
+<li><strong>plot</strong> (<em>bool</em>) – If set to True, display plots of equity, drawdowns and returns.  Default False</li>
+<li><strong>float_precision</strong> (<em>float</em><em>, </em><em>optional</em>) – Number of significant figures to show in returns.  Default 4</li>
 </ul>
 </td>
 </tr>
@@ -2165,7 +2007,7 @@ Default is None in which case the dictionary from the ReasonCode class is used</
 
 <dl class="method">
 <dt id="pyqstrat.strategy.Strategy.run_rules">
-<code class="descname">run_rules</code><span class="sig-paren">(</span><em>rule_names=None</em>, <em>symbols=None</em>, <em>start_date=None</em>, <em>end_date=None</em>, <em>run_first=False</em>, <em>run_last=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Strategy.run_rules"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Strategy.run_rules" title="Permalink to this definition">¶</a></dt>
+<code class="descname">run_rules</code><span class="sig-paren">(</span><em>rule_names=None</em>, <em>symbols=None</em>, <em>start_date=None</em>, <em>end_date=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Strategy.run_rules"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Strategy.run_rules" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run trading rules.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2176,8 +2018,6 @@ Default is None in which case the dictionary from the ReasonCode class is used</
 <li><strong>symbols</strong> – List of symbols to run these signals for.  If None (default) use all symbols</li>
 <li><strong>start_date</strong> – Run rules starting from this date. Default None</li>
 <li><strong>end_date</strong> – Don’t run rules after this date.  Default None</li>
-<li><strong>run_first</strong> – Force running rules on the first bar even if signals do not require this.  Default False</li>
-<li><strong>run_last</strong> – Force running rules on penultimate bar even if signals do not require this.</li>
 </ul>
 </td>
 </tr>
@@ -2211,30 +2051,6 @@ If symbol is None trades for all symbols are returned</p>
 </dd></dl>
 
 </dd></dl>
-
-<dl class="class">
-<dt id="pyqstrat.strategy.Trade">
-<em class="property">class </em><code class="descclassname">pyqstrat.strategy.</code><code class="descname">Trade</code><span class="sig-paren">(</span><em>symbol</em>, <em>date</em>, <em>qty</em>, <em>price</em>, <em>fee=0.0</em>, <em>commission=0.0</em>, <em>order=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Trade"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Trade" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="method">
-<dt id="pyqstrat.strategy.Trade.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>symbol</em>, <em>date</em>, <em>qty</em>, <em>price</em>, <em>fee=0.0</em>, <em>commission=0.0</em>, <em>order=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Trade.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Trade.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Args:
-symbol: a string
-date: Trade execution datetime
-qty: Number of contracts or shares filled
-price: Trade price
-fee: Fees paid to brokers or others. Default 0
-commision: Commission paid to brokers or others. Default 0
-order: A reference to the order that created this trade. Default None</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="function">
-<dt id="pyqstrat.strategy.test_strategy">
-<code class="descclassname">pyqstrat.strategy.</code><code class="descname">test_strategy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#test_strategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.test_strategy" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 </div>
 <div class="section" id="module-pyqstrat.pyqstrat_cpp">
@@ -2775,26 +2591,58 @@ Defaults to True</li>
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.OpenInterestRecord.id">
 <code class="descname">id</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OpenInterestRecord.id" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> – Represents a symbol or instrument id, for example, for an option you may concantenate underlying symbol, expiration, strike,
+<dd><p>Represents a symbol or instrument id, for example, for an option you may concantenate underlying symbol, expiration, strike,
 put or call to uniquely identify the instrument</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.OpenInterestRecord.timestamp">
 <code class="descname">timestamp</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OpenInterestRecord.timestamp" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>int</em> – Trade time, in milliseconds or microseconds since 1/1/1970</p>
+<dd><p>Trade time, in milliseconds or microseconds since 1/1/1970</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">int</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.OpenInterestRecord.qty">
 <code class="descname">qty</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OpenInterestRecord.qty" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>float</em> – Trade quantity</p>
+<dd><p>Trade quantity</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.OpenInterestRecord.metadata">
 <code class="descname">metadata</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OpenInterestRecord.metadata" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> – A string representing any extra information you want to save, such as exchange, or special trade conditions</p>
+<dd><p>A string representing any extra information you want to save, such as exchange, or special trade conditions</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -2865,20 +2713,44 @@ important fields in the metadata attribute</p>
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.OtherRecord.id">
 <code class="descname">id</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OtherRecord.id" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> – Represents a symbol or instrument id, for example, for an option you may concantenate underlying symbol, expiration, strike,
+<dd><p>Represents a symbol or instrument id, for example, for an option you may concantenate underlying symbol, expiration, strike,
 put or call to uniquely identify the instrument</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.OtherRecord.timestamp">
 <code class="descname">timestamp</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OtherRecord.timestamp" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>int</em> – trade time, in milliseconds or microseconds since 1/1/1970</p>
+<dd><p>trade time, in milliseconds or microseconds since 1/1/1970</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">int</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.OtherRecord.metadata">
 <code class="descname">metadata</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.OtherRecord.metadata" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> – a string representing any extra information you want to save, such as exchange, or special trade conditions</p>
+<dd><p>a string representing any extra information you want to save, such as exchange, or special trade conditions</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -3007,38 +2879,86 @@ the prices or quantities are 0, sets them to NAN</p>
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.QuoteRecord.id">
 <code class="descname">id</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.QuoteRecord.id" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> – Represents a symbol or instrument id, for example, for an option you may concantenate underlying symbol, expiration, strike,
+<dd><p>Represents a symbol or instrument id, for example, for an option you may concantenate underlying symbol, expiration, strike,
 put or call to uniquely identify the instrument</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.QuoteRecord.timestamp">
 <code class="descname">timestamp</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.QuoteRecord.timestamp" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>int</em> – Trade time, in milliseconds or microseconds since 1/1/1970</p>
+<dd><p>Trade time, in milliseconds or microseconds since 1/1/1970</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">int</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.QuoteRecord.bid">
 <code class="descname">bid</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.QuoteRecord.bid" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>bool</em> – If True, this is a bid quote, otherwise it is an offer</p>
+<dd><p>If True, this is a bid quote, otherwise it is an offer</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.QuoteRecord.qty">
 <code class="descname">qty</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.QuoteRecord.qty" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>float</em> – Trade quantity</p>
+<dd><p>Trade quantity</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.QuoteRecord.price">
 <code class="descname">price</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.QuoteRecord.price" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>float</em> – Trade price</p>
+<dd><p>Trade price</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.QuoteRecord.metadata">
 <code class="descname">metadata</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.QuoteRecord.metadata" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> – A string representing any extra information you want to save, such as exchange, or special trade conditions</p>
+<dd><p>A string representing any extra information you want to save, such as exchange, or special trade conditions</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -3837,31 +3757,71 @@ Defaults to Schema.TIMESTAMP_MILLI</li>
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.TradeRecord.id">
 <code class="descname">id</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TradeRecord.id" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> – A unique string representing a symbol or instrument id</p>
+<dd><p>A unique string representing a symbol or instrument id</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.TradeRecord.timestamp">
 <code class="descname">timestamp</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TradeRecord.timestamp" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>int</em> – Trade time, in milliseconds or microseconds since 1/1/1970</p>
+<dd><p>Trade time, in milliseconds or microseconds since 1/1/1970</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">int</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.TradeRecord.qty">
 <code class="descname">qty</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TradeRecord.qty" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>float</em> – Trade quantity</p>
+<dd><p>Trade quantity</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.TradeRecord.price">
 <code class="descname">price</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TradeRecord.price" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>float</em> – Trade price</p>
+<dd><p>Trade price</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pyqstrat.pyqstrat_cpp.TradeRecord.metadata">
 <code class="descname">metadata</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.TradeRecord.metadata" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> – a string representing any extra information you want to save, such as exchange, or special trade conditions</p>
+<dd><p>a string representing any extra information you want to save, such as exchange, or special trade conditions</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -4019,6 +3979,14 @@ later retrieve just this batch of records without reading the whole file</p>
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -4027,8 +3995,8 @@ later retrieve just this batch of records without reading the whole file</p>
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/pyqstrat.rst.txt"

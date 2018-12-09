@@ -13,6 +13,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -35,7 +36,7 @@
 <span></span>
 <span class="c1"># coding: utf-8</span>
 
-<span class="c1"># In[1]:</span>
+<span class="c1"># In[7]:</span>
 
 
 <span class="kn">import</span> <span class="nn">os</span>
@@ -175,40 +176,69 @@
             <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
     <span class="k">return</span> <span class="n">dt</span></div>
 
-<div class="viewcode-block" id="resample_ohlc"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.resample_ohlc">[docs]</a><span class="k">def</span> <span class="nf">resample_ohlc</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="p">):</span>
+<div class="viewcode-block" id="resample_vwap"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.resample_vwap">[docs]</a><span class="k">def</span> <span class="nf">resample_vwap</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Compute weighted average of vwap given higher frequency vwap and volume</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="s1">&#39;v&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span> <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">sum_1</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">vwap</span> <span class="o">*</span> <span class="n">df</span><span class="o">.</span><span class="n">v</span>
+    <span class="n">sum_2</span> <span class="o">=</span> <span class="n">sum_1</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">sampling_frequency</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">)</span>
+    <span class="n">volume_sum</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">sampling_frequency</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">)</span>
+    <span class="n">vwap</span> <span class="o">=</span> <span class="n">sum_2</span> <span class="o">/</span> <span class="n">volume_sum</span>
+    <span class="k">return</span> <span class="n">vwap</span></div>
+
+<div class="viewcode-block" id="resample_ohlc"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.resample_ohlc">[docs]</a><span class="k">def</span> <span class="nf">resample_ohlc</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="p">,</span> <span class="n">resample_funcs</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Downsample OHLCV data using sampling frequency</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
-<span class="sd">        o: open price, downsampling uses the first point in the bin</span>
-<span class="sd">        h: high price, downsampling uses the max</span>
-<span class="sd">        l: low price, downsampling uses the min</span>
-<span class="sd">        c: close price, downsampling uses the last point</span>
-<span class="sd">        v: volume, downsampling uses the sum</span>
-<span class="sd">        sampling_frequency: See pandas frequency strings</span>
-<span class="sd">        </span>
+<span class="sd">        df (pd.DataFrame): Must contain an index of numpy datetime64 type which is monotonically increasing</span>
+<span class="sd">        sampling_frequency (str): See pandas frequency strings</span>
+<span class="sd">        resample_funcs (dict of str : int) : a dictionary of column name -&gt; resampling function for any columns that are custom defined.  Default None.</span>
+<span class="sd">            If there is no entry for a custom column, defaults to &#39;last&#39; for that column</span>
 <span class="sd">    Returns:</span>
-<span class="sd">        A tuple of arrays, corresponding to each array passed in that was not None.  </span>
-<span class="sd">          For example, if l and v were passed in as None, the tuple will not contain these.</span>
+<span class="sd">        pd.DataFrame: Resampled dataframe</span>
 <span class="sd">        </span>
-<span class="sd">    &gt;&gt;&gt; dates = np.array([&#39;2018-01-08 15:00:00&#39;, &#39;2018-01-09 15:00:00&#39;, &#39;2018-01-09 15:00:00&#39;, &#39;2018-01-11 15:00:00&#39;], dtype = &#39;M8[ns]&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; o = np.array([8.9, 9.1, 9.3, 8.6])</span>
-<span class="sd">    &gt;&gt;&gt; h = np.array([9.0, 9.3, 9.4, 8.7])</span>
-<span class="sd">    &gt;&gt;&gt; l = np.array([8.8, 9.0, 9.2, 8.4])</span>
-<span class="sd">    &gt;&gt;&gt; c = np.array([8.95, 9.2, 9.35, 8.5])</span>
-<span class="sd">    &gt;&gt;&gt; v = np.array([200, 100, 150, 300])</span>
-<span class="sd">    &gt;&gt;&gt; resample_ohlc(dates, o, h, l, c, None, sampling_frequency = &#39;D&#39;)</span>
-<span class="sd">    (array([&#39;2018-01-08T00:00:00.000000000&#39;, &#39;2018-01-09T00:00:00.000000000&#39;,</span>
-<span class="sd">            &#39;2018-01-10T00:00:00.000000000&#39;, &#39;2018-01-11T00:00:00.000000000&#39;], dtype=&#39;datetime64[ns]&#39;), </span>
-<span class="sd">            array([8.9, 9.1, nan, 8.6]), array([9. , 9.4, nan, 8.7]), array([8.8, 9. , nan, 8.4]), array([8.95, 9.35,  nan, 8.5 ]), None)</span>
+<span class="sd">    &gt;&gt;&gt; df = pd.DataFrame({&#39;date&#39; : np.array([&#39;2018-01-08 15:00:00&#39;, &#39;2018-01-09 13:30:00&#39;, &#39;2018-01-09 15:00:00&#39;, &#39;2018-01-11 15:00:00&#39;], dtype = &#39;M8[ns]&#39;),</span>
+<span class="sd">    ...           &#39;o&#39; : np.array([8.9, 9.1, 9.3, 8.6]), </span>
+<span class="sd">    ...           &#39;h&#39; : np.array([9.0, 9.3, 9.4, 8.7]), </span>
+<span class="sd">    ...           &#39;l&#39; : np.array([8.8, 9.0, 9.2, 8.4]), </span>
+<span class="sd">    ...           &#39;c&#39; : np.array([8.95, 9.2, 9.35, 8.5]),</span>
+<span class="sd">    ...           &#39;v&#39; : np.array([200, 100, 150, 300]),</span>
+<span class="sd">    ...           &#39;x&#39; : np.array([300, 200, 100, 400])</span>
+<span class="sd">    ...          })</span>
+<span class="sd">    &gt;&gt;&gt; df[&#39;vwap&#39;] =  0.5 * (df.l + df.h)</span>
+<span class="sd">    &gt;&gt;&gt; df.set_index(&#39;date&#39;, inplace = True)</span>
+<span class="sd">    &gt;&gt;&gt; resample_ohlc(df, sampling_frequency = &#39;D&#39;, resample_funcs={&#39;x&#39; : lambda df, sampling_frequency : df.x.resample(sampling_frequency).agg(np.mean)})</span>
+<span class="sd">            date   o   h   l    c    v   x  vwap</span>
+<span class="sd">    0 2018-01-08 8.9   9 8.8 8.95  200 300   8.9</span>
+<span class="sd">    1 2018-01-09 9.1 9.4   9 9.35  250 150  9.24</span>
+<span class="sd">    2 2018-01-10 nan nan nan  nan    0 nan   nan</span>
+<span class="sd">    3 2018-01-11 8.6 8.7 8.4  8.5  300 400  8.55</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="n">sampling_frequency</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">dates</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">v</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;date&#39;</span> <span class="p">:</span> <span class="n">dates</span><span class="p">,</span> <span class="s1">&#39;o&#39;</span> <span class="p">:</span> <span class="n">o</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span> <span class="p">:</span> <span class="n">h</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span> <span class="p">:</span> <span class="n">l</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span> <span class="p">:</span> <span class="n">c</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span> <span class="p">:</span> <span class="n">v</span><span class="p">})</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;date&#39;</span><span class="p">)</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">sampling_frequency</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">({</span><span class="s1">&#39;o&#39;</span><span class="p">:</span> <span class="s1">&#39;first&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">:</span> <span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">:</span> <span class="s1">&#39;min&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;last&#39;</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span> <span class="p">:</span> <span class="s1">&#39;sum&#39;</span><span class="p">})</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">how</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sampling_frequency</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">df</span>
     
-    <span class="n">col_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[(</span><span class="n">o</span><span class="p">,</span> <span class="s1">&#39;o&#39;</span><span class="p">),</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">),</span> <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">),</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">),</span> <span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span><span class="p">)]:</span>
-        <span class="n">col_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span> <span class="k">if</span> <span class="n">col</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">col_list</span><span class="p">)</span></div>
+    <span class="k">if</span> <span class="n">resample_funcs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">resample_funcs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="s1">&#39;vwap&#39;</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span> <span class="n">resample_funcs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;vwap&#39;</span> <span class="p">:</span> <span class="n">resample_vwap</span><span class="p">})</span>
+    
+    <span class="n">funcs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;o&#39;</span><span class="p">:</span> <span class="s1">&#39;first&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">:</span> <span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">:</span> <span class="s1">&#39;min&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;last&#39;</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span> <span class="p">:</span> <span class="s1">&#39;sum&#39;</span><span class="p">}</span>
+    
+    <span class="n">agg_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">funcs</span><span class="p">:</span>
+            <span class="n">agg_dict</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">funcs</span><span class="p">[</span><span class="n">col</span><span class="p">]</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">resample_funcs</span><span class="p">:</span>
+            <span class="n">agg_dict</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;last&#39;</span>
+    
+    <span class="n">resampled</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">sampling_frequency</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">agg_dict</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">how</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">resample_funcs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">v</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="n">resampled</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">res</span>
+            
+    <span class="n">resampled</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">resampled</span></div>
 
 <div class="viewcode-block" id="resample_ts"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.resample_ts">[docs]</a><span class="k">def</span> <span class="nf">resample_ts</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Downsample a pair of dates and values using sampling frequency, using the last value if it does not exist at bin edge.  See pandas.Series.resample</span>
@@ -249,7 +279,7 @@
 <span class="sd">    Args:</span>
 <span class="sd">        dates: A numpy array of monotonically increasing datetime64</span>
 <span class="sd">    &gt;&gt;&gt; dates = np.array([&#39;2018-01-01 11:00:00&#39;, &#39;2018-01-01 11:15:00&#39;, &#39;2018-01-01 11:30:00&#39;, &#39;2018-01-01 11:35:00&#39;], dtype = &#39;M8[ns]&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; infer_frequency(dates)</span>
+<span class="sd">    &gt;&gt;&gt; print(round(infer_frequency(dates), 8))</span>
 <span class="sd">    0.01041667</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">assert</span><span class="p">(</span><span class="n">monotonically_increasing</span><span class="p">(</span><span class="n">dates</span><span class="p">))</span>
@@ -314,19 +344,61 @@
 <div class="viewcode-block" id="is_newer"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.is_newer">[docs]</a><span class="k">def</span> <span class="nf">is_newer</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">ref_filename</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;whether filename ctime (modfication time) is newer than ref_filename or either file does not exist</span>
 <span class="sd">    &gt;&gt;&gt; import time</span>
-<span class="sd">    &gt;&gt;&gt; touch(&#39;/tmp/x.txt&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; import tempfile</span>
+<span class="sd">    &gt;&gt;&gt; temp_dir = tempfile.gettempdir()</span>
+<span class="sd">    &gt;&gt;&gt; touch(f&#39;{temp_dir}/x.txt&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; time.sleep(0.1)</span>
-<span class="sd">    &gt;&gt;&gt; touch(&#39;/tmp/y.txt&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; is_newer(&#39;/tmp/y.txt&#39;, &#39;/tmp/x.txt&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; touch(f&#39;{temp_dir}/y.txt&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; is_newer(f&#39;{temp_dir}/y.txt&#39;, f&#39;{temp_dir}/x.txt&#39;)</span>
 <span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; touch(&#39;/tmp/y.txt&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; touch(f&#39;{temp_dir}/y.txt&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; time.sleep(0.1)</span>
-<span class="sd">    &gt;&gt;&gt; touch(&#39;/tmp/x.txt&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; is_newer(&#39;/tmp/y.txt&#39;, &#39;/tmp/x.txt&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; touch(f&#39;{temp_dir}/x.txt&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; is_newer(f&#39;{temp_dir}/y.txt&#39;, f&#39;{temp_dir}/x.txt&#39;)</span>
 <span class="sd">    False</span>
 <span class="sd">    &#39;&#39;&#39;</span> 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">ref_filename</span><span class="p">):</span> <span class="k">return</span> <span class="kc">True</span>
     <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">ref_filename</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_empty_np_value"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.get_empty_np_value">[docs]</a><span class="k">def</span> <span class="nf">get_empty_np_value</span><span class="p">(</span><span class="n">np_dtype</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Get empty value for a given numpy datatype</span>
+<span class="sd">    &gt;&gt;&gt; a = np.array([&#39;2018-01-01&#39;, &#39;2018-01-03&#39;], dtype = &#39;M8[D]&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; get_empty_np_value(a.dtype)</span>
+<span class="sd">    numpy.datetime64(&#39;NaT&#39;)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">kind</span> <span class="o">=</span> <span class="n">np_dtype</span><span class="o">.</span><span class="n">kind</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="c1"># float</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="kc">False</span> <span class="c1"># bool</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span>  <span class="s1">&#39;i&#39;</span> <span class="ow">or</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;u&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="mi">0</span> <span class="c1"># signed or unsigned int</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;NaT&#39;</span><span class="p">)</span> <span class="c1"># datetime</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;O&#39;</span> <span class="ow">or</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;S&#39;</span> <span class="ow">or</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;U&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="s1">&#39;&#39;</span> <span class="c1"># object or string or unicode</span>
+    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;unknown dtype: </span><span class="si">{dtype}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+    
+<span class="n">FUTURE_CODES_INT</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;F&#39;</span> <span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span> <span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span> <span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;J&#39;</span> <span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span> <span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span> <span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span> <span class="p">:</span> <span class="mi">7</span><span class="p">,</span> <span class="s1">&#39;Q&#39;</span> <span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span> <span class="p">:</span> <span class="mi">9</span><span class="p">,</span> <span class="s1">&#39;V&#39;</span> <span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span> <span class="p">:</span> <span class="mi">11</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span> <span class="p">:</span> <span class="mi">12</span><span class="p">}</span>
+<span class="n">FUTURE_CODES_STR</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;F&#39;</span> <span class="p">:</span> <span class="s1">&#39;jan&#39;</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span> <span class="p">:</span> <span class="s1">&#39;feb&#39;</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span> <span class="p">:</span> <span class="s1">&#39;mar&#39;</span><span class="p">,</span> <span class="s1">&#39;J&#39;</span> <span class="p">:</span> <span class="s1">&#39;apr&#39;</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span> <span class="p">:</span> <span class="s1">&#39;may&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span> <span class="p">:</span> <span class="s1">&#39;jun&#39;</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span> <span class="p">:</span> <span class="s1">&#39;jul&#39;</span><span class="p">,</span> <span class="s1">&#39;Q&#39;</span> <span class="p">:</span> <span class="s1">&#39;aug&#39;</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span> <span class="p">:</span> <span class="s1">&#39;sep&#39;</span><span class="p">,</span> <span class="s1">&#39;V&#39;</span> <span class="p">:</span> <span class="s1">&#39;oct&#39;</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span> <span class="p">:</span> <span class="s1">&#39;nov&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span> <span class="p">:</span> <span class="s1">&#39;dec&#39;</span><span class="p">}</span>
+
+<div class="viewcode-block" id="decode_future_code"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.decode_future_code">[docs]</a><span class="k">def</span> <span class="nf">decode_future_code</span><span class="p">(</span><span class="n">future_code</span><span class="p">,</span> <span class="n">as_str</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given a future code such as &quot;X&quot;, return either the month number (from 1 - 12) or the month abbreviation, such as &quot;nov&quot;</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        future_code (str): the one letter future code</span>
+<span class="sd">        as_str (bool, optional): If set, we return the abbreviation, if not, we return the month number</span>
+<span class="sd">        </span>
+<span class="sd">    &gt;&gt;&gt; decode_future_code(&#39;X&#39;, as_str = False)</span>
+<span class="sd">    11</span>
+<span class="sd">    &gt;&gt;&gt; decode_future_code(&#39;X&#39;)</span>
+<span class="sd">    &#39;nov&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">future_code</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Future code must be a single character&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">as_str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">future_code</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">FUTURE_CODES_STR</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;unknown future code: </span><span class="si">{future_code}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">FUTURE_CODES_STR</span><span class="p">[</span><span class="n">future_code</span><span class="p">]</span>
+    
+    <span class="k">if</span> <span class="n">future_code</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">FUTURE_CODES_INT</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;unknown future code: </span><span class="si">{future_code}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">FUTURE_CODES_INT</span><span class="p">[</span><span class="n">future_code</span><span class="p">]</span></div>
 
 </pre></div>
 
@@ -372,6 +444,14 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -380,8 +460,8 @@
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
 

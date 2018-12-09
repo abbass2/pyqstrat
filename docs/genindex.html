@@ -14,6 +14,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" />
    
@@ -157,6 +158,8 @@
       <ul>
         <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.__init__">(pyqstrat.marketdata.MarketData method)</a>
 </li>
+        <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketDataCollection.__init__">(pyqstrat.marketdata.MarketDataCollection method)</a>
+</li>
         <li><a href="pyqstrat.html#pyqstrat.optimize.Optimizer.__init__">(pyqstrat.optimize.Optimizer method)</a>
 </li>
         <li><a href="pyqstrat.html#pyqstrat.orders.LimitOrder.__init__">(pyqstrat.orders.LimitOrder method)</a>
@@ -279,15 +282,7 @@
 </li>
         <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.ostream_redirect.__init__">(pyqstrat.pyqstrat_cpp.ostream_redirect method)</a>
 </li>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.Account.__init__">(pyqstrat.strategy.Account method)</a>
-</li>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.Contract.__init__">(pyqstrat.strategy.Contract method)</a>
-</li>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.Portfolio.__init__">(pyqstrat.strategy.Portfolio method)</a>
-</li>
         <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.__init__">(pyqstrat.strategy.Strategy method)</a>
-</li>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.Trade.__init__">(pyqstrat.strategy.Trade method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -296,13 +291,17 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Account">Account (class in pyqstrat.strategy)</a>
+      <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.add_dates">add_dates() (pyqstrat.marketdata.MarketData method)</a>
+
+      <ul>
+        <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketDataCollection.add_dates">(pyqstrat.marketdata.MarketDataCollection method)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Account.add_contract">add_contract() (pyqstrat.strategy.Account method)</a>
-</li>
+      </ul></li>
       <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.add_indicator">add_indicator() (pyqstrat.strategy.Strategy method)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.add_market_sim">add_market_sim() (pyqstrat.strategy.Strategy method)</a>
+</li>
+      <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketDataCollection.add_marketdata">add_marketdata() (pyqstrat.marketdata.MarketDataCollection method)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.evaluator.Evaluator.add_metric">add_metric() (pyqstrat.evaluator.Evaluator method)</a>
 </li>
@@ -310,13 +309,11 @@
 </li>
       <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.add_rule">add_rule() (pyqstrat.strategy.Strategy method)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.add_signal">add_signal() (pyqstrat.strategy.Strategy method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Portfolio.add_strategy">add_strategy() (pyqstrat.strategy.Portfolio method)</a>
+      <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.add_signal">add_signal() (pyqstrat.strategy.Strategy method)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.ContractPNL.add_trades">add_trades() (pyqstrat.strategy.ContractPNL method)</a>
+      <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.additional_arrays">additional_arrays (pyqstrat.marketdata.MarketData attribute)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.AllOpenInterestAggregator">AllOpenInterestAggregator (class in pyqstrat.pyqstrat_cpp)</a>
 </li>
@@ -360,12 +357,6 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.c">c (pyqstrat.marketdata.MarketData attribute)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Account.calc">calc() (pyqstrat.strategy.Account method)</a>
-
-      <ul>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.ContractPNL.calc">(pyqstrat.strategy.ContractPNL method)</a>
-</li>
-      </ul></li>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.CheckFields">CheckFields (class in pyqstrat.pyqstrat_cpp)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.ArrowWriter.close">close() (pyqstrat.pyqstrat_cpp.ArrowWriter method)</a>
@@ -428,10 +419,6 @@
 </li>
       <li><a href="pyqstrat.html#pyqstrat.evaluator.compute_std">compute_std() (in module pyqstrat.evaluator)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Contract">Contract (class in pyqstrat.strategy)</a>
-</li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.ContractPNL">ContractPNL (class in pyqstrat.strategy)</a>
-</li>
       <li><a href="pyqstrat.html#pyqstrat.optimize.Experiment.cost">cost (pyqstrat.optimize.Experiment attribute)</a>
 </li>
   </ul></td>
@@ -448,14 +435,16 @@
 </li>
       <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.dates">dates (pyqstrat.marketdata.MarketData attribute)</a>
 </li>
+      <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketDataCollection.dates">dates() (pyqstrat.marketdata.MarketDataCollection method)</a>
+</li>
+      <li><a href="pyqstrat.html#pyqstrat.pq_utils.decode_future_code">decode_future_code() (in module pyqstrat.pq_utils)</a>
+</li>
       <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.describe">describe() (pyqstrat.marketdata.MarketData method)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.df">df() (pyqstrat.marketdata.MarketData method)</a>
 
       <ul>
         <li><a href="pyqstrat.html#pyqstrat.plot.OHLC.df">(pyqstrat.plot.OHLC method)</a>
-</li>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.ContractPNL.df">(pyqstrat.strategy.ContractPNL method)</a>
 </li>
       </ul></li>
       <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.df_data">df_data() (pyqstrat.strategy.Strategy method)</a>
@@ -464,26 +453,14 @@
 </li>
       <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.df_orders">df_orders() (pyqstrat.strategy.Strategy method)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Account.df_pnl">df_pnl() (pyqstrat.strategy.Account method)</a>
-
-      <ul>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.df_pnl">(pyqstrat.strategy.Strategy method)</a>
-</li>
-      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Portfolio.df_returns">df_returns() (pyqstrat.strategy.Portfolio method)</a>
-
-      <ul>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.df_returns">(pyqstrat.strategy.Strategy method)</a>
+      <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.df_pnl">df_pnl() (pyqstrat.strategy.Strategy method)</a>
 </li>
-      </ul></li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Account.df_trades">df_trades() (pyqstrat.strategy.Account method)</a>
-
-      <ul>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.df_trades">(pyqstrat.strategy.Strategy method)</a>
+      <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.df_returns">df_returns() (pyqstrat.strategy.Strategy method)</a>
 </li>
-      </ul></li>
+      <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.df_trades">df_trades() (pyqstrat.strategy.Strategy method)</a>
+</li>
       <li><a href="pyqstrat.html#pyqstrat.evaluator.display_return_metrics">display_return_metrics() (in module pyqstrat.evaluator)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.plot.Plot.draw">draw() (pyqstrat.plot.Plot method)</a>
@@ -512,16 +489,10 @@
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pq_utils.ReasonCode.ENTER_SHORT">ENTER_SHORT (pyqstrat.pq_utils.ReasonCode attribute)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Account.equity">equity() (pyqstrat.strategy.Account method)</a>
-</li>
       <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.errors">errors() (pyqstrat.marketdata.MarketData method)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Portfolio.evaluate_returns">evaluate_returns() (pyqstrat.strategy.Portfolio method)</a>
-
-      <ul>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.evaluate_returns">(pyqstrat.strategy.Strategy method)</a>
+      <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.evaluate_returns">evaluate_returns() (pyqstrat.strategy.Strategy method)</a>
 </li>
-      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pyqstrat.html#pyqstrat.evaluator.Evaluator">Evaluator (class in pyqstrat.evaluator)</a>
@@ -546,7 +517,7 @@
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.FileProcessor">FileProcessor (class in pyqstrat.pyqstrat_cpp)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Account.find_index_before">find_index_before() (pyqstrat.strategy.Account method)</a>
+      <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.fill_funcs">fill_funcs (pyqstrat.marketdata.MarketData attribute)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.Schema.FLOAT32">FLOAT32 (pyqstrat.pyqstrat_cpp.Schema attribute)</a>
 
@@ -572,11 +543,15 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.get_additional_arrays">get_additional_arrays() (pyqstrat.marketdata.MarketData method)</a>
+</li>
       <li><a href="pyqstrat.html#pyqstrat.plot.Subplot.get_all_dates">get_all_dates() (pyqstrat.plot.Subplot method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pyqstrat.html#pyqstrat.plot.get_date_formatter">get_date_formatter() (in module pyqstrat.plot)</a>
+</li>
+      <li><a href="pyqstrat.html#pyqstrat.pq_utils.get_empty_np_value">get_empty_np_value() (in module pyqstrat.pq_utils)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -612,14 +587,14 @@
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pq_utils.infer_frequency">infer_frequency() (in module pyqstrat.pq_utils)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.Schema.INT32">INT32 (pyqstrat.pyqstrat_cpp.Schema attribute)</a>
 
       <ul>
         <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.Schema.Type.INT32">(pyqstrat.pyqstrat_cpp.Schema.Type attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.Schema.INT64">INT64 (pyqstrat.pyqstrat_cpp.Schema attribute)</a>
 
       <ul>
@@ -631,6 +606,8 @@
       <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.is_ohlc">is_ohlc() (pyqstrat.marketdata.MarketData method)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.IsFieldInList">IsFieldInList (class in pyqstrat.pyqstrat_cpp)</a>
+</li>
+      <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketDataCollection.items">items() (pyqstrat.marketdata.MarketDataCollection method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -657,6 +634,8 @@
       <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData">MarketData (class in pyqstrat.marketdata)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.marketdata">marketdata() (pyqstrat.strategy.Strategy method)</a>
+</li>
+      <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketDataCollection">MarketDataCollection (class in pyqstrat.marketdata)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.orders.MarketOrder">MarketOrder (class in pyqstrat.orders)</a>
 </li>
@@ -751,8 +730,6 @@
       <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.plot">plot() (pyqstrat.marketdata.MarketData method)</a>
 
       <ul>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.Portfolio.plot">(pyqstrat.strategy.Portfolio method)</a>
-</li>
         <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.plot">(pyqstrat.strategy.Strategy method)</a>
 </li>
       </ul></li>
@@ -764,18 +741,14 @@
 </li>
       <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.plot_returns">plot_returns() (pyqstrat.strategy.Strategy method)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Portfolio">Portfolio (class in pyqstrat.strategy)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Account.position">position() (pyqstrat.strategy.Account method)</a>
-</li>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.QuoteRecord.price">price (pyqstrat.pyqstrat_cpp.QuoteRecord attribute)</a>, <a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.QuoteRecord.price">[1]</a>
 
       <ul>
         <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.TradeRecord.price">(pyqstrat.pyqstrat_cpp.TradeRecord attribute)</a>, <a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.TradeRecord.price">[1]</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.PriceQtyMissingDataHandler">PriceQtyMissingDataHandler (class in pyqstrat.pyqstrat_cpp)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.PrintBadLineHandler">PrintBadLineHandler (class in pyqstrat.pyqstrat_cpp)</a>
@@ -850,11 +823,15 @@
       </ul></li>
       <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.resample">resample() (pyqstrat.marketdata.MarketData method)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.pq_utils.resample_ohlc">resample_ohlc() (in module pyqstrat.pq_utils)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.resample_funcs">resample_funcs (pyqstrat.marketdata.MarketData attribute)</a>
+</li>
+      <li><a href="pyqstrat.html#pyqstrat.pq_utils.resample_ohlc">resample_ohlc() (in module pyqstrat.pq_utils)</a>
+</li>
       <li><a href="pyqstrat.html#pyqstrat.pq_utils.resample_ts">resample_ts() (in module pyqstrat.pq_utils)</a>
+</li>
+      <li><a href="pyqstrat.html#pyqstrat.pq_utils.resample_vwap">resample_vwap() (in module pyqstrat.pq_utils)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pq_utils.ReasonCode.ROLL_FUTURE">ROLL_FUTURE (pyqstrat.pq_utils.ReasonCode attribute)</a>
 </li>
@@ -863,29 +840,13 @@
       <li><a href="pyqstrat.html#pyqstrat.orders.RollOrder">RollOrder (class in pyqstrat.orders)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.optimize.Optimizer.run">run() (pyqstrat.optimize.Optimizer method)</a>
-
-      <ul>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.Portfolio.run">(pyqstrat.strategy.Portfolio method)</a>
 </li>
-      </ul></li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Portfolio.run_indicators">run_indicators() (pyqstrat.strategy.Portfolio method)</a>
-
-      <ul>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.run_indicators">(pyqstrat.strategy.Strategy method)</a>
+      <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.run_indicators">run_indicators() (pyqstrat.strategy.Strategy method)</a>
 </li>
-      </ul></li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Portfolio.run_rules">run_rules() (pyqstrat.strategy.Portfolio method)</a>
-
-      <ul>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.run_rules">(pyqstrat.strategy.Strategy method)</a>
+      <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.run_rules">run_rules() (pyqstrat.strategy.Strategy method)</a>
 </li>
-      </ul></li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Portfolio.run_signals">run_signals() (pyqstrat.strategy.Portfolio method)</a>
-
-      <ul>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.run_signals">(pyqstrat.strategy.Strategy method)</a>
+      <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.run_signals">run_signals() (pyqstrat.strategy.Strategy method)</a>
 </li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -902,12 +863,16 @@
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pq_utils.shift_np">shift_np() (in module pyqstrat.pq_utils)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.orders.StopLimitOrder">StopLimitOrder (class in pyqstrat.orders)</a>
+      <li><a href="pyqstrat.html#pyqstrat.marketdata.sort_ohlcv">sort_ohlcv() (in module pyqstrat.marketdata)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.pq_utils.str2date">str2date() (in module pyqstrat.pq_utils)</a>
+      <li><a href="pyqstrat.html#pyqstrat.marketdata.sort_ohlcv_key">sort_ohlcv_key() (in module pyqstrat.marketdata)</a>
+</li>
+      <li><a href="pyqstrat.html#pyqstrat.orders.StopLimitOrder">StopLimitOrder (class in pyqstrat.orders)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="pyqstrat.html#pyqstrat.pq_utils.str2date">str2date() (in module pyqstrat.pq_utils)</a>
+</li>
       <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy">Strategy (class in pyqstrat.strategy)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.Schema.STRING">STRING (pyqstrat.pyqstrat_cpp.Schema attribute)</a>
@@ -924,8 +889,6 @@
 </li>
       <li><a href="pyqstrat.html#pyqstrat.optimize.Experiment.suggestion">suggestion (pyqstrat.optimize.Experiment attribute)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Account.symbols">symbols() (pyqstrat.strategy.Account method)</a>
-</li>
   </ul></td>
 </tr></table>
 
@@ -939,8 +902,6 @@
       <li><a href="pyqstrat.html#pyqstrat.optimize.test_optimize">test_optimize() (in module pyqstrat.optimize)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.plot.test_plot">test_plot() (in module pyqstrat.plot)</a>
-</li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.test_strategy">test_strategy() (in module pyqstrat.strategy)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.TextFileDecompressor">TextFileDecompressor (class in pyqstrat.pyqstrat_cpp)</a>
 </li>
@@ -990,8 +951,6 @@
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pq_utils.touch">touch() (in module pyqstrat.pq_utils)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Trade">Trade (class in pyqstrat.strategy)</a>
-</li>
       <li><a href="pyqstrat.html#pyqstrat.plot.trade_sets_by_reason_code">trade_sets_by_reason_code() (in module pyqstrat.plot)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.TradeAggregator">TradeAggregator (class in pyqstrat.pyqstrat_cpp)</a>
@@ -1002,17 +961,9 @@
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.TradeRecord">TradeRecord (class in pyqstrat.pyqstrat_cpp)</a>
 </li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Account.trades">trades() (pyqstrat.strategy.Account method)</a>
-
-      <ul>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.ContractPNL.trades">(pyqstrat.strategy.ContractPNL method)</a>
+      <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.trades">trades() (pyqstrat.strategy.Strategy method)</a>
 </li>
-        <li><a href="pyqstrat.html#pyqstrat.strategy.Strategy.trades">(pyqstrat.strategy.Strategy method)</a>
-</li>
-      </ul></li>
       <li><a href="pyqstrat.html#pyqstrat.plot.TradeSet">TradeSet (class in pyqstrat.plot)</a>
-</li>
-      <li><a href="pyqstrat.html#pyqstrat.strategy.Account.transfer_cash">transfer_cash() (pyqstrat.strategy.Account method)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.Schema.types">types (pyqstrat.pyqstrat_cpp.Schema attribute)</a>, <a href="pyqstrat.html#pyqstrat.pyqstrat_cpp.Schema.types">[1]</a>
 </li>
@@ -1031,6 +982,8 @@
       <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.valid_row">valid_row() (pyqstrat.marketdata.MarketData method)</a>
 </li>
       <li><a href="pyqstrat.html#pyqstrat.plot.VerticalLine">VerticalLine (class in pyqstrat.plot)</a>
+</li>
+      <li><a href="pyqstrat.html#pyqstrat.marketdata.MarketData.vwap">vwap (pyqstrat.marketdata.MarketData attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -1117,6 +1070,14 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -1125,8 +1086,8 @@
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
 

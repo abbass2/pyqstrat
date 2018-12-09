@@ -13,6 +13,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -38,8 +39,6 @@
 <span class="c1"># In[1]:</span>
 
 
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;numpy.dtype size changed&quot;</span><span class="p">)</span> <span class="c1"># another bogus warning, see https://github.com/numpy/numpy/pull/432</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">IPython.display</span> <span class="k">as</span> <span class="nn">dsp</span>
@@ -48,28 +47,71 @@
 <span class="kn">from</span> <span class="nn">pyqstrat.plot</span> <span class="k">import</span> <span class="o">*</span>
 
 
-<span class="c1"># In[3]:</span>
+<span class="c1"># In[28]:</span>
 
 
-<span class="k">def</span> <span class="nf">_sort_ohlcv</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
-    <span class="n">l</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span><span class="p">]</span>
+<div class="viewcode-block" id="sort_ohlcv_key"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.sort_ohlcv_key">[docs]</a><span class="k">def</span> <span class="nf">sort_ohlcv_key</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">,</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="s1">&#39;vwap&#39;</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">l</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">l</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="sort_ohlcv"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.sort_ohlcv">[docs]</a><span class="k">def</span> <span class="nf">sort_ohlcv</span><span class="p">(</span><span class="n">columns</span><span class="p">):</span>
+    <span class="n">columns</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">columns</span><span class="p">))</span> <span class="c1"># Use stable sort to sort columns that we don&#39;t know about alphabetically</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">sort_ohlcv_key</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="MarketDataCollection"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.MarketDataCollection">[docs]</a><span class="k">class</span> <span class="nc">MarketDataCollection</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Used to store a set of market data linking symbol -&gt; MarketData </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<div class="viewcode-block" id="MarketDataCollection.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.MarketDataCollection.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbols</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">marketdata_list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            symbols (list of str, optional): Symbols we want to store market data for.  Default None</span>
+<span class="sd">            marketdata_list (list of MarketData): Corresponding MarketData object.  Default None</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">symbols</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">marketdata_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">symbols</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">marketdata_list</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;symbols and marketdata must either both be None or not None&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">symbols</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">marketdata_list</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;symbols and marketdata_list must contain the same number of elements&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">marketdata</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span> <span class="n">marketdata_list</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">marketdata</span> <span class="o">=</span> <span class="p">{}</span></div>
+        
+<div class="viewcode-block" id="MarketDataCollection.add_marketdata"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.MarketDataCollection.add_marketdata">[docs]</a>    <span class="k">def</span> <span class="nf">add_marketdata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">marketdata</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marketdata</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">=</span> <span class="n">marketdata</span></div>
+        
+<div class="viewcode-block" id="MarketDataCollection.add_dates"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.MarketDataCollection.add_dates">[docs]</a>    <span class="k">def</span> <span class="nf">add_dates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dates</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">md</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">marketdata</span><span class="o">.</span><span class="n">values</span><span class="p">():</span> <span class="n">md</span><span class="o">.</span><span class="n">add_dates</span><span class="p">(</span><span class="n">dates</span><span class="p">)</span></div>
+            
+<div class="viewcode-block" id="MarketDataCollection.dates"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.MarketDataCollection.dates">[docs]</a>    <span class="k">def</span> <span class="nf">dates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">marketdata</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">marketdata</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dates</span></div>
+        
+<div class="viewcode-block" id="MarketDataCollection.items"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.MarketDataCollection.items">[docs]</a>    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">marketdata</span><span class="o">.</span><span class="n">items</span><span class="p">()</span></div></div>
+    
 <div class="viewcode-block" id="MarketData"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.MarketData">[docs]</a><span class="k">class</span> <span class="nc">MarketData</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Used to store OHLCV bars.  You must at least supply dates and close prices.  All other fields are optional.</span>
+    <span class="sd">&#39;&#39;&#39;Used to store OHLCV bars, and any additional time series data you want to use to simulate orders and executions.</span>
+<span class="sd">        You must at least supply dates and close prices.  All other fields are optional.</span>
 <span class="sd">    </span>
 <span class="sd">    Attributes:</span>
 <span class="sd">        dates: A numpy datetime array with the datetime for each bar.  Must be monotonically increasing.</span>
 <span class="sd">        c:     A numpy float array with close prices for the bar.</span>
-<span class="sd">        o:     A numpy float array with open prices </span>
-<span class="sd">        h:     A numpy float array with high prices</span>
-<span class="sd">        l:     A numpy float array with high prices</span>
-<span class="sd">        v:     A numpy integer array with volume for the bar</span>
+<span class="sd">        o:     A numpy float array with open prices . Default None</span>
+<span class="sd">        h:     A numpy float array with high prices. Default None</span>
+<span class="sd">        l:     A numpy float array with high prices. Default None</span>
+<span class="sd">        v:     A numpy integer array with volume for the bar. Default None</span>
+<span class="sd">        vwap:  A numpy float array with the volume weighted average price for the bar.  Default None</span>
+<span class="sd">        additional_arrays: A dictionary of name -&gt; numpy array you want to add.  Default None</span>
+<span class="sd">        resample_funcs: A dictionary of functions for resampling each additional array.  Default None.</span>
+<span class="sd">        fill_funcs: A dictionary of functions for filling empty rows when we add dates.  Default None.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-<div class="viewcode-block" id="MarketData.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.MarketData.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dates</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">o</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">l</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="MarketData.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.MarketData.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dates</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">o</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">l</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">vwap</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">additional_arrays</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resample_funcs</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fill_values</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Zeroes in o, h, l, c are set to nan&#39;&#39;&#39;</span>
         <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">dates</span><span class="p">))</span>
@@ -77,6 +119,17 @@
         <span class="k">assert</span><span class="p">(</span><span class="n">h</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">dates</span><span class="p">))</span>
         <span class="k">assert</span><span class="p">(</span><span class="n">l</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">dates</span><span class="p">))</span>
         <span class="k">assert</span><span class="p">(</span><span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">dates</span><span class="p">))</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">vwap</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">vwap</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">dates</span><span class="p">))</span>
+        
+        <span class="n">additional_arrays</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">additional_arrays</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">additional_arrays</span>
+        
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">arr</span> <span class="ow">in</span> <span class="n">additional_arrays</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">dates</span><span class="p">))</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">arr</span><span class="p">)</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">additional_col_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">additional_arrays</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resample_funcs</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">resample_funcs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">resample_funcs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fill_values</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">fill_values</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">fill_values</span>
         
         <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">dates</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span> <span class="c1"># check for monotonically increasing dates</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;marketdata dates must be unique monotonically increasing&#39;</span><span class="p">)</span>
@@ -87,15 +140,67 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">l</span> <span class="o">=</span> <span class="n">zero_to_nan</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">c</span> <span class="o">=</span> <span class="n">zero_to_nan</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vwap</span> <span class="o">=</span> <span class="n">vwap</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_valid_rows</span><span class="p">()</span></div>
         
+<div class="viewcode-block" id="MarketData.add_dates"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.MarketData.add_dates">[docs]</a>    <span class="k">def</span> <span class="nf">add_dates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dates</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Adds new dates to a market data object.  If fill_values was specified we use that to fill in values for any columns </span>
+<span class="sd">        for new dates that are not the same as the old dates.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            dates (np.array of np.datetime64): New dates to add.  Does not have to be sorted or unique</span>
+<span class="sd">        </span>
+<span class="sd">        &gt;&gt;&gt; dates = np.array([&#39;2018-01-05&#39;, &#39;2018-01-09&#39;, &#39;2018-01-10&#39;], dtype = &#39;M8[ns]&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; c = np.array([8.1, 8.2, 8.3])</span>
+<span class="sd">        &gt;&gt;&gt; o = np.array([9, 10, 11])</span>
+<span class="sd">        &gt;&gt;&gt; additional_arrays = {&#39;x&#39; : np.array([5.1, 5.3, 5.5])}</span>
+<span class="sd">        &gt;&gt;&gt; fill_values = {&#39;x&#39; : 0}</span>
+<span class="sd">        &gt;&gt;&gt; md = MarketData(dates, c, o, additional_arrays = additional_arrays, fill_values = fill_values)</span>
+<span class="sd">        &gt;&gt;&gt; new_dates = np.array([&#39;2018-01-07&#39;, &#39;2018-01-09&#39;], dtype = &#39;M8[ns]&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; md.add_dates(new_dates)</span>
+<span class="sd">        &gt;&gt;&gt; print(md.dates)</span>
+<span class="sd">        [&#39;2018-01-05T00:00:00.000000000&#39; &#39;2018-01-07T00:00:00.000000000&#39;</span>
+<span class="sd">         &#39;2018-01-09T00:00:00.000000000&#39; &#39;2018-01-10T00:00:00.000000000&#39;]</span>
+<span class="sd">        &gt;&gt;&gt; np.set_printoptions(formatter = {&#39;float&#39; : lambda x : f&#39;{x:.4f}&#39;})  # After numpy 1.13 positive floats don&#39;t have a leading space for sign</span>
+<span class="sd">        &gt;&gt;&gt; print(md.o, md.c, md.x)</span>
+<span class="sd">        [9.0000 nan 10.0000 11.0000] [8.1000 nan 8.2000 8.3000] [5.1000 0.0000 5.3000 5.5000]</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">dates</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">dates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span>
+        <span class="n">dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">dates</span><span class="p">)</span>
+        <span class="n">new_dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">setdiff1d</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="n">assume_unique</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">all_dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="n">new_dates</span><span class="p">])</span>
+        <span class="n">col_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;vwap&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">additional_col_names</span>
+        <span class="n">sort_index</span> <span class="o">=</span> <span class="n">all_dates</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">col_list</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="k">continue</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span>
+            <span class="n">fill_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fill_values</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fill_values</span> <span class="k">else</span> <span class="n">get_empty_np_value</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">v</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new_dates</span><span class="p">),</span> <span class="n">fill_value</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">dtype</span><span class="p">)])</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">sort_index</span><span class="p">]</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">all_dates</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_valid_rows</span></div>
+        
+    <span class="k">def</span> <span class="nf">_get_fill_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col_name</span><span class="p">):</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col_name</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span>
+        <span class="k">return</span> <span class="n">get_empty_np_value</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+        
     <span class="k">def</span> <span class="nf">_set_valid_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">nans</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">o</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">]),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">col_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">o</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vwap</span><span class="p">]</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">nans</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">col_list</span><span class="p">),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">valid_rows</span> <span class="o">=</span> <span class="o">~</span><span class="n">nans</span>
     
 <div class="viewcode-block" id="MarketData.valid_row"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.MarketData.valid_row">[docs]</a>    <span class="k">def</span> <span class="nf">valid_row</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return True if the row with index i has no nans in it.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_rows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span></div>
+    
+<div class="viewcode-block" id="MarketData.get_additional_arrays"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.MarketData.get_additional_arrays">[docs]</a>    <span class="k">def</span> <span class="nf">get_additional_arrays</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">additional_col_names</span><span class="p">:</span>
+            <span class="n">ret</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ret</span></div>
     
 <div class="viewcode-block" id="MarketData.resample"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.MarketData.resample">[docs]</a>    <span class="k">def</span> <span class="nf">resample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="p">,</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
@@ -105,19 +210,26 @@
 <span class="sd">            sampling_frequency: See sampling frequency in pandas</span>
 <span class="sd">            inplace: If set to False, don&#39;t modify this object, return a new object instead.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">sampling_frequency</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">if</span> <span class="n">sampling_frequency</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">inplace</span><span class="p">:</span> <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">()</span>
-        <span class="n">orig_columns</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">sampling_frequency</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">({</span><span class="s1">&#39;o&#39;</span><span class="p">:</span> <span class="s1">&#39;first&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">:</span> <span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">:</span> <span class="s1">&#39;min&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;last&#39;</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span> <span class="p">:</span> <span class="s1">&#39;sum&#39;</span><span class="p">})</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">how</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">inplace</span><span class="p">:</span>
-            <span class="n">md</span> <span class="o">=</span> <span class="n">MarketData</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">o</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Rename index from date to dates since our internal variable is called &quot;dates&quot; but the df() function returns a column &quot;date&quot;</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;dates&#39;</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">resample_ohlc</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">resample_funcs</span><span class="p">)</span>
+              
+        <span class="k">if</span> <span class="n">inplace</span><span class="p">:</span>
             <span class="n">md</span> <span class="o">=</span> <span class="bp">self</span>
-        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">orig_columns</span><span class="p">:</span> <span class="nb">setattr</span><span class="p">(</span><span class="n">md</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
-        <span class="n">md</span><span class="o">.</span><span class="n">dates</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Create a dummy object, will replace everything (except additional arrays and resample funcs) later</span>
+            <span class="n">md</span> <span class="o">=</span> <span class="n">MarketData</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">o</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vwap</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_additional_arrays</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">resample_funcs</span><span class="p">)</span>
+            
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span> <span class="nb">setattr</span><span class="p">(</span><span class="n">md</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
         <span class="n">md</span><span class="o">.</span><span class="n">_set_valid_rows</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">md</span></div>
+        
+        <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">inplace</span> <span class="k">else</span> <span class="n">md</span></div>
     
 <div class="viewcode-block" id="MarketData.errors"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.MarketData.errors">[docs]</a>    <span class="k">def</span> <span class="nf">errors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">display</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Returns a dataframe indicating any highs that are lower than opens, closes, lows or lows that are higher than other columns</span>
@@ -137,7 +249,7 @@
                 <span class="n">errors_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bad_lows</span><span class="p">)</span>
 
         <span class="n">neg_values_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">c</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="s1">&#39;vwap&#39;</span><span class="p">]:</span>
             <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
                 <span class="n">neg_values_mask</span> <span class="o">|=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">neg_values</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">neg_values_mask</span><span class="p">]</span>
@@ -148,6 +260,8 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors_list</span><span class="p">):</span> <span class="k">return</span> <span class="kc">None</span>
             
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">errors_list</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">sort_ohlcv</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)]</span>
+        
         <span class="k">if</span> <span class="n">display</span><span class="p">:</span> <span class="n">dsp</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">df</span></div>
     
@@ -161,7 +275,7 @@
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">()</span>
         <span class="n">warnings_list</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;vwap&#39;</span><span class="p">]:</span>
             <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span>
                 <span class="n">ret</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">pct_change</span><span class="p">())</span>
@@ -172,11 +286,12 @@
                     <span class="n">double_mask</span> <span class="o">=</span> <span class="n">mask</span> <span class="o">|</span> <span class="n">mask</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># Add the previous row so we know the two values computing a return</span>
                     <span class="n">df_tmp</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">double_mask</span><span class="p">]</span>
                     <span class="n">df_tmp</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df_tmp</span><span class="o">.</span><span class="n">columns</span><span class="p">),</span> <span class="s1">&#39;ret&#39;</span><span class="p">,</span> <span class="n">ret</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span>
-                    <span class="n">df_tmp</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df_tmp</span><span class="o">.</span><span class="n">columns</span><span class="p">),</span> <span class="s1">&#39;warning&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> ret &gt; </span><span class="si">{}</span><span class="s1"> std: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">warn_std</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">std</span><span class="p">,</span> <span class="mi">6</span><span class="p">)))</span>
+                    <span class="n">df_tmp</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df_tmp</span><span class="o">.</span><span class="n">columns</span><span class="p">),</span> <span class="s1">&#39;warning&#39;</span><span class="p">,</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{col}</span><span class="s1"> ret &gt; </span><span class="si">{warn_std}</span><span class="s1"> * std: </span><span class="si">{std:.5g}</span><span class="s1">&#39;</span><span class="p">)</span>
                     <span class="n">warnings_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df_tmp</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">warnings_list</span><span class="p">):</span> <span class="k">return</span> <span class="kc">None</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">warnings_list</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">sort_ohlcv</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)]</span>
         <span class="k">if</span> <span class="n">display</span><span class="p">:</span> <span class="n">dsp</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">df</span></div>
                               
@@ -189,8 +304,7 @@
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
         <span class="n">df_overview</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="s1">&#39;num_missing&#39;</span> <span class="p">:</span> <span class="n">df</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="s1">&#39;pct_missing&#39;</span><span class="p">:</span> <span class="n">df</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="s1">&#39;min&#39;</span> <span class="p">:</span> <span class="n">df</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="s1">&#39;max&#39;</span> <span class="p">:</span> <span class="n">df</span><span class="o">.</span><span class="n">max</span><span class="p">()})</span>
         <span class="n">df_overview</span> <span class="o">=</span> <span class="n">df_overview</span><span class="o">.</span><span class="n">T</span>
-        <span class="n">columns</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">df_overview</span><span class="o">.</span><span class="n">columns</span><span class="p">),</span> <span class="n">key</span> <span class="o">=</span> <span class="n">_sort_ohlcv</span><span class="p">)</span>
-        <span class="n">df_overview</span> <span class="o">=</span> <span class="n">df_overview</span><span class="p">[</span><span class="n">columns</span><span class="p">]</span>
+        <span class="n">df_overview</span> <span class="o">=</span> <span class="n">df_overview</span><span class="p">[</span><span class="n">sort_ohlcv</span><span class="p">(</span><span class="n">df_overview</span><span class="o">.</span><span class="n">columns</span><span class="p">)]</span>
         <span class="k">if</span> <span class="n">display</span><span class="p">:</span> <span class="n">dsp</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">df_overview</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">df_overview</span></div>
        
@@ -292,7 +406,7 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">date_range</span> <span class="o">=</span> <span class="n">strtup2date</span><span class="p">(</span><span class="n">date_range</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_ohlc</span><span class="p">():</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">OHLC</span><span class="p">(</span><span class="s1">&#39;price&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">o</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">OHLC</span><span class="p">(</span><span class="s1">&#39;price&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">o</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vwap</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;price&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">)</span>
         <span class="n">subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -301,7 +415,7 @@
                               
 <div class="viewcode-block" id="MarketData.df"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata.MarketData.df">[docs]</a>    <span class="k">def</span> <span class="nf">df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_date</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">end_date</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;date&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dates</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">})</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;date&#39;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">tup</span> <span class="ow">in</span> <span class="p">[(</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">o</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">)]:</span>
+        <span class="k">for</span> <span class="n">tup</span> <span class="ow">in</span> <span class="p">[(</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">o</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;vwap&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vwap</span><span class="p">)]:</span>
             <span class="k">if</span> <span class="n">tup</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="n">df</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">tup</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tup</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">start_date</span><span class="p">:</span> <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span> <span class="o">&gt;=</span> <span class="n">start_date</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">end_date</span><span class="p">:</span> <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span> <span class="o">&lt;=</span> <span class="n">end_date</span><span class="p">]</span>
@@ -406,9 +520,10 @@
     <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dates</span><span class="p">))</span> <span class="o">/</span> <span class="mf">1000.</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span>
     <span class="n">o</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">l</span> <span class="o">+</span> <span class="p">(</span><span class="n">h</span> <span class="o">-</span> <span class="n">l</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dates</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span>
     <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dates</span><span class="p">))</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">))</span>
+    <span class="n">vwap</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">l</span> <span class="o">+</span> <span class="n">h</span><span class="p">)</span>
     <span class="n">c</span><span class="p">[</span><span class="mi">18</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
     <span class="n">l</span><span class="p">[</span><span class="mi">85</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1000</span>
-    <span class="n">md</span> <span class="o">=</span> <span class="n">MarketData</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+    <span class="n">md</span> <span class="o">=</span> <span class="n">MarketData</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">vwap</span><span class="p">)</span>
     <span class="n">md</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
     <span class="n">md</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">date_range</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;2018-01-02&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-01-02 12:00&#39;</span><span class="p">))</span></div>
 
@@ -459,6 +574,14 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -467,8 +590,8 @@
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
 
