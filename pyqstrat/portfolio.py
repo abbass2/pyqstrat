@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 # coding: utf-8
 
 # In[2]:
@@ -209,10 +209,4 @@ class Portfolio:
         
     def __repr__(self):
         return f'{self.name} {self.strategies.keys()}'
-
-
-# In[ ]:
-
-
-
 

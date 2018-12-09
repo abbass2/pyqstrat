@@ -1,4 +1,9 @@
-#cell 0
+
+# coding: utf-8
+
+# In[1]:
+
+
 import pandas as pd
 import numpy as np
 import IPython.display as dsp
@@ -6,7 +11,10 @@ import matplotlib.dates as mdates
 from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
-#cell 1
+
+# In[28]:
+
+
 def sort_ohlcv_key(a):
     l = ['date', 'o', 'h', 'l', 'c', 'v', 'vwap']
     if a in l:
