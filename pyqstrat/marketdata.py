@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import pandas as pd
 import numpy as np
 import IPython.display as dsp
@@ -11,10 +6,7 @@ import matplotlib.dates as mdates
 from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
-
-# In[28]:
-
-
+#cell 1
 def sort_ohlcv_key(a):
     l = ['date', 'o', 'h', 'l', 'c', 'v', 'vwap']
     if a in l:
@@ -127,11 +119,9 @@ class MarketData:
         >>> print(md.dates)
         ['2018-01-05T00:00:00.000000000' '2018-01-07T00:00:00.000000000'
          '2018-01-09T00:00:00.000000000' '2018-01-10T00:00:00.000000000']
-        >>> from pprint import pprint
-        >>> pprint((md.o, md.c, md.x)) # doctest: +NORMALIZE_WHITESPACE
-        (array([  9.,  nan,  10.,  11.]),
-         array([ 8.1,  nan,  8.2,  8.3]),
-         array([ 5.1,  0. ,  5.3,  5.5]))
+        >>> np.set_printoptions(formatter = {'float' : lambda x : f'{x:.4f}'})  # After numpy 1.13 positive floats don't have a leading space for sign
+        >>> print(md.o, md.c, md.x)
+        [9.0000 nan 10.0000 11.0000] [8.1000 nan 8.2000 8.3000] [5.1000 0.0000 5.3000 5.5000]
         '''
         if dates is None or len(dates) == 0: return
         dates = np.unique(dates)

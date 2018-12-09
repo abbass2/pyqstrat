@@ -1,19 +1,11 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 from collections import defaultdict, deque
 import pandas as pd
 import numpy as np
 from copy import copy
 from pyqstrat.pq_utils import str2date
 
-
-# In[2]:
-
-
+#cell 1
 def _calc_pnl(open_trades, new_trades, ending_close, multiplier):
     '''
     >>> from collections import deque
@@ -137,13 +129,13 @@ class Account:
             starting_equity (float, optional): Starting equity in account currency.  Default 1.e6
             calc_frequency (str, optional): Account will calculate pnl at this frequency.  Default 'D' for daily
        
-        >>> from pprint import pprint
         >>> from pyqstrat.marketdata import MarketData, MarketDataCollection
         >>> from pyqstrat.pq_types import Contract
         >>> dates = np.array(['2018-01-01', '2018-01-02'], dtype = 'M8[D]')
         >>> account = Account([Contract("IBM")], MarketDataCollection(["IBM"], [MarketData(dates, [8.1, 8.2])]))
-        >>> pprint(account.marketdata['IBM'].c)
-        array([ 8.1,  8.2])
+        >>> np.set_printoptions(formatter = {'float' : lambda x : f'{x:.4f}'})  # After numpy 1.13 positive floats don't have a leading space for sign
+        >>> print(account.marketdata['IBM'].c)
+        [8.1000 8.2000]
         '''
         if calc_frequency != 'D': raise Exception('unknown calc frequency: {}'.format(calc_frequency))
         self.calc_freq = calc_frequency
