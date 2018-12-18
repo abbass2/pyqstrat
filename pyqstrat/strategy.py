@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import numpy as np
 import pandas as pd
 import sys
@@ -16,10 +11,7 @@ from pyqstrat.marketdata import *
 from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, plot_return_metrics
 from pyqstrat.account import Account
 
-
-# In[2]:
-
-
+#cell 1
 class Strategy:
     def __init__(self, contracts, marketdata_collection, starting_equity = 1.0e6, calc_frequency = 'D', additional_order_dates = None, additional_trade_dates = None):
         '''

@@ -22,6 +22,12 @@ class get_pybind_include(object):
     method can be invoked. """
 
     def __init__(self, user=False):
+        try:
+            import pybind11
+        except ImportError:
+            if subprocess.call([sys.executable, '-m', 'pip', 'install', 'pybind11']):
+                raise RuntimeError('pybind11 install failed.')
+
         self.user = user
 
     def __str__(self):
@@ -60,7 +66,7 @@ if 'CONDA_PREFIX' in os.environ or 'CONDA_PREFIX_1' in os.environ:
         library_dirs = [conda_prefix + '/lib']
 
     extra_link_args = None
-    if sys.platform == 'darwin':
+    if sys.platform not in ["win32", "cygwin"]:
         link_dirs = ',-rpath,'.join(library_dirs)
         extra_link_args=[f'-Wl,-rpath,{link_dirs}']
 else:

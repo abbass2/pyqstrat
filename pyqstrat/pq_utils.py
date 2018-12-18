@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[7]:
-
-
+#cell 0
 import os
 import numpy as np
 import datetime
@@ -364,4 +359,6 @@ def decode_future_code(future_code, as_str = True):
     
     if future_code not in FUTURE_CODES_INT: raise Exception(f'unknown future code: {future_code}')
     return FUTURE_CODES_INT[future_code]
+
+
 
