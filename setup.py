@@ -140,6 +140,7 @@ class BuildExt(build_ext):
         opts = self.c_opts.get(ct, [])
         if ct == 'unix':
             opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
+            opts.append('-D_GLIBCXX_USE_CXX11_ABI=0') # ABI for std::string changed in C++11.  See https://stackoverflow.com/questions/34571583/understanding-gcc-5s-glibcxx-use-cxx11-abi-or-the-new-abi
             opts.append(cpp_flag(self.compiler))
             if has_flag(self.compiler, '-Ofast'):
                 opts.append('-Ofast')
