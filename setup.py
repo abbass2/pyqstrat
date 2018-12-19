@@ -3,6 +3,7 @@ from setuptools import setup, find_packages, Extension
 from setuptools.command.test import test as TestCommand
 from setuptools.command.build_ext import build_ext
 import setuptools
+import subprocess
 import io
 import codecs
 import os
