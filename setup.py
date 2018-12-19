@@ -67,7 +67,7 @@ if 'CONDA_PREFIX' in os.environ or 'CONDA_PREFIX_1' in os.environ:
         library_dirs = [conda_prefix + '/lib']
 
     extra_link_args = None
-    if sys.platform not in ["win32", "cygwin"]:
+    if sys.platform in ["darwin"]:
         link_dirs = ',-rpath,'.join(library_dirs)
         extra_link_args=[f'-Wl,-rpath,{link_dirs}']
 else:
