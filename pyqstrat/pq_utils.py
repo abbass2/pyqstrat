@@ -1,5 +1,6 @@
 #cell 0
 import os
+import tempfile
 import numpy as np
 import datetime
 import pandas as pd
@@ -360,5 +361,10 @@ def decode_future_code(future_code, as_str = True):
     if future_code not in FUTURE_CODES_INT: raise Exception(f'unknown future code: {future_code}')
     return FUTURE_CODES_INT[future_code]
 
+def get_temp_dir():
+    if os.access('/tmp', os.W_OK):
+        return '/tmp'
+    else:
+        return tempfile.gettempdir()
 
 
