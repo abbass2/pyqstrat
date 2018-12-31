@@ -9,13 +9,12 @@ struct ParseException : public std::runtime_error {
     ParseException(const char* m);
 };
 
-
 struct Record {
     virtual ~Record() {}
 };
 
 struct TradeRecord : public Record {
-    explicit TradeRecord(const std::string& id, int64_t timestamp, float qty, float price, const std::string& metadata) :
+    inline explicit TradeRecord(const std::string& id, int64_t timestamp, float qty, float price, const std::string& metadata) :
     id(id), timestamp(timestamp), qty(qty), price(price), metadata(metadata) {}
     std::string id;
     int64_t timestamp;
@@ -25,7 +24,7 @@ struct TradeRecord : public Record {
 };
 
 struct QuoteRecord : public Record {
-    explicit QuoteRecord(const std::string& id, int64_t timestamp, bool bid, float qty, float price, const std::string& metadata) :
+    inline explicit QuoteRecord(const std::string& id, int64_t timestamp, bool bid, float qty, float price, const std::string& metadata) :
     id(id), timestamp(timestamp), bid(bid), qty(qty), price(price), metadata(metadata) {}
     std::string id;
     int64_t timestamp;
@@ -35,8 +34,29 @@ struct QuoteRecord : public Record {
     std::string metadata;
 };
 
+
+struct QuotePairRecord : public Record {
+    inline explicit QuotePairRecord(const std::string& id, int64_t timestamp, float bid_price, float bid_qty,
+                            float ask_price, float ask_qty, const std::string& metadata) :
+    id(id),
+    timestamp(timestamp),
+    bid_price(bid_price),
+    bid_qty(bid_qty),
+    ask_price(ask_price),
+    ask_qty(ask_qty),
+    metadata(metadata) {}
+    
+    std::string id;
+    int64_t timestamp;
+    float bid_price;
+    float bid_qty;
+    float ask_price;
+    float ask_qty;
+    std::string metadata;
+};
+
 struct OpenInterestRecord : public Record {
-    explicit OpenInterestRecord(const std::string& id, int64_t timestamp, float qty, const std::string& metadata) :
+    inline explicit OpenInterestRecord(const std::string& id, int64_t timestamp, float qty, const std::string& metadata) :
     id(id), timestamp(timestamp), qty(qty), metadata(metadata) {}
     std::string id;
     int64_t timestamp;
@@ -45,7 +65,7 @@ struct OpenInterestRecord : public Record {
 };
 
 struct OtherRecord : public Record {
-    explicit OtherRecord(const std::string& id, int64_t timestamp, const std::string& metadata) :
+    inline explicit OtherRecord(const std::string& id, int64_t timestamp, const std::string& metadata) :
     id(id), timestamp(timestamp), metadata(metadata) {}
     std::string id;
     int64_t timestamp;
@@ -144,15 +164,25 @@ public:
     virtual ~Function() {};
 };
 
+class RecordParser {
+public:
+    virtual void add_line(const std::string& line) = 0;
+    virtual std::shared_ptr<Record> parse() = 0;
+    virtual ~RecordParser() {};
+};
+
 using WriterCreator = Function<std::shared_ptr<Writer>(const std::string&, const Schema&, bool, int)>;
 using CheckFields = Function<bool(const std::vector<std::string>&)>;
 using TimestampParser = Function<int64_t(const std::string&)>;
 using QuoteParser = Function<std::shared_ptr<QuoteRecord> (const std::vector<std::string>&)>;
+using QuotePairParser = Function<std::shared_ptr<QuotePairRecord> (const std::vector<std::string>&)>;
 using TradeParser = Function<std::shared_ptr<TradeRecord>(const std::vector<std::string>&)>;
 using OpenInterestParser = Function<std::shared_ptr<OpenInterestRecord>(const std::vector<std::string>&)>;
 using OtherParser = Function<std::shared_ptr<OtherRecord>(const std::vector<std::string>&)>;
-using RecordParser = Function<std::shared_ptr<Record>(const std::string&)>;
+using RecordFieldParser = Function<std::shared_ptr<Record>(const std::vector<std::string>&)>;
+//using RecordParser = Function<std::shared_ptr<Record>(const std::string&)>;
 using QuoteAggregator = Function<void(const QuoteRecord&, int)>;
+using QuotePairAggregator = Function<void(const QuotePairRecord&, int)>;
 using TradeAggregator = Function<void(const TradeRecord&, int)>;
 using OpenInterestAggregator = Function<void(const OpenInterestRecord&, int)>;
 using OtherAggregator = Function<void(const OtherRecord&, int)>;

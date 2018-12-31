@@ -82,12 +82,12 @@ public:
                       BadLineHandler* bad_line_handler,
                       RecordFilter* record_filter,
                       MissingDataHandler* missing_data_handler,
+                      QuotePairAggregator* quote_pair_aggregator,
                       QuoteAggregator* quote_aggregator,
                       TradeAggregator* trade_aggregator,
                       OpenInterestAggregator* open_interest_aggregator,
                       OtherAggregator* other_aggregator,
                       int skip_rows);
-
     int call(const std::string& input_filename, const std::string& compression);
 private:
     Function<std::shared_ptr<StreamHolder>(const std::string&, const std::string&)>* _record_generator;
@@ -96,6 +96,7 @@ private:
     Function<std::shared_ptr<Record> (int, const std::string&, const std::exception&)>* _bad_line_handler;
     Function<bool (const Record&)>* _record_filter;
     Function<void (std::shared_ptr<Record>)>* _missing_data_handler;
+    Function<void (const QuotePairRecord&, int)>* _quote_pair_aggregator;
     Function<void (const QuoteRecord&, int)>* _quote_aggregator;
     Function<void (const TradeRecord&, int)>* _trade_aggregator;
     Function<void (const OpenInterestRecord&, int)>* _open_interest_aggregator;

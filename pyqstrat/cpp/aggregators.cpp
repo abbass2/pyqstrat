@@ -318,6 +318,33 @@ void AllQuoteAggregator::call(const QuoteRecord& quote, int line_number) {
     _writer->add_record(line_number, tuple);
 }
 
+AllQuotePairAggregator::AllQuotePairAggregator(WriterCreator* writer_creator, const std::string& output_file_prefix,
+                                       int batch_size, Schema::Type timestamp_unit)  {
+    if (!writer_creator) error("writer creator must be specified");
+    Schema schema;
+    schema.types = {
+        std::make_pair("id", Schema::STRING),
+        std::make_pair("timestamp", timestamp_unit),
+        std::make_pair("bid_price", Schema::FLOAT32),
+        std::make_pair("bid_qty", Schema::FLOAT32),
+        std::make_pair("ask_price", Schema::FLOAT32),
+        std::make_pair("ask_qty", Schema::FLOAT32),
+        std::make_pair("meta", Schema::STRING),
+    };
+    _writer = writer_creator->call(output_file_prefix, schema, false, batch_size);
+}
+
+void AllQuotePairAggregator::call(const QuotePairRecord& quote, int line_number) {
+    Tuple tuple;
+    tuple.add(quote.id);
+    tuple.add(quote.timestamp);
+    tuple.add(quote.bid_price);
+    tuple.add(quote.bid_qty);
+    tuple.add(quote.ask_price);
+    tuple.add(quote.ask_qty);
+    tuple.add(quote.metadata);
+    _writer->add_record(line_number, tuple);
+}
 
 AllTradeAggregator::AllTradeAggregator(WriterCreator* writer_creator, const std::string& output_file_prefix, int batch_size,
                                        Schema::Type timestamp_unit) {

@@ -124,6 +124,7 @@ TextFileProcessor::TextFileProcessor(
                                     BadLineHandler* bad_line_handler,
                                     RecordFilter* record_filter,
                                     MissingDataHandler* missing_data_handler,
+                                    QuotePairAggregator* quote_pair_aggregator,
                                     QuoteAggregator* quote_aggregator,
                                     TradeAggregator* trade_aggregator,
                                     OpenInterestAggregator* open_interest_aggregator,
@@ -155,26 +156,33 @@ int TextFileProcessor::call(const std::string& input_filename, const std::string
         //if (line_number > 200000) break;
         if (line_number <= _skip_rows) continue;
         if (_line_filter && !_line_filter->call(line)) continue;
-        auto record = shared_ptr<Record>();
-        try {
-           record  = _record_parser->call(line);
-        } catch(const ParseException& ex) {
-            record = _bad_line_handler->call(line_number, line, ex);
-            if (!record) continue;
+        for (;;) {
+            auto record = shared_ptr<Record>();
+            try {
+                record  = _record_parser->call(line);
+                if (!record) break;
+            } catch(const ParseException& ex) {
+                record = _bad_line_handler->call(line_number, line, ex);
+                if (!record) continue;
+            }
+            //if (line_number % 10000 == 0) cout << "got record from line: " << line_number << ":" << line << endl;
+            if (_record_filter && !_record_filter->call(*record)) continue;
+            if (_missing_data_handler) _missing_data_handler->call(record);
+            
+            auto quote_pair = dynamic_pointer_cast<QuotePairRecord>(record);
+            if (quote_pair && _quote_pair_aggregator) {
+                _quote_pair_aggregator->call(*quote_pair, line_number);
+                continue;
+            }
+            auto quote = dynamic_pointer_cast<QuoteRecord>(record);
+            if (quote && _quote_aggregator) _quote_aggregator->call(*quote, line_number);
+            auto trade = dynamic_pointer_cast<TradeRecord>(record);
+            if (trade && _trade_aggregator) _trade_aggregator->call(*trade, line_number);
+            auto oi = dynamic_pointer_cast<OpenInterestRecord>(record);
+            if (oi && _open_interest_aggregator) _open_interest_aggregator->call(*oi, line_number);
+            auto other = dynamic_pointer_cast<OtherRecord>(record);
+            if (other && _other_aggregator) _other_aggregator->call(*other, line_number);
         }
-        if (record == nullptr) continue;
-        //if (line_number % 10000 == 0) cout << "got record from line: " << line_number << ":" << line << endl;
-        if (_record_filter && !_record_filter->call(*record)) continue;
-        
-        if (_missing_data_handler) _missing_data_handler->call(record);
-        auto quote = dynamic_pointer_cast<QuoteRecord>(record);
-        if (quote && _quote_aggregator) _quote_aggregator->call(*quote, line_number);
-        auto trade = dynamic_pointer_cast<TradeRecord>(record);
-        if (trade && _trade_aggregator) _trade_aggregator->call(*trade, line_number);
-        auto oi = dynamic_pointer_cast<OpenInterestRecord>(record);
-        if (oi && _open_interest_aggregator) _open_interest_aggregator->call(*oi, line_number);
-        auto other = dynamic_pointer_cast<OtherRecord>(record);
-        if (other && _other_aggregator) _other_aggregator->call(*other, line_number);
     }
     return line_number;
 }

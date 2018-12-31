@@ -118,6 +118,16 @@ private:
     std::string _id;
 };
 
+class AllQuotePairAggregator final : public QuotePairAggregator {
+public:
+    AllQuotePairAggregator(WriterCreator*, const std::string& output_file_prefix,
+                       int batch_size = 10000, Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
+    void call(const QuotePairRecord& quote, int line_number) override;
+private:
+    std::shared_ptr<Writer> _writer;
+    std::string _id;
+};
+
 class AllTradeAggregator final : public TradeAggregator {
 public:
     AllTradeAggregator(WriterCreator*, const std::string& output_file_prefix, int batch_size = 10000,
@@ -147,5 +157,7 @@ private:
     std::shared_ptr<Writer> _writer;
     std::string _id;
 };
+
+
 
 #endif
