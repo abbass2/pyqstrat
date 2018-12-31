@@ -1,4 +1,9 @@
-#cell 0
+
+# coding: utf-8
+
+# In[1]:
+
+
 import glob
 import os
 import sys
@@ -13,7 +18,10 @@ from timeit import default_timer as timer
 
 from pyqstrat import *
 
-#cell 1
+
+# In[2]:
+
+
 VERBOSE = False
 
 class PathFileNameProvider:

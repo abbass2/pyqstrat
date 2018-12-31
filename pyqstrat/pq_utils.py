@@ -1,4 +1,9 @@
-#cell 0
+
+# coding: utf-8
+
+# In[4]:
+
+
 import os
 import tempfile
 import numpy as np
@@ -366,5 +371,4 @@ def get_temp_dir():
         return '/tmp'
     else:
         return tempfile.gettempdir()
-
 
