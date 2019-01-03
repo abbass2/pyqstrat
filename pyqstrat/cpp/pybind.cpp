@@ -34,6 +34,22 @@ public:
     }
 };
 
+class PyRecordParser : public RecordParser {
+public:
+    using RecordParser::RecordParser;
+    void add_line(const std::string& line) override {
+        PYBIND11_OVERLOAD_PURE(void,
+                                RecordParser,
+                                add_line,
+                                line);
+    }
+    std::shared_ptr<Record> parse() override {
+        PYBIND11_OVERLOAD_PURE(std::shared_ptr<Record>,
+                                RecordParser,
+                                parse);
+    }
+};
+
 #define TRAMPOLINE(type) \
 py::class_<type, Py##type> function_##type (m, #type); \
 function_##type \
@@ -42,15 +58,42 @@ function_##type \
 
 
 PYBIND11_MODULE(pyqstrat_cpp, m) {
-    
-    
     py::add_ostream_redirect(m, "ostream_redirect");
-
-
     m.attr("__name__") = "pyqstrat.pyqstrat_cpp";
     py::options options;
     options.disable_function_signatures();
     
+    py::class_<RecordParser, PyRecordParser> record_parser (m, "RecordParser");
+    record_parser
+    .def(py::init<>())
+    .def("add_line", & RecordParser::add_line,
+         R"pqdoc(
+         Args:
+            line (str): The line we need to parse
+         )pqdoc")
+    .def("parse", &RecordParser::parse,
+         R"pqdoc(
+         Return: a subclass of :obj:`Record`
+         )pqdoc");
+    
+    py::class_<TextRecordParser>(m, "TextRecordParser", record_parser,
+    R"pqdoc(
+    A helper class that takes in a text line, separates it into a list of fields based on a delimiter, and then uess the parsers
+    passed in to try and parse the line as a quote, trade, open interest record or any other type of record
+    )pqdoc")
+    .def(py::init<std::vector<RecordFieldParser*>, bool, char >(),
+         "parsers"_a,
+         "exclusive"_a = false,
+         "separator"_a = ',',
+     R"pqdoc(
+     Args:
+         parsers: A vector of functions that each take a list of strings as input and returns a subclass of :obj:`Record` or None
+         exclusive (bool, optional): Set this when each line can only contain one type of record, after one first parser returns a non
+            None object, we will not call other parsers.  Default false
+         separator (str, optional):  A single character string.  This is the delimiter we use to separate fields from the text passed in.
+            Default ,
+         )pqdoc");
+   
 #define FUNCTION_PROTO(type) \
 py::class_<type>(m, #type) \
 .def("__call__", &type::call)
@@ -60,15 +103,13 @@ py::class_<type>(m, #type) \
     using PyWriterCreator = PyFunction<std::shared_ptr<Writer>(const std::string&, const Schema&, bool, int)>;
     using PyCheckFields = PyFunction<bool(const std::vector<std::string>&)>;
     using PyTimestampParser = PyFunction<int64_t(const std::string&)>;
-    using PyQuoteParser = PyFunction<std::shared_ptr<QuoteRecord> (const std::vector<std::string>&)>;
-    using PyTradeParser = PyFunction<std::shared_ptr<TradeRecord>(const std::vector<std::string>&)>;
-    using PyOpenInterestParser = PyFunction<std::shared_ptr<OpenInterestRecord>(const std::vector<std::string>&)>;
-    using PyOtherParser = PyFunction<std::shared_ptr<OtherRecord>(const std::vector<std::string>&)>;
+    /*using PyQuotePairParser = PyFunction<std::shared_ptr<Record> (const std::vector<std::string>&)>;
+    using PyTradeParser = PyFunction<std::shared_ptr<Record>(const std::vector<std::string>&)>;
+    using PyOpenInterestParser = PyFunction<std::shared_ptr<Record>(const std::vector<std::string>&)>;
+    using PyOtherParser = PyFunction<std::shared_ptr<Record>(const std::vector<std::string>&)>; */
     using PyRecordParser = PyFunction<std::shared_ptr<Record>(const std::string&)>;
-    using PyQuoteAggregator = PyFunction<void(const QuoteRecord&, int)>;
-    using PyTradeAggregator = PyFunction<void(const TradeRecord&, int)>;
-    using PyOpenInterestAggregator = PyFunction<void(const OpenInterestRecord&, int)>;
-    using PyOtherAggregator = PyFunction<void(const OtherRecord&, int)>;
+    using PyRecordFieldParser = PyFunction<std::shared_ptr<Record>(const std::vector<std::string>&)>;
+    using PyAggregator = PyFunction<void(const Record*, int)>;
     using PyMissingDataHandler = PyFunction<void(std::shared_ptr<Record>)>;
     using PyBadLineHandler = PyFunction<std::shared_ptr<Record>(int, const std::string&, const std::exception&)>;
     using PyLineFilter = PyFunction<bool(const std::string&)>;
@@ -78,15 +119,8 @@ py::class_<type>(m, #type) \
     using PyRecordFilter = PyFunction<bool (const Record &)>;
     
     TRAMPOLINE(TimestampParser);
-    TRAMPOLINE(QuoteParser);
-    TRAMPOLINE(TradeParser);
-    TRAMPOLINE(OpenInterestParser);
-    TRAMPOLINE(OtherParser);
-    TRAMPOLINE(RecordParser);
-    TRAMPOLINE(QuoteAggregator);
-    TRAMPOLINE(TradeAggregator);
-    TRAMPOLINE(OpenInterestAggregator);
-    TRAMPOLINE(OtherAggregator);
+    TRAMPOLINE(RecordFieldParser);
+    TRAMPOLINE(Aggregator);
     TRAMPOLINE(MissingDataHandler);
     TRAMPOLINE(BadLineHandler);
     TRAMPOLINE(LineFilter);
@@ -95,8 +129,6 @@ py::class_<type>(m, #type) \
     TRAMPOLINE(FileProcessor);
     TRAMPOLINE(RecordFilter);
     TRAMPOLINE(WriterCreator);
-
-    //py::add_ostream_redirect(m, "ostream_redirect");
     
     py::class_<Schema> schema(m, "Schema",
         R"pqdoc(
@@ -271,7 +303,7 @@ py::class_<type>(m, #type) \
     .def(py::init<>())
     .def("__call__", &ArrowWriterCreator::call);
     
-    py::class_<TradeBarAggregator, TradeAggregator>(m, "TradeBarAggregator",
+    py::class_<TradeBarAggregator, Aggregator>(m, "TradeBarAggregator",
     R"pqdoc(
         Aggregate trade records to create trade bars, given a frequency.  Calculates open, high, low, close, volume, vwap as well as last_update_time
           which is timestamp of the last trade that we processed before the bar ended.
@@ -314,7 +346,7 @@ py::class_<type>(m, #type) \
         )pqdoc");
     
 
-    py::class_<QuoteTOBAggregator, QuoteAggregator>(m, "QuoteTOBAggregator",
+    py::class_<QuoteTOBAggregator, Aggregator>(m, "QuoteTOBAggregator",
         R"pqdoc(
         Aggregate top of book quotes to top of book records.  If you specify a frequency such as "5m", we will calculate a record
         every 5 minutes which has the top of book at the end of that bar.  If no frequency is specified, we will create a top of book
@@ -357,7 +389,7 @@ py::class_<type>(m, #type) \
          )pqdoc");
 
     
-    py::class_<AllQuoteAggregator, QuoteAggregator>(m, "AllQuoteAggregator",
+    py::class_<AllQuoteAggregator, Aggregator>(m, "AllQuoteAggregator",
     R"pqdoc(
     Writes out every quote we see
     )pqdoc")
@@ -386,7 +418,7 @@ py::class_<type>(m, #type) \
              line_number (int): The line number of the source file that this trade came from.  Used for debugging
         )pqdoc");
    
-    py::class_<AllTradeAggregator, TradeAggregator>(m, "AllTradeAggregator",
+    py::class_<AllTradeAggregator, Aggregator>(m, "AllTradeAggregator",
     R"pqdoc(
     Writes out every trade we see
     )pqdoc")
@@ -415,7 +447,7 @@ py::class_<type>(m, #type) \
              line_number (int): The line number of the source file that this trade came from.  Used for debugging
          )pqdoc");
     
-    py::class_<AllOpenInterestAggregator, OpenInterestAggregator>(m, "AllOpenInterestAggregator",
+    py::class_<AllOpenInterestAggregator, Aggregator>(m, "AllOpenInterestAggregator",
         R"pqdoc(
         Writes out all open interest records
         )pqdoc")
@@ -444,7 +476,7 @@ py::class_<type>(m, #type) \
              line_number (int): The line number of the source file that this trade came from.  Used for debugging
         )pqdoc");
     
-    py::class_<AllOtherAggregator, OtherAggregator>(m, "AllOtherAggregator",
+    py::class_<AllOtherAggregator, Aggregator>(m, "AllOtherAggregator",
     R"pqdoc(
     Writes out any records that are not trades, quotes or open interest
     )pqdoc")
@@ -503,7 +535,7 @@ py::class_<type>(m, #type) \
                 int: Number of millis or micros since epoch
         )pqdoc");
     
-    py::class_<TextQuoteParser, QuoteParser>(m, "TextQuoteParser",
+    py::class_<TextQuoteParser, RecordFieldParser>(m, "TextQuoteParser",
         R"pqdoc(
           Helper class that parses a quote from a list of fields (strings)
         )pqdoc")
@@ -566,7 +598,64 @@ py::class_<type>(m, #type) \
                 QuoteRecord: Or None if this field is not a quote
              )pqdoc");
     
-    py::class_<TextTradeParser, TradeParser>(m, "TextTradeParser",
+    py::class_<TextQuotePairParser, RecordFieldParser>(m, "TextQuotePairParser",
+                                                       R"pqdoc(
+                                                       Helper class that parses a quote containing bid / ask in the same record from a list of fields (strings)
+                                                       )pqdoc")
+    
+    .def(py::init<
+         CheckFields*,
+         int64_t,
+         int,
+         int,
+         int,
+         int,
+         int,
+         const std::vector<int>&,
+         const std::vector<int>&,
+         TimestampParser*,
+         float,
+         bool,
+         bool>(),
+         "is_quote_pair"_a,
+         "base_date"_a,
+         "timestamp_idx"_a,
+         "bid_price_idx"_a,
+         "bid_qty_idx"_a,
+         "ask_price_idx"_a,
+         "ask_qty_idx"_a,
+         "id_field_indices"_a,
+         "meta_field_indices"_a,
+         "timestamp_parser"_a,
+         "price_multiplier"_a = 1.0,
+         "strip_id"_a = true,
+         "strip_meta"_a = true,
+         R"pqdoc(
+         Args:
+             is_quote_pair: a function that takes a list of strings as input and returns a bool if the fields represent a quote pair
+             base_date (int): if the timestamp in the files does not have a date component, pass in the date as number of millis or micros since the epoch
+             timestamp_idx (int): index of the timestamp field within the record
+             bid_price_idx (int): index of the field that contains the bid price
+             bid_qty_idx (int): index of the field that contains the bid quantity
+             ask_price_idx (int): index of the field that contains the ask price
+             ask_qty_idx (int): index of the field that contains the ask quantity
+             id_field_indices (list of str): indices of the fields identifying an instrument.  For example, for a future this could be symbol and expiry. These fields will be concatenated with a separator and placed in the id field in the record.
+             meta_field_indices (list of str): indices of additional fields you want to store.  For example, the exchange.
+             timestamp_parser: a function that takes a timestamp as a string and returns number of millis or micros since the epoch
+             price_multiplier: (float, optional): sometimes the price in a file could be in hundredths of cents, and we divide by this to get dollars. Defaults to 1.0
+             strip_id (bool, optional): if we want to strip any whitespace from the id fields before concatenating them.  Defaults to True
+             strip_meta (bool, optional):  if we want to strip any whitespace from the meta fields before concatenating them.  Defaults to True
+         )pqdoc")
+    
+    .def("__call__", &TextQuotePairParser::call, "fields"_a,
+         R"pqdoc(
+         Args:
+             fields (list of str): A list of fields representing the record
+             Returns:
+             QuotePairRecord: Or None if this field is not a quote pair
+         )pqdoc");
+    
+    py::class_<TextTradeParser, RecordFieldParser>(m, "TextTradeParser",
         R"pqdoc(
         Helper class that parses a trade from a list of fields (strings)
         )pqdoc")
@@ -604,8 +693,8 @@ py::class_<type>(m, #type) \
                 Defaults to 1.0
              strip_id (bool, optional): If we want to strip any whitespace from the id fields before concatenating them.  Defaults to True
              strip_meta (bool, optional):  If we want to strip any whitespace from the meta fields before concatenating them.  Defaults to True
-    )pqdoc")
-         
+         )pqdoc")
+    
     .def("__call__", &TextTradeParser::call, "fields"_a,
     R"pqdoc(
          Args:
@@ -615,7 +704,7 @@ py::class_<type>(m, #type) \
             TradeRecord: or None if this record is not a trade
     )pqdoc");
     
-    py::class_<TextOpenInterestParser, OpenInterestParser>(m, "TextOpenInterestParser",
+    py::class_<TextOpenInterestParser, RecordFieldParser>(m, "TextOpenInterestParser",
         R"pqdoc(
         Helper class that parses an open interest record from a list of fields (strings)
         )pqdoc")
@@ -658,7 +747,7 @@ py::class_<type>(m, #type) \
             OpenInterestRecord: or None if this record is not an open interest record
          )pqdoc");
     
-    py::class_<TextOtherParser, OtherParser>(m, "TextOtherParser",
+    py::class_<TextOtherParser, RecordFieldParser>(m, "TextOtherParser",
     R"pqdoc(
         Helper class that parses a record that contains information other than a quote, trade or open interest record
         )pqdoc")
@@ -698,36 +787,6 @@ py::class_<type>(m, #type) \
          
          Returns:
             OtherRecord:
-         )pqdoc");
-    
-    py::class_<TextRecordParser, RecordParser>(m, "TextRecordParser",
-        R"pqdoc(
-        A helper class that takes in a text line, separates it into a list of fields based on a delimiter, and then uess the parsers
-        passed in to try and parse the line as a quote, trade, open interest record or any other info
-        )pqdoc")
-    .def(py::init<
-         TextQuoteParser*,
-         TextTradeParser*,
-         TextOpenInterestParser*,
-         TextOtherParser*,
-         char>(),
-         "quote_parser"_a,
-         "trade_parser"_a,
-         "open_interest_parser"_a,
-         "other_parser"_a,
-         "separator"_a = ',',
-         R"pqdoc(
-         Args:
-             quote_parser: A function that takes a list of strings as input and returns either a :obj:`QuoteRecord` or None
-             trade_parser: A function that takes a list of strings as input and returns either a :obj:`TradeRecord` or None
-             open_interest_parser: A function that takes a list of strings as input and returns either an :obj:`OpenInterest` or None
-             other_parser: A function that takes a list of strings as input and returns an :obj:`OtherRecord` or None
-             separator (str, optional):  A single character string.  This is the delimiter we use to separate fields from the text passed in
-         )pqdoc")
-    .def("__call__", &TextRecordParser::call, "line"_a,
-         R"pqdoc(
-         Args:
-             line (str): The line we need to parse
          )pqdoc");
     
     py::class_<PrintBadLineHandler, BadLineHandler>(m, "PrintBadLineHandler",
@@ -802,34 +861,58 @@ py::class_<type>(m, #type) \
             record:  Any subclass of :obj:`Record`
           )pqdoc");
     
-    py::class_<FastTimeMilliParser, TimestampParser>(m, "FastTimeMilliParser",
-          R"pqdoc(
-          A helper class that takes a string formatted as HH:MM:SS.xxx and parses it into number of milliseconds since the beginning of the day
+    py::class_<FixedWidthTimeParser, TimestampParser>(m, "FixedWidthTimeParser",
+         R"pqdoc(
+          A helper class that takes a string formatted as HH:MM:SS.xxx and parses it into number of milliseconds or micros since the beginning of the day
           )pqdoc")
-          .def(py::init<>())
-          .def("__call__", &FastTimeMilliParser::call, "time"_a,
+    
+    .def(py::init<bool,
+                int,
+                int,
+                int,
+                int,
+                int,
+                int,
+                int,
+                int,
+                int,
+                int>(),
+         "micros"_a = false,
+         "hours_start"_a = -1,
+         "hours_size"_a = -1,
+         "minutes_start"_a = -1,
+         "minutes_size"_a = -1,
+         "seconds_start"_a = -1,
+         "seconds_size"_a = -1,
+         "millis_start"_a = -1,
+         "millis_size"_a = -1,
+         "micros_start"_a = -1,
+         "micros_size"_a = -1,
+ 
+         R"pqdoc(
+         Args:
+             micros (bool, optional): Whether to return timestamp in millisecs or microsecs since 1970.  Default false
+             hours_start (int, optional): index where the hour starts in the timestamp string.  Default -1
+             hours_size(int, optional): number of characters used for the hour
+             minutes_start (int, optional):
+             minutes_size(int, optional):
+             seconds_start (int, optional):
+             seconds_size(int, optional):
+             millis_start (int, optional):
+             millis_size(int, optional):
+             micros_start (int, optional):
+             micros_size(int, optional):
+         )pqdoc")
+    
+          .def("__call__", &FixedWidthTimeParser::call, "time"_a,
           R"pqdoc(
           Args:
             time (str):  A string like "08:35:22.132"
           
-          Returns:
+          Return:
             int: Millis since beginning of day
           )pqdoc");
 
-    py::class_<FastTimeMicroParser, TimestampParser>(m, "FastTimeMicroParser",
-        R"pqdoc(
-        A helper class that takes a string formatted as HH:MM:SS.xxxxxx and parses it into number of micorseconds since the beginning of the day
-        )pqdoc")
-        .def(py::init<>())
-        .def("__call__", &FastTimeMicroParser::call, "time"_a,
-         R"pqdoc(
-         Args:
-         time (str):  A string like "08:35:22.132385"
-         
-         Returns:
-         int: Millis since beginning of day
-         )pqdoc");
-    
     py::class_<IsFieldInList, CheckFields>(m, "IsFieldInList",
       R"pqdoc(
       Simple utility class to check whether the value of fields[flag_idx] is in any of flag_values
@@ -869,18 +952,15 @@ py::class_<type>(m, #type) \
       R"pqdoc(
       A helper class that takes text based market data files and creates parsed and aggregated quote, trade, open interest, and other files from them.
       )pqdoc")
-
-    .def(py::init<
+    
+     .def(py::init<
          RecordGenerator*,
          LineFilter*,
          RecordParser*,
          BadLineHandler*,
          RecordFilter*,
          MissingDataHandler*,
-         QuoteAggregator*,
-         TradeAggregator*,
-         OpenInterestAggregator*,
-         OtherAggregator*,
+         std::vector<Aggregator*>,
          int>(),
         "record_generator"_a,
         "line_filter"_a,
@@ -888,10 +968,7 @@ py::class_<type>(m, #type) \
         "bad_line_handler"_a,
         "record_filter"_a,
         "missing_data_handler"_a,
-        "quote_aggregator"_a,
-        "trade_aggregator"_a,
-        "open_interest_aggregator"_a,
-        "other_aggregator"_a,
+        "aggregators"_a,
         "skip_rows"_a = 1,
          R"pqdoc(
          Args:
@@ -902,10 +979,7 @@ py::class_<type>(m, #type) \
             bad_line_handler: A function that takes a line that failed to parse and returns a :obj:`Record` object or None
             record_filter: A function that takes a parsed Record object and returns whether we should keep it or discard it
             missing_data_handler: A function that takes a parsed Record object and deals with missing data, for example, by converting 0's to NANs
-            quote_aggregator: A function that takes parsed quote objects and aggregates them
-            trade_aggregator: A function that takes parsed trade objects and aggregates them
-            open_interest_aggregator: A function that takes parsed open interest objects and aggregates them
-            other_aggregator: A function that takes parsed :obj:`OtherRecord` objects and aggregates them
+            aggregators: A vector of functions that each take a parsed Record object and aggregate it.
             skip_rows (int, optional): Number of rows to skip in the file before starting to read it.  Defaults to 1 to ignore a header line
             )pqdoc")
          

@@ -140,7 +140,12 @@ _record_num(0) {
     _writer = writer_creator->call(output_file_prefix + "." + frequency, schema, batch_by_id, batch_size);
 }
     
-void TradeBarAggregator::call(const TradeRecord& trade, int line_number) {
+void TradeBarAggregator::call(const Record* record, int line_number) {
+    if (record == nullptr) return;
+    auto ptrade = dynamic_cast<const TradeRecord*>(record);
+    if (ptrade == nullptr) return;
+    auto trade = *ptrade;
+    
     if (_trade_bars_by_symbol.find(trade.id) == _trade_bars_by_symbol.end()) {
         _trade_bars_by_symbol.insert(std::make_pair(trade.id, std::shared_ptr<SymbolTradeBar>(
             new SymbolTradeBar(_writer, trade.id, _batch_by_id, _frequency))));
@@ -269,7 +274,12 @@ _frequency(-1) {
     _record_num = 0;
 }
 
-void QuoteTOBAggregator::call(const QuoteRecord& quote, int line_number) {
+void QuoteTOBAggregator::call(const Record* record, int line_number) {
+    if (record == nullptr) return;
+    auto pquote = dynamic_cast<const QuoteRecord*>(record);
+    if (pquote == nullptr) return;
+    auto quote = *pquote;
+
     if (_tob_by_symbol.find(quote.id) == _tob_by_symbol.end()) {
         _tob_by_symbol.insert(std::make_pair(quote.id, std::shared_ptr<SymbolQuoteTOB>(
             new SymbolQuoteTOB(_writer, quote.id, _batch_by_id, _frequency))));
@@ -307,7 +317,12 @@ AllQuoteAggregator::AllQuoteAggregator(WriterCreator* writer_creator, const std:
     _writer = writer_creator->call(output_file_prefix, schema, false, batch_size);
 }
 
-void AllQuoteAggregator::call(const QuoteRecord& quote, int line_number) {
+void AllQuoteAggregator::call(const Record* record, int line_number) {
+    if (record == nullptr) return;
+    auto pquote = dynamic_cast<const QuoteRecord*>(record);
+    if (pquote == nullptr) return;
+    auto quote = *pquote;
+
     Tuple tuple;
     tuple.add(quote.id);
     tuple.add(quote.timestamp);
@@ -334,7 +349,12 @@ AllQuotePairAggregator::AllQuotePairAggregator(WriterCreator* writer_creator, co
     _writer = writer_creator->call(output_file_prefix, schema, false, batch_size);
 }
 
-void AllQuotePairAggregator::call(const QuotePairRecord& quote, int line_number) {
+void AllQuotePairAggregator::call(const Record* record, int line_number) {
+    if (record == nullptr) return;
+    auto pquote = dynamic_cast<const QuotePairRecord*>(record);
+    if (pquote == nullptr) return;
+    auto quote = *pquote;
+
     Tuple tuple;
     tuple.add(quote.id);
     tuple.add(quote.timestamp);
@@ -360,7 +380,12 @@ AllTradeAggregator::AllTradeAggregator(WriterCreator* writer_creator, const std:
     _writer = writer_creator->call(output_file_prefix, schema, false, batch_size);
 }
 
-void AllTradeAggregator::call(const TradeRecord& trade, int line_number) {
+void AllTradeAggregator::call(const Record* record, int line_number) {
+    if (record == nullptr) return;
+    auto ptrade = dynamic_cast<const TradeRecord*>(record);
+    if (ptrade == nullptr) return;
+    auto trade = *ptrade;
+    
     Tuple tuple;
     tuple.add(trade.id);
     tuple.add(trade.timestamp);
@@ -383,7 +408,12 @@ AllOpenInterestAggregator::AllOpenInterestAggregator(WriterCreator* writer_creat
     _writer = writer_creator->call(output_file_prefix, schema, false, batch_size);
 }
 
-void AllOpenInterestAggregator::call(const OpenInterestRecord& oi, int line_number) {
+void AllOpenInterestAggregator::call(const Record* record, int line_number) {
+    if (record == nullptr) return;
+    auto poi = dynamic_cast<const OpenInterestRecord*>(record);
+    if (poi == nullptr) return;
+    auto oi = *poi;
+
     Tuple tuple;
     tuple.add(oi.id);
     tuple.add(oi.timestamp);
@@ -404,7 +434,12 @@ AllOtherAggregator::AllOtherAggregator(WriterCreator* writer_creator, const std:
     _writer = writer_creator->call(output_file_prefix, schema, false, batch_size);
 }
 
-void AllOtherAggregator::call(const OtherRecord& other, int line_number) {
+void AllOtherAggregator::call(const Record* record, int line_number) {
+    if (record == nullptr) return;
+    auto pother = dynamic_cast<const OtherRecord*>(record);
+    if (pother == nullptr) return;
+    auto other = *pother;
+
     Tuple tuple;
     tuple.add(other.id);
     tuple.add(other.timestamp);

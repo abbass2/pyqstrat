@@ -58,6 +58,22 @@ _strip_meta(strip_meta) {
     if (!is_quote || !timestamp_parser) error("is_quote and timestamp parser must be specified")
 }
 
+shared_ptr<Record> TextQuoteParser::call(const vector<string>& fields) {
+    if (!_is_quote->call(fields)) return nullptr;
+    int64_t timestamp = _timestamp_parser->call(fields[_timestamp_idx]) + _base_date;
+    const string& bid_offer_str = fields[_bid_offer_idx];
+    bool bid;
+    if (bid_offer_str == _bid_str) bid = true;
+    else if (bid_offer_str == _offer_str) bid = false;
+    else parse_error("unknown bid offer string: " << bid_offer_str);
+    float price = str_to_float(fields[_price_idx]) / _price_multiplier;
+    float qty = str_to_float(fields[_qty_idx]);
+    string id = join_fields(fields, _id_field_indices, '|', _strip_id);
+    string meta = join_fields(fields, _meta_field_indices, '|', _strip_meta);
+    return shared_ptr<Record>(new QuoteRecord(id, timestamp, bid, qty, price, meta));
+}
+
+
 TextQuotePairParser::TextQuotePairParser(CheckFields* is_quote_pair,
                                  int64_t base_date,
                                  int timestamp_idx,
@@ -131,7 +147,7 @@ shared_ptr<Record> TextTradeParser::call(const vector<string>& fields) {
     float qty = str_to_float(fields[_qty_idx]);
     string id = join_fields(fields, _id_field_indices, '|', _strip_id);
     string meta = join_fields(fields, _meta_field_indices, '|', _strip_meta);
-    return std::make_shared<Record>(id, timestamp, qty, price, meta);
+    return shared_ptr<Record>(new TradeRecord(id, timestamp, qty, price, meta));
 }
     
 TextOpenInterestParser::TextOpenInterestParser(CheckFields* is_open_interest,
@@ -161,7 +177,7 @@ shared_ptr<Record> TextOpenInterestParser::call(const vector<string>& fields) {
     float qty = str_to_float(fields[_qty_idx]);
     string id = join_fields(fields, _id_field_indices, '|', _strip_id);
     string meta = join_fields(fields, _meta_field_indices, '|', _strip_meta);
-    return std::make_shared<Record>(id, timestamp, qty, meta);
+    return shared_ptr<Record>(new OpenInterestRecord(id, timestamp, qty, meta));
 }
     
 TextOtherParser::TextOtherParser(CheckFields* is_other,
@@ -205,36 +221,61 @@ void TextRecordParser::add_line(const std::string& line) {
 }
     
 shared_ptr<Record> TextRecordParser::parse() {
-    if (_parse_index >= _parsers.size()) return nullptr;
-    _parse_index++;  // Make sure this gets incremented even if next line throws
-    auto record = _parsers[_parse_index - 1]->call(_fields);
-    if (record && _exclusive) _parse_index = static_cast<int>(_parsers.size()); //If exclusive don't try any parsers for the line after the first one
+    shared_ptr<Record> record;
+    for (;;) {
+        _parse_index++;  // Make sure this gets incremented even if next line throws
+        if (_parse_index == (_parsers.size() + 1)) break;
+        record = _parsers[_parse_index - 1]->call(_fields);
+        if (record) {
+            //If exclusive don't try any parsers for the line after the first one that succeeds
+            if (_exclusive) _parse_index = static_cast<int>(_parsers.size());
+            return record;
+        }
+    }
     return record;
 }
 
-int64_t FastTimeParser::call(const std::string& time) {
-    int hours = str_to_int(time.substr(_hours_start, _hours_end).c_str());
-    int minutes = str_to_int(time.substr(_minutes_start, _minutes_end).c_str());
-    int seconds = str_to_int(time.substr(_seconds_start, _seconds_end).c_str());
-    int millis = str_to_int(time.substr(_millis_start, _millis_end).c_str());
-    int micros = str_to_int(time.substr(_micros_start, _micros_end).c_str());
+int get_time_part(const std::string& time, int start, int size) {
+    if (start < 0 || size <= 0) {
+        return 0;
+    }
+    int ret = str_to_int(time.substr(start, size).c_str());
+    return ret;
+}
+
+
+FixedWidthTimeParser::FixedWidthTimeParser(bool micros,
+                                 int hours_start,
+                                 int hours_size,
+                                 int minutes_start,
+                                 int minutes_size,
+                                 int seconds_start,
+                                 int seconds_size,
+                                 int millis_start,
+                                 int millis_size,
+                                 int micros_start,
+                                 int micros_size) :
+                                    _micros(micros),
+                                    _hours_start(hours_start),
+                                    _hours_size(hours_size),
+                                    _minutes_start(minutes_start),
+                                    _minutes_size(minutes_size),
+                                    _seconds_start(seconds_start),
+                                    _seconds_size(seconds_size),
+                                    _millis_start(millis_start),
+                                    _millis_size(millis_size),
+                                    _micros_start(micros_start),
+                                    _micros_size(micros_size)
+{}
+
+
+int64_t FixedWidthTimeParser::call(const std::string& time) {
+    int hours = get_time_part(time, _hours_start, _hours_size);
+    int minutes = get_time_part(time, _minutes_start, _minutes_size);
+    int seconds = get_time_part(time, _seconds_start, _seconds_size);
+    int millis = get_time_part(time, _millis_start, _millis_size);
+    int micros = get_time_part(time, _micros_start, _micros_size);
+    if (_micros) return static_cast<int64_t>((hours * 60 * 60 + minutes * 60 + seconds) * 1000000 + millis * 1000 + micros);
     return static_cast<int64_t>((hours * 60 * 60 + minutes * 60 + seconds) * 1000 + millis);
 }
 
-int64_t FastTimeMilliParser::call(const std::string& time) {
-    if (time.size() != 12 || time[2] != ':' || time[5] != ':' || time[8] != '.') error("timestamp not in HH:MM:SS format: " << time)
-    int hours = str_to_int(time.substr(0, 2).c_str());
-    int minutes = str_to_int(time.substr(3, 2).c_str());
-    int seconds = str_to_int(time.substr(6, 2).c_str());
-    int millis = str_to_int(time.substr(9, 3).c_str());
-    return static_cast<int64_t>((hours * 60 * 60 + minutes * 60 + seconds) * 1000 + millis);
-}
-
-int64_t FastTimeMicroParser::call(const std::string& time) {
-    if (time.size() != 15 || time[2] != ':' || time[5] != ':' || time[8] != '.') error("timestamp not in HH:MM:SS format: " << time)
-        int hours = str_to_int(time.substr(0, 2).c_str());
-    int minutes = str_to_int(time.substr(3, 2).c_str());
-    int seconds = str_to_int(time.substr(5, 2).c_str());
-    int micros = str_to_int(time.substr(9, 6).c_str());
-    return static_cast<int64_t>((hours * 60 * 60 + minutes * 60 + seconds) * 1000 + micros);
-}

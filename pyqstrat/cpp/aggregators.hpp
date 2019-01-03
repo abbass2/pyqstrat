@@ -44,12 +44,12 @@ private:
     bool _closed;
 };
 
-class TradeBarAggregator final : public TradeAggregator {
+class TradeBarAggregator final : public Aggregator {
 public:
     TradeBarAggregator(WriterCreator*, const std::string& output_file_prefix, const std::string& frequency = "5m",
                        bool batch_by_id = true, int batch_size = std::numeric_limits<int>::max(),
                        Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
-    void call(const TradeRecord& trade, int line_number) override;
+    void call(const Record* trade, int line_number) override;
     void close();
     ~TradeBarAggregator();
 private:
@@ -90,13 +90,13 @@ private:
     bool _closed;
 };
 
-class QuoteTOBAggregator final : public QuoteAggregator {
+class QuoteTOBAggregator final : public Aggregator {
 public:
     //Assumes quotes are processed in time order.  Set frequency to "" to create bid / offer every time TOB changes.
     QuoteTOBAggregator(WriterCreator*, const std::string& output_file_prefix, const std::string& frequency = "5m",
                        bool batch_by_id = true, int batch_size = std::numeric_limits<int>::max(),
                        Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
-    void call(const QuoteRecord& quote, int line_number) override;
+    void call(const Record* quote, int line_number) override;
     void close();
     virtual ~QuoteTOBAggregator();
 private:
@@ -108,51 +108,51 @@ private:
     std::map<std::string, std::shared_ptr<SymbolQuoteTOB>> _tob_by_symbol;
 };
 
-class AllQuoteAggregator final : public QuoteAggregator {
+class AllQuoteAggregator final : public Aggregator {
 public:
     AllQuoteAggregator(WriterCreator*, const std::string& output_file_prefix,
                        int batch_size = 10000, Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
-    void call(const QuoteRecord& quote, int line_number) override;
+    void call(const Record* quote, int line_number) override;
 private:
     std::shared_ptr<Writer> _writer;
     std::string _id;
 };
 
-class AllQuotePairAggregator final : public QuotePairAggregator {
+class AllQuotePairAggregator final : public Aggregator {
 public:
     AllQuotePairAggregator(WriterCreator*, const std::string& output_file_prefix,
                        int batch_size = 10000, Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
-    void call(const QuotePairRecord& quote, int line_number) override;
+    void call(const Record* quote, int line_number) override;
 private:
     std::shared_ptr<Writer> _writer;
     std::string _id;
 };
 
-class AllTradeAggregator final : public TradeAggregator {
+class AllTradeAggregator final : public Aggregator {
 public:
     AllTradeAggregator(WriterCreator*, const std::string& output_file_prefix, int batch_size = 10000,
                        Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
-    void call(const TradeRecord& trade, int line_number) override;
+    void call(const Record* trade, int line_number) override;
 private:
     std::shared_ptr<Writer> _writer;
     std::string _id;
 };
 
-class AllOpenInterestAggregator final : public OpenInterestAggregator {
+class AllOpenInterestAggregator final : public Aggregator {
 public:
     AllOpenInterestAggregator(WriterCreator*, const std::string& output_file_prefix,int batch_size = 10000,
                               Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
-    void call(const OpenInterestRecord& oi, int line_number) override;
+    void call(const Record* oi, int line_number) override;
 private:
     std::shared_ptr<Writer> _writer;
     std::string _id;
 };
 
-class AllOtherAggregator final : public OtherAggregator {
+class AllOtherAggregator final : public Aggregator {
 public:
     AllOtherAggregator(WriterCreator*, const std::string& output_file_prefix, int batch_size = 10000,
                        Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
-    void call(const OtherRecord& other, int line_number) override;
+    void call(const Record* other, int line_number) override;
 private:
     std::shared_ptr<Writer> _writer;
     std::string _id;

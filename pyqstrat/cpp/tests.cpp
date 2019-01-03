@@ -123,8 +123,6 @@ void test_quote_pair_processing() {
     cout << "start: " << start.time_since_epoch().count() << " processed " << lines << " lines in " << duration.count() / 1000.0 << " milliseconds" << endl;
 }
 
-
-
 int run_python() {
      // Run python
      int argc = 4;

@@ -21,12 +21,32 @@ private:
     bool _micros;
 };
 
-struct FastTimeMilliParser : public TimestampParser {
+class FixedWidthTimeParser : public TimestampParser {
+public:
+    FixedWidthTimeParser(bool micros = false,
+                        int hours_start = -1,
+                        int hours_size = -1,
+                        int minutes_start = -1,
+                        int minutes_size = -1,
+                        int seconds_start = -1,
+                        int seconds_size = -1,
+                        int millis_start = -1,
+                        int millis_size = -1,
+                        int micros_start = -1,
+                        int micros_size = -1);
     int64_t call(const std::string& time) override;
-};
-
-struct FastTimeMicroParser : public TimestampParser {
-    int64_t call(const std::string& time) override;
+private:
+    bool _micros;
+    int _hours_start;
+    int _hours_size;
+    int _minutes_start;
+    int _minutes_size;
+    int _seconds_start;
+    int _seconds_size;
+    int _millis_start;
+    int _millis_size;
+    int _micros_start;
+    int _micros_size;
 };
 
 class TextQuoteParser : public RecordFieldParser {
@@ -45,7 +65,6 @@ public:
                     float price_multiplier = 1.0,
                     bool strip_id = true,
                     bool strip_meta = true);
-    
     std::shared_ptr<Record> call(const std::vector<std::string>& fields) override;
 private:
     CheckFields* _is_quote;
@@ -66,7 +85,8 @@ private:
 
 class TextQuotePairParser : public RecordFieldParser {
 public:
-    TextQuotePairParser(CheckFields* is_quote_pair,
+    TextQuotePairParser(
+                    CheckFields* is_quote_pair,
                     int64_t base_date,
                     int timestamp_idx,
                     int bid_price_idx,

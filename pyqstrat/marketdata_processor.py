@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import glob
 import os
 import sys
@@ -18,10 +13,7 @@ from timeit import default_timer as timer
 
 from pyqstrat import *
 
-
-# In[2]:
-
-
+#cell 1
 VERBOSE = False
 
 class PathFileNameProvider:
@@ -189,17 +181,14 @@ def base_date_filename_mapper(input_file_path):
     return round(millis_since_epoch(base_date))
 
 def create_text_file_processor(record_generator, line_filter, record_parser, bad_line_handler, record_filter, missing_data_handler,
-                                quote_aggregator, trade_aggregator, open_interest_aggregator, other_aggregator, skip_rows = 1): 
+                               aggregators, skip_rows = 1): 
     return TextFileProcessor(record_generator,
                                 line_filter,
                                 record_parser,
                                 bad_line_handler,
                                 record_filter,
                                 missing_data_handler,
-                                quote_aggregator,
-                                trade_aggregator,
-                                open_interest_aggregator,
-                                other_aggregator,
+                                aggregators,
                                 skip_rows)
 
 def get_field_indices(field_names, headers):
@@ -226,10 +215,7 @@ def process_marketdata_file(input_filename,
                  open_interest_parser_creator,
                  other_parser_creator,
                  record_parser_creator,
-                 quote_aggregator_creator,
-                 trade_aggregator_creator,
-                 open_interest_aggregator_creator,
-                 other_aggregator_creator,
+                 aggregator_creator,
                  line_filter = None, 
                  compression = None,
                  base_date_mapper = base_date_filename_mapper,
@@ -298,11 +284,8 @@ def process_marketdata_file(input_filename,
     if other_parser_creator: other_parser = other_parser_creator(base_date, headers)
 
     record_parser = record_parser_creator(quote_parser, trade_parser, open_interest_parser, other_parser)
-
-    quote_aggregator = quote_aggregator_creator(writer_creator, output_file_prefix)
-    trade_aggregator = trade_aggregator_creator(writer_creator, output_file_prefix)
-    open_interest_aggregator = open_interest_aggregator_creator(writer_creator, output_file_prefix)
-    other_aggregator = other_aggregator_creator(writer_creator, output_file_prefix)
+    
+    aggregators = aggregator_creator(writer_creator, output_file_prefix)
 
     file_processor = file_processor_creator(
         record_generator, 
@@ -311,10 +294,7 @@ def process_marketdata_file(input_filename,
         bad_line_handler, 
         record_filter, 
         missing_data_handler,
-        quote_aggregator, 
-        trade_aggregator, 
-        open_interest_aggregator, 
-        other_aggregator
+        aggregators
     )
 
     start = timer()
@@ -370,4 +350,7 @@ def process_marketdata(input_filename_provider, file_processor, num_processes = 
                     else: 
                         print(str(new_exc))
                         continue
+
+#cell 2
+
 
