@@ -3019,8 +3019,8 @@ later retrieve just this batch of records without reading the whole file.</p>
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">FormatTimestampParser</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.FormatTimestampParser" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.TimestampParser" title="pyqstrat.pyqstrat_cpp.TimestampParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.TimestampParser</span></code></a></p>
 <dl class="docutils">
-<dt>Helper class that parses timestamps according to the strftime format string passed in.  strftime is slow so use fast_milli_time_parser</dt>
-<dd>or fast_time_micro_parser if your timestamps are in “HH:MM:SS….” format</dd>
+<dt>Helper class that parses timestamps according to the strftime format string passed in.  strftime is slow so</dt>
+<dd>use <code class="xref py py-obj docutils literal notranslate"><span class="pre">FixedWithTimeParser</span></code> if your timestamp has a fixed format such as “HH:MM:SS….”</dd>
 </dl>
 <dl class="method">
 <dt id="pyqstrat.pyqstrat_cpp.FormatTimestampParser.__call__">
