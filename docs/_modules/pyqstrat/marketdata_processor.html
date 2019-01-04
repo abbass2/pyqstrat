@@ -13,7 +13,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -216,17 +216,14 @@
     <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">millis_since_epoch</span><span class="p">(</span><span class="n">base_date</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="create_text_file_processor"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata_processor.create_text_file_processor">[docs]</a><span class="k">def</span> <span class="nf">create_text_file_processor</span><span class="p">(</span><span class="n">record_generator</span><span class="p">,</span> <span class="n">line_filter</span><span class="p">,</span> <span class="n">record_parser</span><span class="p">,</span> <span class="n">bad_line_handler</span><span class="p">,</span> <span class="n">record_filter</span><span class="p">,</span> <span class="n">missing_data_handler</span><span class="p">,</span>
-                                <span class="n">quote_aggregator</span><span class="p">,</span> <span class="n">trade_aggregator</span><span class="p">,</span> <span class="n">open_interest_aggregator</span><span class="p">,</span> <span class="n">other_aggregator</span><span class="p">,</span> <span class="n">skip_rows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span> 
+                               <span class="n">aggregators</span><span class="p">,</span> <span class="n">skip_rows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span> 
     <span class="k">return</span> <span class="n">TextFileProcessor</span><span class="p">(</span><span class="n">record_generator</span><span class="p">,</span>
                                 <span class="n">line_filter</span><span class="p">,</span>
                                 <span class="n">record_parser</span><span class="p">,</span>
                                 <span class="n">bad_line_handler</span><span class="p">,</span>
                                 <span class="n">record_filter</span><span class="p">,</span>
                                 <span class="n">missing_data_handler</span><span class="p">,</span>
-                                <span class="n">quote_aggregator</span><span class="p">,</span>
-                                <span class="n">trade_aggregator</span><span class="p">,</span>
-                                <span class="n">open_interest_aggregator</span><span class="p">,</span>
-                                <span class="n">other_aggregator</span><span class="p">,</span>
+                                <span class="n">aggregators</span><span class="p">,</span>
                                 <span class="n">skip_rows</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="get_field_indices"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata_processor.get_field_indices">[docs]</a><span class="k">def</span> <span class="nf">get_field_indices</span><span class="p">(</span><span class="n">field_names</span><span class="p">,</span> <span class="n">headers</span><span class="p">):</span>
@@ -253,10 +250,7 @@
                  <span class="n">open_interest_parser_creator</span><span class="p">,</span>
                  <span class="n">other_parser_creator</span><span class="p">,</span>
                  <span class="n">record_parser_creator</span><span class="p">,</span>
-                 <span class="n">quote_aggregator_creator</span><span class="p">,</span>
-                 <span class="n">trade_aggregator_creator</span><span class="p">,</span>
-                 <span class="n">open_interest_aggregator_creator</span><span class="p">,</span>
-                 <span class="n">other_aggregator_creator</span><span class="p">,</span>
+                 <span class="n">aggregator_creator</span><span class="p">,</span>
                  <span class="n">line_filter</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
                  <span class="n">compression</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                  <span class="n">base_date_mapper</span> <span class="o">=</span> <span class="n">base_date_filename_mapper</span><span class="p">,</span>
@@ -325,11 +319,8 @@
     <span class="k">if</span> <span class="n">other_parser_creator</span><span class="p">:</span> <span class="n">other_parser</span> <span class="o">=</span> <span class="n">other_parser_creator</span><span class="p">(</span><span class="n">base_date</span><span class="p">,</span> <span class="n">headers</span><span class="p">)</span>
 
     <span class="n">record_parser</span> <span class="o">=</span> <span class="n">record_parser_creator</span><span class="p">(</span><span class="n">quote_parser</span><span class="p">,</span> <span class="n">trade_parser</span><span class="p">,</span> <span class="n">open_interest_parser</span><span class="p">,</span> <span class="n">other_parser</span><span class="p">)</span>
-
-    <span class="n">quote_aggregator</span> <span class="o">=</span> <span class="n">quote_aggregator_creator</span><span class="p">(</span><span class="n">writer_creator</span><span class="p">,</span> <span class="n">output_file_prefix</span><span class="p">)</span>
-    <span class="n">trade_aggregator</span> <span class="o">=</span> <span class="n">trade_aggregator_creator</span><span class="p">(</span><span class="n">writer_creator</span><span class="p">,</span> <span class="n">output_file_prefix</span><span class="p">)</span>
-    <span class="n">open_interest_aggregator</span> <span class="o">=</span> <span class="n">open_interest_aggregator_creator</span><span class="p">(</span><span class="n">writer_creator</span><span class="p">,</span> <span class="n">output_file_prefix</span><span class="p">)</span>
-    <span class="n">other_aggregator</span> <span class="o">=</span> <span class="n">other_aggregator_creator</span><span class="p">(</span><span class="n">writer_creator</span><span class="p">,</span> <span class="n">output_file_prefix</span><span class="p">)</span>
+    
+    <span class="n">aggregators</span> <span class="o">=</span> <span class="n">aggregator_creator</span><span class="p">(</span><span class="n">writer_creator</span><span class="p">,</span> <span class="n">output_file_prefix</span><span class="p">)</span>
 
     <span class="n">file_processor</span> <span class="o">=</span> <span class="n">file_processor_creator</span><span class="p">(</span>
         <span class="n">record_generator</span><span class="p">,</span> 
@@ -338,10 +329,7 @@
         <span class="n">bad_line_handler</span><span class="p">,</span> 
         <span class="n">record_filter</span><span class="p">,</span> 
         <span class="n">missing_data_handler</span><span class="p">,</span>
-        <span class="n">quote_aggregator</span><span class="p">,</span> 
-        <span class="n">trade_aggregator</span><span class="p">,</span> 
-        <span class="n">open_interest_aggregator</span><span class="p">,</span> 
-        <span class="n">other_aggregator</span>
+        <span class="n">aggregators</span>
     <span class="p">)</span>
 
     <span class="n">start</span> <span class="o">=</span> <span class="n">timer</span><span class="p">()</span>
@@ -397,6 +385,9 @@
                     <span class="k">else</span><span class="p">:</span> 
                         <span class="nb">print</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">new_exc</span><span class="p">))</span>
                         <span class="k">continue</span></div>
+
+<span class="c1">#cell 2</span>
+
 
 </pre></div>
 
@@ -458,7 +449,7 @@
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.3</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>

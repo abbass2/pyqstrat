@@ -13,7 +13,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -36,10 +36,11 @@
 <span></span>
 <span class="c1"># coding: utf-8</span>
 
-<span class="c1"># In[7]:</span>
+<span class="c1"># In[4]:</span>
 
 
 <span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -400,6 +401,12 @@
     <span class="k">if</span> <span class="n">future_code</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">FUTURE_CODES_INT</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;unknown future code: </span><span class="si">{future_code}</span><span class="s1">&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">FUTURE_CODES_INT</span><span class="p">[</span><span class="n">future_code</span><span class="p">]</span></div>
 
+<div class="viewcode-block" id="get_temp_dir"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.get_temp_dir">[docs]</a><span class="k">def</span> <span class="nf">get_temp_dir</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="s1">&#39;/tmp&#39;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">W_OK</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;/tmp&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">gettempdir</span><span class="p">()</span></div>
+
 </pre></div>
 
           </div>
@@ -460,7 +467,7 @@
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.3</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>

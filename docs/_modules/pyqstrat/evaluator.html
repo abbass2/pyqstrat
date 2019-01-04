@@ -13,7 +13,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -33,7 +33,12 @@
           <div class="body" role="main">
             
   <h1>Source code for pyqstrat.evaluator</h1><div class="highlight"><pre>
-<span></span><span class="c1">#cell 0</span>
+<span></span>
+<span class="c1"># coding: utf-8</span>
+
+<span class="c1"># In[1]:</span>
+
+
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;numpy.dtype size changed&quot;</span><span class="p">)</span> <span class="c1"># another bogus warning, see https://github.com/numpy/numpy/pull/432</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -42,7 +47,9 @@
 <span class="kn">from</span> <span class="nn">pyqstrat.plot</span> <span class="k">import</span> <span class="o">*</span>
 
 
-<span class="c1">#cell 1</span>
+<span class="c1"># In[2]:</span>
+
+
 <span class="n">_VERBOSE</span> <span class="o">=</span> <span class="kc">False</span>
 
 <div class="viewcode-block" id="compute_amean"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_amean">[docs]</a><span class="k">def</span> <span class="nf">compute_amean</span><span class="p">(</span><span class="n">returns</span><span class="p">):</span>
@@ -472,10 +479,6 @@
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">test_evaluator</span><span class="p">()</span>
 
-
-<span class="c1">#cell 2</span>
-
-
 </pre></div>
 
           </div>
@@ -536,7 +539,7 @@
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.3</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
