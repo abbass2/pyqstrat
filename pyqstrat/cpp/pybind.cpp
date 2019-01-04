@@ -502,9 +502,9 @@ py::class_<type>(m, #type) \
     
     py::class_<FormatTimestampParser, TimestampParser>(m, "FormatTimestampParser",
         R"pqdoc(
-            Helper class that parses timestamps according to the strftime format string passed in.  strftime is slow so use fast_milli_time_parser
-                or fast_time_micro_parser if your timestamps are in "HH:MM:SS...." format
-        )pqdoc")
+            Helper class that parses timestamps according to the strftime format string passed in.  strftime is slow so
+                use :obj:`FixedWithTimeParser` if your timestamp has a fixed format such as "HH:MM:SS...."
+         )pqdoc")
 
     .def(py::init<int64_t,
          const std::string&,
