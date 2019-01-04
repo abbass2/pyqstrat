@@ -66,10 +66,12 @@ if 'CONDA_PREFIX' in os.environ or 'CONDA_PREFIX_1' in os.environ:
     else:
         library_dirs = [conda_prefix + '/lib']
 
-    extra_link_args = None
     if sys.platform in ["darwin"]:
+        extra_link_args.append("-stdlib=libc++")
+        extra_link_args.append("-mmacosx-version-min=10.7")
         link_dirs = ',-rpath,'.join(library_dirs)
-        extra_link_args=[f'-stdlib=libc++ -lm -Wl,-rpath,{link_dirs}']
+        extra_link_args.append(f'-Wl,-rpath,{link_dirs}')
+
 else:
     print(f'CONDA_PREFIX or CONDA_PREFIX_1 environment variables not found for including and linking to boost and arrow header files.')
 

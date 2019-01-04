@@ -208,7 +208,7 @@ private:
     bool _exclusive;
     char _separator;
     std::vector<std::string> _headers;
-    int _parse_index;
+    std::size_t _parse_index;
     std::vector<std::string> _fields;
 };
 

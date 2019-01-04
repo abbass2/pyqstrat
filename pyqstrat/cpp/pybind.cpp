@@ -103,11 +103,6 @@ py::class_<type>(m, #type) \
     using PyWriterCreator = PyFunction<std::shared_ptr<Writer>(const std::string&, const Schema&, bool, int)>;
     using PyCheckFields = PyFunction<bool(const std::vector<std::string>&)>;
     using PyTimestampParser = PyFunction<int64_t(const std::string&)>;
-    /*using PyQuotePairParser = PyFunction<std::shared_ptr<Record> (const std::vector<std::string>&)>;
-    using PyTradeParser = PyFunction<std::shared_ptr<Record>(const std::vector<std::string>&)>;
-    using PyOpenInterestParser = PyFunction<std::shared_ptr<Record>(const std::vector<std::string>&)>;
-    using PyOtherParser = PyFunction<std::shared_ptr<Record>(const std::vector<std::string>&)>; */
-    using PyRecordParser = PyFunction<std::shared_ptr<Record>(const std::string&)>;
     using PyRecordFieldParser = PyFunction<std::shared_ptr<Record>(const std::vector<std::string>&)>;
     using PyAggregator = PyFunction<void(const Record*, int)>;
     using PyMissingDataHandler = PyFunction<void(std::shared_ptr<Record>)>;
