@@ -331,3 +331,6 @@ def process_marketdata(input_filename_provider, file_processor, num_processes = 
                         print(str(new_exc))
                         continue
 
+#cell 2
+
+

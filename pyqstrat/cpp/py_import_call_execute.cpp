@@ -118,6 +118,9 @@ int import_call_execute(int argc, const char *argv[]) {
         return_value = -5;
         goto except;
     }
+    
+    
+    fprintf(stdout, "Calling function %s\n", argv[3]);
     pResult = PyObject_CallObject(pFunc, NULL);
     if (! pResult) {
         fprintf(stderr, "%s: Function call failed\n", argv[0]);
