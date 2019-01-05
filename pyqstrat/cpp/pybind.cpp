@@ -81,7 +81,7 @@ PYBIND11_MODULE(pyqstrat_cpp, m) {
     A helper class that takes in a text line, separates it into a list of fields based on a delimiter, and then uess the parsers
     passed in to try and parse the line as a quote, trade, open interest record or any other type of record
     )pqdoc")
-    .def(py::init<std::vector<RecordFieldParser*>, bool, char >(),
+    .def(py::init<std::vector<RecordFieldParser*>, bool, char >(), py::keep_alive<1, 2>(),
          "parsers"_a,
          "exclusive"_a = false,
          "separator"_a = ',',
@@ -412,6 +412,35 @@ py::class_<type>(m, #type) \
              quote (:obj:`QuoteRecord`):
              line_number (int): The line number of the source file that this trade came from.  Used for debugging
         )pqdoc");
+    
+    py::class_<AllQuotePairAggregator, Aggregator>(m, "AllQuotePairAggregator",
+                                               R"pqdoc(
+                                               Writes out every quote pair we find
+                                               )pqdoc")
+    .def(py::init<WriterCreator*, const std::string&, int, Schema::Type>(),
+         "writer_creator"_a,
+         "output_file_prefix"_a,
+         "batch_size"_a = 10000,
+         "timestamp_unit"_a = Schema::TIMESTAMP_MILLI,
+         R"pqdoc(
+         Args:
+             writer_creator: A function that takes an output_file_prefix, schema, create_batch_id and max_batch_size and returns an object
+             implementing the :obj:`Writer` interface
+             output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind of data and format the file creates.  E.g. "/tmp/output_file_1"
+             batch_size (int, optional): If set, we will write a batch to disk every time we have this many records queued up.  Defaults to 2.1 billion
+             timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
+             Defaults to Schema.TIMESTAMP_MILLI
+        )pqdoc")
+    
+    .def("__call__", &AllQuotePairAggregator::call,  "quote_pair"_a, "line_number"_a,
+         R"pqdoc(
+         Add a quote pair record to be written to disk at some point
+         
+         Args:
+            quote_pair (:obj:`QuoteRecord`):
+                line_number (int): The line number of the source file that this trade came from.  Used for debugging
+         )pqdoc");
+
    
     py::class_<AllTradeAggregator, Aggregator>(m, "AllTradeAggregator",
     R"pqdoc(

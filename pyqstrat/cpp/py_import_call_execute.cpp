@@ -2,6 +2,24 @@
 
 #include "Python.h"
 
+#include <string>
+#include <vector>
+
+std::vector<std::string> tokenize2(const char* str, const char separator) {
+    std::vector<std::string> tokens;
+    const char* token_start = str;
+    while (true) {
+        if ((*str == separator) || (*str == '\0')) {
+            tokens.push_back(std::string(token_start, str));
+            token_start = str + 1;
+            if (*str == '\0') break;
+        }
+        str++;
+    }
+    return tokens;
+}
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,6 +54,8 @@ int add_path_to_sys_module(const char *path) {
     free(command);
     return ret;
 }
+    
+
 
 /** This imports a Python module and calls a specific function in it.
  * It's arguments are similar to main():
@@ -68,10 +88,16 @@ int import_call_execute(int argc, const char *argv[]) {
     }
     Py_SetProgramName((wchar_t*)argv[0]);
     Py_Initialize();
-    if (add_path_to_sys_module(argv[1])) {
-        return_value = -2;
-        goto except;
+    
+    for (auto dir : tokenize2(argv[1], ':')) {
+        if (add_path_to_sys_module(dir.c_str())) {
+            return_value = -2;
+            goto except;
+        }
     }
+    
+    fprintf(stdout, "running %s\n", argv[2]);
+    
     pModule = PyImport_ImportModule(argv[2]);
     if (! pModule) {
         fprintf(stderr,

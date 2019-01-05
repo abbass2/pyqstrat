@@ -210,10 +210,6 @@ def get_field_indices(field_names, headers):
 
 def process_marketdata_file(input_filename,
                  output_file_prefix_mapper,
-                 quote_parser_creator,
-                 trade_parser_creator,
-                 open_interest_parser_creator,
-                 other_parser_creator,
                  record_parser_creator,
                  aggregator_creator,
                  line_filter = None, 
@@ -234,13 +230,8 @@ def process_marketdata_file(input_filename,
     Args:
         input_filename (str):
         output_file_prefix_mapper: A function that takes an input filename and returns the corresponding output filename we want
-        quote_parser_creator: A function that takes a date and a list of headers and returns a function that parses quotes
-        trade_parser_creator: A function that takes a date and a list of headers and returns a function that parses trades
-        open_interest_parser_creator: A function that takes a date and a list of headers and returns a function that parses open interest
-        other_parser_creator:  A function that takes a date and a list of headers and returns a function that parses lines that are not quotes, 
-            trades, or open_interest
-        record_parser_creator:  A function that takes a quote parser, trade parser, open interest parser and other parser and returns a 
-            function that can take a list of fields and return a quote, trade, open interest or other record
+        record_parser_creator:  A function that takes a date and a list of column names and returns a 
+            function that can take a list of fields and return a subclass of Record
         line_filter (optional): A function that takes a line and decides whether we want to keep it or discard it.  Defaults to None
         compression (str, optional): Compression type for the input file.  Defaults to None
         base_date_mapper (optional): A function that takes an input filename and returns the date implied by the filename, 
@@ -260,6 +251,7 @@ def process_marketdata_file(input_filename,
     """
     
     output_file_prefix = output_file_prefix_mapper(input_filename)
+        
     base_date = base_date_mapper(input_filename)
     
     if not is_newer(input_filename, output_file_prefix + '.done'):
@@ -271,19 +263,7 @@ def process_marketdata_file(input_filename,
     if compression is None: compression = infer_compression(input_filename)
     headers = header_parser(input_filename, compression)
     
-    quote_parser = None
-    if quote_parser_creator : quote_parser = quote_parser_creator(base_date, headers)
-
-    trade_parser = None
-    if trade_parser_creator: trade_parser = trade_parser_creator(base_date, headers)
-
-    open_interest_parser = None
-    if open_interest_parser_creator: open_interest_parser = open_interest_parser_creator(base_date, headers)
-
-    other_parser = None
-    if other_parser_creator: other_parser = other_parser_creator(base_date, headers)
-
-    record_parser = record_parser_creator(quote_parser, trade_parser, open_interest_parser, other_parser)
+    record_parser = record_parser_creator(base_date, headers)
     
     aggregators = aggregator_creator(writer_creator, output_file_prefix)
 
@@ -350,7 +330,4 @@ def process_marketdata(input_filename_provider, file_processor, num_processes = 
                     else: 
                         print(str(new_exc))
                         continue
-
-#cell 2
-
 

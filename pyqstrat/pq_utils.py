@@ -1,15 +1,14 @@
-
-# coding: utf-8
-
-# In[4]:
-
-
+#cell 0
 import os
 import tempfile
 import numpy as np
 import datetime
 import pandas as pd
 import matplotlib as mpl
+try:
+    import tkinter
+except:
+    mpl.use('Agg')  # Support running in headless mode
 import matplotlib.pyplot as plt
 
 SEC_PER_DAY = 3600 * 24
@@ -371,4 +370,5 @@ def get_temp_dir():
         return '/tmp'
     else:
         return tempfile.gettempdir()
+
 
