@@ -579,6 +579,8 @@ py::class_<type>(m, #type) \
          float,
          bool,
          bool>(),
+         py::keep_alive<1, 2>(), //Keep pointer to CheckFields alive while this is alive
+         py::keep_alive<1, 9>(), // Keep pointer to timestamp parser alive while this is alive
          "is_quote"_a,
          "base_date"_a,
          "timestamp_idx"_a,
@@ -641,6 +643,8 @@ py::class_<type>(m, #type) \
          float,
          bool,
          bool>(),
+         py::keep_alive<1, 2>(), //Keep pointer to CheckFields alive while this is alive
+         py::keep_alive<1, 11>(), // Keep pointer to timestamp parser alive while TextQuotePairParser is alive
          "is_quote_pair"_a,
          "base_date"_a,
          "timestamp_idx"_a,
@@ -684,13 +688,20 @@ py::class_<type>(m, #type) \
         Helper class that parses a trade from a list of fields (strings)
         )pqdoc")
     
-    .def(py::init<CheckFields*, int64_t, int, int, int,
+    .def(py::init<
+         CheckFields*,
+         int64_t,
+         int,
+         int,
+         int,
          const std::vector<int>&,
          const std::vector<int>&,
          TimestampParser*,
          float,
          bool,
          bool>(),
+         py::keep_alive<1, 2>(), //Keep pointer to CheckFields alive while this is alive
+         py::keep_alive<1, 9>(), // Keep pointer to timestamp parser alive while this is alive
          "is_trade"_a,
          "base_date"_a,
          "timestamp_idx"_a,
@@ -739,6 +750,8 @@ py::class_<type>(m, #type) \
          TimestampParser*,
          bool,
          bool>(),
+         py::keep_alive<1, 2>(), //Keep pointer to CheckFields alive while this is alive
+         py::keep_alive<1, 8>(), // Keep pointer to timestamp parser alive while this is alive
          "is_open_interest"_a,
          "base_date"_a,
          "timestamp_idx"_a,
@@ -775,7 +788,8 @@ py::class_<type>(m, #type) \
     R"pqdoc(
         Helper class that parses a record that contains information other than a quote, trade or open interest record
         )pqdoc")
-    .def(py::init<CheckFields*,
+    .def(py::init<
+         CheckFields*,
          int64_t,
          int,
          const std::vector<int>&,
@@ -783,6 +797,8 @@ py::class_<type>(m, #type) \
          TimestampParser*,
          bool,
          bool>(),
+         py::keep_alive<1, 2>(), //Keep pointer to CheckFields alive while this is alive
+         py::keep_alive<1, 7>(), // Keep pointer to timestamp parser alive while this is alive
          "is_other"_a,
          "base_date"_a,
          "timestamp_idx"_a,
