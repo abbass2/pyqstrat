@@ -371,7 +371,7 @@ def get_fut_code(month):
     '''
     Given a month number such as 3 for March, return the future code for it, e.g. H
     >>> get_fut_code(3)
-    H
+    'H'
     '''
     return FUTURES_CODES_INVERTED[month]
 

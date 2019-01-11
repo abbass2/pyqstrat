@@ -6,11 +6,11 @@
 
 using namespace std;
 
-#define _USE_MATH_DEFINES
+const double PI  = 3.14159265358979323846264338327950288; // From M_PI definition
 
 // pdf
 double pdf(double x) {
-    return ( 1.0 / (sqrt( 2 * M_PI))) * exp(-0.5 * x * x);
+    return ( 1.0 / (sqrt( 2 * PI))) * exp(-0.5 * x * x);
 }
 
 // cdf
