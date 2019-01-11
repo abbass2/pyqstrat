@@ -56,8 +56,11 @@ function_##type \
 .def(py::init<>()) \
 .def("__call__", & type ::call )
 
+void init_pybind_options(py::module &); //Initialize the black scholes options module
 
 PYBIND11_MODULE(pyqstrat_cpp, m) {
+    init_pybind_options(m);
+    
     py::add_ostream_redirect(m, "ostream_redirect");
     m.attr("__name__") = "pyqstrat.pyqstrat_cpp";
     py::options options;

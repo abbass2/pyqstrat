@@ -341,6 +341,8 @@ def get_empty_np_value(np_dtype):
     raise Exception(f'unknown dtype: {dtype}')
     
 FUTURE_CODES_INT = {'F' : 1, 'G' : 2, 'H' : 3, 'J' : 4, 'K' : 5, 'M' : 6, 'N' : 7, 'Q' : 8, 'U' : 9, 'V' : 10, 'X' : 11, 'Z' : 12}
+FUTURES_CODES_INVERTED = dict([[v,k] for k,v in FUTURE_CODES_INT.items()])
+
 FUTURE_CODES_STR = {'F' : 'jan', 'G' : 'feb', 'H' : 'mar', 'J' : 'apr', 'K' : 'may', 'M' : 'jun', 'N' : 'jul', 'Q' : 'aug', 'U' : 'sep', 'V' : 'oct', 'X' : 'nov', 'Z' : 'dec'}
 
 def decode_future_code(future_code, as_str = True):
@@ -365,10 +367,21 @@ def decode_future_code(future_code, as_str = True):
     if future_code not in FUTURE_CODES_INT: raise Exception(f'unknown future code: {future_code}')
     return FUTURE_CODES_INT[future_code]
 
+def get_fut_code(month):
+    '''
+    Given a month number such as 3 for March, return the future code for it, e.g. H
+    >>> get_fut_code(3)
+    H
+    '''
+    return FUTURES_CODES_INVERTED[month]
+
 def get_temp_dir():
     if os.access('/tmp', os.W_OK):
         return '/tmp'
     else:
         return tempfile.gettempdir()
+    
+
+#cell 1
 
 

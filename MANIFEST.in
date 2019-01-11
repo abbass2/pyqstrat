@@ -1,4 +1,4 @@
-global-include *.txt *.cpp *.hpp *.py *.ipynb *.html *.csv
+global-include *.txt *.cpp *.hpp *.h *.py *.ipynb *.html *.csv
 recursive-exclude pyqstrat/notebooks *.py
 prune dist
 prune docs
