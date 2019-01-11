@@ -128,6 +128,14 @@ numpy.datetime64(‘NaT’)</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="pyqstrat.pq_utils.get_fut_code">
+<code class="descclassname">pyqstrat.pq_utils.</code><code class="descname">get_fut_code</code><span class="sig-paren">(</span><em>month</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#get_fut_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.get_fut_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a month number such as 3 for March, return the future code for it, e.g. H
+&gt;&gt;&gt; get_fut_code(3)
+‘H’</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyqstrat.pq_utils.get_temp_dir">
 <code class="descclassname">pyqstrat.pq_utils.</code><code class="descname">get_temp_dir</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#get_temp_dir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.get_temp_dir" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -2776,6 +2784,48 @@ of data and format the file creates.  E.g. “/tmp/output_file_1”</li>
 </dd></dl>
 
 <dl class="class">
+<dt id="pyqstrat.pyqstrat_cpp.AllQuotePairAggregator">
+<em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">AllQuotePairAggregator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.AllQuotePairAggregator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Aggregator" title="pyqstrat.pyqstrat_cpp.Aggregator"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.Aggregator</span></code></a></p>
+<p>Writes out every quote pair we find</p>
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.AllQuotePairAggregator.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.AllQuotePairAggregator.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a quote pair record to be written to disk at some point</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>quote_pair</strong> (<a class="reference internal" href="#pyqstrat.pyqstrat_cpp.QuoteRecord" title="pyqstrat.pyqstrat_cpp.QuoteRecord"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuoteRecord</span></code></a>) – line_number (int): The line number of the source file that this trade came from.  Used for debugging</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pyqstrat_cpp.AllQuotePairAggregator.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.AllQuotePairAggregator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>writer_creator</strong> – A function that takes an output_file_prefix, schema, create_batch_id and max_batch_size and returns an object
+implementing the <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writer" title="pyqstrat.pyqstrat_cpp.Writer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Writer</span></code></a> interface</li>
+<li><strong>output_file_prefix</strong> (<em>str</em>) – Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind of data and format the file creates.  E.g. “/tmp/output_file_1”</li>
+<li><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – If set, we will write a batch to disk every time we have this many records queued up.  Defaults to 2.1 billion</li>
+<li><strong>timestamp_unit</strong> (<a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Schema.Type" title="pyqstrat.pyqstrat_cpp.Schema.Type"><em>Schema.Type</em></a><em>, </em><em>optional</em>) – Whether timestamps are measured as milliseconds or microseconds since the unix epoch.</li>
+<li><strong>to Schema.TIMESTAMP_MILLI</strong> (<em>Defaults</em>) – </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.AllTradeAggregator">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">AllTradeAggregator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.AllTradeAggregator" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Aggregator" title="pyqstrat.pyqstrat_cpp.Aggregator"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.Aggregator</span></code></a></p>
@@ -4435,6 +4485,109 @@ later retrieve just this batch of records without reading the whole file</p>
 
 </dd></dl>
 
+<dl class="function">
+<dt id="pyqstrat.pyqstrat_cpp.black_scholes_price">
+<code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">black_scholes_price</code><span class="sig-paren">(</span><em>call: numpy.ndarray[bool], S: numpy.ndarray[float64], K: numpy.ndarray[float64], t: numpy.ndarray[float64], r: numpy.ndarray[float64], sigma: numpy.ndarray[float64], q: numpy.ndarray[float64]</em><span class="sig-paren">)</span> &#x2192; object<a class="headerlink" href="#pyqstrat.pyqstrat_cpp.black_scholes_price" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute Euroepean option price
+Args:
+call (bool): True for a call option, False for a put
+S (float): Spot price. For a future discount the future price using exp(-rt)
+K (float): Strike
+t (float): Time to maturity in years
+r (float): Continuously compounded interest rate.  Use 0.01 for 1%
+sigma (float): Annualized volatility.  Use 0.01 for 1%
+q (float): Annualized dividend yield.  Use 0.01 for 1%
+Returns:
+float: Option price</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pyqstrat_cpp.cdf">
+<code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">cdf</code><span class="sig-paren">(</span><em>x: numpy.ndarray[float64]</em><span class="sig-paren">)</span> &#x2192; object<a class="headerlink" href="#pyqstrat.pyqstrat_cpp.cdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cumulative density function of normal distribution
+Args:
+x (float): random variable
+Returns:
+float: cdf of the random variable</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pyqstrat_cpp.d1">
+<code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">d1</code><span class="sig-paren">(</span><em>S: numpy.ndarray[float64], K: numpy.ndarray[float64], t: numpy.ndarray[float64], r: numpy.ndarray[float64], sigma: numpy.ndarray[float64], q: numpy.ndarray[float64]</em><span class="sig-paren">)</span> &#x2192; object<a class="headerlink" href="#pyqstrat.pyqstrat_cpp.d1" title="Permalink to this definition">¶</a></dt>
+<dd><p>d1 from Black Scholes
+Args:
+S (float): Spot price. For a future discount the future price using exp(-rt)
+K (float): Strike
+t (float): Time to maturity in years
+r (float): Continuously compounded interest rate.  Use 0.01 for 1%
+sigma (float): Annualized volatility.  Use 0.01 for 1%
+q (float): Annualized dividend yield.  Use 0.01 for 1%
+Returns:
+float:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pyqstrat_cpp.d2">
+<code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">d2</code><span class="sig-paren">(</span><em>S: numpy.ndarray[float64], K: numpy.ndarray[float64], t: numpy.ndarray[float64], r: numpy.ndarray[float64], sigma: numpy.ndarray[float64], q: numpy.ndarray[float64]</em><span class="sig-paren">)</span> &#x2192; object<a class="headerlink" href="#pyqstrat.pyqstrat_cpp.d2" title="Permalink to this definition">¶</a></dt>
+<dd><p>d2 from Black Scholes
+Args:
+S (float): Spot price. For a future discount the future price using exp(-rt)
+K (float): Strike
+t (float): Time to maturity in years
+r (float): Continuously compounded interest rate.  Use 0.01 for 1%
+sigma (float): Annualized volatility.  Use 0.01 for 1%
+q (float): Annualized dividend yield.  Use 0.01 for 1%
+Returns:
+float:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pyqstrat_cpp.delta">
+<code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">delta</code><span class="sig-paren">(</span><em>call: numpy.ndarray[bool], S: numpy.ndarray[float64], K: numpy.ndarray[float64], t: numpy.ndarray[float64], r: numpy.ndarray[float64], sigma: numpy.ndarray[float64], q: numpy.ndarray[float64]</em><span class="sig-paren">)</span> &#x2192; object<a class="headerlink" href="#pyqstrat.pyqstrat_cpp.delta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute European option delta
+Args:
+call (bool): True for a call option, False for a put
+S (float): Spot price. For a future discount the future price using exp(-rt)
+K (float): Strike
+t (float): Time to maturity in years
+r (float): Continuously compounded interest rate.  Use 0.01 for 1%
+sigma (float): Annualized volatility.  Use 0.01 for 1%
+q (float): Annualized dividend yield.  Use 0.01 for 1%
+Returns:
+float: Option delta</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pyqstrat_cpp.gamma">
+<code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">gamma</code><span class="sig-paren">(</span><em>S: numpy.ndarray[float64], K: numpy.ndarray[float64], t: numpy.ndarray[float64], r: numpy.ndarray[float64], sigma: numpy.ndarray[float64], q: numpy.ndarray[float64]</em><span class="sig-paren">)</span> &#x2192; object<a class="headerlink" href="#pyqstrat.pyqstrat_cpp.gamma" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute European option gamma.
+Args:
+S (float): Spot price. For a future discount the future price using exp(-rt)
+K (float): Strike
+t (float): Time to maturity in years
+r (float): Continuously compounded interest rate.  Use 0.01 for 1%
+sigma (float): Annualized volatility.  Use 0.01 for 1%
+q (float): Annualized dividend yield.  Use 0.01 for 1%
+Returns:
+float: Option gamma</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pyqstrat_cpp.implied_vol">
+<code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">implied_vol</code><span class="sig-paren">(</span><em>call: numpy.ndarray[bool], price: numpy.ndarray[float64], S: numpy.ndarray[float64], K: numpy.ndarray[float64], t: numpy.ndarray[float64], r: numpy.ndarray[float64], q: numpy.ndarray[float64]</em><span class="sig-paren">)</span> &#x2192; object<a class="headerlink" href="#pyqstrat.pyqstrat_cpp.implied_vol" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute implied volatility for a European option.
+Args:
+call (bool): True for a call option, False for a put
+price (float): The option premium
+S (float): Spot price. For a future discount the future price using exp(-rt)
+K (float): Strike
+t (float): Time to maturity in years
+r (float): Continuously compounded interest rate.  Use 0.01 for 1%
+q (float): Annualized dividend yield.  Use 0.01 for 1%
+Returns:
+float: Implied volatility.  For 1% we return 0.01</p>
+</dd></dl>
+
 <dl class="class">
 <dt id="pyqstrat.pyqstrat_cpp.ostream_redirect">
 <em class="property">class </em><code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">ostream_redirect</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.ostream_redirect" title="Permalink to this definition">¶</a></dt>
@@ -4444,6 +4597,53 @@ later retrieve just this batch of records without reading the whole file</p>
 <code class="descname">__init__</code><span class="sig-paren">(</span><em>self: pyqstrat.pyqstrat_cpp.ostream_redirect</em>, <em>stdout: bool=True</em>, <em>stderr: bool=True</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyqstrat.pyqstrat_cpp.ostream_redirect.__init__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pyqstrat_cpp.rho">
+<code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">rho</code><span class="sig-paren">(</span><em>call: numpy.ndarray[bool], S: numpy.ndarray[float64], K: numpy.ndarray[float64], t: numpy.ndarray[float64], r: numpy.ndarray[float64], sigma: numpy.ndarray[float64], q: numpy.ndarray[float64]</em><span class="sig-paren">)</span> &#x2192; object<a class="headerlink" href="#pyqstrat.pyqstrat_cpp.rho" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute European option rho.  This is Black Scholes formula rho divided by 100 so we get rho per 1% change in interest rate
+Args:
+call (bool): True for a European call option, False for a put
+S (float): Spot price. For a future discount the future price using exp(-rt)
+K (float): Strike
+t (float): Time to maturity in years
+r (float): Continuously compounded interest rate.  Use 0.01 for 1%
+sigma (float): Annualized volatility.  Use 0.01 for 1%
+q (float): Annualized dividend yield.  Use 0.01 for 1%
+Returns:
+float: Option theta</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pyqstrat_cpp.theta">
+<code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">theta</code><span class="sig-paren">(</span><em>call: numpy.ndarray[bool], S: numpy.ndarray[float64], K: numpy.ndarray[float64], t: numpy.ndarray[float64], r: numpy.ndarray[float64], sigma: numpy.ndarray[float64], q: numpy.ndarray[float64]</em><span class="sig-paren">)</span> &#x2192; object<a class="headerlink" href="#pyqstrat.pyqstrat_cpp.theta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute European option theta per day.  This is Black Scholes formula theta divided by 365 to give us the customary theta per day
+Args:
+call (bool): True for a call option, False for a put
+S (float): Spot price. For a future discount the future price using exp(-rt)
+K (float): Strike
+t (float): Time to maturity in years
+r (float): Continuously compounded interest rate.  Use 0.01 for 1%
+sigma (float): Annualized volatility.  Use 0.01 for 1%
+q (float): Annualized dividend yield.  Use 0.01 for 1%
+Returns:
+float: Option theta</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pyqstrat_cpp.vega">
+<code class="descclassname">pyqstrat.pyqstrat_cpp.</code><code class="descname">vega</code><span class="sig-paren">(</span><em>S: float</em>, <em>K: float</em>, <em>t: float</em>, <em>r: float</em>, <em>sigma: float</em>, <em>q: float</em><span class="sig-paren">)</span> &#x2192; float<a class="headerlink" href="#pyqstrat.pyqstrat_cpp.vega" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute European option vega.  This is Black Scholes formula vega divided by 100 so we get rho per 1% change in interest rate
+Args:
+S (float): Spot price. For a future discount the future price using exp(-rt)
+K (float): Strike
+t (float): Time to maturity in years
+r (float): Continuously compounded interest rate.  Use 0.01 for 1%
+sigma (float): Annualized volatility.  Use 0.01 for 1%
+q (float): Annualized dividend yield.  Use 0.01 for 1%
+Returns:
+float: Option vega</p>
 </dd></dl>
 
 </div>
@@ -4652,7 +4852,7 @@ trace and diagnose the problem.  If not set, we print the error and continue.  D
 
 <dl class="function">
 <dt id="pyqstrat.marketdata_processor.process_marketdata_file">
-<code class="descclassname">pyqstrat.marketdata_processor.</code><code class="descname">process_marketdata_file</code><span class="sig-paren">(</span><em>input_filename</em>, <em>output_file_prefix_mapper</em>, <em>quote_parser_creator</em>, <em>trade_parser_creator</em>, <em>open_interest_parser_creator</em>, <em>other_parser_creator</em>, <em>record_parser_creator</em>, <em>aggregator_creator</em>, <em>line_filter=None</em>, <em>compression=None</em>, <em>base_date_mapper=&lt;function base_date_filename_mapper&gt;</em>, <em>file_processor_creator=&lt;function create_text_file_processor&gt;</em>, <em>header_parser_creator=&lt;function &lt;lambda&gt;&gt;</em>, <em>header_record_generator=&lt;function text_file_record_generator&gt;</em>, <em>record_generator=&lt;pyqstrat.pyqstrat_cpp.TextFileDecompressor object&gt;</em>, <em>bad_line_handler=&lt;pyqstrat.pyqstrat_cpp.PrintBadLineHandler object&gt;</em>, <em>record_filter=None</em>, <em>missing_data_handler=&lt;pyqstrat.pyqstrat_cpp.PriceQtyMissingDataHandler object&gt;</em>, <em>writer_creator=&lt;pyqstrat.pyqstrat_cpp.ArrowWriterCreator object&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata_processor.html#process_marketdata_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata_processor.process_marketdata_file" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyqstrat.marketdata_processor.</code><code class="descname">process_marketdata_file</code><span class="sig-paren">(</span><em>input_filename</em>, <em>output_file_prefix_mapper</em>, <em>record_parser_creator</em>, <em>aggregator_creator</em>, <em>line_filter=None</em>, <em>compression=None</em>, <em>base_date_mapper=&lt;function base_date_filename_mapper&gt;</em>, <em>file_processor_creator=&lt;function create_text_file_processor&gt;</em>, <em>header_parser_creator=&lt;function &lt;lambda&gt;&gt;</em>, <em>header_record_generator=&lt;function text_file_record_generator&gt;</em>, <em>record_generator=&lt;pyqstrat.pyqstrat_cpp.TextFileDecompressor object&gt;</em>, <em>bad_line_handler=&lt;pyqstrat.pyqstrat_cpp.PrintBadLineHandler object&gt;</em>, <em>record_filter=None</em>, <em>missing_data_handler=&lt;pyqstrat.pyqstrat_cpp.PriceQtyMissingDataHandler object&gt;</em>, <em>writer_creator=&lt;pyqstrat.pyqstrat_cpp.ArrowWriterCreator object&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata_processor.html#process_marketdata_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata_processor.process_marketdata_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Processes a single market data file</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -4661,13 +4861,8 @@ trace and diagnose the problem.  If not set, we print the error and continue.  D
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>input_filename</strong> (<em>str</em>) – </li>
 <li><strong>output_file_prefix_mapper</strong> – A function that takes an input filename and returns the corresponding output filename we want</li>
-<li><strong>quote_parser_creator</strong> – A function that takes a date and a list of headers and returns a function that parses quotes</li>
-<li><strong>trade_parser_creator</strong> – A function that takes a date and a list of headers and returns a function that parses trades</li>
-<li><strong>open_interest_parser_creator</strong> – A function that takes a date and a list of headers and returns a function that parses open interest</li>
-<li><strong>other_parser_creator</strong> – A function that takes a date and a list of headers and returns a function that parses lines that are not quotes,
-trades, or open_interest</li>
-<li><strong>record_parser_creator</strong> – A function that takes a quote parser, trade parser, open interest parser and other parser and returns a
-function that can take a list of fields and return a quote, trade, open interest or other record</li>
+<li><strong>record_parser_creator</strong> – A function that takes a date and a list of column names and returns a
+function that can take a list of fields and return a subclass of Record</li>
 <li><strong>line_filter</strong> (<em>optional</em>) – A function that takes a line and decides whether we want to keep it or discard it.  Defaults to None</li>
 <li><strong>compression</strong> (<em>str</em><em>, </em><em>optional</em>) – Compression type for the input file.  Defaults to None</li>
 <li><strong>base_date_mapper</strong> (<em>optional</em>) – A function that takes an input filename and returns the date implied by the filename,

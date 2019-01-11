@@ -33,18 +33,17 @@
           <div class="body" role="main">
             
   <h1>Source code for pyqstrat.pq_utils</h1><div class="highlight"><pre>
-<span></span>
-<span class="c1"># coding: utf-8</span>
-
-<span class="c1"># In[4]:</span>
-
-
+<span></span><span class="c1">#cell 0</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">tkinter</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="n">mpl</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;Agg&#39;</span><span class="p">)</span>  <span class="c1"># Support running in headless mode</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
 <span class="n">SEC_PER_DAY</span> <span class="o">=</span> <span class="mi">3600</span> <span class="o">*</span> <span class="mi">24</span>
@@ -377,6 +376,8 @@
     <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;unknown dtype: </span><span class="si">{dtype}</span><span class="s1">&#39;</span><span class="p">)</span></div>
     
 <span class="n">FUTURE_CODES_INT</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;F&#39;</span> <span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span> <span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span> <span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;J&#39;</span> <span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span> <span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span> <span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span> <span class="p">:</span> <span class="mi">7</span><span class="p">,</span> <span class="s1">&#39;Q&#39;</span> <span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span> <span class="p">:</span> <span class="mi">9</span><span class="p">,</span> <span class="s1">&#39;V&#39;</span> <span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span> <span class="p">:</span> <span class="mi">11</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span> <span class="p">:</span> <span class="mi">12</span><span class="p">}</span>
+<span class="n">FUTURES_CODES_INVERTED</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([[</span><span class="n">v</span><span class="p">,</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">FUTURE_CODES_INT</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span>
+
 <span class="n">FUTURE_CODES_STR</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;F&#39;</span> <span class="p">:</span> <span class="s1">&#39;jan&#39;</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span> <span class="p">:</span> <span class="s1">&#39;feb&#39;</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span> <span class="p">:</span> <span class="s1">&#39;mar&#39;</span><span class="p">,</span> <span class="s1">&#39;J&#39;</span> <span class="p">:</span> <span class="s1">&#39;apr&#39;</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span> <span class="p">:</span> <span class="s1">&#39;may&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span> <span class="p">:</span> <span class="s1">&#39;jun&#39;</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span> <span class="p">:</span> <span class="s1">&#39;jul&#39;</span><span class="p">,</span> <span class="s1">&#39;Q&#39;</span> <span class="p">:</span> <span class="s1">&#39;aug&#39;</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span> <span class="p">:</span> <span class="s1">&#39;sep&#39;</span><span class="p">,</span> <span class="s1">&#39;V&#39;</span> <span class="p">:</span> <span class="s1">&#39;oct&#39;</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span> <span class="p">:</span> <span class="s1">&#39;nov&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span> <span class="p">:</span> <span class="s1">&#39;dec&#39;</span><span class="p">}</span>
 
 <div class="viewcode-block" id="decode_future_code"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.decode_future_code">[docs]</a><span class="k">def</span> <span class="nf">decode_future_code</span><span class="p">(</span><span class="n">future_code</span><span class="p">,</span> <span class="n">as_str</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
@@ -401,11 +402,23 @@
     <span class="k">if</span> <span class="n">future_code</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">FUTURE_CODES_INT</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;unknown future code: </span><span class="si">{future_code}</span><span class="s1">&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">FUTURE_CODES_INT</span><span class="p">[</span><span class="n">future_code</span><span class="p">]</span></div>
 
+<div class="viewcode-block" id="get_fut_code"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.get_fut_code">[docs]</a><span class="k">def</span> <span class="nf">get_fut_code</span><span class="p">(</span><span class="n">month</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given a month number such as 3 for March, return the future code for it, e.g. H</span>
+<span class="sd">    &gt;&gt;&gt; get_fut_code(3)</span>
+<span class="sd">    &#39;H&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">FUTURES_CODES_INVERTED</span><span class="p">[</span><span class="n">month</span><span class="p">]</span></div>
+
 <div class="viewcode-block" id="get_temp_dir"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.get_temp_dir">[docs]</a><span class="k">def</span> <span class="nf">get_temp_dir</span><span class="p">():</span>
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="s1">&#39;/tmp&#39;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">W_OK</span><span class="p">):</span>
         <span class="k">return</span> <span class="s1">&#39;/tmp&#39;</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">gettempdir</span><span class="p">()</span></div>
+    
+
+<span class="c1">#cell 1</span>
+
 
 </pre></div>
 

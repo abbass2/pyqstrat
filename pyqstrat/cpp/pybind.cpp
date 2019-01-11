@@ -426,14 +426,14 @@ py::class_<type>(m, #type) \
          "batch_size"_a = 10000,
          "timestamp_unit"_a = Schema::TIMESTAMP_MILLI,
          R"pqdoc(
-         Args:
-             writer_creator: A function that takes an output_file_prefix, schema, create_batch_id and max_batch_size and returns an object
-             implementing the :obj:`Writer` interface
-             output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind of data and format the file creates.  E.g. "/tmp/output_file_1"
-             batch_size (int, optional): If set, we will write a batch to disk every time we have this many records queued up.  Defaults to 2.1 billion
-             timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
-             Defaults to Schema.TIMESTAMP_MILLI
-        )pqdoc")
+             Args:
+                 writer_creator: A function that takes an output_file_prefix, schema, create_batch_id and max_batch_size and returns an object
+                    implementing the :obj:`Writer` interface
+                 output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind of data and format the file creates.  E.g. "/tmp/output_file_1"
+                 batch_size (int, optional): If set, we will write a batch to disk every time we have this many records queued up.  Defaults to 2.1 billion
+                 timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
+                 Defaults to Schema.TIMESTAMP_MILLI
+         )pqdoc")
     
     .def("__call__", &AllQuotePairAggregator::call,  "quote_pair"_a, "line_number"_a,
          R"pqdoc(

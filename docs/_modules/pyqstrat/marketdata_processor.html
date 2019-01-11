@@ -245,10 +245,6 @@
 
 <div class="viewcode-block" id="process_marketdata_file"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata_processor.process_marketdata_file">[docs]</a><span class="k">def</span> <span class="nf">process_marketdata_file</span><span class="p">(</span><span class="n">input_filename</span><span class="p">,</span>
                  <span class="n">output_file_prefix_mapper</span><span class="p">,</span>
-                 <span class="n">quote_parser_creator</span><span class="p">,</span>
-                 <span class="n">trade_parser_creator</span><span class="p">,</span>
-                 <span class="n">open_interest_parser_creator</span><span class="p">,</span>
-                 <span class="n">other_parser_creator</span><span class="p">,</span>
                  <span class="n">record_parser_creator</span><span class="p">,</span>
                  <span class="n">aggregator_creator</span><span class="p">,</span>
                  <span class="n">line_filter</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
@@ -269,13 +265,8 @@
 <span class="sd">    Args:</span>
 <span class="sd">        input_filename (str):</span>
 <span class="sd">        output_file_prefix_mapper: A function that takes an input filename and returns the corresponding output filename we want</span>
-<span class="sd">        quote_parser_creator: A function that takes a date and a list of headers and returns a function that parses quotes</span>
-<span class="sd">        trade_parser_creator: A function that takes a date and a list of headers and returns a function that parses trades</span>
-<span class="sd">        open_interest_parser_creator: A function that takes a date and a list of headers and returns a function that parses open interest</span>
-<span class="sd">        other_parser_creator:  A function that takes a date and a list of headers and returns a function that parses lines that are not quotes, </span>
-<span class="sd">            trades, or open_interest</span>
-<span class="sd">        record_parser_creator:  A function that takes a quote parser, trade parser, open interest parser and other parser and returns a </span>
-<span class="sd">            function that can take a list of fields and return a quote, trade, open interest or other record</span>
+<span class="sd">        record_parser_creator:  A function that takes a date and a list of column names and returns a </span>
+<span class="sd">            function that can take a list of fields and return a subclass of Record</span>
 <span class="sd">        line_filter (optional): A function that takes a line and decides whether we want to keep it or discard it.  Defaults to None</span>
 <span class="sd">        compression (str, optional): Compression type for the input file.  Defaults to None</span>
 <span class="sd">        base_date_mapper (optional): A function that takes an input filename and returns the date implied by the filename, </span>
@@ -295,6 +286,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     
     <span class="n">output_file_prefix</span> <span class="o">=</span> <span class="n">output_file_prefix_mapper</span><span class="p">(</span><span class="n">input_filename</span><span class="p">)</span>
+        
     <span class="n">base_date</span> <span class="o">=</span> <span class="n">base_date_mapper</span><span class="p">(</span><span class="n">input_filename</span><span class="p">)</span>
     
     <span class="k">if</span> <span class="ow">not</span> <span class="n">is_newer</span><span class="p">(</span><span class="n">input_filename</span><span class="p">,</span> <span class="n">output_file_prefix</span> <span class="o">+</span> <span class="s1">&#39;.done&#39;</span><span class="p">):</span>
@@ -306,19 +298,7 @@
     <span class="k">if</span> <span class="n">compression</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">compression</span> <span class="o">=</span> <span class="n">infer_compression</span><span class="p">(</span><span class="n">input_filename</span><span class="p">)</span>
     <span class="n">headers</span> <span class="o">=</span> <span class="n">header_parser</span><span class="p">(</span><span class="n">input_filename</span><span class="p">,</span> <span class="n">compression</span><span class="p">)</span>
     
-    <span class="n">quote_parser</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">quote_parser_creator</span> <span class="p">:</span> <span class="n">quote_parser</span> <span class="o">=</span> <span class="n">quote_parser_creator</span><span class="p">(</span><span class="n">base_date</span><span class="p">,</span> <span class="n">headers</span><span class="p">)</span>
-
-    <span class="n">trade_parser</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">trade_parser_creator</span><span class="p">:</span> <span class="n">trade_parser</span> <span class="o">=</span> <span class="n">trade_parser_creator</span><span class="p">(</span><span class="n">base_date</span><span class="p">,</span> <span class="n">headers</span><span class="p">)</span>
-
-    <span class="n">open_interest_parser</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">open_interest_parser_creator</span><span class="p">:</span> <span class="n">open_interest_parser</span> <span class="o">=</span> <span class="n">open_interest_parser_creator</span><span class="p">(</span><span class="n">base_date</span><span class="p">,</span> <span class="n">headers</span><span class="p">)</span>
-
-    <span class="n">other_parser</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">other_parser_creator</span><span class="p">:</span> <span class="n">other_parser</span> <span class="o">=</span> <span class="n">other_parser_creator</span><span class="p">(</span><span class="n">base_date</span><span class="p">,</span> <span class="n">headers</span><span class="p">)</span>
-
-    <span class="n">record_parser</span> <span class="o">=</span> <span class="n">record_parser_creator</span><span class="p">(</span><span class="n">quote_parser</span><span class="p">,</span> <span class="n">trade_parser</span><span class="p">,</span> <span class="n">open_interest_parser</span><span class="p">,</span> <span class="n">other_parser</span><span class="p">)</span>
+    <span class="n">record_parser</span> <span class="o">=</span> <span class="n">record_parser_creator</span><span class="p">(</span><span class="n">base_date</span><span class="p">,</span> <span class="n">headers</span><span class="p">)</span>
     
     <span class="n">aggregators</span> <span class="o">=</span> <span class="n">aggregator_creator</span><span class="p">(</span><span class="n">writer_creator</span><span class="p">,</span> <span class="n">output_file_prefix</span><span class="p">)</span>
 
