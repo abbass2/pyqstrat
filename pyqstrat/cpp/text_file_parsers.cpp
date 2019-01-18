@@ -330,8 +330,9 @@ int64_t FixedWidthTimeParser::parse_date(const std::string& date) {
     if (_years_size == 2) year += 2000;
     int month = get_time_part(date, _months_start, _months_size);
     int day = get_time_part(date, _days_start, _days_size);
-    DateTime datetime{year, month, day};
-    if (year == 0 | month == 0 | day == 0) return 0;
+    DateTime datetime;
+    datetime.year = year; datetime.month = month; datetime.day = day;
+    if (year == 0 || month == 0 || day == 0) return 0;
     auto the_date = datetime_utc_to_timepoint(datetime);
     auto ms = std::chrono::time_point_cast<std::chrono::milliseconds>(the_date);
     auto ret = ms.time_since_epoch().count();
