@@ -33,6 +33,9 @@ install:
   - CXX=g++-5 CC=g++-5 python setup.py build_ext --inplace
 
 script:
-  - python -m pytest pyqstrat
-
-  
+  - ulimit -c unlimited -S
+  - which python
+  - python -m pytest pyqstrat || RESULT=$?
+  - ls -l
+  - for i in $(find ./ -maxdepth 1 -name 'core*' -print); do gdb $HOME/miniconda/bin/python core* -ex "thread apply all bt" -ex "set pagination 0" -batch; done;
+   

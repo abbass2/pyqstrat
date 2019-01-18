@@ -158,6 +158,10 @@ class BuildExt(build_ext):
             opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
         for ext in self.extensions:
             ext.extra_compile_args = opts
+        try:
+            self.compiler.compiler_so.remove("-Wstrict-prototypes") # Bug in distutils See https://bugs.python.org/issue1222585
+        except (AttributeError, ValueError):
+            pass
         build_ext.build_extensions(self)
 
 # End pybind11
