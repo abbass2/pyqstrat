@@ -570,7 +570,7 @@ py::class_<type>(m, #type) \
     .def(py::init<
          CheckFields*,
          int64_t,
-         int,
+         const std::vector<int>&,
          int,
          int,
          int,
@@ -586,7 +586,7 @@ py::class_<type>(m, #type) \
          py::keep_alive<1, 9>(), // Keep pointer to timestamp parser alive while this is alive
          "is_quote"_a,
          "base_date"_a,
-         "timestamp_idx"_a,
+         "timestamp_indices"_a,
          "bid_offer_idx"_a,
          "price_idx"_a,
          "qty_idx"_a,
@@ -602,7 +602,7 @@ py::class_<type>(m, #type) \
              Args:
                 is_quote: a function that takes a list of strings as input and returns a bool if the fields represent a quote
                 base_date (int): if the timestamp in the files does not have a date component, pass in the date as number of millis or micros since the epoch
-                timestamp_idx (int): index of the timestamp field within the record
+                timestamp_indices (list of int): index of the timestamp field within the record
                 bid_offer_idx (int): index of the field that contains whether this is a bid or offer quote
                 price_idx (int): index of the price field
                 qty_idx (int): index of the quote size field
@@ -635,7 +635,7 @@ py::class_<type>(m, #type) \
     .def(py::init<
          CheckFields*,
          int64_t,
-         int,
+         const std::vector<int>&,
          int,
          int,
          int,
@@ -650,7 +650,7 @@ py::class_<type>(m, #type) \
          py::keep_alive<1, 11>(), // Keep pointer to timestamp parser alive while TextQuotePairParser is alive
          "is_quote_pair"_a,
          "base_date"_a,
-         "timestamp_idx"_a,
+         "timestamp_indices"_a,
          "bid_price_idx"_a,
          "bid_qty_idx"_a,
          "ask_price_idx"_a,
@@ -665,7 +665,8 @@ py::class_<type>(m, #type) \
          Args:
              is_quote_pair: a function that takes a list of strings as input and returns a bool if the fields represent a quote pair
              base_date (int): if the timestamp in the files does not have a date component, pass in the date as number of millis or micros since the epoch
-             timestamp_idx (int): index of the timestamp field within the record
+             timestamp_indices (list of int): Index of the timestamp fields within the record.  For example, date and time could be in different fields.
+                We add the result of each timestamp field to get the final timestamp
              bid_price_idx (int): index of the field that contains the bid price
              bid_qty_idx (int): index of the field that contains the bid quantity
              ask_price_idx (int): index of the field that contains the ask price
@@ -694,7 +695,7 @@ py::class_<type>(m, #type) \
     .def(py::init<
          CheckFields*,
          int64_t,
-         int,
+         const std::vector<int>&,
          int,
          int,
          const std::vector<int>&,
@@ -707,7 +708,7 @@ py::class_<type>(m, #type) \
          py::keep_alive<1, 9>(), // Keep pointer to timestamp parser alive while this is alive
          "is_trade"_a,
          "base_date"_a,
-         "timestamp_idx"_a,
+         "timestamp_indices"_a,
          "price_idx"_a,
          "qty_idx"_a,
          "id_field_indices"_a,
@@ -720,7 +721,8 @@ py::class_<type>(m, #type) \
          Args:
              is_trade: A function that takes a list of strings as input and returns a bool if the fields represent a trade
              base_date (int): If the timestamp in the files does not have a date component, pass in the date as number of millis or micros since the epoch
-             timestamp_idx (int): Index of the timestamp field within the record
+             timestamp_indices (list of int): Index of the timestamp fields within the record.  For example, date and time could be in different fields.
+                We add the result of each timestamp field to get the final timestamp
              price_idx (int): Index of the price field
              qty_idx (int): Index of the quote size field
              id_field_indices (list of str): Indices of the fields identifying an instrument.  For example, for a future this could be symbol and expiry.
@@ -747,7 +749,9 @@ py::class_<type>(m, #type) \
         Helper class that parses an open interest record from a list of fields (strings)
         )pqdoc")
     
-    .def(py::init<CheckFields*, int64_t, int, int,
+    .def(py::init<CheckFields*, int64_t,
+         const std::vector<int>&,
+         int,
          const std::vector<int>&,
          const std::vector<int>&,
          TimestampParser*,
@@ -757,7 +761,7 @@ py::class_<type>(m, #type) \
          py::keep_alive<1, 8>(), // Keep pointer to timestamp parser alive while this is alive
          "is_open_interest"_a,
          "base_date"_a,
-         "timestamp_idx"_a,
+         "timestamp_indices"_a,
          "qty_idx"_a,
          "id_field_indices"_a,
          "meta_field_indices"_a,
@@ -769,7 +773,8 @@ py::class_<type>(m, #type) \
          Args:
              is_open_interest: A function that takes a list of strings as input and returns a bool if the fields represent an open interest record
              base_date (int): If the timestamp in the files does not have a date component, pass in the date as number of millis or micros since the epoch
-             timestamp_idx (int): Index of the timestamp field within the record
+             timestamp_indices (list of int): Index of the timestamp fields within the record.  For example, date and time could be in different fields.
+                We add the result of each timestamp field to get the final timestamp
              qty_idx (int): Index of the quote size field
              id_field_indices (list of str): Indices of the fields identifying an instrument.  For example, for a future this could be symbol and expiry.
                 These fields will be concatenated with a separator and placed in the id field in the record
@@ -794,7 +799,7 @@ py::class_<type>(m, #type) \
     .def(py::init<
          CheckFields*,
          int64_t,
-         int,
+         const std::vector<int>&,
          const std::vector<int>&,
          const std::vector<int>&,
          TimestampParser*,
@@ -804,7 +809,7 @@ py::class_<type>(m, #type) \
          py::keep_alive<1, 7>(), // Keep pointer to timestamp parser alive while this is alive
          "is_other"_a,
          "base_date"_a,
-         "timestamp_idx"_a,
+         "timestamp_indices"_a,
          "id_field_indices"_a,
          "meta_field_indices"_a,
          "timestamp_parser"_a,
@@ -814,7 +819,8 @@ py::class_<type>(m, #type) \
              Args:
                  is_other: A function that takes a list of strings as input and returns a bool if we want to parse this record
                  base_date (int): If the timestamp in the files does not have a date component, pass in the date as number of millis or micros since the epoch
-                 timestamp_idx (int): Index of the timestamp field within the record
+                 timestamp_indices (list of int): Index of the timestamp fields within the record.  For example, date and time could be in different fields.
+                    We add the result of each timestamp field to get the final timestamp
                  id_field_indices (list of str): Indices of the fields identifying an instrument.  For example, for a future this could be symbol and expiry.
                     These fields will be concatenated with a separator and placed in the id field in the record
                  meta_field_indices (list of str): Indices of additional fields you want to store.  For example, the exchange.
@@ -919,8 +925,20 @@ py::class_<type>(m, #type) \
                 int,
                 int,
                 int,
+                int,
+                int,
+                int,
+                int,
+                int,
+                int,
                 int>(),
          "micros"_a = false,
+         "years_start"_a = -1,
+         "years_size"_a = -1,
+         "months_start"_a = -1,
+         "months_size"_a = -1,
+         "days_start"_a = -1,
+         "days_size"_a = -1,
          "hours_start"_a = -1,
          "hours_size"_a = -1,
          "minutes_start"_a = -1,
@@ -931,7 +949,6 @@ py::class_<type>(m, #type) \
          "millis_size"_a = -1,
          "micros_start"_a = -1,
          "micros_size"_a = -1,
- 
          R"pqdoc(
          Args:
              micros (bool, optional): Whether to return timestamp in millisecs or microsecs since 1970.  Default false
@@ -950,10 +967,10 @@ py::class_<type>(m, #type) \
           .def("__call__", &FixedWidthTimeParser::call, "time"_a,
           R"pqdoc(
           Args:
-            time (str):  A string like "08:35:22.132"
+            time (str):  A string like "2018-01-01 08:35:22.132"
           
           Return:
-            int: Millis since beginning of day
+            int: Milliseconds or microseconds since Unix epoch
           )pqdoc");
 
     py::class_<IsFieldInList, CheckFields>(m, "IsFieldInList",

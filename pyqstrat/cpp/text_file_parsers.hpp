@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "utils.hpp"
 #include "pq_types.hpp"
@@ -24,19 +25,33 @@ private:
 class FixedWidthTimeParser : public TimestampParser {
 public:
     FixedWidthTimeParser(bool micros = false,
-                        int hours_start = -1,
-                        int hours_size = -1,
-                        int minutes_start = -1,
-                        int minutes_size = -1,
-                        int seconds_start = -1,
-                        int seconds_size = -1,
-                        int millis_start = -1,
-                        int millis_size = -1,
-                        int micros_start = -1,
-                        int micros_size = -1);
+                         int years_start = -1,
+                         int years_size = -1,
+                         int months_start = -1,
+                         int months_end = -1,
+                         int days_start = -1,
+                         int days_end = -1,
+                         int hours_start = -1,
+                         int hours_size = -1,
+                         int minutes_start = -1,
+                         int minutes_size = -1,
+                         int seconds_start = -1,
+                         int seconds_size = -1,
+                         int millis_start = -1,
+                         int millis_size = -1,
+                         int micros_start = -1,
+                         int micros_size = -1);
     int64_t call(const std::string& time) override;
 private:
+    int64_t parse_date(const std::string& date);
+    int64_t parse_time(const std::string& time);
     bool _micros;
+    int _years_start;
+    int _years_size;
+    int _months_start;
+    int _months_size;
+    int _days_start;
+    int _days_size;
     int _hours_start;
     int _hours_size;
     int _minutes_start;
@@ -47,13 +62,14 @@ private:
     int _millis_size;
     int _micros_start;
     int _micros_size;
+    std::map<std::string, int64_t> _parsed_date_cache;
 };
 
 class TextQuoteParser : public RecordFieldParser {
 public:
     TextQuoteParser(CheckFields* is_quote,
                     int64_t base_date,
-                    int timestamp_idx,
+                    const std::vector<int>& timestamp_indices,
                     int bid_offer_idx,
                     int price_idx,
                     int qty_idx,
@@ -69,7 +85,7 @@ public:
 private:
     CheckFields* _is_quote;
     int64_t _base_date;
-    int _timestamp_idx;
+    std::vector<int> _timestamp_indices;
     int _bid_offer_idx;
     int _price_idx;
     int _qty_idx;
@@ -88,7 +104,7 @@ public:
     TextQuotePairParser(
                     CheckFields* is_quote_pair,
                     int64_t base_date,
-                    int timestamp_idx,
+                    const std::vector<int>& timestamp_indices,
                     int bid_price_idx,
                     int bid_qty_idx,
                     int ask_price_idx,
@@ -104,7 +120,7 @@ public:
 private:
     CheckFields* _is_quote_pair;
     int64_t _base_date;
-    int _timestamp_idx;
+    std::vector<int> _timestamp_indices;
     int _bid_price_idx;
     int _bid_qty_idx;
     int _ask_price_idx;
@@ -122,7 +138,7 @@ class TextTradeParser : public RecordFieldParser {
 public:
     TextTradeParser(CheckFields* is_trade,
                     int64_t base_date,
-                    int timestamp_idx,
+                    const std::vector<int>& timestamp_indices,
                     int price_idx,
                     int qty_idx,
                     const std::vector<int>& id_field_indices,
@@ -137,7 +153,7 @@ public:
 private:
     CheckFields* _is_trade;
     int64_t _base_date;
-    int _timestamp_idx;
+    std::vector<int> _timestamp_indices;
     int _price_idx;
     int _qty_idx;
     std::vector<int> _id_field_indices;
@@ -152,7 +168,7 @@ class TextOpenInterestParser : public RecordFieldParser {
 public:
     TextOpenInterestParser(CheckFields* is_open_interest,
                            int64_t base_date,
-                           int timestamp_idx,
+                           const std::vector<int>& timestamp_indices,
                            int qty_idx,
                            const std::vector<int>& id_field_indices,
                            const std::vector<int>& meta_field_indices,
@@ -165,7 +181,7 @@ public:
 private:
     CheckFields* _is_open_interest;
     int64_t _base_date;
-    int _timestamp_idx;
+    std::vector<int> _timestamp_indices;
     int _qty_idx;
     std::vector<int> _id_field_indices;
     std::vector<int> _meta_field_indices;
@@ -178,7 +194,7 @@ class TextOtherParser : public RecordFieldParser {
 public:
     TextOtherParser(CheckFields* is_other,
                     int64_t base_date,
-                    int timestamp_idx,
+                    const std::vector<int>& timestamp_indices,
                     const std::vector<int>& id_field_indices,
                     const std::vector<int>& meta_field_indices,
                     TimestampParser* timestamp_parser,
@@ -190,7 +206,7 @@ public:
 private:
     CheckFields* _is_other;
     int64_t _base_date;
-    int _timestamp_idx;
+    std::vector<int> _timestamp_indices;
     std::vector<int> _id_field_indices;
     std::vector<int> _meta_field_indices;
     TimestampParser* _timestamp_parser;

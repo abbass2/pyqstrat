@@ -98,7 +98,7 @@ double implied_vol(bool call, double price, double S, double K, double t, double
     return iv;
 }
 
-int main() {
+int test_options() {
     double S = 9.3;
     double K = 10.0;
     double r = 0.01;

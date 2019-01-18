@@ -1,5 +1,6 @@
 
 #include "text_file_parsers.hpp"
+#include "date.hpp"
 
 using namespace std;
 
@@ -29,7 +30,7 @@ ParseException::ParseException(const char* m) : std::runtime_error(m) { }
 
 TextQuoteParser::TextQuoteParser(CheckFields* is_quote,
                                 int64_t base_date,
-                                int timestamp_idx,
+                                const vector<int>& timestamp_indices,
                                 int bid_offer_idx,
                                 int price_idx,
                                 int qty_idx,
@@ -43,7 +44,7 @@ TextQuoteParser::TextQuoteParser(CheckFields* is_quote,
                                 bool strip_meta) :
 _is_quote(is_quote),
 _base_date(base_date),
-_timestamp_idx(timestamp_idx),
+_timestamp_indices(timestamp_indices),
 _bid_offer_idx(bid_offer_idx),
 _price_idx(price_idx),
 _qty_idx(qty_idx),
@@ -60,7 +61,10 @@ _strip_meta(strip_meta) {
 
 shared_ptr<Record> TextQuoteParser::call(const vector<string>& fields) {
     if (!_is_quote->call(fields)) return nullptr;
-    int64_t timestamp = _timestamp_parser->call(fields[_timestamp_idx]) + _base_date;
+    
+    int64_t timestamp = _base_date;
+    for (auto idx : _timestamp_indices) timestamp += _timestamp_parser->call(fields[idx]);
+    
     const string& bid_offer_str = fields[_bid_offer_idx];
     bool bid;
     if (bid_offer_str == _bid_str) bid = true;
@@ -76,7 +80,7 @@ shared_ptr<Record> TextQuoteParser::call(const vector<string>& fields) {
 
 TextQuotePairParser::TextQuotePairParser(CheckFields* is_quote_pair,
                                  int64_t base_date,
-                                 int timestamp_idx,
+                                 const vector<int>& timestamp_indices,
                                  int bid_price_idx,
                                  int bid_qty_idx,
                                  int ask_price_idx,
@@ -89,7 +93,7 @@ TextQuotePairParser::TextQuotePairParser(CheckFields* is_quote_pair,
                                  bool strip_meta) :
 _is_quote_pair(is_quote_pair),
 _base_date(base_date),
-_timestamp_idx(timestamp_idx),
+_timestamp_indices(timestamp_indices),
 _bid_price_idx(bid_price_idx),
 _bid_qty_idx(bid_qty_idx),
 _ask_price_idx(ask_price_idx),
@@ -105,7 +109,8 @@ _strip_meta(strip_meta) {
 
 shared_ptr<Record> TextQuotePairParser::call(const vector<string>& fields) {
     if (_is_quote_pair && !_is_quote_pair->call(fields)) return nullptr;
-    int64_t timestamp = _timestamp_parser->call(fields[_timestamp_idx]) + _base_date;
+    int64_t timestamp = _base_date;
+    for (auto idx : _timestamp_indices) timestamp += _timestamp_parser->call(fields[idx]);
     float bid_price = str_to_float(fields[_bid_price_idx]) / _price_multiplier;
     float bid_qty = str_to_float(fields[_bid_qty_idx]);
     float ask_price = str_to_float(fields[_ask_price_idx]) / _price_multiplier;
@@ -117,7 +122,7 @@ shared_ptr<Record> TextQuotePairParser::call(const vector<string>& fields) {
 
 TextTradeParser::TextTradeParser(CheckFields* is_trade,
                                 int64_t base_date,
-                                int timestamp_idx,
+                                const vector<int>& timestamp_indices,
                                 int price_idx,
                                 int qty_idx,
                                 const vector<int>& id_field_indices,
@@ -128,7 +133,7 @@ TextTradeParser::TextTradeParser(CheckFields* is_trade,
                                 bool strip_meta) :
 _is_trade(is_trade),
 _base_date(base_date),
-_timestamp_idx(timestamp_idx),
+_timestamp_indices(timestamp_indices),
 _price_idx(price_idx),
 _qty_idx(qty_idx),
 _id_field_indices(id_field_indices),
@@ -142,7 +147,8 @@ _strip_meta(strip_meta) {
 
 shared_ptr<Record> TextTradeParser::call(const vector<string>& fields) {
     if (!_is_trade->call(fields)) return nullptr;
-    int64_t timestamp = _timestamp_parser->call(fields[_timestamp_idx]) + _base_date;
+    int64_t timestamp = _base_date;
+    for (auto idx : _timestamp_indices) timestamp += _timestamp_parser->call(fields[idx]);
     float price = str_to_float(fields[_price_idx]) / _price_multiplier;
     float qty = str_to_float(fields[_qty_idx]);
     string id = join_fields(fields, _id_field_indices, '|', _strip_id);
@@ -152,7 +158,7 @@ shared_ptr<Record> TextTradeParser::call(const vector<string>& fields) {
     
 TextOpenInterestParser::TextOpenInterestParser(CheckFields* is_open_interest,
                                                int64_t base_date,
-                                               int timestamp_idx,
+                                               const vector<int>& timestamp_indices,
                                                int qty_idx,
                                                const vector<int>& id_field_indices,
                                                const vector<int>& meta_field_indices,
@@ -161,7 +167,7 @@ TextOpenInterestParser::TextOpenInterestParser(CheckFields* is_open_interest,
                                                bool strip_meta) :
 _is_open_interest(is_open_interest),
 _base_date(base_date),
-_timestamp_idx(timestamp_idx),
+_timestamp_indices(timestamp_indices),
 _qty_idx(qty_idx),
 _id_field_indices(id_field_indices),
 _meta_field_indices(meta_field_indices),
@@ -173,7 +179,8 @@ _strip_meta(strip_meta) {
 
 shared_ptr<Record> TextOpenInterestParser::call(const vector<string>& fields) {
     if (!_is_open_interest->call(fields)) return nullptr;
-    int64_t timestamp = _timestamp_parser->call(fields[_timestamp_idx]) + _base_date;
+    int64_t timestamp = _base_date;
+    for (auto idx : _timestamp_indices) timestamp += _timestamp_parser->call(fields[idx]);
     float qty = str_to_float(fields[_qty_idx]);
     string id = join_fields(fields, _id_field_indices, '|', _strip_id);
     string meta = join_fields(fields, _meta_field_indices, '|', _strip_meta);
@@ -182,7 +189,7 @@ shared_ptr<Record> TextOpenInterestParser::call(const vector<string>& fields) {
     
 TextOtherParser::TextOtherParser(CheckFields* is_other,
                                 int64_t base_date,
-                                int timestamp_idx,
+                                const vector<int>& timestamp_indices,
                                 const vector<int>& id_field_indices,
                                 const vector<int>& meta_field_indices,
                                 TimestampParser* timestamp_parser,
@@ -190,7 +197,7 @@ TextOtherParser::TextOtherParser(CheckFields* is_other,
                                 bool strip_meta) :
 _is_other(is_other),
 _base_date(base_date),
-_timestamp_idx(timestamp_idx),
+_timestamp_indices(timestamp_indices),
 _id_field_indices(id_field_indices),
 _meta_field_indices(meta_field_indices),
 _timestamp_parser(timestamp_parser),
@@ -201,7 +208,8 @@ _strip_meta(strip_meta) {
     
 shared_ptr<Record> TextOtherParser::call(const vector<string>& fields) {
     if (!_is_other->call(fields)) return nullptr;
-    int64_t timestamp = _timestamp_parser->call(fields[_timestamp_idx]) + _base_date;
+    int64_t timestamp = _base_date;
+    for (auto idx : _timestamp_indices) timestamp += _timestamp_parser->call(fields[idx]);
     string id = join_fields(fields, _id_field_indices, '|', _strip_id);
     string meta = join_fields(fields, _meta_field_indices, '|', _strip_meta);
     return shared_ptr<Record>(new OtherRecord(id, timestamp, meta));
@@ -243,8 +251,33 @@ int get_time_part(const std::string& time, int start, int size) {
     return ret;
 }
 
+struct DateTime {              // hold date/time (interpreted as UTC), to be converted to time_point
+    int year;
+    int month;
+    int day;
+    int hour = 0;
+    int min  = 0;
+    int sec  = 0;
+};
 
-FixedWidthTimeParser::FixedWidthTimeParser(bool micros,
+// convert date/time from UTC, to time_point
+std::chrono::system_clock::time_point datetime_utc_to_timepoint(const DateTime &dt)
+{
+    using namespace std::chrono;
+    using namespace date;
+    auto ymd = year(dt.year)/dt.month/dt.day; // year_month_day type
+    if (!ymd.ok()) error("Invalid date");
+    return sys_days(ymd);
+}
+
+FixedWidthTimeParser::FixedWidthTimeParser(
+                                 bool micros,
+                                 int years_start,
+                                 int years_size,
+                                 int months_start,
+                                 int months_size,
+                                 int days_start,
+                                 int days_size,
                                  int hours_start,
                                  int hours_size,
                                  int minutes_start,
@@ -256,6 +289,12 @@ FixedWidthTimeParser::FixedWidthTimeParser(bool micros,
                                  int micros_start,
                                  int micros_size) :
                                     _micros(micros),
+                                    _years_start(years_start),
+                                    _years_size(years_size),
+                                    _months_start(months_start),
+                                    _months_size(months_size),
+                                    _days_start(days_start),
+                                    _days_size(days_size),
                                     _hours_start(hours_start),
                                     _hours_size(hours_size),
                                     _minutes_start(minutes_start),
@@ -268,14 +307,41 @@ FixedWidthTimeParser::FixedWidthTimeParser(bool micros,
                                     _micros_size(micros_size)
 {}
 
+int64_t FixedWidthTimeParser::parse_date(const std::string& date) {
+    if (date.empty()) return 0;
+    auto it = _parsed_date_cache.find(date);
+    if (it != _parsed_date_cache.end()) return it->second;
+    int year = get_time_part(date, _years_start, _years_size);
+    if (_years_size == 2) year += 2000;
+    int month = get_time_part(date, _months_start, _months_size);
+    int day = get_time_part(date, _days_start, _days_size);
+    DateTime datetime{year, month, day};
+    if (year == 0 | month == 0 | day == 0) return 0;
+    auto the_date = datetime_utc_to_timepoint(datetime);
+    auto ms = std::chrono::time_point_cast<std::chrono::milliseconds>(the_date);
+    auto ret = ms.time_since_epoch().count();
+    _parsed_date_cache.insert(make_pair(date, ret));
+    return ret;
+}
 
-int64_t FixedWidthTimeParser::call(const std::string& time) {
+int64_t FixedWidthTimeParser::parse_time(const std::string& time) {
+    if (time.empty()) return 0;
     int hours = get_time_part(time, _hours_start, _hours_size);
     int minutes = get_time_part(time, _minutes_start, _minutes_size);
     int seconds = get_time_part(time, _seconds_start, _seconds_size);
     int millis = get_time_part(time, _millis_start, _millis_size);
     int micros = get_time_part(time, _micros_start, _micros_size);
-    if (_micros) return static_cast<int64_t>((hours * 60 * 60 + minutes * 60 + seconds) * 1000000 + millis * 1000 + micros);
-    return static_cast<int64_t>((hours * 60 * 60 + minutes * 60 + seconds) * 1000 + millis);
+    return static_cast<int64_t>((hours * 60 * 60 + minutes * 60 + seconds) * 1000000 + millis * 1000 + micros);
 }
+
+int64_t FixedWidthTimeParser::call(const std::string& timestamp) {
+    int64_t date_micros = parse_date(timestamp) * 1000;
+    int64_t time_micros = parse_time(timestamp);
+    if (_micros) return static_cast<int64_t>(date_micros + time_micros);
+    return static_cast<int64_t>(round((date_micros + time_micros) / 1000.0));
+}
+
+
+
+
 
