@@ -75,7 +75,7 @@ public:
                     int qty_idx,
                     const std::vector<int>& id_field_indices,
                     const std::vector<int>& meta_field_indices,
-                    TimestampParser* timestamp_parser,
+                    const std::vector<TimestampParser*>& timestamp_parsers,
                     const std::string& bid_str,
                     const std::string& offer_str,
                     float price_multiplier = 1.0,
@@ -91,7 +91,7 @@ private:
     int _qty_idx;
     std::vector<int> _id_field_indices;
     std::vector<int> _meta_field_indices;
-    TimestampParser* _timestamp_parser;
+    std::vector<TimestampParser*> _timestamp_parsers;
     std::string _bid_str;
     std::string _offer_str;
     float _price_multiplier;
@@ -111,7 +111,7 @@ public:
                     int ask_qty_idx,
                     const std::vector<int>& id_field_indices,
                     const std::vector<int>& meta_field_indices,
-                    TimestampParser* timestamp_parser,
+                    const std::vector<TimestampParser*>& timestamp_parsers,
                     float price_multiplier = 1.0,
                     bool strip_id = true,
                     bool strip_meta = true);
@@ -127,7 +127,7 @@ private:
     int _ask_qty_idx;
     std::vector<int> _id_field_indices;
     std::vector<int> _meta_field_indices;
-    TimestampParser* _timestamp_parser;
+    std::vector<TimestampParser*> _timestamp_parsers;
     float _price_multiplier;
     bool _strip_id;
     bool _strip_meta;
@@ -143,7 +143,7 @@ public:
                     int qty_idx,
                     const std::vector<int>& id_field_indices,
                     const std::vector<int>& meta_field_indices,
-                    TimestampParser* timestamp_parser,
+                    const std::vector<TimestampParser*>& timestamp_parsers,
                     float price_multiplier = 1,
                     bool strip_id = true,
                     bool strip_meta = true);
@@ -158,7 +158,7 @@ private:
     int _qty_idx;
     std::vector<int> _id_field_indices;
     std::vector<int> _meta_field_indices;
-    TimestampParser* _timestamp_parser;
+    std::vector<TimestampParser*> _timestamp_parsers;
     float _price_multiplier;
     bool _strip_id;
     bool _strip_meta;
@@ -172,7 +172,7 @@ public:
                            int qty_idx,
                            const std::vector<int>& id_field_indices,
                            const std::vector<int>& meta_field_indices,
-                           TimestampParser* timestamp_parser,
+                           const std::vector<TimestampParser*>& timestamp_parsers,
                            bool strip_id = true,
                            bool strip_meta = true);
     
@@ -185,7 +185,7 @@ private:
     int _qty_idx;
     std::vector<int> _id_field_indices;
     std::vector<int> _meta_field_indices;
-    TimestampParser* _timestamp_parser;
+    std::vector<TimestampParser*> _timestamp_parsers;
     bool _strip_id;
     bool _strip_meta;
 };
@@ -197,7 +197,7 @@ public:
                     const std::vector<int>& timestamp_indices,
                     const std::vector<int>& id_field_indices,
                     const std::vector<int>& meta_field_indices,
-                    TimestampParser* timestamp_parser,
+                    const std::vector<TimestampParser*>& timestamp_parsers,
                     bool strip_id = true,
                     bool strip_meta = true);
     
@@ -209,7 +209,7 @@ private:
     std::vector<int> _timestamp_indices;
     std::vector<int> _id_field_indices;
     std::vector<int> _meta_field_indices;
-    TimestampParser* _timestamp_parser;
+    std::vector<TimestampParser*> _timestamp_parsers;
     bool _strip_id;
     bool _strip_meta;
 };

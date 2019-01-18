@@ -576,7 +576,7 @@ py::class_<type>(m, #type) \
          int,
          const std::vector<int>&,
          const std::vector<int>&,
-         TimestampParser*,
+         const std::vector<TimestampParser*>,
          const std::string&,
          const std::string&,
          float,
@@ -592,7 +592,7 @@ py::class_<type>(m, #type) \
          "qty_idx"_a,
          "id_field_indices"_a,
          "meta_field_indices"_a,
-         "timestamp_parser"_a,
+         "timestamp_parsers"_a,
          "bid_str"_a,
          "offer_str"_a,
          "price_multiplier"_a = 1.0,
@@ -609,7 +609,7 @@ py::class_<type>(m, #type) \
                 id_field_indices (list of str): indices of the fields identifying an instrument.  For example, for a future this could be symbol and expiry.
                     These fields will be concatenated with a separator and placed in the id field in the record
                 meta_field_indices (list of str): indices of additional fields you want to store.  For example, the exchange.
-                timestamp_parser: a function that takes a timestamp as a string and returns number of millis or micros since the epoch
+                timestamp_parsers: a vector of functions that take a timestamp as a string and returns number of millis or micros since the epoch
                 bid_str (str): if the field indicated in bid_offer_idx matches this string, we consider this quote to be a bid
                 offer_str (str): if the field indicated in bid_offer_idx matches this string, we consider this quote to be an offer
                 price_multiplier: (float, optional): sometimes the price in a file could be in hundredths of cents, and we divide by this to get dollars.
@@ -642,7 +642,7 @@ py::class_<type>(m, #type) \
          int,
          const std::vector<int>&,
          const std::vector<int>&,
-         TimestampParser*,
+         const std::vector<TimestampParser*>&,
          float,
          bool,
          bool>(),
@@ -657,7 +657,7 @@ py::class_<type>(m, #type) \
          "ask_qty_idx"_a,
          "id_field_indices"_a,
          "meta_field_indices"_a,
-         "timestamp_parser"_a,
+         "timestamp_parsers"_a,
          "price_multiplier"_a = 1.0,
          "strip_id"_a = true,
          "strip_meta"_a = true,
@@ -673,7 +673,7 @@ py::class_<type>(m, #type) \
              ask_qty_idx (int): index of the field that contains the ask quantity
              id_field_indices (list of str): indices of the fields identifying an instrument.  For example, for a future this could be symbol and expiry. These fields will be concatenated with a separator and placed in the id field in the record.
              meta_field_indices (list of str): indices of additional fields you want to store.  For example, the exchange.
-             timestamp_parser: a function that takes a timestamp as a string and returns number of millis or micros since the epoch
+             timestamp_parsers: a list of functions that takes a timestamp as a string and returns number of millis or micros since the epoch
              price_multiplier: (float, optional): sometimes the price in a file could be in hundredths of cents, and we divide by this to get dollars. Defaults to 1.0
              strip_id (bool, optional): if we want to strip any whitespace from the id fields before concatenating them.  Defaults to True
              strip_meta (bool, optional):  if we want to strip any whitespace from the meta fields before concatenating them.  Defaults to True
@@ -700,7 +700,7 @@ py::class_<type>(m, #type) \
          int,
          const std::vector<int>&,
          const std::vector<int>&,
-         TimestampParser*,
+         const std::vector<TimestampParser*>,
          float,
          bool,
          bool>(),
@@ -713,7 +713,7 @@ py::class_<type>(m, #type) \
          "qty_idx"_a,
          "id_field_indices"_a,
          "meta_field_indices"_a,
-         "timestamp_parser"_a,
+         "timestamp_parsers"_a,
          "price_multiplier"_a = 1.0,
          "strip_id"_a = true,
          "strip_meta"_a = true,
@@ -728,7 +728,7 @@ py::class_<type>(m, #type) \
              id_field_indices (list of str): Indices of the fields identifying an instrument.  For example, for a future this could be symbol and expiry.
                 These fields will be concatenated with a separator and placed in the id field in the record
              meta_field_indices (list of str): Indices of additional fields you want to store.  For example, the exchange.
-             timestamp_parser: A function that takes a timestamp as a string and returns number of millis or micros since the epoch
+             timestamp_parsers: A list of functions that takes a timestamp as a string and returns number of millis or micros since the epoch
              price_multiplier: (float, optional): Sometimes the price in a file could be in hundredths of cents, and we divide by this to get dollars.
                 Defaults to 1.0
              strip_id (bool, optional): If we want to strip any whitespace from the id fields before concatenating them.  Defaults to True
@@ -754,7 +754,7 @@ py::class_<type>(m, #type) \
          int,
          const std::vector<int>&,
          const std::vector<int>&,
-         TimestampParser*,
+         const std::vector<TimestampParser*>,
          bool,
          bool>(),
          py::keep_alive<1, 2>(), //Keep pointer to CheckFields alive while this is alive
@@ -765,7 +765,7 @@ py::class_<type>(m, #type) \
          "qty_idx"_a,
          "id_field_indices"_a,
          "meta_field_indices"_a,
-         "timestamp_parser"_a,
+         "timestamp_parsers"_a,
          "strip_id"_a = true,
          "strip_meta"_a = true,
          
@@ -779,7 +779,7 @@ py::class_<type>(m, #type) \
              id_field_indices (list of str): Indices of the fields identifying an instrument.  For example, for a future this could be symbol and expiry.
                 These fields will be concatenated with a separator and placed in the id field in the record
              meta_field_indices (list of str): Indices of additional fields you want to store.  For example, the exchange.
-             timestamp_parser: A function that takes a timestamp as a string and returns number of millis or micros since the epoch
+             timestamp_parsers: A list of function that takes a timestamp as a string and returns number of millis or micros since the epoch
              strip_id (bool, optional): If we want to strip any whitespace from the id fields before concatenating them.  Defaults to True
              strip_meta (bool, optional):  If we want to strip any whitespace from the meta fields before concatenating them.  Defaults to True
          )pqdoc")
@@ -802,7 +802,7 @@ py::class_<type>(m, #type) \
          const std::vector<int>&,
          const std::vector<int>&,
          const std::vector<int>&,
-         TimestampParser*,
+         const std::vector<TimestampParser*>,
          bool,
          bool>(),
          py::keep_alive<1, 2>(), //Keep pointer to CheckFields alive while this is alive
@@ -812,7 +812,7 @@ py::class_<type>(m, #type) \
          "timestamp_indices"_a,
          "id_field_indices"_a,
          "meta_field_indices"_a,
-         "timestamp_parser"_a,
+         "timestamp_parsers"_a,
          "strip_id"_a = true,
          "strip_meta"_a = true,
          R"pqdoc(
@@ -824,7 +824,7 @@ py::class_<type>(m, #type) \
                  id_field_indices (list of str): Indices of the fields identifying an instrument.  For example, for a future this could be symbol and expiry.
                     These fields will be concatenated with a separator and placed in the id field in the record
                  meta_field_indices (list of str): Indices of additional fields you want to store.  For example, the exchange.
-                 timestamp_parser: A function that takes a timestamp as a string and returns number of millis or micros since the epoch
+                 timestamp_parsers: A list of functions that take a timestamp as a string and returns number of millis or micros since the epoch
                  strip_id (bool, optional): If we want to strip any whitespace from the id fields before concatenating them.  Defaults to True
                  strip_meta (bool, optional):  If we want to strip any whitespace from the meta fields before concatenating them.  Defaults to True
            )pqdoc")

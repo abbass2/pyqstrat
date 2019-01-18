@@ -50,10 +50,10 @@ void test_tick_processing() {
     auto is_open_interest = IsOpenInterest();
     auto is_other = IsOther();
     
-    auto quote_parser = make_shared<TextQuoteParser>(&is_quote, 0, vector<int>{0}, 3, 9, 8, vector<int>{5, 6, 7}, vector<int>{10, 4}, &timestamp_parser, "B", "O", 10000.0);
-    auto trade_parser = make_shared<TextTradeParser>(&is_trade, 0, vector<int>{0}, 9, 8, vector<int>{5, 6, 7}, vector<int>{10, 4}, &timestamp_parser, 10000.0);
-    auto oi_parser = make_shared<TextOpenInterestParser>(&is_open_interest, 0, vector<int>{0}, 8, vector<int>{5, 6, 7}, vector<int>{10, 4}, &timestamp_parser);
-    auto other_parser = make_shared<TextOtherParser>(&is_other, 0, vector<int>{0}, vector<int>{5, 6, 7}, vector<int>{10, 4}, &timestamp_parser);
+    auto quote_parser = make_shared<TextQuoteParser>(&is_quote, 0, vector<int>{0}, 3, 9, 8, vector<int>{5, 6, 7}, vector<int>{10, 4}, vector<TimestampParser*>{&timestamp_parser}, "B", "O", 10000.0);
+    auto trade_parser = make_shared<TextTradeParser>(&is_trade, 0, vector<int>{0}, 9, 8, vector<int>{5, 6, 7}, vector<int>{10, 4}, vector<TimestampParser*>{&timestamp_parser}, 10000.0);
+    auto oi_parser = make_shared<TextOpenInterestParser>(&is_open_interest, 0, vector<int>{0}, 8, vector<int>{5, 6, 7}, vector<int>{10, 4}, vector<TimestampParser*>{&timestamp_parser});
+    auto other_parser = make_shared<TextOtherParser>(&is_other, 0, vector<int>{0}, vector<int>{5, 6, 7}, vector<int>{10, 4}, vector<TimestampParser*>{&timestamp_parser});
     auto text_record_parser = TextRecordParser(std::vector<RecordFieldParser*>{quote_parser.get(), trade_parser.get(), oi_parser.get(), other_parser.get()});
     auto arrow_writer_creator = ArrowWriterCreator();
     //auto quote_aggregator = AllQuoteAggregator(writer_creator, "/tmp/quotes_all", batch_size);

@@ -214,7 +214,7 @@ def process_marketdata_file(input_filename,
                  aggregator_creator,
                  line_filter = None, 
                  compression = None,
-                 base_date_mapper = base_date_filename_mapper,
+                 base_date_mapper = None,
                  file_processor_creator = create_text_file_processor,
                  header_parser_creator = lambda record_generator :  TextHeaderParser(record_generator),
                  header_record_generator = text_file_record_generator,
@@ -251,8 +251,10 @@ def process_marketdata_file(input_filename,
     """
     
     output_file_prefix = output_file_prefix_mapper(input_filename)
-        
-    base_date = base_date_mapper(input_filename)
+    
+    base_date = 0
+    
+    if base_date_mapper is not None: base_date = base_date_mapper(input_filename)
     
     if not is_newer(input_filename, output_file_prefix + '.done'):
         print(f'{output_file_prefix + ".done"} exists and is not older than: {input_filename}')
