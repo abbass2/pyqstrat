@@ -13,6 +13,10 @@ addons:
       - apport
       - python3-dbg
 
+env:
+  global:
+    - PYTHONPATH="/home/travis/miniconda/envs/test-environment/lib/python3.6/site-packages"
+
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
   - sudo apt-get update -qq
@@ -38,8 +42,8 @@ script:
   - which python3-dbg
   - python3-dbg -m pytest pyqstrat || RESULT=$?
   - ls -l
-  - for i in $(find ./ -maxdepth 1 -name 'core*' -print); do gdb $HOME/miniconda/bin/python3-dbg core* -ex "thread apply all bt" -ex "set pagination 0" -batch; done;
-  - for i in $(find ./ -maxdepth 1 -name 'core*' -print); do gdb $HOME/miniconda/bin/python3-dbg core* -ex "py-bt" -ex "set pagination 0" -batch; done;
-  - for i in $(find ./ -maxdepth 1 -name 'core*' -print); do gdb $HOME/miniconda/bin/python3-dbg core* -ex "py-locals" -ex "set pagination 0" -batch; done;
+  - for i in $(find ./ -maxdepth 1 -name 'core*' -print); do gdb /usr/bin/python3-dbg core* -ex "thread apply all bt" -ex "set pagination 0" -batch; done;
+  - for i in $(find ./ -maxdepth 1 -name 'core*' -print); do gdb /usr/bin/python3-dbg core* -ex "py-bt" -ex "set pagination 0" -batch; done;
+  - for i in $(find ./ -maxdepth 1 -name 'core*' -print); do gdb /usr/bin/python3-dbg core* -ex "py-locals" -ex "set pagination 0" -batch; done;
   
    
