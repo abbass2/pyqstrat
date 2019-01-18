@@ -36,7 +36,7 @@ install:
 script:
   - ulimit -c unlimited -S
   - which python3.6-dbg
-  - python3-dbg -m pytest pyqstrat || RESULT=$?
+  - python3.6-dbg -m pytest pyqstrat || RESULT=$?
   - ls -l
   - for i in $(find ./ -maxdepth 1 -name 'core*' -print); do gdb $HOME/miniconda/bin/python3.6-dbg core* -ex "thread apply all bt" -ex "set pagination 0" -batch; done;
   - for i in $(find ./ -maxdepth 1 -name 'core*' -print); do gdb $HOME/miniconda/bin/python3.6-dbg core* -ex "py-bt" -ex "set pagination 0" -batch; done;
