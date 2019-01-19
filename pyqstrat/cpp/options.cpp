@@ -93,6 +93,8 @@ double implied_vol(bool call, double price, double S, double K, double t, double
     double undiscounted_price = price / dcf;
     double F = S * exp((r - q) * t); // Compute forward price
     double iv = implied_volatility_from_a_transformed_rational_guess(undiscounted_price, F, K, t, call ? 1.0 : -1.0);
+    if (iv == std::numeric_limits<double>::max() || iv == -std::numeric_limits<double>::max()) return NAN;
+    
     //cout << "iv: " << iv << " undiscounted premium: " << undiscounted_premium << " forward_or_spot: " << forward_or_spot <<
     //" strike: " << strike << " t: " << t << " put_call_flag: " << put_call_flag << endl;
     return iv;

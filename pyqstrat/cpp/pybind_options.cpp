@@ -35,7 +35,7 @@ void init_pybind_options(py::module &m) {
           "t"_a,
           "r"_a,
           "sigma"_a,
-          "q"_a,
+          "q"_a = 0.0,
           R"pqdoc(
           d1 from Black Scholes
           Args:
@@ -55,7 +55,7 @@ void init_pybind_options(py::module &m) {
           "t"_a,
           "r"_a,
           "sigma"_a,
-          "q"_a,
+          "q"_a = 0.0,
           R"pqdoc(
           d2 from Black Scholes
           Args:
@@ -76,7 +76,7 @@ void init_pybind_options(py::module &m) {
           "t"_a,
           "r"_a,
           "sigma"_a,
-          "q"_a,
+          "q"_a = 0.0,
           R"pqdoc(
           Compute Euroepean option price
           Args:
@@ -86,7 +86,7 @@ void init_pybind_options(py::module &m) {
               t (float): Time to maturity in years
               r (float): Continuously compounded interest rate.  Use 0.01 for 1%
               sigma (float): Annualized volatility.  Use 0.01 for 1%
-              q (float): Annualized dividend yield.  Use 0.01 for 1%
+              q (float, optional): Annualized dividend yield.  Use 0.01 for 1%.  Default 0
           Returns:
               float: Option price
           )pqdoc");
@@ -98,7 +98,7 @@ void init_pybind_options(py::module &m) {
           "t"_a,
           "r"_a,
           "sigma"_a,
-          "q"_a,
+          "q"_a = 0.0,
           R"pqdoc(
           Compute European option delta
           Args:
@@ -108,7 +108,7 @@ void init_pybind_options(py::module &m) {
               t (float): Time to maturity in years
               r (float): Continuously compounded interest rate.  Use 0.01 for 1%
               sigma (float): Annualized volatility.  Use 0.01 for 1%
-              q (float): Annualized dividend yield.  Use 0.01 for 1%
+              q (float, optional): Annualized dividend yield.  Use 0.01 for 1%.  Default 0
           Returns:
               float: Option delta
           )pqdoc");
@@ -120,7 +120,7 @@ void init_pybind_options(py::module &m) {
           "t"_a,
           "r"_a,
           "sigma"_a,
-          "q"_a,
+          "q"_a = 0.0,
           R"pqdoc(
           Compute European option theta per day.  This is Black Scholes formula theta divided by 365 to give us the customary theta per day
           Args:
@@ -130,7 +130,7 @@ void init_pybind_options(py::module &m) {
               t (float): Time to maturity in years
               r (float): Continuously compounded interest rate.  Use 0.01 for 1%
               sigma (float): Annualized volatility.  Use 0.01 for 1%
-              q (float): Annualized dividend yield.  Use 0.01 for 1%
+              q (float, optional): Annualized dividend yield.  Use 0.01 for 1%.  Default 0
           Returns:
               float: Option theta
           )pqdoc");
@@ -141,7 +141,7 @@ void init_pybind_options(py::module &m) {
           "t"_a,
           "r"_a,
           "sigma"_a,
-          "q"_a,
+          "q"_a = 0.0,
           R"pqdoc(
           Compute European option gamma.
           Args:
@@ -150,7 +150,7 @@ void init_pybind_options(py::module &m) {
               t (float): Time to maturity in years
               r (float): Continuously compounded interest rate.  Use 0.01 for 1%
               sigma (float): Annualized volatility.  Use 0.01 for 1%
-              q (float): Annualized dividend yield.  Use 0.01 for 1%
+              q (float, optional): Annualized dividend yield.  Use 0.01 for 1%.  Default 0
           Returns:
               float: Option gamma
           )pqdoc");
@@ -161,7 +161,7 @@ void init_pybind_options(py::module &m) {
           "t"_a,
           "r"_a,
           "sigma"_a,
-          "q"_a,
+          "q"_a = 0.0,
           R"pqdoc(
           Compute European option vega.  This is Black Scholes formula vega divided by 100 so we get rho per 1% change in interest rate
           Args:
@@ -170,7 +170,7 @@ void init_pybind_options(py::module &m) {
               t (float): Time to maturity in years
               r (float): Continuously compounded interest rate.  Use 0.01 for 1%
               sigma (float): Annualized volatility.  Use 0.01 for 1%
-              q (float): Annualized dividend yield.  Use 0.01 for 1%
+              q (float, optional): Annualized dividend yield.  Use 0.01 for 1%.  Default 0
           Returns:
               float: Option vega
           )pqdoc");
@@ -182,7 +182,7 @@ void init_pybind_options(py::module &m) {
           "t"_a,
           "r"_a,
           "sigma"_a,
-          "q"_a,
+          "q"_a = 0.0,
           R"pqdoc(
           Compute European option rho.  This is Black Scholes formula rho divided by 100 so we get rho per 1% change in interest rate
           Args:
@@ -192,7 +192,7 @@ void init_pybind_options(py::module &m) {
               t (float): Time to maturity in years
               r (float): Continuously compounded interest rate.  Use 0.01 for 1%
               sigma (float): Annualized volatility.  Use 0.01 for 1%
-              q (float): Annualized dividend yield.  Use 0.01 for 1%
+              q (float, optional): Annualized dividend yield.  Use 0.01 for 1%.  Default 0
           Returns:
               float: Option theta
           )pqdoc");
@@ -204,7 +204,7 @@ void init_pybind_options(py::module &m) {
           "K"_a,
           "t"_a,
           "r"_a,
-          "q"_a,
+          "q"_a = 0.0,
           R"pqdoc(
           Compute implied volatility for a European option.
           Args:
@@ -214,7 +214,7 @@ void init_pybind_options(py::module &m) {
               K (float): Strike
               t (float): Time to maturity in years
               r (float): Continuously compounded interest rate.  Use 0.01 for 1%
-              q (float): Annualized dividend yield.  Use 0.01 for 1%
+              q (float, optional): Annualized dividend yield.  Use 0.01 for 1%.  Default 0
           Returns:
               float: Implied volatility.  For 1% we return 0.01
           )pqdoc");
