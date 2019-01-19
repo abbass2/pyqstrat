@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include <iomanip>
+#include <limits>
 #include "options.hpp"
 
 using namespace std;
