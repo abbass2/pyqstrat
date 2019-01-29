@@ -145,6 +145,9 @@ class Calendar(object):
         772.0
         >>> dates = pd.date_range('20130101',periods=8)
         >>> increments = np.array([5, 0, 3, 9, 4, 10, 15, 29])
+        >>> import warnings
+        >>> import pandas as pd
+        >>> warnings.filterwarnings(action = 'ignore', category = pd.errors.PerformanceWarning)
         >>> dates2 = dates + increments * dates.freq
         >>> df = pd.DataFrame({'x': dates, 'y' : dates2})
         >>> df.iloc[4]['x'] = np.nan
@@ -165,7 +168,7 @@ class Calendar(object):
         count = np.where(count == DUMMY_DIFF, np.nan, count)
         if isinstance(start, str) and isinstance(end, str):
             return np.ndarray.item(count)
-        if not isinstance(start, collections.Iterable) and not isinstance(end, collections.Iterable):
+        if not isinstance(start, collections.abc.Iterable) and not isinstance(end, collections.abc.Iterable):
             return np.ndarray.item(count)
         return count
         
