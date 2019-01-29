@@ -34,6 +34,10 @@ install:
   - CXX=g++-5 CC=g++-5 python setup.py build_ext --inplace
 
 script:
+  - which python
+  - python -c 'print("hello")'
+  - python -c 'import pyqstrat'
   - python -m pytest pyqstrat
+
   
    
