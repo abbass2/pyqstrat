@@ -145,14 +145,14 @@ class Calendar(object):
         772.0
         >>> dates = pd.date_range('20130101',periods=8)
         >>> increments = np.array([5, 0, 3, 9, 4, 10, 15, 29])
-        >>> dates2 = dates + increments * 1000000000000000
+        >>> dates2 = dates + increments * dates.freq
         >>> df = pd.DataFrame({'x': dates, 'y' : dates2})
         >>> df.iloc[4]['x'] = np.nan
         >>> df.iloc[6]['y'] = np.nan
         >>> nyse = Calendar.get_calendar(Calendar.NYSE)
         >>> np.set_printoptions(formatter = {'float' : lambda x : f'{x:.1f}'})  # After numpy 1.13 positive floats don't have a leading space for sign
         >>> print(nyse.num_trading_days(df.x, df.y))
-        [39.0 0.0 23.0 71.0 nan 80.0 nan 232.0]
+        [3.0 0.0 1.0 5.0 nan 8.0 nan 20.0]
         '''
         s_tmp, e_tmp = _normalize(start, end, include_first, include_last)
         # np.busday_count does not like nat dates so convert them to known numbers and then check for them.
@@ -260,24 +260,7 @@ class Calendar(object):
             Calendar.add_calendar(exchange_name, holidays)
         return Calendar._calendars[exchange_name]
     
-#if __name__ == "__main__":
-#    import doctest
-#    doctest.testmod()
-
-#cell 1
-eurex = Calendar.get_calendar(Calendar.EUREX)
-eurex.num_trading_days('2009-01-01', '2011-12-31')
-dates = pd.date_range('20130101',periods=8)
-increments = np.array([5, 0, 3, 9, 4, 10, 15, 29])
-dates2 = dates + increments * 1000000000000000
-df = pd.DataFrame({'x': dates, 'y' : dates2})
-df.iloc[4]['x'] = np.nan
-df.iloc[6]['y'] = np.nan
-nyse = Calendar.get_calendar(Calendar.NYSE)
-np.set_printoptions(formatter = {'float' : lambda x : f'{x:.1f}'})  # After numpy 1.13 positive floats don't have a leading space for sign
-print(nyse.num_trading_days(df.x, df.y))
-
-
-#cell 2
-
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
 
