@@ -384,7 +384,7 @@ def get_temp_dir():
 def linear_interpolate(a1, a2, x1, x2, x):
     '''
     >>> linear_interpolate(3, 4, 8, 10, 8.9)
-    array(3.45)
+    array(3.4500)
     '''
     return np.where(x2 == x1, np.nan, a1 + (a2 - a1) * (x - x1) / (x2 - x1))
 
