@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 from collections import defaultdict, deque
 import pandas as pd
 import numpy as np
@@ -11,9 +6,7 @@ from copy import copy
 from pyqstrat.pq_utils import str2date
 
 
-# In[2]:
-
-
+#cell 1
 def _calc_pnl(open_trades, new_trades, ending_close, multiplier):
     '''
     >>> from collections import deque
@@ -63,15 +56,14 @@ class ContractPNL:
         self.multiplier = contract.multiplier
         self.marketdata = marketdata
         self.dates = self.marketdata.dates
-        self.unrealized = np.empty(len(self.dates), dtype = np.float) * np.nan; self.unrealized[0] = 0
-        self.realized = np.empty(len(self.dates), dtype = np.float) * np.nan; self.realized[0] = 0
+        self.unrealized = np.full(len(self.dates), np.nan, dtype = np.float); self.unrealized[0] = 0
+        self.realized = np.full(len(self.dates), np.nan, dtype = np.float); self.realized[0] = 0
         
-        #TODO: Add commission and fee from trades
         self.commission = np.zeros(len(self.dates), dtype = np.float);
         self.fee = np.zeros(len(self.dates), dtype = np.float);
         
-        self.net_pnl = np.empty(len(self.dates), dtype = np.float) * np.nan; self.net_pnl[0] = 0
-        self.position = np.empty(len(self.dates), dtype = np.float) * np.nan; self.position[0] = 0
+        self.net_pnl = np.full(len(self.dates), np.nan, dtype = np.float); self.net_pnl[0] = 0
+        self.position = np.full(len(self.dates), np.nan, dtype = np.float); self.position[0] = 0
         self.close = self.marketdata.c
         self._trades = []
         self.open_trades = deque()
@@ -102,6 +94,8 @@ class ContractPNL:
         self.realized[i] = self.realized[prev_i] + realized
         trade_qty = sum([trade.qty for trade in calc_trades])
         self.position[i] = self.position[prev_i] + trade_qty
+        self.commission[i] = self.commission[prev_i] + sum([trade.commission for trade in calc_trades])
+        self.fee[i] = self.fee[prev_i] + sum([trade.fee for trade in calc_trades])
         self.net_pnl[i] = self.realized[i] + self.unrealized[i] - self.commission[i] - self.fee[i]
         if np.isnan(self.net_pnl[i]):
             raise Exception(f'net_pnl: nan i: {i} realized: {self.realized[i]} unrealized: {self.unrealized[i]} commission: {self.commission[i]} fee: {self.fee[i]}')
@@ -124,8 +118,6 @@ class ContractPNL:
         df.dropna(subset = ['unrealized', 'realized'], inplace = True)
         df['symbol'] = self.symbol
         return df[['symbol', 'date', 'unrealized', 'realized', 'fee', 'net_pnl', 'position']].set_index('date')
-    
-
 
 class Account:
     '''An Account calculates pnl for a set of contracts'''
@@ -179,7 +171,7 @@ class Account:
         self.calc_dates = np.unique(calc_dates)
         self.calc_indices = np.searchsorted(dates, self.calc_dates, side='left') - 1
         if self.calc_indices[0] == -1: self.calc_indices[0] = 0
-        self._equity = np.empty(len(dates), np.float) * np.nan; 
+        self._equity = np.full(len(dates), np.nan, dtype = np.float); 
         self._equity[0] = self.starting_equity
         
     def symbols(self):

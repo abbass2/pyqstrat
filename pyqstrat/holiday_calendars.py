@@ -129,10 +129,11 @@ class Calendar(object):
         array([False, False,  True,  True,  True,  True,  True, False]...)
         '''
         if isinstance(dates, str) or isinstance(dates, datetime.date): 
-            dates = np.datetime64(dates)
+            dates = np.datetime64(dates, 'D')
             if isinstance(dates.astype(datetime.datetime), int): # User can pass in a string like 20180101 which gets parsed as a year
                 raise Exception(f'invalid date: {dates}')
-        return np.is_busday(dates, busdaycal = self.bus_day_cal)
+        if isinstance(dates, pd.Series): dates = dates.values
+        return np.is_busday(dates.astype('M8[D]'), busdaycal = self.bus_day_cal)
     
     def num_trading_days(self, start, end, include_first = False, include_last = True):
         '''
@@ -266,4 +267,7 @@ class Calendar(object):
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 1
+
 
