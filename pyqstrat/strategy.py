@@ -393,8 +393,14 @@ class Strategy:
             position = df_pnl_.position.values
             pos_subplot = Subplot([TimeSeries('position', dates = df_pnl_.index.values, values = position, plot_type = 'filled_line')], 
                                   ylabel = 'Position', height_ratio = 0.167)
+            
+            title_full = None
+            if len(symbols) > 1:
+                if title is None: title = ''
+                title_full = f'{title} {symbol}'
+                
             plot = Plot([main_subplot, signal_subplot, pos_subplot, pnl_subplot], figsize = figsize,
-                                date_range = date_range, date_format = date_format, sampling_frequency = sampling_frequency, title = title, hspace = hspace)
+                                date_range = date_range, date_format = date_format, sampling_frequency = sampling_frequency, title = title_full, hspace = hspace)
             plot.draw()
             
     def evaluate_returns(self, symbol = None, plot = True, float_precision = 4):

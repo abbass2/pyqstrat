@@ -34,7 +34,7 @@ def _as_np_date(val):
         return timestamp.to_datetime64().astype('M8[D]')
     if isinstance(val, pd.Series) or isinstance(val, pd.DatetimeIndex):
         return val.values.astype('M8[D]')
-    if isinstance(val, np.ndarray) and val.dtype == np.dtype('M8[ns]'): 
+    if isinstance(val, np.ndarray) and np.issubdtype(val.dtype, np.datetime64): 
         return val.astype('M8[D]')
     return None
 
