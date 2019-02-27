@@ -394,7 +394,7 @@ class Strategy:
             pos_subplot = Subplot([TimeSeries('position', dates = df_pnl_.index.values, values = position, plot_type = 'filled_line')], 
                                   ylabel = 'Position', height_ratio = 0.167)
             
-            title_full = None
+            title_full = title
             if len(symbols) > 1:
                 if title is None: title = ''
                 title_full = f'{title} {symbol}'
