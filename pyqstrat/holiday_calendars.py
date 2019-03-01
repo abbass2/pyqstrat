@@ -38,6 +38,39 @@ def _as_np_date(val):
         return val.astype('M8[D]')
     return None
 
+def normalize_datetime(val):
+    '''
+    Break up a datetime into date and time.  
+    
+    Args:
+        val: The datetime to normalize.  Can be an array or a single datetime as a string, pandas timestamp, numpy datetime 
+            or python date or datetime
+    Return:
+        tuple of numpy datetime64('D') and np.timedelta64
+        
+        File "__main__", line 55, in __main__._normalize_date_time
+    
+    >>> print(normalize_datetime(pd.Timestamp('2016-05-01 3:55:00')))
+    (numpy.datetime64('2016-05-01'), numpy.timedelta64(14100000000000,'ns'))
+    >>> print(normalize_datetime('2016-05-01'))
+    (numpy.datetime64('2016-05-01'), numpy.timedelta64(0,'D'))
+    >>> x = pd.DataFrame({'x' : [np.datetime64('2015-01-01 05:00:00'), np.datetime64('2015-02-01 06:00:00')]})
+    >>> print(normalize_datetime(x.x))
+    (array(['2015-01-01', '2015-02-01'], dtype='datetime64[D]'), array([18000000000000, 21600000000000], dtype='timedelta64[ns]'))
+    >>> x = pd.DataFrame({'x' : [1, 2]}, index = [np.datetime64('2015-01-01 05:00:00'), np.datetime64('2015-02-01 06:00:00')])
+    >>> print(normalize_datetime(x.index))
+    (array(['2015-01-01', '2015-02-01'], dtype='datetime64[D]'), array([18000000000000, 21600000000000], dtype='timedelta64[ns]'))
+    '''
+    if isinstance(val, pd.Timestamp): 
+        datetime = val.to_datetime64()
+    elif isinstance(val, pd.Series) or isinstance(val, pd.DatetimeIndex):
+        datetime = val.values
+    else:
+        datetime = np.datetime64(val)
+        
+    date = datetime.astype('M8[D]')
+    time_delta = datetime - date
+    return date, time_delta
 
 def _normalize(start, end, include_first, include_last):
     '''
@@ -208,7 +241,9 @@ class Calendar(object):
         Args:
             start: np.datetime64 or str or datetime
             num_days (int): number of trading days to add
-            roll (str, optional): one of 'raise', 'nat', 'forward', 'following', 'backward', 'preceding', 'modifiedfollowing', 'modifiedpreceding'}
+            roll (str, optional): one of 'raise', 'nat', 'forward', 'following', 'backward', 'preceding', 'modifiedfollowing', 'modifiedpreceding' or 'allow'}
+                'allow' is a special case in which case, adding 1 day to a holiday will act as if it was not a holiday, and give you the next business day'
+                The rest of the values are the same as in the numpy busday_offset function
                 From numpy documentation: 
                 How to treat dates that do not fall on a valid day. The default is ‘raise’.
                 'raise' means to raise an exception for an invalid day.
@@ -219,7 +254,6 @@ class Calendar(object):
                 in which case to take the first valid day earlier in time.
                 'modifiedpreceding' means to take the first valid day earlier in time unless it is across a Month boundary, 
                 in which case to take the first valid day later in time.
-        
         Return:
             np.datetime64[D]: The date num_days trading days after start
             
@@ -230,9 +264,18 @@ class Calendar(object):
         numpy.datetime64('2017-04-13')
         >>> calendar.add_trading_days(np.datetime64('2017-04-08'), 0, roll = 'preceding') # 4/7/2017 is a Friday and not a holiday
         numpy.datetime64('2017-04-07')
+        >>> calendar.add_trading_days(np.datetime64('2019-02-17 15:25'), 1, roll = 'allow')
+        numpy.datetime64('2019-02-19T15:25')
+        >>> calendar.add_trading_days(np.datetime64('2019-02-17 15:25'), -1, roll = 'allow')
+        numpy.datetime64('2019-02-15T15:25')
         '''
-        start = _as_np_date(start)
-        out = np.busday_offset(start, num_days, roll = roll, busdaycal = self.bus_day_cal)
+        start_date, time_delta = normalize_datetime(start)
+        if roll == 'allow':
+            # If today is a holiday, roll forward but subtract 1 day so
+            num_days = np.where(self.is_trading_day(start) | (num_days < 1), num_days, num_days - 1)
+            roll = 'forward'
+        out = np.busday_offset(start_date, num_days, roll = roll, busdaycal = self.bus_day_cal)
+        out = out + time_delta # for some reason += does not work correctly here.
         return out
         
     def add_calendar(exchange_name, holidays):
@@ -267,7 +310,6 @@ class Calendar(object):
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
-
-#cell 1
+    
 
 
