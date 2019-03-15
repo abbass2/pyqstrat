@@ -353,7 +353,7 @@ class Strategy:
         Args:
             symbols: List of symbols or None (default) for all symbols
             md_columns: List of columns of market data to plot.  Default is 'c' for close price.  You can set this to 'ohlcv' if you want to plot
-             a candlestick of OHLCV data
+             a candlestick of OHLCV data.  Set to None to not plot market data
             pnl_columns: List of P&L columns to plot.  Default is 'equity'
             title: Title of plot (None)
             figsize: Figure size.  Default is (20, 15)
@@ -368,15 +368,18 @@ class Strategy:
         date_range = strtup2date(date_range)
         if symbols is None: symbols = self.symbols
         if not isinstance(symbols, list): symbols = [symbols]
-        if not isinstance(md_columns, list): md_columns = [md_columns]
+        if md_columns is not None and not isinstance(md_columns, list): md_columns = [md_columns]
         if not isinstance(pnl_columns, list): pnl_columns = [pnl_columns]
         for symbol in symbols:
             md = self.marketdata(symbol)
             md_dates = md.dates
-            if md_columns == ['ohlcv']:
-                md_list = [OHLC('price', dates = md_dates, o = md.o, h = md.h, l = md.l, c = md.c, v = md.v, vwap = md.vwap)]
+            if md_columns is None:
+                md_list = []
             else:
-                md_list = [TimeSeries(md_column, dates = md_dates, values = getattr(md, md_column)) for md_column in md_columns]
+                if md_columns == ['ohlcv']:
+                    md_list = [OHLC('price', dates = md_dates, o = md.o, h = md.h, l = md.l, c = md.c, v = md.v, vwap = md.vwap)]
+                else:
+                    md_list = [TimeSeries(md_column, dates = md_dates, values = getattr(md, md_column)) for md_column in md_columns]
             indicator_list = [TimeSeries(indicator_name, dates = md_dates, values = self.indicator_values[symbol][indicator_name], line_type = '--'
                                         ) for indicator_name in self.indicators.keys() if indicator_name in self.indicator_values[symbol]]
             signal_list = [TimeSeries(signal_name, dates = md_dates, values = self.signal_values[symbol][signal_name]

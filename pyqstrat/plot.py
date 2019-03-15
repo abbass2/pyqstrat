@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 from collections import defaultdict
 from functools import reduce
 import pandas as pd
@@ -26,10 +21,7 @@ from pyqstrat.pq_utils import *
 
 set_defaults()
 
-
-# In[9]:
-
-
+#cell 1
 
 _VERBOSE = False
 
@@ -377,6 +369,10 @@ def _plot_data(ax, data):
         if data.marker is not None:
             line = ax.scatter(x, y, marker = data.marker, c = data.marker_color, s = data.marker_size, zorder=100)
     elif data.plot_type == 'scatter':
+        #x_cp = x[:]
+        #x = x[np.isfinite(y) & np.isfinite(x)]
+        #y = y[np.isfinite(y) & np.isfinite(x_cp)]
+        #print(f'x: {x} y: {y}')
         line = ax.scatter(x, y, marker = data.marker, c = data.marker_color, s = data.marker_size, zorder=100)
     elif data.plot_type == 'bar':
         line = ax.bar(index, y, color = data.color)
@@ -541,7 +537,7 @@ class Subplot:
             if isinstance(data, OHLC):
                 data.reindex(all_dates)
             else:
-                fill = not isinstance(data, TradeSet) and not data.plot_type == 'bar'
+                fill = not isinstance(data, TradeSet) and not data.plot_type in ['bar', 'scatter']
                 data.reindex(all_dates, fill = fill)
             
     def _draw(self, ax, plot_dates, date_formatter):
@@ -693,6 +689,8 @@ class Plot:
         for ax in ax_list:
             ax.relim()
             ax.autoscale_view()
+            
+        return ax_list
                 
 def _group_trades_by_reason_code(trades):
     trade_groups = defaultdict(list)
