@@ -36,7 +36,7 @@ class Portfolio:
             strategy_names: A list of strategy names.  By default this is set to None and we use all strategies.
         '''
         if strategy_names is None: strategy_names = list(self.strategies.keys())
-        if len(strategy_names) == 0: raise Exception('a portofolio must have at least one strategy')
+        if len(strategy_names) == 0: raise Exception('a portfolio must have at least one strategy')
         for name in strategy_names: self.strategies[name].run_indicators()
                 
     def run_signals(self, strategy_names = None):
@@ -46,7 +46,7 @@ class Portfolio:
             strategy_names: A list of strategy names.  By default this is set to None and we use all strategies.
         '''
         if strategy_names is None: strategy_names = list(self.strategies.keys())
-        if len(strategy_names) == 0: raise Exception('a portofolio must have at least one strategy')
+        if len(strategy_names) == 0: raise Exception('a portfolio must have at least one strategy')
         for name in strategy_names: self.strategies[name].run_signals()
             
     def _get_iterations(self, strategies, start_date, end_date):
@@ -54,14 +54,14 @@ class Portfolio:
         >>> class Strategy:
         ...    def __init__(self, num): 
         ...        self.num = num
-        ...        self.dates = [
+        ...        self.timestamps = [
         ...            np.array(['2018-01-01', '2018-01-02', '2018-01-03'], dtype = 'M8[D]'),
         ...            np.array(['2018-01-02', '2018-01-03', '2018-01-04'], dtype = 'M8[D]')]
         ...    def _check_for_orders(self, args): pass
         ...    def _check_for_trades(self, args): pass
         ...    def _get_iteration_indices(self, start_date, end_date):
         ...        i = self.num
-        ...        return self.dates[self.num - 1], [f'oarg_1_{1}', f'oarg_2_{i}', f'oarg_3_{i}'], [f'targ_1_{i}', f'targ_2_{i}', f'targ_3_{i}']
+        ...        return self.timestamps[self.num - 1], [f'oarg_1_{1}', f'oarg_2_{i}', f'oarg_3_{i}'], [f'targ_1_{i}', f'targ_2_{i}', f'targ_3_{i}']
         ...    def __repr__(self):
         ...        return f'{self.num}'
 
@@ -77,33 +77,33 @@ class Portfolio:
         trades_iter_list = []
 
         for strategy in strategies:
-            dates, orders_iter, trades_iter = strategy._get_iteration_indices(start_date = start_date, end_date = end_date)
-            orders_iter_list.append((strategy, dates, orders_iter))
-            trades_iter_list.append((strategy, dates, trades_iter))
+            timestamps, orders_iter, trades_iter = strategy._get_iteration_indices(start_date = start_date, end_date = end_date)
+            orders_iter_list.append((strategy, timestamps, orders_iter))
+            trades_iter_list.append((strategy, timestamps, trades_iter))
 
-        dates_list = [tup[1] for tup in orders_iter_list] + [tup[1] for tup in trades_iter_list]
-        all_dates = np.array(reduce(np.union1d, dates_list))
-        order_iterations = [[] for x in range(len(all_dates))]
+        timestamps_list = [tup[1] for tup in orders_iter_list] + [tup[1] for tup in trades_iter_list]
+        all_timestamps = np.array(reduce(np.union1d, timestamps_list))
+        order_iterations = [[] for x in range(len(all_timestamps))]
 
         for tup in orders_iter_list: # per strategy
             strategy = tup[0]
-            dates = tup[1]
+            timestamps = tup[1]
             orders_iter = tup[2] # vector with list of (rule, symbol, iter_params dict)
 
-            for i, date in enumerate(dates):
-                idx = np.searchsorted(all_dates, date)
+            for i, timestamp in enumerate(timestamps):
+                idx = np.searchsorted(all_timestamps, timestamp)
                 args = (strategy, i, orders_iter[i])
                 order_iterations[idx].append((Strategy._check_for_orders, args))
 
-        trade_iterations = [[] for x in range(len(all_dates))]
+        trade_iterations = [[] for x in range(len(all_timestamps))]
 
         for tup in trades_iter_list: # per strategy
             strategy = tup[0]
-            dates = tup[1]
+            timestamps = tup[1]
             trades_iter = tup[2] # vector with list of (rule, symbol, iter_params dict)
 
-            for i, date in enumerate(dates):
-                idx = np.searchsorted(all_dates, date)
+            for i, timestamp in enumerate(timestamps):
+                idx = np.searchsorted(all_timestamps, timestamp)
                 args = (strategy, i, trades_iter[i])
                 trade_iterations[idx].append((Strategy._check_for_trades, args))
 
@@ -115,13 +115,13 @@ class Portfolio:
         '''
         start_date, end_date = str2date(start_date), str2date(end_date)
         if strategy_names is None: strategy_names = list(self.strategies.keys())
-        if len(strategy_names) == 0: raise Exception('a portofolio must have at least one strategy')
+        if len(strategy_names) == 0: raise Exception('a portfolio must have at least one strategy')
 
         strategies = [self.strategies[key] for key in strategy_names]
         
-        min_date = min([strategy.dates[0] for strategy in strategies])
+        min_date = min([strategy.timestamps[0] for strategy in strategies])
         if start_date: min_date = max(min_date, start_date)
-        max_date = max([strategy.dates[-1] for strategy in strategies])
+        max_date = max([strategy.timestamps[-1] for strategy in strategies])
         if end_date: max_date = min(max_date, end_date)
             
         order_iterations, trade_iterations = self._get_iterations(strategies, start_date, end_date)

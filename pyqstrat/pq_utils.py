@@ -152,8 +152,8 @@ def resample_vwap(df, sampling_frequency):
     vwap = sum_2 / volume_sum
     return vwap
 
-def resample_ohlc(df, sampling_frequency, resample_funcs = None):
-    '''Downsample OHLCV data using sampling frequency
+def resample_trade_bars(df, sampling_frequency, resample_funcs = None):
+    '''Downsample trade bars using sampling frequency
     
     Args:
         df (pd.DataFrame): Must contain an index of numpy datetime64 type which is monotonically increasing
@@ -173,7 +173,7 @@ def resample_ohlc(df, sampling_frequency, resample_funcs = None):
     ...          })
     >>> df['vwap'] =  0.5 * (df.l + df.h)
     >>> df.set_index('date', inplace = True)
-    >>> resample_ohlc(df, sampling_frequency = 'D', resample_funcs={'x' : lambda df, sampling_frequency : df.x.resample(sampling_frequency).agg(np.mean)})
+    >>> resample_trade_bars(df, sampling_frequency = 'D', resample_funcs={'x' : lambda df, sampling_frequency : df.x.resample(sampling_frequency).agg(np.mean)})
             date   o   h   l    c    v   x  vwap
     0 2018-01-08 8.9   9 8.8 8.95  200 300   8.9
     1 2018-01-09 9.1 9.4   9 9.35  250 150  9.24
@@ -239,16 +239,17 @@ def monotonically_increasing(array):
     if not len(array): return False
     return np.all(np.diff(array).astype(np.float) > 0)
 
-def infer_frequency(dates):
+def infer_frequency(timestamps):
     '''Returns most common frequency of date differences as a fraction of days
     Args:
-        dates: A numpy array of monotonically increasing datetime64
-    >>> dates = np.array(['2018-01-01 11:00:00', '2018-01-01 11:15:00', '2018-01-01 11:30:00', '2018-01-01 11:35:00'], dtype = 'M8[ns]')
-    >>> print(round(infer_frequency(dates), 8))
+        timestamps: A numpy array of monotonically increasing datetime64
+    >>> timestamps = np.array(['2018-01-01 11:00:00', '2018-01-01 11:15:00', '2018-01-01 11:30:00', '2018-01-01 11:35:00'], dtype = 'M8[ns]')
+    >>> print(round(infer_frequency(timestamps), 8))
     0.01041667
     '''
-    assert(monotonically_increasing(dates))
-    numeric_dates = date_2_num(dates)
+    if isinstance(timestamps, pd.Series): timestamps = timestamps.values
+    assert(monotonically_increasing(timestamps))
+    numeric_dates = date_2_num(timestamps)
     diff_dates = np.round(np.diff(numeric_dates), 8)
     (values,counts) = np.unique(diff_dates, return_counts=True)
     ind = np.argmax(counts)

@@ -4,24 +4,25 @@ import numpy as np
 
 #cell 1
 class Trade:
-    def __init__(self, symbol, date, qty, price, fee = 0., commission = 0., order = None):
+    def __init__(self, symbol, timestamp, qty, price, fee = 0., commission = 0., order = None):
         '''Args:
-            symbol: a string
-            date: Trade execution datetime
-            qty: Number of contracts or shares filled
-            price: Trade price
-            fee: Fees paid to brokers or others. Default 0
-            commision: Commission paid to brokers or others. Default 0
-            order: A reference to the order that created this trade. Default None
+            symbol (str): a string
+            timestamp (np.datetime64): Trade execution datetime
+            qty (float): Number of contracts or shares filled
+            price (float): Trade price
+            fee (float): Fees paid to brokers or others. Default 0
+            commision (float): Commission paid to brokers or others. Default 0
+            order :obj:`pq.Order`: A reference to the order that created this trade. Default None
         '''
         assert(isinstance(symbol, str) and len(symbol) > 0)
         assert(np.isfinite(qty))
         assert(np.isfinite(price))
         assert(np.isfinite(fee))
         assert(np.isfinite(commission))
+        assert(isinstance(timestamp, np.datetime64))
         
         self.symbol = symbol
-        self.date = date
+        self.timestamp = timestamp
         self.qty = qty
         self.price = price
         self.fee = fee
@@ -29,7 +30,7 @@ class Trade:
         self.order = order
         
     def __repr__(self):
-        return '{} {:%Y-%m-%d %H:%M} qty: {} prc: {}{}{} order: {}'.format(self.symbol, pd.Timestamp(self.date).to_pydatetime(), 
+        return '{} {:%Y-%m-%d %H:%M} qty: {} prc: {}{}{} order: {}'.format(self.symbol, pd.Timestamp(self.timestamp).to_pydatetime(), 
                                                 self.qty, self.price, 
                                                 ' ' + str(self.fee) if self.fee != 0 else '', 
                                                 ' ' + str(self.commission) if self.commission != 0 else '', 

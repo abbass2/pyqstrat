@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import pandas as pd
 import numpy as np
 import IPython.display as dsp
@@ -11,58 +6,20 @@ import matplotlib.dates as mdates
 from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
-
-# In[28]:
-
-
-def sort_ohlcv_key(a):
+#cell 1
+def sort_trade_bars_key(a):
     l = ['date', 'o', 'h', 'l', 'c', 'v', 'vwap']
     if a in l:
         return l.index(a)
     else:
         return len(l)
     
-def sort_ohlcv(columns):
+def sort_trade_bars(columns):
     columns = sorted(list(columns)) # Use stable sort to sort columns that we don't know about alphabetically
-    return sorted(columns, key = sort_ohlcv_key)
-
-class MarketDataCollection:
-    '''
-    Used to store a set of market data linking symbol -> MarketData 
-    '''
-    def __init__(self, symbols = None, marketdata_list = None):
-        '''
-        Args:
-            symbols (list of str, optional): Symbols we want to store market data for.  Default None
-            marketdata_list (list of MarketData): Corresponding MarketData object.  Default None
-        '''
-        if symbols is not None or marketdata_list is not None:
-            if symbols is None or marketdata_list is None:
-                raise Exception('symbols and marketdata must either both be None or not None')
-            if len(symbols) != len(marketdata_list):
-                raise Exception('symbols and marketdata_list must contain the same number of elements')
-            self.marketdata = dict(zip(symbols, marketdata_list))
-        else:
-            self.marketdata = {}
-        
-    def add_marketdata(self, symbol, marketdata):
-        self.marketdata[symbol] = marketdata
-        
-    def add_dates(self, dates):
-        for md in self.marketdata.values(): md.add_dates(dates)
-            
-    def dates(self):
-        if len(self.marketdata) == 0:
-            return np.array([], dtype = np.datetime64)
-        else:
-            return list(self.marketdata.values())[0].dates
-        
-    def items(self):
-        return self.marketdata.items()
+    return sorted(columns, key = sort_trade_bars_key)
     
-class MarketData:
-    '''Used to store OHLCV bars, and any additional time series data you want to use to simulate orders and executions.
-        You must at least supply dates and close prices.  All other fields are optional.
+class TradeBars:
+    '''Used to store OHLCV bars.  You must at least supply dates and close prices.  All other fields are optional.
     
     Attributes:
         dates: A numpy datetime array with the datetime for each bar.  Must be monotonically increasing.
@@ -169,7 +126,7 @@ class MarketData:
     
     def resample(self, sampling_frequency, inplace = False):
         '''
-        Downsample the OHLCV data into a new bar frequency
+        Downsample the trade bars data into a new bar frequency
         
         Args:
             sampling_frequency: See sampling frequency in pandas
@@ -183,7 +140,7 @@ class MarketData:
         # Rename index from date to dates since our internal variable is called "dates" but the df() function returns a column "date"
         df.index.name = 'dates'
 
-        df = resample_ohlc(df, sampling_frequency, self.resample_funcs)
+        df = resample_trade_bars(df, sampling_frequency, self.resample_funcs)
               
         if inplace:
             md = self
@@ -225,7 +182,7 @@ class MarketData:
         if not len(errors_list): return None
             
         df = pd.concat(errors_list)
-        df = df[sort_ohlcv(df.columns)]
+        df = df[sort_trade_bars(df.columns)]
         
         if display: dsp.display(df)
         return df
@@ -256,7 +213,7 @@ class MarketData:
 
         if not len(warnings_list): return None
         df = pd.concat(warnings_list)
-        df = df[sort_ohlcv(df.columns)]
+        df = df[sort_trade_bars(df.columns)]
         if display: dsp.display(df)
         return df
                               
@@ -269,7 +226,7 @@ class MarketData:
         df = self.df().reset_index()
         df_overview = pd.DataFrame({'count': len(df), 'num_missing' : df.isnull().sum(), 'pct_missing': df.isnull().sum() / len(df), 'min' : df.min(), 'max' : df.max()})
         df_overview = df_overview.T
-        df_overview = df_overview[sort_ohlcv(df_overview.columns)]
+        df_overview = df_overview[sort_trade_bars(df_overview.columns)]
         if display: dsp.display(df_overview)
         return df_overview
        
@@ -353,7 +310,7 @@ class MarketData:
         print('Time distribution:')
         self.time_distribution(display = print_time_distribution, frequency = time_distribution_frequency)
         
-    def is_ohlc(self):
+    def has_ohlc(self):
         '''
         Returns True if we have all ohlc columns and none are empty
         '''
@@ -370,8 +327,8 @@ class MarketData:
             title: Title of the graph, default "Price / Volume"
         '''
         date_range = strtup2date(date_range)
-        if self.is_ohlc():
-            data = OHLC('price', self.dates, self.o, self.h, self.l, self.c, self.v, self.vwap)
+        if self.has_ohlc():
+            data = TradeBarSeries('price', self.dates, self.o, self.h, self.l, self.c, self.v, self.vwap)
         else:
             data = TimeSeries('price', self.dates, self.c)
         subplot = Subplot(data)

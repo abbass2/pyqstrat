@@ -6,7 +6,6 @@ import numpy as np
 from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
-
 #cell 1
 _VERBOSE = False
 
