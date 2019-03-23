@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -73,7 +68,7 @@ class Optimizer:
             self.generator.send((cost, other_costs))
             self.experiments.append(Experiment(suggestion, cost, other_costs))
     
-    #TODO: Needs to be rewritten to send costs back to generator when we do parrallel gradient descent, etc.
+    #TODO: Needs to be rewritten to send costs back to generator when we do parallel gradient descent, etc.
     def _run_multi_process(self, raise_on_error):
         fut_map = {}
         with concurrent.futures.ProcessPoolExecutor(self.max_processes) as executor:
@@ -277,4 +272,5 @@ def test_optimize():
             
 if __name__ == "__main__":
     test_optimize()
+
 

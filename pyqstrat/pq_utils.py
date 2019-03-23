@@ -389,6 +389,3 @@ def linear_interpolate(a1, a2, x1, x2, x):
     '''
     return np.where(x2 == x1, np.nan, a1 + (a2 - a1) * (x - x1) / (x2 - x1))
 
-#cell 1
-
-

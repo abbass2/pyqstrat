@@ -1,6 +1,6 @@
 #cell 0
 import warnings
-warnings.filterwarnings("ignore", message="numpy.dtype size changed") # another bogus warning, see https://github.com/numpy/numpy/pull/432
+#warnings.filterwarnings("ignore", message="numpy.dtype size changed") # another bogus warning, see https://github.com/numpy/numpy/pull/432
 import pandas as pd
 import numpy as np
 from pyqstrat.pq_utils import *
@@ -24,22 +24,24 @@ def compute_amean(returns):
     if not len(returns): return np.nan
     return np.nanmean(returns)
 
-def compute_periods_per_year(dates):
+def compute_periods_per_year(timestamps):
     """Computes trading periods per year for an array of numpy datetime64's.
-      E.g. if most of the dates are separated by 1 day, will return 252.
+      E.g. if most of the timestamps are separated by 1 day, will return 252.
       
     Args:
-        dates: a numpy array of datetime64's
+        timestamps: a numpy array of datetime64's
         
     Returns:
         a float
         
     >>> compute_periods_per_year(np.array(['2018-01-01', '2018-01-02', '2018-01-03', '2018-01-09'], dtype = 'M8[D]'))
     252.0
+    >>> round(compute_periods_per_year(np.array(['2018-01-01 10:00', '2018-01-01 10:05', '2018-01-01 10:10'], dtype = 'M8[m]')), 2)
+    72576.05
     """
-    if not len(dates): return np.nan
-    freq = infer_frequency(dates)
-    return 252. * freq
+    if not len(timestamps): return np.nan
+    freq = infer_frequency(timestamps)
+    return 252. / freq
 
 def compute_gmean(returns, periods_per_year):
     """ Computes geometric mean of an array of returns
@@ -102,24 +104,24 @@ def compute_sharpe(returns, amean, periods_per_year):
     sharpe = np.nan if s == 0 else amean / s * np.sqrt(periods_per_year)
     return sharpe
 
-def compute_equity(dates, starting_equity, returns):
-    ''' Given starting equity, dates and returns, create a numpy array of equity at each date'''
+def compute_equity(timestamps, starting_equity, returns):
+    ''' Given starting equity, timestamps and returns, create a numpy array of equity at each date'''
     return starting_equity * np.cumprod(1. + returns)
 
-def compute_rolling_dd(dates, equity):
+def compute_rolling_dd(timestamps, equity):
     '''
     Compute numpy array of rolling drawdown percentage
     
     Args:
-        dates: numpy array of datetime64
+        timestamps: numpy array of datetime64
         equity: numpy array of equity
     '''
-    assert(len(dates) == len(equity))
-    if not len(dates): return np.array([], dtype = 'M8[ns]'), np.array([], dtype = np.float)
-    s = pd.Series(equity, index = dates)
+    assert(len(timestamps) == len(equity))
+    if not len(timestamps): return np.array([], dtype = 'M8[ns]'), np.array([], dtype = np.float)
+    s = pd.Series(equity, index = timestamps)
     rolling_max = s.expanding(min_periods = 1).max()
     dd = np.where(s >= rolling_max, 0.0, (s - rolling_max) / rolling_max)
-    return dates, dd
+    return timestamps, dd
 
 def compute_maxdd_pct(rolling_dd):
     '''Compute max drawdown percentage given a numpy array of rolling drawdowns, ignoring NaNs'''
@@ -127,13 +129,13 @@ def compute_maxdd_pct(rolling_dd):
     return np.nanmin(rolling_dd)
 
 def compute_maxdd_date(rolling_dd_dates, rolling_dd):
-    ''' Compute date of max drawdown given numpy array of dates, and corresponding rolling dd percentages'''
+    ''' Compute date of max drawdown given numpy array of timestamps, and corresponding rolling dd percentages'''
     if not len(rolling_dd_dates): return pd.NaT
     assert(len(rolling_dd_dates) == len(rolling_dd))
     return rolling_dd_dates[np.argmin(rolling_dd)]
 
 def compute_maxdd_start(rolling_dd_dates, rolling_dd, mdd_date):
-    '''Compute date when max drawdown starts, given numpy array of dates, corresponding rolling dd percentages and date that max dd starts'''
+    '''Compute date when max drawdown starts, given numpy array of timestamps corresponding rolling dd percentages and date that max dd starts'''
     if not len(rolling_dd_dates) or pd.isnull(mdd_date): return pd.NaT
     assert(len(rolling_dd_dates) == len(rolling_dd))
     return rolling_dd_dates[(rolling_dd >= 0) & (rolling_dd_dates < mdd_date)][-1]
@@ -143,57 +145,58 @@ def compute_mar(returns, periods_per_year, mdd_pct):
     if not len(returns) or np.isnan(mdd_pct): return np.nan
     return np.mean(returns) * periods_per_year / mdd_pct
 
-def compute_dates_3yr(dates):
+def compute_dates_3yr(timestamps):
     ''' Given an array of numpy datetimes, return those that are within 3 years of the last date in the array'''
-    if not len(dates): return np.array([], dtype = 'M8[D]')
-    last_date = dates[-1]
+    if not len(timestamps): return np.array([], dtype = 'M8[D]')
+    last_date = timestamps[-1]
     d = pd.to_datetime(last_date)
     start_3yr = np.datetime64( d.replace(year = d.year - 3))
-    return dates[dates > start_3yr]
+    return timestamps[timestamps > start_3yr]
 
-def compute_returns_3yr(dates, returns):
-    '''Given an array of numpy datetimes and an array of returns, return those that are within 3 years of the last date in the datetime array '''
-    if not len(dates): return np.array([], dtype = np.float)
-    assert(len(dates) == len(returns))
-    dates_3yr = compute_dates_3yr(dates)
-    return returns[dates >= dates_3yr[0]]
+def compute_returns_3yr(timestamps, returns):
+    '''Given an array of numpy datetimes and an array of returns, return those that are within 3 years 
+        of the last date in the datetime array '''
+    if not len(timestamps): return np.array([], dtype = np.float)
+    assert(len(timestamps) == len(returns))
+    timestamps_3yr = compute_dates_3yr(timestamps)
+    return returns[timestamps >= timestamps_3yr[0]]
 
-def compute_rolling_dd_3yr(dates, equity):
+def compute_rolling_dd_3yr(timestamps, equity):
     '''Compute rolling drawdowns over the last 3 years'''
-    if not len(dates): return np.array([], dtype = 'M8[D]')
-    last_date = dates[-1]
+    if not len(timestamps): return np.array([], dtype = 'M8[D]')
+    last_date = timestamps[-1]
     d = pd.to_datetime(last_date)
     start_3yr = np.datetime64( d.replace(year = d.year - 3))
-    equity = equity[dates >= start_3yr]
-    dates = dates[dates >= start_3yr]
-    return compute_rolling_dd(dates, equity)
+    equity = equity[timestamps >= start_3yr]
+    timestamps = timestamps[timestamps >= start_3yr]
+    return compute_rolling_dd(timestamps, equity)
 
 def compute_maxdd_pct_3yr(rolling_dd_3yr):
     '''Compute max drawdown percentage over the last 3 years'''
     return compute_maxdd_pct(rolling_dd_3yr)
 
-def compute_maxdd_date_3yr(rolling_dd_3yr_dates, rolling_dd_3yr):
+def compute_maxdd_date_3yr(rolling_dd_3yr_timestamps, rolling_dd_3yr):
     '''Compute max drawdown date over the last 3 years'''
-    return compute_maxdd_date(rolling_dd_3yr_dates, rolling_dd_3yr)
+    return compute_maxdd_date(rolling_dd_3yr_timestamps, rolling_dd_3yr)
 
-def compute_maxdd_start_3yr(rolling_dd_3yr_dates, rolling_dd_3yr, mdd_date_3yr):
+def compute_maxdd_start_3yr(rolling_dd_3yr_timestamps, rolling_dd_3yr, mdd_date_3yr):
     '''Comput max drawdown start date over the last 3 years'''
-    return compute_maxdd_start(rolling_dd_3yr_dates, rolling_dd_3yr, mdd_date_3yr)
+    return compute_maxdd_start(rolling_dd_3yr_timestamps, rolling_dd_3yr, mdd_date_3yr)
 
 def compute_calmar(returns_3yr, periods_per_year, mdd_pct_3yr):
     '''Compute Calmar ratio, which is the annualized return divided by max drawdown over the last 3 years'''
     return compute_mar(returns_3yr, periods_per_year, mdd_pct_3yr)
 
-def compute_bucketed_returns(dates, returns):
+def compute_bucketed_returns(timestamps, returns):
     '''
     Bucket returns by year
     
     Returns:
         A tuple with the first element being a list of years and the second a list of numpy arrays containing returns for each corresponding year
     '''
-    assert(len(dates) == len(returns))
-    if not len(dates): return np.array([], dtype = np.str), np.array([], dtype = np.float)
-    s = pd.Series(returns, index = dates)
+    assert(len(timestamps) == len(returns))
+    if not len(timestamps): return np.array([], dtype = np.str), np.array([], dtype = np.float)
+    s = pd.Series(returns, index = timestamps)
     years_list = []
     rets_list = []
     for year, rets in s.groupby(s.index.map(lambda x : x.year)):
@@ -202,7 +205,7 @@ def compute_bucketed_returns(dates, returns):
     
     return years_list, rets_list
 
-def compute_annual_returns(dates, returns, periods_per_year):
+def compute_annual_returns(timestamps, returns, periods_per_year):
     '''Takes the output of compute_bucketed_returns and returns geometric mean of returns by year
     
     Returns:
@@ -210,9 +213,9 @@ def compute_annual_returns(dates, returns, periods_per_year):
         an array of annualized returns for those years
         
     '''
-    assert(len(dates) == len(returns) and periods_per_year > 0)
-    if not len(dates): return np.array([], dtype = np.str), np.array([], dtype = np.float)
-    s = pd.Series(returns, index = dates)
+    assert(len(timestamps) == len(returns) and periods_per_year > 0)
+    if not len(timestamps): return np.array([], dtype = np.str), np.array([], dtype = np.float)
+    s = pd.Series(returns, index = timestamps)
     ret_by_year = s.groupby(s.index.map(lambda x: x.year)).agg(
         lambda y: compute_gmean(y, periods_per_year))
     return ret_by_year.index.values, ret_by_year.values
@@ -278,12 +281,12 @@ class Evaluator:
         return self.metric_values
     
     
-def compute_return_metrics(dates, rets, starting_equity):
+def compute_return_metrics(timestamps, rets, starting_equity):
     '''
     Compute a set of common metrics using returns (for example, of an instrument or a portfolio)
     
     Args:
-        dates: a numpy datetime array with one date per return
+        timestamps: a numpy datetime array with one date per return
         rets: a numpy float array of returns
         starting_equity: starting equity value in your portfolio
         
@@ -295,12 +298,12 @@ def compute_return_metrics(dates, rets, starting_equity):
     
     assert(starting_equity > 0.)
     assert(type(rets) == np.ndarray and rets.dtype == np.float64)
-    assert(type(dates) == np.ndarray and np.issubdtype(dates.dtype, np.datetime64) and monotonically_increasing(dates))
+    assert(type(timestamps) == np.ndarray and np.issubdtype(timestamps.dtype, np.datetime64) and monotonically_increasing(timestamps))
 
     rets = nan_to_zero(rets)
 
-    ev = Evaluator({'dates' : dates, 'returns' : rets, 'starting_equity' : starting_equity})
-    ev.add_metric('periods_per_year', compute_periods_per_year, dependencies = ['dates'])
+    ev = Evaluator({'timestamps' : timestamps, 'returns' : rets, 'starting_equity' : starting_equity})
+    ev.add_metric('periods_per_year', compute_periods_per_year, dependencies = ['timestamps'])
     ev.add_metric('amean', compute_amean, dependencies = ['returns'])
     ev.add_metric('std', compute_std, dependencies = ['returns'])
     ev.add_metric('up_periods', lambda returns : len(returns[returns > 0]), dependencies = ['returns'])
@@ -309,27 +312,27 @@ def compute_return_metrics(dates, rets, starting_equity):
     ev.add_metric('gmean', compute_gmean, dependencies=['returns', 'periods_per_year'])
     ev.add_metric('sharpe', compute_sharpe, dependencies = ['returns', 'periods_per_year', 'amean'])
     ev.add_metric('sortino', compute_sortino, dependencies = ['returns', 'periods_per_year', 'amean'])
-    ev.add_metric('equity', compute_equity, dependencies = ['dates', 'starting_equity', 'returns'])
+    ev.add_metric('equity', compute_equity, dependencies = ['timestamps', 'starting_equity', 'returns'])
     
     # Drawdowns
-    ev.add_metric('rolling_dd', compute_rolling_dd, dependencies = ['dates', 'equity'])
+    ev.add_metric('rolling_dd', compute_rolling_dd, dependencies = ['timestamps', 'equity'])
     ev.add_metric('mdd_pct', lambda rolling_dd : compute_maxdd_pct(rolling_dd[1]), dependencies = ['rolling_dd'])
     ev.add_metric('mdd_date', lambda rolling_dd : compute_maxdd_date(rolling_dd[0], rolling_dd[1]), dependencies = ['rolling_dd'])
     ev.add_metric('mdd_start', lambda rolling_dd, mdd_date : compute_maxdd_start(rolling_dd[0], rolling_dd[1], mdd_date), dependencies = ['rolling_dd', 'mdd_date'])
     ev.add_metric('mar', compute_mar, dependencies = ['returns', 'periods_per_year', 'mdd_pct'])
     
-    ev.add_metric('dates_3yr', compute_dates_3yr, dependencies = ['dates'])
-    ev.add_metric('returns_3yr', compute_returns_3yr, dependencies = ['dates', 'returns'])
+    ev.add_metric('timestamps_3yr', compute_dates_3yr, dependencies = ['timestamps'])
+    ev.add_metric('returns_3yr', compute_returns_3yr, dependencies = ['timestamps', 'returns'])
 
-    ev.add_metric('rolling_dd_3yr', compute_rolling_dd_3yr, dependencies = ['dates', 'equity'])
+    ev.add_metric('rolling_dd_3yr', compute_rolling_dd_3yr, dependencies = ['timestamps', 'equity'])
     ev.add_metric('mdd_pct_3yr', lambda rolling_dd_3yr : compute_maxdd_pct_3yr(rolling_dd_3yr[1]), dependencies = ['rolling_dd_3yr'])
     ev.add_metric('mdd_date_3yr', lambda rolling_dd_3yr : compute_maxdd_date_3yr(rolling_dd_3yr[0], rolling_dd_3yr[1]) , dependencies = ['rolling_dd_3yr'])
     ev.add_metric('mdd_start_3yr', lambda rolling_dd_3yr, mdd_date_3yr : compute_maxdd_start_3yr(rolling_dd_3yr[0], rolling_dd_3yr[1], mdd_date_3yr), 
                   dependencies = ['rolling_dd_3yr', 'mdd_date_3yr'])
     ev.add_metric('calmar', compute_calmar, dependencies = ['returns_3yr', 'periods_per_year', 'mdd_pct_3yr'])
 
-    ev.add_metric('annual_returns', compute_annual_returns, dependencies=['dates', 'returns', 'periods_per_year'])
-    ev.add_metric('bucketed_returns', compute_bucketed_returns, dependencies=['dates', 'returns'])
+    ev.add_metric('annual_returns', compute_annual_returns, dependencies=['timestamps', 'returns', 'periods_per_year'])
+    ev.add_metric('bucketed_returns', compute_bucketed_returns, dependencies=['timestamps', 'returns'])
 
     ev.compute()
     return ev
@@ -360,7 +363,7 @@ def display_return_metrics(metrics, float_precision = 3):
             
     _metrics['mdd_dates'] = f'{str(metrics["mdd_start"])[:10]}/{str(metrics["mdd_date"])[:10]}'
     _metrics['up_dwn'] = f'{metrics["up_periods"]}/{metrics["down_periods"]}/{metrics["up_pct"]:.3g}'
-    _metrics['dd_3y_dates'] = f'{str(metrics["mdd_start_3yr"])[:10]}/{str(metrics["mdd_date_3yr"])[:10]}'
+    _metrics['dd_3y_timestamps'] = f'{str(metrics["mdd_start_3yr"])[:10]}/{str(metrics["mdd_date_3yr"])[:10]}'
     
     years = metrics['annual_returns'][0]
     ann_rets = metrics['annual_returns'][1]
@@ -373,7 +376,7 @@ def display_return_metrics(metrics, float_precision = 3):
         if isinstance(v, np.float) or isinstance(v, float):
             _metrics[k] = format_str.format(v)
        
-    cols = ['gmean', 'amean', 'std', 'shrp', 'srt', 'calmar', 'mar', 'mdd_pct', 'mdd_dates', 'dd_3y_pct', 'dd_3y_dates', 'up_dwn'
+    cols = ['gmean', 'amean', 'std', 'shrp', 'srt', 'calmar', 'mar', 'mdd_pct', 'mdd_dates', 'dd_3y_pct', 'dd_3y_timestamps', 'up_dwn'
            ] + [str(year) for year in sorted(years)]
     
     df = pd.DataFrame(index = [''])
@@ -389,9 +392,9 @@ def plot_return_metrics(metrics, title = None):
     Plot equity, rolling drawdowns and and a boxplot of annual returns given the output of compute_return_metrics.
     '''
     returns = metrics['returns']
-    dates = metrics['dates']
+    timestamps = metrics['timestamps']
     equity =  metrics['equity']
-    equity = TimeSeries('equity', dates = dates, values = equity)
+    equity = TimeSeries('equity', timestamps = timestamps, values = equity)
     mdd_date, mdd_start = metrics['mdd_start'], metrics['mdd_date']
     mdd_date_3yr, mdd_start_3yr = metrics['mdd_start_3yr'], metrics['mdd_date_3yr']
     drawdown_lines = [DateLine(name = 'max dd', date = mdd_start, color = 'red'),
@@ -402,7 +405,7 @@ def plot_return_metrics(metrics, title = None):
                              date_lines = drawdown_lines, horizontal_lines=[HorizontalLine(metrics['starting_equity'], color = 'black')]) 
     
 
-    rolling_dd = TimeSeries('drawdowns', dates = metrics['rolling_dd'][0], values = metrics['rolling_dd'][1])
+    rolling_dd = TimeSeries('drawdowns', timestamps = metrics['rolling_dd'][0], values = metrics['rolling_dd'][1])
     zero_line = HorizontalLine(y = 0, color = 'black')
     dd_subplot = Subplot(rolling_dd, ylabel = 'Drawdowns', height_ratio = 0.2, date_lines = drawdown_lines, horizontal_lines = [zero_line])
     
@@ -418,11 +421,11 @@ def plot_return_metrics(metrics, title = None):
 def test_evaluator():
     from datetime import datetime, timedelta
     np.random.seed(10)
-    dates = np.arange(datetime(2018, 1, 1), datetime(2018, 3, 1), timedelta(days = 1))
-    rets = np.random.normal(size = len(dates)) / 1000
+    timestamps = np.arange(datetime(2018, 1, 1), datetime(2018, 3, 1), timedelta(days = 1))
+    rets = np.random.normal(size = len(timestamps)) / 1000
     starting_equity = 1.e6
     
-    ev = compute_return_metrics(dates, rets, starting_equity)
+    ev = compute_return_metrics(timestamps, rets, starting_equity)
     metrics = display_return_metrics(ev.metrics());
     plot_return_metrics(ev.metrics())
     
@@ -435,8 +438,5 @@ def test_evaluator():
     
 if __name__ == "__main__":
     test_evaluator()
-
-
-#cell 2
 
 

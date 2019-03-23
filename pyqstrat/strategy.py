@@ -156,7 +156,8 @@ class Strategy:
                 parent_values = types.SimpleNamespace()
                 for parent_name in parent_names:
                     setattr(parent_values, parent_name, getattr(self.indicator_values[symbol], parent_name))
-                if isinstance(indicator_function, np.ndarray):
+                if isinstance(indicator_function, np.ndarray) or isinstance(indicator_function, pd.Series):
+                    indicator_function = series_to_array(indicator_function)
                     setattr(self.indicator_values[symbol], indicator_name, indicator_function)
                 else:
                     setattr(self.indicator_values[symbol], indicator_name, series_to_array(
@@ -404,7 +405,7 @@ class Strategy:
           if they are specified.  If symbol is None, orders for all symbols are returned'''
         start_date, end_date = str2date(start_date), str2date(end_date)
         orders = self.orders(symbol, start_date, end_date)
-        df_orders = pd.DataFrame.from_records([(order.symbol, type(order).__name__, order.date, order.qty, order.params()) 
+        df_orders = pd.DataFrame.from_records([(order.symbol, type(order).__name__, order.timestamp, order.qty, order.params()) 
                                                for order in orders], columns = ['symbol', 'type', 'date', 'qty', 'params'])
         return df_orders
    
@@ -515,7 +516,7 @@ class Strategy:
                 
             plot_list = [primary_indicator_subplot]
             if len(secondary_indicator_list): plot_list.append(secondary_indicator_subplot)
-            plot_list += [pos_subplot, pnl_subplot]
+            plot_list += [signal_subplot, pos_subplot, pnl_subplot]
                 
             plot = Plot(plot_list, figsize = figsize, date_range = date_range, date_format = date_format, 
                         sampling_frequency = sampling_frequency, 
