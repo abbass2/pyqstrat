@@ -46,14 +46,13 @@ Requirements:
 
 Known Install issues:
 
-* arrow-cpp 0.11.1 should not be used, please move to 0.12.1 or later. ( problem with the C++ 11 string ABI ). If the above generic conda command tries to install 0.11.1, please say 'n', and then use this command:  
+* arrow-cpp 0.11.1 should not be used, please move to 0.12.1 or later. If the above generic conda command tries to install 0.11.1, please say 'n', and then use this command:  
 
 ::
 
    conda install arrow-cpp=0.12.* -c conda-forge
    conda install pyarrow=0.12.* -c conda-forge
    pip install pyqstrat
-
 
 Documentation
 -------------
