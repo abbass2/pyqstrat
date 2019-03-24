@@ -282,17 +282,19 @@ class Evaluator:
     
 def handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros, subsequent_non_finite_to_zeros): 
     '''
+    >>> np.set_printoptions(formatter={'float': '{: .6g}'.format})
     >>> timestamps = np.arange(np.datetime64('2019-01-01'), np.datetime64('2019-01-07'))
     >>> rets = np.array([np.nan, np.nan, 3, 4, np.nan, 5])
     >>> handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros = False, subsequent_non_finite_to_zeros = True)
-    (array(['2019-01-03', '2019-01-04', '2019-01-05', '2019-01-06'], dtype='datetime64[D]'), array([3., 4., 0., 5.]))
+    (array(['2019-01-03', '2019-01-04', '2019-01-05', '2019-01-06'], dtype='datetime64[D]'), array([ 3,  4,  0,  5]))
     >>> handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros = True, subsequent_non_finite_to_zeros = False)
-    (array(['2019-01-01', '2019-01-02', '2019-01-03', '2019-01-04', '2019-01-06'], dtype='datetime64[D]'), array([0., 0., 3., 4., 5.]))
+    (array(['2019-01-01', '2019-01-02', '2019-01-03', '2019-01-04', '2019-01-06'], dtype='datetime64[D]'), array([ 0,  0,  3,  4,  5]))
     >>> handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros = False, subsequent_non_finite_to_zeros = False)
-    (array(['2019-01-01', '2019-01-02', '2019-01-03', '2019-01-04', '2019-01-06'], dtype='datetime64[D]'), array([0., 0., 3., 4., 5.]))
+    (array(['2019-01-01', '2019-01-02', '2019-01-03', '2019-01-04', '2019-01-06'], dtype='datetime64[D]'), array([ 0,  0,  3,  4,  5]))
     >>> rets = np.array([1, 2, 3, 4, 4.5,  5])
     >>> handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros = False, subsequent_non_finite_to_zeros = True)
-    (array(['2019-01-01', '2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05', '2019-01-06'], dtype='datetime64[D]'), array([1. , 2. , 3. , 4. , 4.5, 5. ]))
+    (array(['2019-01-01', '2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05', '2019-01-06'], 
+        dtype='datetime64[D]'), array([ 1,  2,  3,  4,  4.5,  5]))
     '''
     
     first_non_nan_index = np.ravel(np.nonzero(~np.isnan(rets)))

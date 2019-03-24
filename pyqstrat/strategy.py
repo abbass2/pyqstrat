@@ -242,8 +242,11 @@ class Strategy:
         ...        self.rules = {'rule_a' : rule_a, 'rule_b' : rule_b}
         ...        self.market_sims = {'IBM' : market_sim_ibm, 'AAPL' : market_sim_aapl}
         ...        self.rule_signals = {'rule_a' : ('sig_a', [1]), 'rule_b' : ('sig_b', [1, -1])}
-        ...        self.signal_values = {'IBM' : types.SimpleNamespace(sig_a = np.array([0., 1., 1.]), sig_b = np.array([0., 0., 0.]))},
-        ...                              'AAPL' : types.SimpleNamespace(sig_a = np.array([0., 0., 0.]), sig_b = np.array([0., -1., -1]))}}
+        ...        self.signal_values = {'IBM' : types.SimpleNamespace(sig_a = np.array([0., 1., 1.]), 
+        ...                                                   sig_b = np.array([0., 0., 0.]) ),
+        ...                               'AAPL' : types.SimpleNamespace(sig_a = np.array([0., 0., 0.]), 
+        ...                                                    sig_b = np.array([0., -1., -1])
+        ...                                                   )}
         ...        self.indicator_values = {'IBM' : types.SimpleNamespace(), 'AAPL' : types.SimpleNamespace()}
         >>>
         >>> def market_sim_aapl(): pass
@@ -256,9 +259,6 @@ class Strategy:
         >>> start_date = np.datetime64('2018-01-01')
         >>> end_date = np.datetime64('2018-02-05')
         >>> timestamps, orders_iter, trades_iter = Strategy._get_iteration_indices(MockStrat(), rule_names, symbols, start_date, end_date)
-        >>> assert(len(trades_iter[1]) == 0)
-        >>> assert(trades_iter[2][1][1] == "AAPL")
-        >>> assert(trades_iter[2][2][1] == "IBM")
         >>> assert(len(orders_iter[0]) == 0)
         >>> assert(len(orders_iter[1]) == 2)
         >>> assert(orders_iter[1][0][1] == "IBM")
@@ -580,8 +580,8 @@ def test_strategy():
     from pyqstrat.orders import MarketOrder
 
     try:
-        ko_file = os.path.dirname(os.path.realpath(__file__)) + './support/coke_15_min_prices.csv.gz'
-        pep_file = os.path.dirname(os.path.realpath(__file__)) + './support/pepsi_15_min_prices.csv.gz' # If we are running from unit tests
+        ko_file_path = os.path.dirname(os.path.realpath(__file__)) + '/notebooks/support/coke_15_min_prices.csv.gz'
+        pep_file_path = os.path.dirname(os.path.realpath(__file__)) + '/notebooks/support/pepsi_15_min_prices.csv.gz' # If we are running from unit tests
     except:
         ko_file_path = '../notebooks/support/coke_15_min_prices.csv.gz'
         pep_file_path = '../notebooks/support/pepsi_15_min_prices.csv.gz'
@@ -701,5 +701,8 @@ def test_strategy():
     
 if __name__ == "__main__":
     test_strategy()
+
+
+#cell 2
 
 
