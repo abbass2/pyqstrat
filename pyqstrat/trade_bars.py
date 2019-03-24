@@ -327,7 +327,7 @@ class TradeBars:
         return df
     
     
-def roll_futures(md, date_func, condition_func, expiries = None, return_full_df = False):
+def roll_futures(fut_prices, date_func, condition_func, expiries = None, return_full_df = False):
     '''Construct a continuous futures dataframe with one row per datetime given rolling logic
     
     Args:
@@ -348,54 +348,55 @@ def roll_futures(md, date_func, condition_func, expiries = None, return_full_df 
         A pandas DataFrame with one row per date, which contains the columns in the original md DataFrame and the same columns suffixed with _next 
           representing the series we want to roll to.  There is also a column called roll_flag which is set to True whenever 
           the date and roll condition functions are met.
-          
-    >>> trade_bar = pd.DataFrame({'date' : np.concatenate((np.arange(np.datetime64('2018-03-11'), np.datetime64('2018-03-16')),
-    ...                                            np.arange(np.datetime64('2018-03-11'), np.datetime64('2018-03-16')))),
-    ...                    'c' : [10, 10.1, 10.2, 10.3, 10.4] + [10.35, 10.45, 10.55, 10.65, 10.75],
-    ...                    'v' : [200, 200, 150, 100, 100] + [100, 50, 200, 250, 300],
-    ...                    'series' : ['MAR2018'] * 5 + ['JUN2018'] * 5})[['date','series', 'c', 'v']]
-    >>> expiries = pd.Series(np.array(['2018-03-15', '2018-06-15'], dtype = 'M8[D]'), index = ['MAR2018', 'JUN2018'], name = "expiry")
-    >>> date_func = lambda md : trade_bar.expiry - trade_bar.date <= np.timedelta64(3, 'D')
-    >>> condition_func = lambda md : trade_bar.v_next > trade_bar.v
 
-    >>> df = roll_futures(md, date_func, condition_func, expiries)
-    >>> df[df.series == 'MAR2018'].date.max() == np.datetime64('2018-03-14')
+          
+    >>> fut_prices = pd.DataFrame({'timestamp' : np.concatenate((np.arange(np.datetime64('2018-03-11'), np.datetime64('2018-03-16')),
+    ...                                           np.arange(np.datetime64('2018-03-11'), np.datetime64('2018-03-16')))),
+    ...                   'c' : [10, 10.1, 10.2, 10.3, 10.4] + [10.35, 10.45, 10.55, 10.65, 10.75],
+    ...                   'v' : [200, 200, 150, 100, 100] + [100, 50, 200, 250, 300],
+    ...                   'series' : ['MAR2018'] * 5 + ['JUN2018'] * 5})[['timestamp','series', 'c', 'v']]
+    >>> expiries = pd.Series(np.array(['2018-03-15', '2018-06-15'], dtype = 'M8[D]'), index = ['MAR2018', 'JUN2018'], name = "expiry")
+    >>> date_func = lambda fut_prices : fut_prices.expiry - fut_prices.timestamp <= np.timedelta64(3, 'D')
+    >>> condition_func = lambda fut_prices : fut_prices.v_next > fut_prices.v
+    >>> df = roll_futures(fut_prices, date_func, condition_func, expiries)
+    >>> print(df[df.series == 'MAR2018'].timestamp.max() == np.datetime64('2018-03-14'))
     True
-    >>> df[df.series == 'JUN2018'].date.max() == np.datetime64('2018-03-15')
+    >>> print(df[df.series == 'JUN2018'].timestamp.max() == np.datetime64('2018-03-15'))
     True
     '''
-    if 'date' not in trade_bar.columns or 'series' not in trade_bar.columns:
-        raise Exception('date or series not found in columns: {trade_bar.columns}')
+    if 'timestamp' not in fut_prices.columns or 'series' not in fut_prices.columns:
+        raise Exception('timestamp or series not found in columns: {fut_prices.columns}')
         
     if expiries is not None:
         expiries = expiries.to_frame(name = 'expiry')
-        trade_bar = pd.merge(md, expiries, left_on = ['series'], right_index = True, how = 'left')
+        fut_prices = pd.merge(fut_prices, expiries, left_on = ['series'], right_index = True, how = 'left')
     else:
-        if 'expiry' not in trade_bar.columns: raise Exception('expiry column must be present in market data if expiries argument is not specified')
-        expiries = md[['series', 'expiry']].drop_duplicates().sort_values(by = 'expiry').set_index('s')
+        if 'expiry' not in fut_prices.columns: raise Exception('expiry column must be present in market data if expiries argument is not specified')
+        expiries = fut_prices[['series', 'expiry']].drop_duplicates().sort_values(by = 'expiry').set_index('s')
 
     expiries = pd.merge(expiries, expiries.shift(-1), left_index = True, right_index = True, how = 'left', suffixes = ['', '_next'])
 
-    orig_cols = [col for col in trade_bar.columns if col not in ['date']]
-    md1 = pd.merge(md, expiries[['expiry', 'expiry_next']], on = ['expiry'], how = 'left')
-    trade_bar = pd.merge(md1, md, left_on = ['date', 'expiry_next'], right_on = ['date', 'expiry'], how = 'left', suffixes = ['', '_next'])
+    orig_cols = [col for col in fut_prices.columns if col not in ['timestamp']]
+    fut_prices1 = pd.merge(fut_prices, expiries[['expiry', 'expiry_next']], on = ['expiry'], how = 'left')
+    fut_prices = pd.merge(fut_prices1, fut_prices, left_on = ['timestamp', 'expiry_next'], 
+                         right_on = ['timestamp', 'expiry'], how = 'left', suffixes = ['', '_next'])
 
-    trade_bar.sort_values(by = ['expiry', 'date'], inplace = True)
+    fut_prices.sort_values(by = ['expiry', 'timestamp'], inplace = True)
 
-    roll_flag = date_func(md) & condition_func(md) 
+    roll_flag = date_func(fut_prices) & condition_func(fut_prices) 
 
-    df_roll = pd.DataFrame({'series' : trade_bar.series, 'date' : trade_bar.date, 'roll_flag' : roll_flag})
+    df_roll = pd.DataFrame({'series' : fut_prices.series, 'timestamp' : fut_prices.timestamp, 'roll_flag' : roll_flag})
     df_roll = df_roll[df_roll.roll_flag].groupby('series', as_index = False).first()
-    trade_bar = pd.merge(md, df_roll, on = ['series', 'date'], how = 'left')
-    trade_bar.roll_flag = trade_bar.roll_flag.fillna(False)
+    fut_prices= pd.merge(fut_prices, df_roll, on = ['series', 'timestamp'], how = 'left')
+    fut_prices.roll_flag = fut_prices.roll_flag.fillna(False)
     
-    cols = ['date'] + orig_cols + [col + '_next' for col in orig_cols] + ['roll_flag']
-    trade_bar = md[cols]
+    cols = ['timestamp'] + orig_cols + [col + '_next' for col in orig_cols] + ['roll_flag']
+    fut_prices= fut_prices[cols]
     
-    if return_full_df: return md
+    if return_full_df: return fut_prices
     
     df_list = []
-    for series, g in trade_bar.groupby('expiry'):
+    for series, g in fut_prices.groupby('expiry'):
         roll_flag = g.roll_flag
         true_values = roll_flag[roll_flag]
         if len(true_values):
@@ -408,10 +409,9 @@ def roll_futures(md, date_func, condition_func, expiries = None, return_full_df 
         df_list.append(g)
 
     full_df = pd.concat(df_list)
-    full_df = full_df.sort_values(by = ['expiry', 'date']).drop_duplicates(subset=['date'])
+    full_df = full_df.sort_values(by = ['expiry', 'timestamp']).drop_duplicates(subset=['timestamp'])
 
     return full_df
-
 
 def test_trade_bars():
     from datetime import datetime, timedelta
