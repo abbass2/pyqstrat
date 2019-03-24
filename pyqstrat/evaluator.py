@@ -300,7 +300,8 @@ def compute_return_metrics(timestamps, rets, starting_equity):
     assert(type(rets) == np.ndarray and rets.dtype == np.float64)
     assert(type(timestamps) == np.ndarray and np.issubdtype(timestamps.dtype, np.datetime64) and monotonically_increasing(timestamps))
 
-    rets = nan_to_zero(rets)
+    timestamps = timestamps[np.isfinite(rets)]
+    rets = rets[np.isfinite(rets)]
 
     ev = Evaluator({'timestamps' : timestamps, 'returns' : rets, 'starting_equity' : starting_equity})
     ev.add_metric('periods_per_year', compute_periods_per_year, dependencies = ['timestamps'])

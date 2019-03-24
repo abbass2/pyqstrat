@@ -145,21 +145,28 @@ class Strategy:
          
         for symbol in symbols:
             for indicator_name in indicator_names:
+                print(f'running symbol: {symbol} indicator: {indicator_name}')
                 # First run all parents
                 parent_names = self.indicator_deps[indicator_name]
                 for parent_name in parent_names:
                     if symbol in self.indicator_values and hasattr(self.indicator_values[symbol], parent_name): continue
                     self.run_indicators([parent_name], [symbol])
+                    
                 # Now run the actual indicator
                 if symbol in self.indicator_values and hasattr(self.indicator_values[symbol], indicator_name): continue
                 indicator_function = self.indicators[indicator_name]
                 parent_values = types.SimpleNamespace()
-                for parent_name in parent_names:
-                    setattr(parent_values, parent_name, getattr(self.indicator_values[symbol], parent_name))
+                    
                 if isinstance(indicator_function, np.ndarray) or isinstance(indicator_function, pd.Series):
-                    indicator_function = series_to_array(indicator_function)
-                    setattr(self.indicator_values[symbol], indicator_name, indicator_function)
+                    print(f'setting indicator values: {symbol} {indicator_name}')
+                    indicator_values = series_to_array(indicator_function)
+                    setattr(self.indicator_values[symbol], indicator_name, indicator_values)
+                    
                 else:
+                    print(f'calculating indicator values: {symbol} {indicator_name}')
+                    for parent_name in parent_names:
+                        setattr(parent_values, parent_name, getattr(self.indicator_values[symbol], parent_name))
+
                     setattr(self.indicator_values[symbol], indicator_name, series_to_array(
                         indicator_function(symbol, self.timestamps, parent_values, self.strategy_context)))
                 
