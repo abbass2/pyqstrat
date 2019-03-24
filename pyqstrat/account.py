@@ -14,12 +14,12 @@ def _calc_pnl(open_trades, new_trades, ending_close, multiplier):
     ...              Trade('IBM', np.datetime64('2018-01-01 10:20:00'), 10, 50.),
     ...              Trade('IBM', np.datetime64('2018-01-02 11:20:00'), -5, 45.)])
     >>> print(_calc_pnl(open_trades = deque(), new_trades = trades, ending_close = 54, multiplier = 100))
-    (deque([IBM 2018-01-01 10:20 qty: 8 prc: 50.0 order: None]), 3200.0, -2800.0)
+    (deque([IBM 2018-01-01 10:20 qty: 8 prc: 50 order: None]), 3200.0, -2800.0)
     >>> trades = deque([Trade('IBM', np.datetime64('2018-01-01 10:15:00'), -8, 10.),
     ...          Trade('IBM', np.datetime64('2018-01-01 10:20:00'), 9, 11.),
     ...          Trade('IBM', np.datetime64('2018-01-02 11:20:00'), -4, 6.)])
     >>> print(_calc_pnl(open_trades = deque(), new_trades = trades, ending_close = 5.8, multiplier = 100))
-    (deque([IBM 2018-01-02 11:20 qty: -3 prc: 6.0 order: None]), 60.00000000000006, -1300.0)
+    (deque([IBM 2018-01-02 11:20 qty: -3 prc: 6 order: None]), 60.00000000000006, -1300.0)
     '''
     
     realized = 0.
@@ -117,11 +117,11 @@ class ContractPNL:
          
     def df(self):
         '''Returns a pandas dataframe with pnl data, indexed by date'''
-        df = pd.DataFrame({'date' : self.timestamps, 'unrealized' : self.unrealized, 'realized' : self.realized, 
+        df = pd.DataFrame({'timestamp' : self.timestamps, 'unrealized' : self.unrealized, 'realized' : self.realized, 
                            'fee' : self.fee, 'net_pnl' : self.net_pnl, 'position' : self.position, 'price' : self.price})
         df.dropna(subset = ['unrealized', 'realized'], inplace = True)
         df['symbol'] = self.symbol
-        return df[['symbol', 'date', 'unrealized', 'realized', 'fee', 'net_pnl', 'position', 'price']].set_index('date')
+        return df[['symbol', 'timestamp', 'unrealized', 'realized', 'fee', 'net_pnl', 'position', 'price']]
     
 def _get_calc_indices(timestamps):
     calc_timestamps = np.unique(timestamps.astype('M8[D]'))
@@ -135,17 +135,11 @@ class Account:
         '''
         Args:
             contracts (list of Contract): Contracts that we want to compute PNL for
-            marketdata_collection (MarketDataCollection): MarketData corresponding to contracts 
+            timestamps (list of np.datetime64): Timestamps that we might compute PNL at
+            price_function (function): Function that takes a symbol, timestamps, index, strategy context and 
+                returns the price used to compute pnl
             starting_equity (float, optional): Starting equity in account currency.  Default 1.e6
             calc_frequency (str, optional): Account will calculate pnl at this frequency.  Default 'D' for daily
-       
-        >>> from pyqstrat.marketdata import MarketData, MarketDataCollection
-        >>> from pyqstrat.pq_types import Contract
-        >>> timestamps = np.array(['2018-01-01', '2018-01-02'], dtype = 'M8[D]')
-        >>> account = Account([Contract("IBM")], MarketDataCollection(["IBM"], [MarketData(timestamps, [8.1, 8.2])]))
-        >>> np.set_printoptions(formatter = {'float' : lambda x : f'{x:.4f}'})  # After numpy 1.13 positive floats don't have a leading space for sign
-        >>> print(account.marketdata['IBM'].c)
-        [8.1000 8.2000]
         '''
         if calc_frequency != 'D': raise Exception('unknown calc frequency: {}'.format(calc_frequency))
         self.calc_freq = calc_frequency
@@ -184,32 +178,6 @@ class Account:
             i: Index to compute P&L at.  Account remembers the last index it computed P&L up to and will compute P&L
                 between these two indices.  If there is more than one day between the last index and current index, we will 
                 include pnl for end of day at those dates as well.
-                
-        >>> from pyqstrat.pq_types import Contract, Trade
-        >>> from pyqstrat.orders import MarketOrder
-        >>> import math
-
-        >>> def get_close_price(symbol, timestamps, idx):
-        ...    indices = np.arange(len(timestamps))
-        ...    prices = indices + 10
-        ...    price = dict(zip(indices, prices))[idx]
-        ...    return price
-
-        >>> symbol = 'IBM'
-        >>> timestamps = np.array(['2018-01-01 05:35', '2018-01-02 08:00', '2018-01-02 09:00', '2018-01-05 13:35'], dtype = 'M8[m]')
-        >>> account = Account([Contract(symbol)], timestamps, get_close_price)
-        >>> trade_1 = Trade(symbol, np.datetime64('2018-01-01 09:00'), 10, 10.1, 0.01, 
-        ...                order = MarketOrder(symbol, np.datetime64('2018-01-01 08:55'), 10))
-        >>> trade_2 = Trade(symbol, np.datetime64('2018-01-04 13:55'), 20, 15.1, 0.02, 
-        ...                order = MarketOrder(symbol, np.datetime64('2018-01-03 13:03'), 20))
-        >>> account._add_trades('IBM', [trade_1, trade_2])
-        >>> np.set_printoptions(formatter = {'float' : lambda x : f'{x:.4f}'})  # After numpy 1.13 positive floats don't have a leading space for sign
-        >>> account.calc(3)
-        >>> account.df_trades()
-        >>> assert(len(account.df_trades()) 
-        >>> assert(np.allclose(np.array([1000000, 1000018.99, 999986.97]), account.df_pnl().equity.values, rtol = 0))
-        >>> assert(np.allclose(np.array([0, 10, 30]), account.df_pnl().position.values, rtol = 0))
-        >>> assert(np.allclose(np.array([0, 10, 30]), account.df_pnl().position.values, rtol = 0))
         '''
         calc_indices = self.calc_indices[:]
         if self.current_calc_index == i: return
@@ -284,31 +252,32 @@ class Account:
                 df = symbol_pnl.df()
                 dfs.append(df)
             ret = pd.concat(dfs)
-            ret = ret.reset_index().groupby('date').sum()
-        df_equity = pd.DataFrame({'equity' : self._equity}, index = self.timestamps).dropna()
-        ret = pd.merge(ret, df_equity, left_index = True, right_index = True, how = 'outer')
-        ret.index.name = 'date'
-        return ret
+            ret = ret.groupby('timestamp').sum()
+        df_equity = pd.DataFrame({'timestamp' : self.timestamps, 'equity' : self._equity}).dropna()
+        ret = pd.merge(ret, df_equity, on = ['timestamp'], how = 'outer')
+        return ret.reset_index()
     
     def df_trades(self, symbol = None, start_date = None, end_date = None):
-        '''Returns a dataframe with data from trades with the given symbol and with trade date between (and including) start date and end date
-          if they are specified.  If symbol is None, trades for all symbols are returned'''
+        '''Returns a dataframe with data from trades with the given symbol and with trade date between (and including) 
+            start date and end date if they are specified.  If symbol is None, trades for all symbols are returned'''
         start_date, end_date = str2date(start_date), str2date(end_date)
         if symbol:
             trades = self.contract_pnls[symbol].trades(start_date, end_date)
         else:
             trades = [v.trades(start_date, end_date) for v in self.contract_pnls.values()]
             trades = [trade for sublist in trades for trade in sublist] # flatten list
-        df = pd.DataFrame.from_records([(trade.symbol, trade.timestamp, trade.qty, trade.price, trade.fee, trade.commission, trade.order.timestamp, trade.order.qty, trade.order.params()) for trade in trades],
-                    columns = ['symbol', 'date', 'qty', 'price', 'fee', 'commission', 'order_date', 'order_qty', 'order_params'])
+        df = pd.DataFrame.from_records([(trade.symbol, trade.timestamp, trade.qty, trade.price, 
+                                         trade.fee, trade.commission, trade.order.timestamp, trade.order.qty, trade.order.params()
+                                        ) for trade in trades],
+                    columns = ['symbol', 'timestamp', 'qty', 'price', 'fee', 'commission', 'order_date', 'order_qty', 'order_params'])
         return df
     
-if __name__ == "__main__":
+def test_account():
     from pyqstrat.pq_types import Contract, Trade
     from pyqstrat.orders import MarketOrder
     import math
 
-    def get_close_price(symbol, timestamps, idx):
+    def get_close_price(symbol, timestamps, idx, strategy_context):
         indices = np.arange(len(timestamps))
         prices = indices + 10
         price = dict(zip(indices, prices))[idx]
@@ -316,7 +285,7 @@ if __name__ == "__main__":
     
     symbol = 'IBM'
     timestamps = np.array(['2018-01-01 05:35', '2018-01-02 08:00', '2018-01-02 09:00', '2018-01-05 13:35'], dtype = 'M8[m]')
-    account = Account([Contract(symbol)], timestamps, get_close_price)
+    account = Account([Contract(symbol)], timestamps, get_close_price, None)
     #account = Account([Contract(symbol)], timestamps, get_close_price)
     trade_1 = Trade(symbol, np.datetime64('2018-01-01 09:00'), 10, 10.1, 0.01, 
                     order = MarketOrder(symbol, np.datetime64('2018-01-01 08:55'), 10))
@@ -331,7 +300,7 @@ if __name__ == "__main__":
     assert(np.allclose(np.array([1000000, 1000018.99, 999986.97]), account.df_pnl().equity.values, rtol = 0))
     assert(np.allclose(np.array([0, 10, 30]), account.df_pnl().position.values, rtol = 0))
     assert(np.allclose(np.array([0, 10, 30]), account.df_pnl().position.values, rtol = 0))
-
-#cell 2
-
+    
+if __name__ == "__main__":
+    test_account()
 

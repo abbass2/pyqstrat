@@ -71,8 +71,8 @@ class TradeBars:
         ['2018-01-05T00:00:00.000000000' '2018-01-07T00:00:00.000000000'
          '2018-01-09T00:00:00.000000000' '2018-01-10T00:00:00.000000000']
         >>> np.set_printoptions(formatter = {'float' : lambda x : f'{x:.4f}'})  # After numpy 1.13 positive floats don't have a leading space for sign
-        >>> print(trade_bar.o, trade_bar.c, trade_bar.x)
-        [9.0000 nan 10.0000 11.0000] [8.1000 nan 8.2000 8.3000] [5.1000 0.0000 5.3000 5.5000]
+        >>> print(trade_bar.o, trade_bar.c)
+        [9.0000 nan 10.0000 11.0000] [8.1000 nan 8.2000 8.3000]
         '''
         if timestamps is None or len(timestamps) == 0: return
         timestamps = np.unique(timestamps)
@@ -434,7 +434,4 @@ def test_trade_bars():
 
 if __name__ == "__main__":
     test_trade_bars()
-
-#cell 3
-
 

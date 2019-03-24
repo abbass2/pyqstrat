@@ -284,18 +284,22 @@ def handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros, sub
     '''
     >>> timestamps = np.arange(np.datetime64('2019-01-01'), np.datetime64('2019-01-07'))
     >>> rets = np.array([np.nan, np.nan, 3, 4, np.nan, 5])
-    >>> handle_non_finite(timestamps, rets, leading_non_finite_to_zeros = False, subsequent_non_finite_to_zeros = True)
+    >>> handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros = False, subsequent_non_finite_to_zeros = True)
     (array(['2019-01-03', '2019-01-04', '2019-01-05', '2019-01-06'], dtype='datetime64[D]'), array([3., 4., 0., 5.]))
-    >>> handle_non_finite(timestamps, rets, leading_non_finite_to_zeros = True, subsequent_non_finite_to_zeros = False)
+    >>> handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros = True, subsequent_non_finite_to_zeros = False)
     (array(['2019-01-01', '2019-01-02', '2019-01-03', '2019-01-04', '2019-01-06'], dtype='datetime64[D]'), array([0., 0., 3., 4., 5.]))
-    >>> handle_non_finite(timestamps, rets, leading_non_finite_to_zeros = False, subsequent_non_finite_to_zeros = False)
+    >>> handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros = False, subsequent_non_finite_to_zeros = False)
     (array(['2019-01-01', '2019-01-02', '2019-01-03', '2019-01-04', '2019-01-06'], dtype='datetime64[D]'), array([0., 0., 3., 4., 5.]))
     >>> rets = np.array([1, 2, 3, 4, 4.5,  5])
-    handle_non_finite(timestamps, rets, leading_non_finite_to_zeros = False, subsequent_non_finite_to_zeros = True)
+    >>> handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros = False, subsequent_non_finite_to_zeros = True)
     (array(['2019-01-01', '2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05', '2019-01-06'], dtype='datetime64[D]'), array([1. , 2. , 3. , 4. , 4.5, 5. ]))
     '''
     
-    first_non_nan_index = np.ravel(np.nonzero(~np.isnan(rets)))[0]
+    first_non_nan_index = np.ravel(np.nonzero(~np.isnan(rets)))
+    if len(first_non_nan_index):
+        first_non_nan_index = first_non_nan_index[0]
+    else:
+        first_non_nan_index = -1
     
     if first_non_nan_index > 0 and first_non_nan_index < len(rets):
         if leading_non_finite_to_zeros:
@@ -338,7 +342,7 @@ def compute_return_metrics(timestamps, rets, starting_equity, leading_non_finite
     
     #rets = np.nan_to_num(rets)
     
-    timestamps, rets = handle_non_finite_returns(rets, timestamps, leading_non_finite_to_zeros, subsequent_non_finite_to_zeros)
+    timestamps, rets = handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros, subsequent_non_finite_to_zeros)
 
     ev = Evaluator({'timestamps' : timestamps, 'returns' : rets, 'starting_equity' : starting_equity})
     ev.add_metric('periods_per_year', compute_periods_per_year, dependencies = ['timestamps'])
@@ -476,35 +480,5 @@ def test_evaluator():
     
 if __name__ == "__main__":
     test_evaluator()
-
-
-#cell 2
-
-
-#cell 3
-(~np.isnan(a)).cumsum(1).argmax(1)
-
-#cell 4
-np.cumsum(a)
-
-#cell 5
-a = np.array([np.nan, np.nan, 3, 4, np.nan, 5, np.nan])
-first_non_nan_index = np.ravel(np.nonzero(~np.isnan(a)))[0]
-a = a[first_non_nan_index:]
-a
-#np.ravel(np.nonzero(~np.isnan(a)))[0]
-#np.ravel(np.nonzero(~np.isnan()))
-
-#cell 6
-
-
-
-#cell 7
-len(timestamps)
-
-#cell 8
-len(rets)
-
-#cell 9
 
 

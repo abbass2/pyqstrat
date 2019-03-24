@@ -370,10 +370,6 @@ def _plot_data(ax, data):
         if data.marker is not None:
             line = ax.scatter(x, y, marker = data.marker, c = data.marker_color, s = data.marker_size, zorder=100)
     elif data.plot_type == 'scatter':
-        #x_cp = x[:]
-        #x = x[np.isfinite(y) & np.isfinite(x)]
-        #y = y[np.isfinite(y) & np.isfinite(x_cp)]
-        #print(f'x: {x} y: {y}')
         line = ax.scatter(x, y, marker = data.marker, c = data.marker_color, s = data.marker_size, zorder=100)
     elif data.plot_type == 'bar':
         line = ax.bar(index, y, color = data.color)
@@ -516,8 +512,6 @@ class Subplot:
                     val = getattr(data, col)
                     if val is not None:
                         df_dict[col] = val
-                for k, v in df_dict.items():
-                    print(f'{k} len: {len(v)}')
                 df = pd.DataFrame(df_dict)
                 df.set_index('timestamps', inplace = True)
                 df = resample_trade_bars(df, sampling_frequency)
@@ -727,8 +721,8 @@ def test_plot():
             self.reason_code = reason_code
     
     class MockTrade:
-        def __init__(self, date, qty, price, reason_code):
-            self.date = date
+        def __init__(self, timestamp, qty, price, reason_code):
+            self.timestamp = timestamp
             self.qty = qty
             self.price = price
             self.order = MockOrder(reason_code) 
@@ -785,10 +779,10 @@ def test_plot():
     
     subplot_list = [ind_subplot, sig_subplot, pos_subplot, equity_subplot, annual_returns_subplot, xy_subplot, xyz_subplot]
     plot = Plot(subplot_list, figsize = (20,20), title = 'Plot Test', hspace = 0.35)
-    plot.draw()
+    plot.draw();
     
 if __name__ == "__main__":
-    test_plot()
+    test_plot();
 
 #cell 2
 

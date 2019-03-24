@@ -165,13 +165,14 @@ class Portfolio:
         if len(strategy_names) == 0: raise Exception('portfolio must have at least one strategy')
         equity_list = []
         for name in strategy_names:
-            equity = self.strategies[name].df_returns(sampling_frequency = sampling_frequency)[['equity']]
-            equity.columns = [name]
+            equity = self.strategies[name].df_returns(sampling_frequency = sampling_frequency)[['timestamp', 'equity']]
+            equity.columns = ['timestamp', name]
+            equity = equity.set_index('timestamp')
             equity_list.append(equity)
         df = pd.concat(equity_list, axis = 1)
         df['equity'] = df.sum(axis = 1)
         df['ret'] = df.equity.pct_change()
-        return df
+        return df.reset_index()
         
     def evaluate_returns(self, sampling_frequency = 'D', strategy_names = None, plot = True, float_precision = 4):
         '''Returns a dictionary of common return metrics.
@@ -183,7 +184,7 @@ class Portfolio:
             float_precision: Number of significant figures to show in returns.  Default 4
         '''
         returns = self.df_returns(sampling_freq, strategy_names)
-        ev = compute_return_metrics(returns.index.values, returns.ret.values, returns.equity.values[0])
+        ev = compute_return_metrics(returns.timestamp.values, returns.ret.values, returns.equity.values[0])
         display_return_metrics(ev.metrics(), float_precision = float_precision)
         if plot: plot_return_metrics(ev.metrics())
         return ev.metrics()
@@ -196,7 +197,8 @@ class Portfolio:
             strategy_names: A list of strategy names.  By default this is set to None and we use all strategies.
         '''
         returns = self.df_returns(sampling_frequency, strategy_names)
-        ev = compute_return_metrics(returns.index.values, returns.ret.values, returns.equity.values[0])
+        timestamps = returns.timestamp.values
+        ev = compute_return_metrics(timestamps, returns.ret.values, returns.equity.values[0])
         plot_return_metrics(ev.metrics())
         
     def __repr__(self):

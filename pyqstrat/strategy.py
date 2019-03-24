@@ -160,11 +160,6 @@ class Strategy:
                 if symbol in self.indicator_values and hasattr(symbol_ind_namespace, indicator_name): continue
                 indicator_function = self.indicators[indicator_name]
                      
-                #if isinstance(indicator_function, np.ndarray) or isinstance(indicator_function, pd.Series):
-                #    indicator_values = series_to_array(indicator_function)
-                #    setattr(symbol_ind_namespace, indicator_name, indicator_values)
-                #    print(f'{symbol} added indicator: {indicator_name} {indicator_values[0:10]}')
-                #else:
                 parent_values = types.SimpleNamespace()
 
                 for parent_name in parent_names:
@@ -385,8 +380,8 @@ class Strategy:
                 name = k
                 if name in df.columns: name = name + '.sig'
                 df.insert(len(df.columns), name, getattr(signal_values, k))
-            
-            if add_pnl: df = pd.merge(df, df_pnl, left_index = True, right_index = True, how = 'left')
+                
+            if add_pnl: df = pd.merge(df, df_pnl, on = ['timestamp'], how = 'left')
             # Add counter column for debugging
             df.insert(len(df.columns), 'i', np.arange(len(df)))
             
@@ -419,7 +414,7 @@ class Strategy:
         start_date, end_date = str2date(start_date), str2date(end_date)
         orders = self.orders(symbol, start_date, end_date)
         df_orders = pd.DataFrame.from_records([(order.symbol, type(order).__name__, order.timestamp, order.qty, order.params()) 
-                                               for order in orders], columns = ['symbol', 'type', 'date', 'qty', 'params'])
+                                               for order in orders], columns = ['symbol', 'type', 'timestamp', 'qty', 'params'])
         return df_orders
    
     def df_pnl(self, symbol = None):
@@ -433,9 +428,9 @@ class Strategy:
             symbol: The symbol to get returns for.  If set to None (default), this returns the sum of PNL for all symbols
             sampling_frequency: Downsampling frequency.  Default is None.  See pandas frequency strings for possible values
         '''
-        pnl = self.df_pnl(symbol)[['equity']]
+        pnl = self.df_pnl(symbol)[['timestamp', 'equity']]
         pnl.equity = pnl.equity.ffill()
-        pnl = pnl.resample(sampling_frequency).last()
+        pnl = pnl.set_index('timestamp').resample(sampling_frequency).last().reset_index()
         pnl['ret'] = pnl.equity.pct_change()
         return pnl
     
@@ -504,7 +499,7 @@ class Strategy:
                                                              self.indicator_values[symbol], indicator_properties)
             signal_list = _get_time_series_list(self.timestamps, signal_names, self.signal_values[symbol], signal_properties)
             df_pnl_ = self.df_pnl(symbol)
-            pnl_list = [TimeSeries(pnl_column, timestamps = df_pnl_.index.values, values = df_pnl_[pnl_column].values
+            pnl_list = [TimeSeries(pnl_column, timestamps = df_pnl_.timestamp.values, values = df_pnl_[pnl_column].values
                                   ) for pnl_column in pnl_columns]
             
             if trade_marker_properties:
@@ -518,7 +513,7 @@ class Strategy:
             signal_subplot = Subplot(signal_list, ylabel = 'Signals', height_ratio = 0.167)
             pnl_subplot = Subplot(pnl_list, ylabel = 'Equity', height_ratio = 0.167, log_y = True, y_tick_format = '${x:,.0f}')
             position = df_pnl_.position.values
-            pos_subplot = Subplot([TimeSeries('position', timestamps = df_pnl_.index.values, values = position, 
+            pos_subplot = Subplot([TimeSeries('position', timestamps = df_pnl_.timestamp, values = position, 
                                               plot_type = 'filled_line')], ylabel = 'Position', height_ratio = 0.167)
             
             title_full = title
@@ -535,7 +530,7 @@ class Strategy:
                         title = title_full, hspace = hspace)
             plot.draw()
             
-    def evaluate_returns(self, symbol = None, plot = True, float_precision = 4):
+    def evaluate_returns(self, symbol = None, plot = True, display_summary = True, float_precision = 4):
         '''Returns a dictionary of common return metrics.
         
         Args:
@@ -544,8 +539,9 @@ class Strategy:
             float_precision (float, optional): Number of significant figures to show in returns.  Default 4
         '''
         returns = self.df_returns(symbol)
-        ev = compute_return_metrics(returns.index.values, returns.ret.values, self.account.starting_equity)
-        display_return_metrics(ev.metrics(), float_precision = float_precision)
+        ev = compute_return_metrics(returns.timestamp.values, returns.ret.values, self.account.starting_equity)
+        if display_summary:
+            display_return_metrics(ev.metrics(), float_precision = float_precision)
         if plot: plot_return_metrics(ev.metrics())
         return ev.metrics()
     
@@ -563,69 +559,147 @@ class Strategy:
         
         df = pd.concat(df_list, axis = 1)
             
-        ev = compute_return_metrics(returns.index.values, returns.ret.values, self.account.starting_equity)
+        ev = compute_return_metrics(returns.timestamp.values, returns.ret.values, self.account.starting_equity)
         plot_return_metrics(ev.metrics())
        
     def __repr__(self):
         return f'{pformat(self.indicators)} {pformat(self.rules)} {pformat(self.account)}'
     
-if __name__ == "__main__":
+    
+def test_strategy():
+    import math
+    import datetime
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import scipy.stats
+    import os
+    from types import SimpleNamespace
     from pyqstrat.pq_types import Contract, Trade
-    from pyqstrat.pq_utils import ReasonCode
-    from pyqstrat.orders import MarketOrder
     from pyqstrat.portfolio import Portfolio
+    from pyqstrat.orders import MarketOrder
+
+    try:
+        ko_file = os.path.dirname(os.path.realpath(__file__)) + './support/coke_15_min_prices.csv.gz'
+        pep_file = os.path.dirname(os.path.realpath(__file__)) + './support/pepsi_15_min_prices.csv.gz' # If we are running from unit tests
+    except:
+        ko_file_path = '../notebooks/support/coke_15_min_prices.csv.gz'
+        pep_file_path = '../notebooks/support/pepsi_15_min_prices.csv.gz'
+
+    ko_prices = pd.read_csv(ko_file_path)
+    pep_prices = pd.read_csv(pep_file_path)
+
+    ko_prices['timestamp'] = pd.to_datetime(ko_prices.date)
+    pep_prices['timestamp'] = pd.to_datetime(pep_prices.date)
+
+    timestamps = ko_prices.timestamp.values
     
-    def price_function(symbol, timestamps, i, strategy_context):
-        return prices[i]
+    ratio = ko_prices.c / pep_prices.c
     
-    def sma(symbol, timestamps, parent_indicators, strategy_context):
-        return pd.Series(parent_indicators.c).rolling(window = 20).mean()
-    
-    def signal(symbol, timestamps, indicators, parent_signals, strategy_context):
-        sma = np.nan_to_num(indicators.sma)
-        signal = np.where(indicators.c > (sma + 0.1), 1, 0)
-        signal = np.where(indicators.c < (sma - 0.1), -1, signal)
+    def zscore_indicator(symbol, timestamps, indicators, strategy_context): # simple moving average
+        ratio = indicators.ratio
+        r = pd.Series(ratio).rolling(window = 130)
+        mean = r.mean()
+        std = r.std(ddof = 0)
+        zscore = (ratio - mean) / std
+        zscore = np.nan_to_num(zscore)
+        return zscore
+
+    def pair_strategy_signal(symbol, timestamps, indicators, parent_signals, strategy_context): # We don't need any indicators since the zscore is already part of the market data
+        zscore = indicators.zscore
+        signal = np.where(zscore > 1, 2, 0)
+        signal = np.where(zscore < -1, -2, signal)
+        signal = np.where((zscore > 0.5) & (zscore < 1), 1, signal)
+        signal = np.where((zscore < -0.5) & (zscore > -1), -1, signal)
+        if symbol == 'PEP': signal = -1. * signal
         return signal
-    
-    def rule(symbol, i, timestamps, indicator_values, signal_values, account, strategy_context):
+
+    def pair_trading_rule(symbol, i, timestamps, indicators, signal, account, strategy_context):
         timestamp = timestamps[i]
         curr_pos = account.position(symbol, timestamp)
-        signal_value = signal_values[i]
+        signal_value = signal[i]
         risk_percent = 0.1
-        timestamp = timestamps[i]
 
-        if signal_value == 1:
-            return [MarketOrder(symbol, timestamp, 10, reason_code = ReasonCode.ENTER_LONG)]
-        if signal_value == -1:
-            return [MarketOrder(symbol, timestamp, -10, reason_code = ReasonCode.ENTER_SHORT)]
-        return []
+        orders = []
+
+        # if we don't already have a position, check if we should enter a trade
+        if math.isclose(curr_pos, 0):
+            if signal_value == 2 or signal_value == -2:
+                curr_equity = account.equity(timestamp)
+                order_qty = np.round(curr_equity * risk_percent / indicators.c[i] * np.sign(signal_value))
+                trigger_price = indicators.c[i]
+                reason_code = ReasonCode.ENTER_LONG if order_qty > 0 else ReasonCode.ENTER_SHORT
+                orders.append(MarketOrder(symbol, timestamp, order_qty, reason_code = reason_code))
+
+        else: # We have a current position, so check if we should exit
+            if (curr_pos > 0 and signal_value == -1) or (curr_pos < 0 and signal_value == 1):
+                order_qty = -curr_pos
+                reason_code = ReasonCode.EXIT_LONG if order_qty < 0 else ReasonCode.EXIT_SHORT
+                orders.append(MarketOrder(symbol, timestamp, order_qty, reason_code = reason_code))
+        return orders
 
     def market_simulator(orders, i, timestamps, indicators, signals, strategy_context):
-        c = indicators.c[i]
         trades = []
-    
-        for order in orders:
-            trades.append(Trade(order.symbol, timestamps[i], order.qty, c, order = order, commission = 0.01))
-            order.status = 'filled'
-                           
-        return trades
-        
-    contract = Contract("IBM")
-    timestamps = np.arange(np.datetime64('2019-01-01'), np.datetime64('2019-01-03'), np.timedelta64(15, 'm'))
-    np.random.seed(0)
-    returns = np.random.normal(size = len(timestamps)) / 100
-    prices = np.round(np.cumprod(1 + returns) * 10, 2)
-    strategy = Strategy([contract], timestamps, price_function)
-    strategy.add_indicator('c', prices)
-    strategy.add_indicator('sma', sma, depends_on = ['c'])
-    strategy.add_signal('signal', signal, depends_on_indicators=['sma', 'c'])
-    strategy.add_rule('rule', rule, signal_name = 'signal', sig_true_values = [1, -1])
-    strategy.add_market_sim(market_simulator)
-    portfolio = Portfolio()
-    portfolio.add_strategy('strategy', strategy)
-    portfolio.run()
-    strategy.plot()
 
-#cell 2
+        timestamp = timestamps[i]
+
+        o, h, l, c = indicators.o[i], indicators.h[i], indicators.l[i], indicators.c[i]
+
+        for order in orders:
+            trade_price = np.nan
+
+            if isinstance(order, MarketOrder):
+                trade_price = 0.5 * (o + h) if order.qty > 0 else 0.5 * (o + l)
+            else:
+                raise Exception(f'unexpected order type: {order}')
+
+            if np.isnan(trade_price): continue
+
+            trade = Trade(order.symbol, timestamp, order.qty, trade_price, order = order, commission = 0, fee = 0)
+            order.status = 'filled'
+
+            trades.append(trade)
+
+        return trades
+    
+
+    def get_price(symbol, timestamps, i, strategy_context):
+        if symbol == 'KO':
+            return strategy_context.ko_price[i]
+        elif symbol == 'PEP':
+            return strategy_context.pep_price[i]
+        raise Exception(f'Unknown symbol: {symbol}')
+        
+    ko_contract = Contract('KO')
+    pep_contract = Contract('PEP')
+
+    strategy_context = SimpleNamespace(ko_price = ko_prices.c.values, pep_price = pep_prices.c.values)
+
+    strategy = Strategy([ko_contract, pep_contract], timestamps, get_price, strategy_context = strategy_context)
+    for tup in [('KO', ko_prices), ('PEP', pep_prices)]:
+        for column in ['o', 'h', 'l', 'c']:
+            strategy.add_indicator(column, tup[1][column], symbols = [tup[0]])
+    strategy.add_indicator('ratio', ratio)
+    strategy.add_indicator('zscore', zscore_indicator, depends_on = ['ratio'])
+
+    strategy.add_signal('pair_strategy_signal', pair_strategy_signal, depends_on_indicators = ['zscore'])
+
+    # ask pqstrat to call our trading rule when the signal has one of the values [-2, -1, 1, 2]
+    strategy.add_rule('pair_trading_rule', pair_trading_rule, 
+                      signal_name = 'pair_strategy_signal', sig_true_values = [-2, -1, 1, 2])
+
+    strategy.add_market_sim(market_simulator)
+
+    portfolio = Portfolio()
+    portfolio.add_strategy('pair_strategy', strategy)
+    portfolio.run()
+    
+    metrics = strategy.evaluate_returns(plot = False, display_summary = False)
+    assert(round(metrics['gmean'], 6) == -0.003986)
+    assert(round(metrics['sharpe'], 4) == -0.3502)
+    assert(round(metrics['mdd_pct'], 6) == -0.004439)
+    
+if __name__ == "__main__":
+    test_strategy()
 
 
