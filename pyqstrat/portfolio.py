@@ -8,7 +8,6 @@ from pyqstrat.pq_utils import *
 from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, plot_return_metrics
 from pyqstrat.strategy import Strategy
 
-
 #cell 1
 class Portfolio:
     '''A portfolio contains one or more strategies that run concurrently so you can test running strategies that are uncorrelated together.'''

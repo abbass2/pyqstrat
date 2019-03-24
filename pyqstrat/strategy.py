@@ -66,20 +66,24 @@ class Strategy:
         self.signal_deps = {}
         self.signal_symbols = {}
         
-    def add_indicator(self, name, indicator_function, symbols = None, depends_on = None):
+    def add_indicator(self, name, indicator, symbols = None, depends_on = None):
         '''
         Args:
             name: Name of the indicator
-            indicator_function:  A function that takes strategy timestamps and other indicators and returns a numpy array
-              containing indicator values.  The return array must have the same length as the timestamps object
+            indicator:  A function that takes strategy timestamps and other indicators and returns a numpy array
+              containing indicator values.  The return array must have the same length as the timestamps object.
+              Can also be a numpy array or a pandas Series in which case we just store the values.
             symbols (list of str, optional): Symbols that this indicator applies to.  If not set, it applies to all symbols.  Default None.
             depends_on (list of str, optional): Names of other indicators that we need to compute this indicator.
                 Default None.
         '''
-        
-        self.indicators[name] = indicator_function
+        self.indicators[name] = indicator
         self.indicator_deps[name] = [] if depends_on is None else depends_on
         if symbols is None: symbols = self.symbols
+        if isinstance(indicator, np.ndarray) or isinstance(indicator, pd.Series):
+            indicator_values = series_to_array(indicator)
+            for symbol in symbols:
+                setattr(self.indicator_values[symbol], name, indicator_values)
         self.indicator_symbols[name] = symbols
         
     def add_signal(self, name, signal_function, symbols = None, depends_on_indicators = None, depends_on_signals = None):
@@ -144,31 +148,30 @@ class Strategy:
         indicator_names = list(set(ind_names).intersection(indicator_names))
          
         for symbol in symbols:
+            symbol_ind_namespace = self.indicator_values[symbol]
             for indicator_name in indicator_names:
-                print(f'running symbol: {symbol} indicator: {indicator_name}')
                 # First run all parents
                 parent_names = self.indicator_deps[indicator_name]
                 for parent_name in parent_names:
-                    if symbol in self.indicator_values and hasattr(self.indicator_values[symbol], parent_name): continue
+                    if symbol in self.indicator_values and hasattr(symbol_ind_namespace, parent_name): continue
                     self.run_indicators([parent_name], [symbol])
                     
                 # Now run the actual indicator
-                if symbol in self.indicator_values and hasattr(self.indicator_values[symbol], indicator_name): continue
+                if symbol in self.indicator_values and hasattr(symbol_ind_namespace, indicator_name): continue
                 indicator_function = self.indicators[indicator_name]
+                     
+                #if isinstance(indicator_function, np.ndarray) or isinstance(indicator_function, pd.Series):
+                #    indicator_values = series_to_array(indicator_function)
+                #    setattr(symbol_ind_namespace, indicator_name, indicator_values)
+                #    print(f'{symbol} added indicator: {indicator_name} {indicator_values[0:10]}')
+                #else:
                 parent_values = types.SimpleNamespace()
-                    
-                if isinstance(indicator_function, np.ndarray) or isinstance(indicator_function, pd.Series):
-                    print(f'setting indicator values: {symbol} {indicator_name}')
-                    indicator_values = series_to_array(indicator_function)
-                    setattr(self.indicator_values[symbol], indicator_name, indicator_values)
-                    
-                else:
-                    print(f'calculating indicator values: {symbol} {indicator_name}')
-                    for parent_name in parent_names:
-                        setattr(parent_values, parent_name, getattr(self.indicator_values[symbol], parent_name))
 
-                    setattr(self.indicator_values[symbol], indicator_name, series_to_array(
-                        indicator_function(symbol, self.timestamps, parent_values, self.strategy_context)))
+                for parent_name in parent_names:
+                    setattr(parent_values, parent_name, getattr(symbol_ind_namespace, parent_name))
+
+                setattr(symbol_ind_namespace, indicator_name, series_to_array(
+                    indicator_function(symbol, self.timestamps, parent_values, self.strategy_context)))
                 
     def run_signals(self, signal_names = None, symbols = None, clear_all = False):
         '''Calculate values of the signals specified and store them.
@@ -229,8 +232,11 @@ class Strategy:
             timestamp = self.timestamps[i]
             if timestamp not in self.exclude_trade_timestamps:
                 self._check_for_trades(i, trades_iter[i])
+                self.account.calc(idx)
             if timestamp not in self.exclude_order_timestamps:
                 self._check_for_orders(i, tup_list)
+
+
         
     def _get_iteration_indices(self, rule_names = None, symbols = None, start_date = None, end_date = None):
         '''
@@ -334,7 +340,7 @@ class Strategy:
         if len(trades) == 0: return []
         self._trades[symbol] += trades
         self.account._add_trades(symbol, trades)
-        self.account.calc(idx)
+        #self.account.calc(idx)
         open_orders = [order for order in open_orders if order.status == 'open']
         return open_orders
             
@@ -508,8 +514,7 @@ class Strategy:
                 
             primary_indicator_subplot = Subplot(primary_indicator_list + trade_sets, height_ratio = 0.5, ylabel = 'Primary Indicators')
             if len(secondary_indicator_list):
-                secondary_indicator_subplot = Subplot(secondary_indicator_list + trade_sets, height_ratio = 0.5, 
-                                                      ylabel = 'Secondary Indicators')
+                secondary_indicator_subplot = Subplot(secondary_indicator_list, height_ratio = 0.5, ylabel = 'Secondary Indicators')
             signal_subplot = Subplot(signal_list, ylabel = 'Signals', height_ratio = 0.167)
             pnl_subplot = Subplot(pnl_list, ylabel = 'Equity', height_ratio = 0.167, log_y = True, y_tick_format = '${x:,.0f}')
             position = df_pnl_.position.values

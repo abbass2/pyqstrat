@@ -5,7 +5,8 @@ import numpy as np
 #cell 1
 class Trade:
     def __init__(self, symbol, timestamp, qty, price, fee = 0., commission = 0., order = None):
-        '''Args:
+        '''
+        Args:
             symbol (str): a string
             timestamp (np.datetime64): Trade execution datetime
             qty (float): Number of contracts or shares filled
@@ -30,11 +31,14 @@ class Trade:
         self.order = order
         
     def __repr__(self):
-        return '{} {:%Y-%m-%d %H:%M} qty: {} prc: {}{}{} order: {}'.format(self.symbol, pd.Timestamp(self.timestamp).to_pydatetime(), 
-                                                self.qty, self.price, 
-                                                ' ' + str(self.fee) if self.fee != 0 else '', 
-                                                ' ' + str(self.commission) if self.commission != 0 else '', 
-                                                self.order)
+        '''
+        >>> print(Trade('IBM', np.datetime64('2019-01-01 15:00'), 100, 10.2130000, 0.01))
+        IBM 2019-01-01 15:00 qty: 100 prc: 10.213 fee: 0.01 order: None
+        '''
+        timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
+        fee = f' fee: {self.fee:.6g}' if self.fee else ''
+        commission = f' commission: {self.commission:.6g}' if self.commission else ''
+        return f'{self.symbol} {timestamp:%Y-%m-%d %H:%M} qty: {self.qty} prc: {self.price:.6g}{fee}{commission} order: {self.order}'
     
 class Contract:
     '''A Contract can be a real or virtual instrument. For example, for futures you may wish to create a single continous contract instead of
@@ -53,4 +57,7 @@ class Contract:
         
     def __repr__(self):
         return f'{self.symbol} multiplier: {self.multiplier}'
+
+#cell 2
+
 

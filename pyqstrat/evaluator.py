@@ -299,6 +299,8 @@ def compute_return_metrics(timestamps, rets, starting_equity):
     assert(starting_equity > 0.)
     assert(type(rets) == np.ndarray and rets.dtype == np.float64)
     assert(type(timestamps) == np.ndarray and np.issubdtype(timestamps.dtype, np.datetime64) and monotonically_increasing(timestamps))
+    
+    #rets = np.nan_to_num(rets)
 
     timestamps = timestamps[np.isfinite(rets)]
     rets = rets[np.isfinite(rets)]
