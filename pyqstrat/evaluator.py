@@ -280,16 +280,52 @@ class Evaluator:
         '''Return a dictionary of metric name -> metric value'''
         return self.metric_values
     
+def handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros, subsequent_non_finite_to_zeros): 
+    '''
+    >>> timestamps = np.arange(np.datetime64('2019-01-01'), np.datetime64('2019-01-07'))
+    >>> rets = np.array([np.nan, np.nan, 3, 4, np.nan, 5])
+    >>> handle_non_finite(timestamps, rets, leading_non_finite_to_zeros = False, subsequent_non_finite_to_zeros = True)
+    (array(['2019-01-03', '2019-01-04', '2019-01-05', '2019-01-06'], dtype='datetime64[D]'), array([3., 4., 0., 5.]))
+    >>> handle_non_finite(timestamps, rets, leading_non_finite_to_zeros = True, subsequent_non_finite_to_zeros = False)
+    (array(['2019-01-01', '2019-01-02', '2019-01-03', '2019-01-04', '2019-01-06'], dtype='datetime64[D]'), array([0., 0., 3., 4., 5.]))
+    >>> handle_non_finite(timestamps, rets, leading_non_finite_to_zeros = False, subsequent_non_finite_to_zeros = False)
+    (array(['2019-01-01', '2019-01-02', '2019-01-03', '2019-01-04', '2019-01-06'], dtype='datetime64[D]'), array([0., 0., 3., 4., 5.]))
+    >>> rets = np.array([1, 2, 3, 4, 4.5,  5])
+    handle_non_finite(timestamps, rets, leading_non_finite_to_zeros = False, subsequent_non_finite_to_zeros = True)
+    (array(['2019-01-01', '2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05', '2019-01-06'], dtype='datetime64[D]'), array([1. , 2. , 3. , 4. , 4.5, 5. ]))
+    '''
     
-def compute_return_metrics(timestamps, rets, starting_equity):
+    first_non_nan_index = np.ravel(np.nonzero(~np.isnan(rets)))[0]
+    
+    if first_non_nan_index > 0 and first_non_nan_index < len(rets):
+        if leading_non_finite_to_zeros:
+            rets[:first_non_nan_index] = np.nan_to_num(rets[:first_non_nan_index])
+        else:
+            timestamps = timestamps[first_non_nan_index:]
+            rets = rets[first_non_nan_index:]
+    
+    if subsequent_non_finite_to_zeros:
+        rets = np.nan_to_num(rets)
+    else:
+        timestamps = timestamps[np.isfinite(rets)]
+        rets = rets[np.isfinite(rets)]
+    
+    return timestamps, rets
+    
+def compute_return_metrics(timestamps, rets, starting_equity, leading_non_finite_to_zeros = False, subsequent_non_finite_to_zeros = True):
     '''
     Compute a set of common metrics using returns (for example, of an instrument or a portfolio)
     
     Args:
-        timestamps: a numpy datetime array with one date per return
-        rets: a numpy float array of returns
-        starting_equity: starting equity value in your portfolio
-        
+        timestamps (np.array of datetime64): Timestamps for the returns
+        rets (nd.array of float): The returns, use 0.01 for 1%
+        starting_equity (float): Starting equity value in your portfolio
+        leading_non_finite_to_zeros (bool, optional): If set, we replace leading nan, inf, -inf returns with zeros.  
+            For example, you may need a warmup period for moving averages.  Default False
+        subsequent_non_finite_to_zeros (bool, optional): If set, we replace any nans that follow the first non nan value with zeros.
+            There may be periods where you have no prices but removing these returns would result in incorrect annualization. 
+            Default True
+         
     Returns:
         An Evaluator object containing computed metrics off the returns passed in.  
         If needed, you can add your own metrics to this object based on the values of existing metrics and recompute the Evaluator.
@@ -301,9 +337,8 @@ def compute_return_metrics(timestamps, rets, starting_equity):
     assert(type(timestamps) == np.ndarray and np.issubdtype(timestamps.dtype, np.datetime64) and monotonically_increasing(timestamps))
     
     #rets = np.nan_to_num(rets)
-
-    timestamps = timestamps[np.isfinite(rets)]
-    rets = rets[np.isfinite(rets)]
+    
+    timestamps, rets = handle_non_finite_returns(rets, timestamps, leading_non_finite_to_zeros, subsequent_non_finite_to_zeros)
 
     ev = Evaluator({'timestamps' : timestamps, 'returns' : rets, 'starting_equity' : starting_equity})
     ev.add_metric('periods_per_year', compute_periods_per_year, dependencies = ['timestamps'])
@@ -441,5 +476,35 @@ def test_evaluator():
     
 if __name__ == "__main__":
     test_evaluator()
+
+
+#cell 2
+
+
+#cell 3
+(~np.isnan(a)).cumsum(1).argmax(1)
+
+#cell 4
+np.cumsum(a)
+
+#cell 5
+a = np.array([np.nan, np.nan, 3, 4, np.nan, 5, np.nan])
+first_non_nan_index = np.ravel(np.nonzero(~np.isnan(a)))[0]
+a = a[first_non_nan_index:]
+a
+#np.ravel(np.nonzero(~np.isnan(a)))[0]
+#np.ravel(np.nonzero(~np.isnan()))
+
+#cell 6
+
+
+
+#cell 7
+len(timestamps)
+
+#cell 8
+len(rets)
+
+#cell 9
 
 
