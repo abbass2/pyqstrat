@@ -9,7 +9,7 @@ This framework is designed for capable programmers who are comfortable with nump
 
 The goals are:
 
-* Speed - Performance sensitive components are written at the numpy level, or in C++, which can lead to performance improvement of several orders of magnitude over python code.  Where possible, we parrallelize work so you can take advantage of all the cores available on your machine.
+* Speed - Performance sensitive components are written at the numpy level, or in C++, which can lead to performance improvement of several orders of magnitude over regular Python code.  Where possible, we parrallelize work so you can take advantage of all the cores available on your machine.
 * Transparency - If you are going to commit money to a strategy, you want to know exactly what assumptions you are making.  The code is written and documented so these are as clear as possible.
 * Extensibility - It would be impossible to think of all requirements for backtesting strategies that traders could come up with.  In addition, traders will want to measure different metrics depending on the strategy being traded.
 
