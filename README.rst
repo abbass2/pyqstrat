@@ -16,7 +16,7 @@ The goals are:
 Using this framework, you can:
 
 * Construct a portfolio containing multiple strategies that run concurrently
-* Construct indicators, trading signals, trading rules and market simulators and add them to a strategy
+* Create indicators, trading signals, trading rules and market simulators and add them to a strategy
 * Add multiple symbols representing real or "virtual" instruments to a strategy
 * Reuse existing market simulation or build your own to simulate how and when orders are filled
 * Measure returns, drawdowns, common return metrics such as sharpe, calmar and also add your own metrics.
