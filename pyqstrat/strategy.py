@@ -578,8 +578,8 @@ class Strategy:
     def __repr__(self):
         return f'{pformat(self.indicators)} {pformat(self.rules)} {pformat(self.account)}'
     
-#def test_strategy():
-if __name__ == "__main__":
+def test_strategy():
+#if __name__ == "__main__":
 
     import math
     import datetime
@@ -719,12 +719,9 @@ if __name__ == "__main__":
     assert(round(metrics['sharpe'], 4) == -0.3502)
     assert(round(metrics['mdd_pct'], 6) == -0.004439)
     
-#if __name__ == "__main__":
-#    test_strategy()
+if __name__ == "__main__":
+    test_strategy()
 
 #cell 2
-strategy.plot()
-
-#cell 3
 
 
