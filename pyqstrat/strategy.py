@@ -523,6 +523,7 @@ class Strategy:
                 trade_sets = trade_sets_by_reason_code(self._trades[contract_group])
                 
             primary_indicator_subplot = Subplot(primary_indicator_list + trade_sets, height_ratio = 0.5, ylabel = 'Primary Indicators')
+ 
             if len(secondary_indicator_list):
                 secondary_indicator_subplot = Subplot(secondary_indicator_list, height_ratio = 0.5, ylabel = 'Secondary Indicators')
             signal_subplot = Subplot(signal_list, ylabel = 'Signals', height_ratio = 0.167)

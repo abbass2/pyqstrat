@@ -89,10 +89,10 @@ class ContractPNL:
         '''
         
         if self.first_calc:
-            self.unrealized[prev_i] = 0
-            self.realized[prev_i] = 0
-            self.net_pnl [prev_i] = 0
-            self.position[prev_i] = 0
+            self.unrealized[:prev_i + 1] = 0
+            self.realized[:prev_i + 1] = 0
+            self.net_pnl [:prev_i + 1] = 0
+            self.position[:prev_i + 1] = 0
             self.first_calc = False
 
         calc_trades = deque([trade for trade in self._trades if trade.timestamp > self.timestamps[prev_i] 
@@ -283,7 +283,8 @@ class Account:
             for contract in contract_group.contracts:
                 symbol = contract.symbol
                 if symbol not in self.symbol_pnls: continue
-                dfs.append(self.symbol_pnls[symbol].df())
+                df = self.symbol_pnls[symbol].df()
+                dfs.append(df)
             ret_df = pd.concat(dfs)
         else:
             dfs = []
@@ -291,10 +292,11 @@ class Account:
                 df = symbol_pnl.df()
                 dfs.append(df)
             ret_df = pd.concat(dfs)
-            ret_df = ret_df.groupby('timestamp').sum()
+            
+        ret_df = ret_df.groupby('timestamp', as_index = False).sum()
         equity_df = pd.DataFrame({'timestamp' : self.timestamps, 'equity' : self._equity}).dropna()
-        ret = pd.merge(ret_df, equity_df, on = ['timestamp'], how = 'outer')
-        return ret.reset_index()
+        ret = pd.merge(ret_df, equity_df, on = ['timestamp'], how = 'outer').sort_values(by = ['timestamp'])
+        return ret #[['symbol', 'timestamp', 'unrealized', 'realized', 'fee', 'net_pnl', 'position', 'price', 'equity']]
     
     def df_trades(self, contract_group = None, start_date = None, end_date = None):
         '''Returns a dataframe of trades
@@ -330,7 +332,9 @@ def test_account():
         price = dict(zip(indices, prices))[idx]
         return price
     
-    contract = Contract('IBM', contract_group = ContractGroup('IBM'))
+    contract_group = ContractGroup('IBM')
+    
+    contract = Contract('IBM', contract_group = contract_group)
     timestamps = np.array(['2018-01-01 05:35', '2018-01-02 08:00', '2018-01-02 09:00', '2018-01-05 13:35'], dtype = 'M8[m]')
     account = Account([contract.contract_group], timestamps, get_close_price, None)
     #account = Account([Contract(symbol)], timestamps, get_close_price)

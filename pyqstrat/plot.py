@@ -21,8 +21,6 @@ from pyqstrat.pq_utils import set_defaults, ReasonCode, series_to_array, strtup2
 
 set_defaults()
 
-#cell 1
-
 _VERBOSE = False
 
 class DateFormatter(mtick.Formatter):
@@ -628,7 +626,6 @@ class Plot:
         if not len(timestamps_list): return None
         plot_timestamps = np.array(reduce(np.union1d, timestamps_list))
         return plot_timestamps
-        
 
     def draw(self, check_data_size = True):
         '''Draw the subplots.
@@ -783,7 +780,4 @@ def test_plot():
     
 if __name__ == "__main__":
     test_plot();
-
-#cell 2
-
 
