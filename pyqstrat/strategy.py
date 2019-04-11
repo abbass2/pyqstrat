@@ -281,7 +281,7 @@ class Strategy:
         >>> start_date = np.datetime64('2018-01-01')
         >>> end_date = np.datetime64('2018-02-05')
         >>> timestamps, orders_iter, trades_iter = Strategy._get_iteration_indices(MockStrat(), rule_names, contract_groups, 
-            start_date, end_date)
+        ...    start_date, end_date)
         >>> assert(len(orders_iter[0]) == 0)
         >>> assert(len(orders_iter[1]) == 2)
         >>> assert(orders_iter[1][0][1] == ibm)
@@ -768,7 +768,4 @@ if __name__ == "__main__":
     test_strategy()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
-
-#cell 2
-
 

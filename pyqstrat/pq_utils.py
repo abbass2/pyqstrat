@@ -163,22 +163,23 @@ def resample_trade_bars(df, sampling_frequency, resample_funcs = None):
     Returns:
         pd.DataFrame: Resampled dataframe
         
+    >>> import math
     >>> df = pd.DataFrame({'date' : np.array(['2018-01-08 15:00:00', '2018-01-09 13:30:00', '2018-01-09 15:00:00', '2018-01-11 15:00:00'], dtype = 'M8[ns]'),
-    ...           'o' : np.array([8.9, 9.1, 9.3, 8.6]), 
-    ...           'h' : np.array([9.0, 9.3, 9.4, 8.7]), 
-    ...           'l' : np.array([8.8, 9.0, 9.2, 8.4]), 
-    ...           'c' : np.array([8.95, 9.2, 9.35, 8.5]),
-    ...           'v' : np.array([200, 100, 150, 300]),
-    ...           'x' : np.array([300, 200, 100, 400])
-    ...          })
+    ...          'o' : np.array([8.9, 9.1, 9.3, 8.6]), 
+    ...          'h' : np.array([9.0, 9.3, 9.4, 8.7]), 
+    ...          'l' : np.array([8.8, 9.0, 9.2, 8.4]), 
+    ...          'c' : np.array([8.95, 9.2, 9.35, 8.5]),
+    ...          'v' : np.array([200, 100, 150, 300]),
+    ...          'x' : np.array([300, 200, 100, 400])
+    ...         })
     >>> df['vwap'] =  0.5 * (df.l + df.h)
     >>> df.set_index('date', inplace = True)
-    >>> resample_trade_bars(df, sampling_frequency = 'D', resample_funcs={'x' : lambda df, sampling_frequency : df.x.resample(sampling_frequency).agg(np.mean)})
-            date    o    h    l     c    v      x  vwap
-        0 2018-01-08  8.9  9.0  8.8  8.95  200  300.0  8.90
-        1 2018-01-09  9.1  9.4  9.0  9.35  250  150.0  9.24
-        2 2018-01-10  NaN  NaN  NaN   NaN    0    NaN   NaN
-        3 2018-01-11  8.6  8.7  8.4  8.50  300  400.0  8.55
+    >>> df = resample_trade_bars(df, sampling_frequency = 'D', resample_funcs={'x' : lambda df, 
+    ...   sampling_frequency : df.x.resample(sampling_frequency).agg(np.mean)})
+    >>> assert(len(df) == 4)
+    >>> assert(math.isclose(df.vwap.iloc[1], 9.24))
+    >>> assert(np.isnan(df.vwap.iloc[2]))
+    >>> assert(math.isclose(df.l[3], 8.4))
     '''
     if sampling_frequency is None: return df
     
