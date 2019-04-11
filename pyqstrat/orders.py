@@ -33,10 +33,7 @@ class MarketOrder:
             '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + (
             '' if not self.properties.__dict__ else f' {self.properties}') + (
             f' {self.status}')
-    
-    def params(self):
-        return {}
-        
+            
 class LimitOrder:
     def __init__(self, contract, timestamp, qty, limit_price, reason_code = ReasonCode.NONE, properties = None, status = 'open'):
         '''
@@ -57,9 +54,10 @@ class LimitOrder:
         self.qty = qty
         self.reason_code = reason_code
         self.limit_price = limit_price
-        self.status = status
         if properties is None: properties = types.SimpleNamespace()
         self.properties = properties
+        self.properties.limit_price = self.limit_price
+        self.status = status
         
     def __repr__(self):
         timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
@@ -68,8 +66,6 @@ class LimitOrder:
             '' if not self.properties.__dict__ else f' {self.properties}') + (
             f' {self.status}')
     
-    def params(self):
-        return {'limit_price' : self.limit_price}
     
 class RollOrder:
     '''A roll order is used to roll a future from one series to the next.  It represents a sell of one future and the buying of another future.'''
@@ -95,10 +91,11 @@ class RollOrder:
         self.reopen_qty = reopen_qty
         self.reason_code = reason_code
         self.qty = close_qty # For display purposes when we print varying order types
+        if properties is None: properties = types.SimpleNamespace()
+        self.properties = properties
+        self.properties.close_qty = self.close_qty
+        self.properties.reopen_qty = self.reopen_qty
         self.status = status
-        
-    def params(self):
-        return {'close_qty' : self.close_qty, 'reopen_qty' : self.reopen_qty}
         
     def __repr__(self):
         timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
@@ -135,10 +132,11 @@ class StopLimitOrder:
         self.limit_price = limit_price
         self.reason_code = reason_code
         self.triggered = False
+        if properties is None: properties = types.SimpleNamespace()
+        self.properties = properties
+        self.properties.trigger_price = trigger_price
+        self.properties.limit_price = limit_price
         self.status =  status
-        
-    def params(self):
-        return {'trigger_price' : self.trigger_price, 'limit_price' : self.limit_price}
         
     def __repr__(self):
         timestamp = pd.Timestamp(self.timestamp).to_pydatetime()

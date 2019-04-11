@@ -438,14 +438,14 @@ class Strategy:
         '''Returns a list of orders with the given contract group and with order date between (and including) start date and 
             end date if they are specified.
             If contract_group is None orders for all contract_groups are returned'''
+        orders = []
         start_date, end_date = str2date(start_date), str2date(end_date)
         if contract_group is None:
-            orders  += [order for order in self._orders if (
+            orders += [order for order in self._orders if (
                 start_date is None or order.date >= start_date) and (end_date is None or order.date <= end_date)]
         else:
-            orders = []
             for contract in contract_group.contracts:
-                orders  += [order for order in self._orders if (contract is None or order.contract == contract) and (
+                orders += [order for order in self._orders if (contract is None or order.contract == contract) and (
                     start_date is None or order.date >= start_date) and (end_date is None or order.date <= end_date)]
         return orders
     
@@ -455,8 +455,12 @@ class Strategy:
             if they are specified. If contract_group is None orders for all contract_groups are returned'''
         start_date, end_date = str2date(start_date), str2date(end_date)
         orders = self.orders(contract_group, start_date, end_date)
-        df_orders = pd.DataFrame.from_records([(order.contract.symbol, type(order).__name__, order.timestamp, order.qty, order.params()) 
-                                               for order in orders], columns = ['symbol', 'type', 'timestamp', 'qty', 'params'])
+        order_records = [(order.contract.symbol, type(order).__name__, order.timestamp, order.qty, 
+                          order.reason_code, 
+                          (order.properties.__dict__ if order.properties.__dict__ else ''),
+                          (order.contract.properties.__dict__ if order.contract.properties.__dict__ else '')) for order in orders]
+        df_orders = pd.DataFrame.from_records(order_records,
+                                              columns = ['symbol', 'type', 'timestamp', 'qty', 'reason_code', 'order_props', 'contract_props'])
         return df_orders
    
     def df_pnl(self, contract_group = None):
@@ -768,4 +772,7 @@ if __name__ == "__main__":
     test_strategy()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 2
+
 

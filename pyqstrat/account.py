@@ -1,5 +1,6 @@
 #cell 0
 from collections import defaultdict, deque
+import math
 import pandas as pd
 import numpy as np
 from copy import copy
@@ -224,10 +225,10 @@ class Account:
                 prev_calc_index = calc_index
         self.current_calc_index = i
         
-    def position(self, contract_group, date):
+    def position(self, contract_group, timestamp):
         '''Returns position for a contract_group at a given date in number of contracts or shares.  
             Will cause calculation if Account has not previously calculated up to this date'''
-        i = self.find_index_before(date)
+        i = self.find_index_before(timestamp)
         self.calc(i)
         position = 0
         for contract in contract_group.contracts:
@@ -236,10 +237,24 @@ class Account:
             position += self.symbol_pnls[symbol].position[i]
         return position
     
-    def equity(self, date):
+    def positions(self, contract_group, timestamp):
+        '''
+        Returns all non-zero positions in a contract group
+        '''
+        i = self.find_index_before(timestamp)
+        self.calc(i)
+        positions = []
+        for contract in contract_group.contracts:
+            symbol = contract.symbol
+            if symbol not in self.symbol_pnls: continue
+            position = self.symbol_pnls[symbol].position[i]
+            if not math.isclose(position, 0): positions.append((contract, position))
+        return positions
+    
+    def equity(self, timestamp):
         '''Returns equity in this account in Account currency.  Will cause calculation if Account has not previously 
             calculated up to this date'''
-        i = self.find_index_before(date)
+        i = self.find_index_before(timestamp)
         self.calc(i)
         return self._equity[i]
     
@@ -261,9 +276,9 @@ class Account:
                 trades += self.symbol_pnls[symbol].trades(start_date, end_date)
             return trades
         
-    def find_index_before(self, date):
-        '''Returns the market data index before or at date'''
-        return np.searchsorted(self.timestamps, date)
+    def find_index_before(self, timestamp):
+        '''Returns the market data index before or at timestamp'''
+        return np.searchsorted(self.timestamps, timestamp)
         
     def transfer_cash(self, date, amount):
         '''Move cash from one portfolio to another'''
@@ -316,9 +331,13 @@ class Account:
             trades = [v.trades(start_date, end_date) for v in self.symbol_pnls.values()]
             trades = [trade for sublist in trades for trade in sublist] # flatten list
         df = pd.DataFrame.from_records([(trade.contract.symbol, trade.timestamp, trade.qty, trade.price, 
-                                         trade.fee, trade.commission, trade.order.timestamp, trade.order.qty, trade.order.params()
+                                         trade.fee, trade.commission, trade.order.timestamp, trade.order.qty, 
+                                         trade.order.reason_code, 
+                                         (trade.order.properties.__dict__ if trade.order.properties.__dict__ else ''), 
+                                         (trade.contract.properties.__dict__ if trade.contract.properties.__dict__ else '')
                                         ) for trade in trades],
-                    columns = ['symbol', 'timestamp', 'qty', 'price', 'fee', 'commission', 'order_date', 'order_qty', 'order_params'])
+                    columns = ['symbol', 'timestamp', 'qty', 'price', 'fee', 'commission', 'order_date', 'order_qty', 
+                               'reason_code', 'order_props', 'contract_props'])
         return df
     
 def test_account():
@@ -356,4 +375,7 @@ if __name__ == "__main__":
     test_account()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 2
+
 
