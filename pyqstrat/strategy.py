@@ -56,6 +56,7 @@ class Strategy:
         self.signals = {}
         self.signal_values = defaultdict(types.SimpleNamespace)
         self.rules = {}
+        self.rule_types = {}
         self.rule_signals = {}
         self.market_sims = {}
         self._trades = defaultdict(list)
@@ -105,7 +106,7 @@ class Strategy:
         if contract_groups is None: contract_groups = self.contract_groups
         self.signal_cgroups[name] = contract_groups
         
-    def add_rule(self, name, rule_function, signal_name, sig_true_values = None):
+    def add_rule(self, name, rule_function, signal_name, sig_true_values = None, rule_type = None):
         '''Add a trading rule
         
         Args:
@@ -114,10 +115,16 @@ class Strategy:
             signal_name (str): The strategy will call the trading rule function when the signal with this name matches sig_true_values
             sig_true_values (numpy array, optional): If the signal value at a bar is equal to one of these values, 
                 the Strategy will call the trading rule function.  Default [TRUE]
+            rule_type (str, optional): Can be "entry", "exit" or None.  Entry rules are only triggered when the corresponding contract positions are 0
+                exit rules are only triggered when the corresponding contract positions are non-zero.  If not set, we don't look at position before triggering the rule.
+                Default None
         '''
         if sig_true_values is None: sig_true_values = [True]
         self.rule_signals[name] = (signal_name, sig_true_values)
         self.rules[name] = rule_function
+        if rule_type is not None:
+            assert(rule_type in ['entry', 'exit'])
+        self.rule_types[name] = rule_type
         
     def add_market_sim(self, market_sim_function, contract_groups = None):
         '''Add a market simulator.  A market simulator takes a list of Orders as input and returns a list of Trade objects.
@@ -301,7 +308,7 @@ class Strategy:
                 # Don't run rules on last index since we cannot fill any orders
                 if len(indices) and indices[-1] == len(sig_values) -1: indices = indices[:-1] 
                 indicator_values = self.indicator_values[cgroup]
-                iteration_params = {'market_sim' : market_sim, 'indicator_values' : indicator_values, 'signal_values' : sig_values}
+                iteration_params = {'market_sim' : market_sim, 'indicator_values' : indicator_values, 'signal_values' : sig_values, 'rule_name' : rule_name}
                 for idx in indices: orders_iter[idx].append((rule_function, cgroup, iteration_params))
 
             self.orders_iter = orders_iter
@@ -329,7 +336,12 @@ class Strategy:
                 raise type(e)(f'Exception: {str(e)} at rule: {type(tup[0])} contract_group: {tup[1]} index: {i}').with_traceback(sys.exc_info()[2])
                     
     def _get_orders(self, idx, rule_function, contract_group, params):
-        indicator_values, signal_values = (params['indicator_values'], params['signal_values'])
+        indicator_values, signal_values, rule_name = (params['indicator_values'], params['signal_values'], params['rule_name'])
+        rule_type = self.rule_types[rule_name]
+        if rule_type is not None:
+            curr_pos = self.account.position(contract_group, self.timestamps[idx])
+            if rule_type == 'entry' and not math.isclose(curr_pos, 0): return []
+            if rule_type == 'exit' and math.isclose(curr_pos, 0): return []
         open_orders = rule_function(contract_group, idx, self.timestamps, indicator_values, signal_values, self.account, self.strategy_context)
         return open_orders
         
@@ -632,9 +644,9 @@ def test_strategy():
         if contract_group.name == 'PEP': signal = -1. * signal
         return signal
 
-    def pair_trading_rule(contract_group, i, timestamps, indicators, signal, account, strategy_context):
+    def pair_entry_rule(contract_group, i, timestamps, indicators, signal, account, strategy_context):
         timestamp = timestamps[i]
-        curr_pos = account.position(contract_group, timestamp)
+        assert(math.isclose(account.position(contract_group, timestamp), 0))
         signal_value = signal[i]
         risk_percent = 0.1
 
@@ -645,20 +657,28 @@ def test_strategy():
         if contract is None: contract = Contract(symbol, contract_group = contract_group)
         
         # if we don't already have a position, check if we should enter a trade
-        if math.isclose(curr_pos, 0):
-            if signal_value == 2 or signal_value == -2:
-                curr_equity = account.equity(timestamp)
-                order_qty = np.round(curr_equity * risk_percent / indicators.c[i] * np.sign(signal_value))
-                trigger_price = indicators.c[i]
-                print(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp} risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
-                reason_code = ReasonCode.ENTER_LONG if order_qty > 0 else ReasonCode.ENTER_SHORT
-                orders.append(MarketOrder(contract, timestamp, order_qty, reason_code = reason_code))
-
-        else: # We have a current position, so check if we should exit
-            if (curr_pos > 0 and signal_value == -1) or (curr_pos < 0 and signal_value == 1):
-                order_qty = -curr_pos
-                reason_code = ReasonCode.EXIT_LONG if order_qty < 0 else ReasonCode.EXIT_SHORT
-                orders.append(MarketOrder(contract, timestamp, order_qty, reason_code = reason_code))
+        #if math.isclose(curr_pos, 0):
+        curr_equity = account.equity(timestamp)
+        order_qty = np.round(curr_equity * risk_percent / indicators.c[i] * np.sign(signal_value))
+        trigger_price = indicators.c[i]
+        print(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp} risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
+        reason_code = ReasonCode.ENTER_LONG if order_qty > 0 else ReasonCode.ENTER_SHORT
+        orders.append(MarketOrder(contract, timestamp, order_qty, reason_code = reason_code))
+        return orders
+            
+    def pair_exit_rule(contract_group, i, timestamps, indicators, signal, account, strategy_context):
+        timestamp = timestamps[i]
+        curr_pos = account.position(contract_group, timestamp)
+        assert(not math.isclose(curr_pos, 0))
+        signal_value = signal[i]
+        orders = []
+        symbol = contract_group.name
+        contract = contract_group.get_contract(symbol)
+        if contract is None: contract = Contract(symbol, contract_group = contract_group)
+        if (curr_pos > 0 and signal_value == -1) or (curr_pos < 0 and signal_value == 1):
+            order_qty = -curr_pos
+            reason_code = ReasonCode.EXIT_LONG if order_qty < 0 else ReasonCode.EXIT_SHORT
+            orders.append(MarketOrder(contract, timestamp, order_qty, reason_code = reason_code))
         return orders
 
     def market_simulator(orders, i, timestamps, indicators, signals, strategy_context):
@@ -708,9 +728,12 @@ def test_strategy():
     strategy.add_signal('pair_strategy_signal', pair_strategy_signal, depends_on_indicators = ['zscore'])
 
     # ask pqstrat to call our trading rule when the signal has one of the values [-2, -1, 1, 2]
-    strategy.add_rule('pair_trading_rule', pair_trading_rule, 
-                      signal_name = 'pair_strategy_signal', sig_true_values = [-2, -1, 1, 2])
-
+    strategy.add_rule('pair_entry_rule', pair_entry_rule, 
+                      signal_name = 'pair_strategy_signal', sig_true_values = [-2, 2], rule_type = 'entry')
+    
+    strategy.add_rule('pair_exit_rule', pair_exit_rule, 
+                      signal_name = 'pair_strategy_signal', sig_true_values = [-1, 1], rule_type = 'exit')
+    
     strategy.add_market_sim(market_simulator)
 
     portfolio = Portfolio()
@@ -724,7 +747,4 @@ def test_strategy():
     
 if __name__ == "__main__":
     test_strategy()
-
-#cell 2
-
 
