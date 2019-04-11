@@ -26,7 +26,7 @@ class ContractGroup:
             return None
         
     def __repr__(self):
-        return f'{self.name} {self.contracts}'
+        return self.name + f' {self.contracts}' if len(self.contracts) else ''
 
 class Contract:
     '''A contract such as a stock, option or a future that can be traded'''
@@ -88,8 +88,8 @@ class Trade:
         
     def __repr__(self):
         '''
-        >>> print(Trade(Contract('IBM'), np.datetime64('2019-01-01 15:00'), 100, 10.2130000, 0.01))
-        IBM 2019-01-01 15:00 qty: 100 prc: 10.213 fee: 0.01 order: None
+        >>> print(Trade(Contract('IBM', contract_group = ContractGroup('IBM')), np.datetime64('2019-01-01 15:00'), 100, 10.2130000, 0.01))
+        IBM 2019-01-01 15:00:00 qty: 100 prc: 10.213 fee: 0.01 order: None
         '''
         timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
         fee = f' fee: {self.fee:.6g}' if self.fee else ''

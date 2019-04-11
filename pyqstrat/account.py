@@ -11,16 +11,19 @@ def _calc_pnl(open_trades, new_trades, ending_close, multiplier):
     '''
     >>> from collections import deque
     >>> from pyqstrat.pq_types import Trade
-    >>> trades = deque([Trade('IBM', np.datetime64('2018-01-01 10:15:00'), 3, 51.),
-    ...              Trade('IBM', np.datetime64('2018-01-01 10:20:00'), 10, 50.),
-    ...              Trade('IBM', np.datetime64('2018-01-02 11:20:00'), -5, 45.)])
+    >>> from pyqstrat.pq_types import Contract, ContractGroup
+    >>> contract_group = ContractGroup('IBM')
+    >>> ibm = Contract('IBM', contract_group = contract_group)
+    >>> trades = deque([Trade(ibm, np.datetime64('2018-01-01 10:15:00'), 3, 51.),
+    ...              Trade(ibm, np.datetime64('2018-01-01 10:20:00'), 10, 50.),
+    ...              Trade(ibm, np.datetime64('2018-01-02 11:20:00'), -5, 45.)])
     >>> print(_calc_pnl(open_trades = deque(), new_trades = trades, ending_close = 54, multiplier = 100))
-    (deque([IBM 2018-01-01 10:20 qty: 8 prc: 50 order: None]), 3200.0, -2800.0)
-    >>> trades = deque([Trade('IBM', np.datetime64('2018-01-01 10:15:00'), -8, 10.),
-    ...          Trade('IBM', np.datetime64('2018-01-01 10:20:00'), 9, 11.),
-    ...          Trade('IBM', np.datetime64('2018-01-02 11:20:00'), -4, 6.)])
+    (deque([IBM 2018-01-01 10:20:00 qty: 8 prc: 50 order: None]), 3200.0, -2800.0)
+    >>> trades = deque([Trade(ibm, np.datetime64('2018-01-01 10:15:00'), -8, 10.),
+    ...          Trade(ibm, np.datetime64('2018-01-01 10:20:00'), 9, 11.),
+    ...          Trade(ibm, np.datetime64('2018-01-02 11:20:00'), -4, 6.)])
     >>> print(_calc_pnl(open_trades = deque(), new_trades = trades, ending_close = 5.8, multiplier = 100))
-    (deque([IBM 2018-01-02 11:20 qty: -3 prc: 6 order: None]), 60.00000000000006, -1300.0)
+    (deque([IBM 2018-01-02 11:20:00 qty: -3 prc: 6 order: None]), 60.00000000000006, -1300.0)
     '''
     
     realized = 0.

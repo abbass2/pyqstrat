@@ -247,14 +247,14 @@ class Strategy:
         ...        self.timestamps = timestamps
         ...        self.account = self
         ...        self.rules = {'rule_a' : rule_a, 'rule_b' : rule_b}
-        ...        self.market_sims = {'IBM' : market_sim_ibm, 'AAPL' : market_sim_aapl}
+        ...        self.market_sims = {ibm : market_sim_ibm, aapl : market_sim_aapl}
         ...        self.rule_signals = {'rule_a' : ('sig_a', [1]), 'rule_b' : ('sig_b', [1, -1])}
-        ...        self.signal_values = {'IBM' : types.SimpleNamespace(sig_a = np.array([0., 1., 1.]), 
+        ...        self.signal_values = {ibm : types.SimpleNamespace(sig_a = np.array([0., 1., 1.]), 
         ...                                                   sig_b = np.array([0., 0., 0.]) ),
-        ...                               'AAPL' : types.SimpleNamespace(sig_a = np.array([0., 0., 0.]), 
+        ...                               aapl : types.SimpleNamespace(sig_a = np.array([0., 0., 0.]), 
         ...                                                    sig_b = np.array([0., -1., -1])
         ...                                                   )}
-        ...        self.indicator_values = {'IBM' : types.SimpleNamespace(), 'AAPL' : types.SimpleNamespace()}
+        ...        self.indicator_values = {ibm : types.SimpleNamespace(), aapl : types.SimpleNamespace()}
         >>>
         >>> def market_sim_aapl(): pass
         >>> def market_sim_ibm(): pass
@@ -262,14 +262,16 @@ class Strategy:
         >>> def rule_b(): pass
         >>> timestamps = np.array(['2018-01-01', '2018-01-02', '2018-01-03'], dtype = 'M8[D]')
         >>> rule_names = ['rule_a', 'rule_b']
-        >>> contract_groups = [ContractGroup('IBM'), ContractGroup('AAPL')]
+        >>> ibm = ContractGroup('IBM')
+        >>> aapl = ContractGroup('AAPL')
+        >>> contract_groups = [ibm, aapl]
         >>> start_date = np.datetime64('2018-01-01')
         >>> end_date = np.datetime64('2018-02-05')
         >>> timestamps, orders_iter, trades_iter = Strategy._get_iteration_indices(MockStrat(), rule_names, contract_groups, start_date, end_date)
         >>> assert(len(orders_iter[0]) == 0)
         >>> assert(len(orders_iter[1]) == 2)
-        >>> assert(orders_iter[1][0][1] == "IBM")
-        >>> assert(orders_iter[1][1][1] == "AAPL")
+        >>> assert(orders_iter[1][0][1] == ibm)
+        >>> assert(orders_iter[1][1][1] == aapl)
         >>> assert(len(orders_iter[2]) == 0)
         '''
         start_date, end_date = str2date(start_date), str2date(end_date)
