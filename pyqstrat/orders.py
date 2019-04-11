@@ -145,4 +145,8 @@ class StopLimitOrder:
         return f'{self.contract.symbol} {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} trigger_prc: {self.trigger_price} limit_prc: {self.limit_price}' + (
             '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + '' if not self.properties.__dict__ else f' {self.properties}'+ (
             f' {self.status}')
+    
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
 

@@ -5,15 +5,19 @@ import types
 
 #cell 1
 class ContractGroup:
-    '''
-    A way to group contracts for figuring out which indicators, rules and signals to apply to a contract and for PNL reporting
-    Args:
-        name (str): Name of the group
-    '''
-    def __init__(self, name):
-        self.name = name
-        self.contracts = set()
-        self.contracts_by_symbol = {}
+    '''A way to group contracts for figuring out which indicators, rules and signals to apply to a contract and for PNL reporting'''
+
+    @classmethod
+    def create(self, name):
+        '''
+         Args:
+            name (str): Name of the group
+        '''
+        contract_group = ContractGroup()
+        contract_group.name = name
+        contract_group.contracts = set()
+        contract_group.contracts_by_symbol = {}
+        return contract_group
         
     def add_contract(self, contract):
         self.contracts.add(contract)
@@ -30,7 +34,7 @@ class ContractGroup:
 
 class Contract:
     '''A contract such as a stock, option or a future that can be traded'''
-    def __init__(self, symbol, contract_group, multiplier = 1., properties = None):
+    def create(symbol, contract_group, multiplier = 1., properties = None):
         '''
         Args:
             symbol (str): A unique string reprenting this contract. e.g IBM or ESH9
@@ -43,17 +47,20 @@ class Contract:
                 so multiplier would be 50.  Default 1
         '''
         assert(isinstance(symbol, str) and len(symbol) > 0)
+        assert(isinstance(contract_group, ContractGroup))
         assert(multiplier > 0)
-        self.symbol = symbol
-        self.multiplier = multiplier
+        contract = Contract()
+        contract.symbol = symbol
+        contract.multiplier = multiplier
         
         if properties is None:
             properties = types.SimpleNamespace()
-        self.properties = properties
+        contract.properties = properties
         
-        contract_group.add_contract(self)
-        self.contract_group = contract_group
-        
+        contract_group.add_contract(contract)
+        contract.contract_group = contract_group
+        return contract
+    
     def __repr__(self):
         return f'{self.symbol} {self.multiplier} ' + (
             f'group: {self.contract_group.name}' if self.contract_group else '') + (
@@ -88,7 +95,7 @@ class Trade:
         
     def __repr__(self):
         '''
-        >>> print(Trade(Contract('IBM', contract_group = ContractGroup('IBM')), np.datetime64('2019-01-01 15:00'), 100, 10.2130000, 0.01))
+        >>> print(Trade(Contract.create('IBM', contract_group = ContractGroup.create('IBM')), np.datetime64('2019-01-01 15:00'), 100, 10.2130000, 0.01))
         IBM 2019-01-01 15:00:00 qty: 100 prc: 10.213 fee: 0.01 order: None
         '''
         timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
@@ -96,16 +103,8 @@ class Trade:
         commission = f' commission: {self.commission:.6g}' if self.commission else ''
         return f'{self.contract.symbol}' + (f' {self.contract.properties}' if self.contract.properties.__dict__ else '') + (
             f' {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} prc: {self.price:.6g}{fee}{commission} order: {self.order}')
-
-#cell 2
-x = types.SimpleNamespace()
-
-#cell 3
-if x.__dict__: print('hello')
-
-#cell 4
-if not x: print('hello')
-
-#cell 5
-
+    
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
 

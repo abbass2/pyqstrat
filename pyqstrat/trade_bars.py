@@ -434,4 +434,9 @@ def test_trade_bars():
 
 if __name__ == "__main__":
     test_trade_bars()
+    import doctest
+    doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 2
+
 

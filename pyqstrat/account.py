@@ -354,4 +354,6 @@ def test_account():
     
 if __name__ == "__main__":
     test_account()
+    import doctest
+    doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
 

@@ -1,6 +1,5 @@
 #cell 0
 import warnings
-#warnings.filterwarnings("ignore", message="numpy.dtype size changed") # another bogus warning, see https://github.com/numpy/numpy/pull/432
 import pandas as pd
 import numpy as np
 from pyqstrat.pq_utils import *
@@ -482,5 +481,10 @@ def test_evaluator():
     
 if __name__ == "__main__":
     test_evaluator()
+    import doctest
+    doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+
+#cell 2
 
 
