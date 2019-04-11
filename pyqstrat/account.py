@@ -12,8 +12,8 @@ def _calc_pnl(open_trades, new_trades, ending_close, multiplier):
     >>> from collections import deque
     >>> from pyqstrat.pq_types import Trade
     >>> from pyqstrat.pq_types import Contract, ContractGroup
-    >>> contract_group = ContractGroup('IBM')
-    >>> ibm = Contract('IBM', contract_group = contract_group)
+    >>> contract_group = ContractGroup.create('IBM')
+    >>> ibm = Contract.create('IBM', contract_group = contract_group)
     >>> trades = deque([Trade(ibm, np.datetime64('2018-01-01 10:15:00'), 3, 51.),
     ...              Trade(ibm, np.datetime64('2018-01-01 10:20:00'), 10, 50.),
     ...              Trade(ibm, np.datetime64('2018-01-02 11:20:00'), -5, 45.)])
@@ -332,9 +332,9 @@ def test_account():
         price = dict(zip(indices, prices))[idx]
         return price
     
-    contract_group = ContractGroup('IBM')
+    contract_group = ContractGroup.create('IBM')
     
-    contract = Contract('IBM', contract_group = contract_group)
+    contract = Contract.create('IBM', contract_group = contract_group)
     timestamps = np.array(['2018-01-01 05:35', '2018-01-02 08:00', '2018-01-02 09:00', '2018-01-05 13:35'], dtype = 'M8[m]')
     account = Account([contract.contract_group], timestamps, get_close_price, None)
     #account = Account([Contract(symbol)], timestamps, get_close_price)
