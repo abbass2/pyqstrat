@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from copy import copy
 from pyqstrat.pq_utils import str2date
+from pyqstrat.pq_types import ContractGroup
 
 #cell 1
 def _calc_pnl(open_trades, new_trades, ending_close, multiplier):
@@ -53,6 +54,7 @@ class ContractPNL:
     def __init__(self, contract, timestamps, price_function, strategy_context):
         self.symbol = contract.symbol
         self.multiplier = contract.multiplier
+        self.contract = contract
         self.timestamps = timestamps
         self.price_function = price_function
         self.strategy_context = strategy_context
@@ -67,6 +69,7 @@ class ContractPNL:
         self.price = np.full(len(self.timestamps), np.nan, dtype = np.float)
         self._trades = []
         self.open_trades = deque()
+        self.first_calc = True
         
     def add_trades(self, trades):
         '''Args:
@@ -81,10 +84,18 @@ class ContractPNL:
             prev_i: Start index to compute pnl from
             i: End index to compute pnl to
         '''
+        
+        if self.first_calc:
+            self.unrealized[prev_i] = 0
+            self.realized[prev_i] = 0
+            self.net_pnl [prev_i] = 0
+            self.position[prev_i] = 0
+            self.first_calc = False
+
         calc_trades = deque([trade for trade in self._trades if trade.timestamp > self.timestamps[prev_i] 
                              and trade.timestamp <= self.timestamps[i]])
         
-        price = self.price_function(self.symbol, self.timestamps, i, self.strategy_context)
+        price = self.price_function(self.contract, self.timestamps, i, self.strategy_context)
         
         if not np.isfinite(price):
             unrealized = self.unrealized[prev_i]
@@ -131,10 +142,10 @@ def _get_calc_indices(timestamps):
 
 class Account:
     '''An Account calculates pnl for a set of contracts'''
-    def __init__(self, contracts, timestamps, price_function, strategy_context, starting_equity = 1.0e6, calc_frequency = 'D'):
+    def __init__(self, contract_groups, timestamps, price_function, strategy_context, starting_equity = 1.0e6, calc_frequency = 'D'):
         '''
         Args:
-            contracts (list of Contract): Contracts that we want to compute PNL for
+            contract_groups (list of :obj:`ContractGroup`): Contract groups that we want to compute PNL for
             timestamps (list of np.datetime64): Timestamps that we might compute PNL at
             price_function (function): Function that takes a symbol, timestamps, index, strategy context and 
                 returns the price used to compute pnl
@@ -143,32 +154,32 @@ class Account:
         '''
         if calc_frequency != 'D': raise Exception('unknown calc frequency: {}'.format(calc_frequency))
         self.calc_freq = calc_frequency
-        self.contract_pnls = defaultdict()
         self.current_calc_index = 0
         self.starting_equity = starting_equity
         self.price_function = price_function
         self.strategy_context = strategy_context
-        
-        contract_symbols = sorted([contract.symbol for contract in contracts])
         
         self.timestamps = timestamps
         self.calc_indices = _get_calc_indices(timestamps)
         
         self._equity = np.full(len(timestamps), np.nan, dtype = np.float); 
         self._equity[0] = self.starting_equity
-
-        if contracts is not None:
-            for contract in contracts: 
-                self.add_contract(contract)
+        
+        self.symbol_pnls = {}
+        self.symbols = set()
         
     def symbols(self):
-        return list(self.contract_pnls.keys())
+        return self.symbols
         
     def add_contract(self, contract):
-         self.contract_pnls[contract.symbol] = ContractPNL(contract, self.timestamps, self.price_function, self.strategy_context)
+        self.symbol_pnls[contract.symbol] = ContractPNL(contract, self.timestamps, self.price_function, self.strategy_context)
+        self.symbols.add(contract.symbol)
         
-    def _add_trades(self, symbol, trades):
-        self.contract_pnls[symbol].add_trades(trades)
+    def _add_trades(self, trades):
+        for trade in trades:
+            contract = trade.contract
+            if contract.symbol not in self.symbols: self.add_contract(contract)
+            self.symbol_pnls[trade.contract.symbol].add_trades([trade])
         
     def calc(self, i):
         '''
@@ -191,24 +202,36 @@ class Account:
             calc_indices = np.append(calc_indices, i)
             intermediate_calc_indices = np.append(intermediate_calc_indices, len(calc_indices) - 1)
             
-        for symbol, symbol_pnl in self.contract_pnls.items():
+        if not len(self.symbol_pnls):
+            prev_equity = self._equity[self.current_calc_index]
+            for idx in intermediate_calc_indices:
+                self._equity[calc_indices[idx]] = prev_equity
+            self.current_calc_index = i
+            return
+        
+        for symbol, symbol_pnl in self.symbol_pnls.items():
             prev_calc_index = self.current_calc_index
             for idx in intermediate_calc_indices:
                 calc_index = calc_indices[idx]
                 symbol_pnl.calc(prev_calc_index, calc_index)
                 self._equity[calc_index] = self._equity[prev_calc_index] + \
                     symbol_pnl.net_pnl[calc_index] - symbol_pnl.net_pnl[prev_calc_index]
-                # print(f'prev_calc_index: {prev_calc_index} calc_index: {calc_index} prev_equity: {self._equity[prev_calc_index]} net_pnl: {symbol_pnl.net_pnl[calc_index]} prev_net_pnl: {symbol_pnl.net_pnl[prev_calc_index]}')
+                # print(f'prev_calc_index: {prev_calc_index} calc_index: {calc_index} prev_equity: 
+                # {self._equity[prev_calc_index]} net_pnl: {symbol_pnl.net_pnl[calc_index]} prev_net_pnl: {symbol_pnl.net_pnl[prev_calc_index]}')
                 prev_calc_index = calc_index
-                
         self.current_calc_index = i
         
-    def position(self, symbol, date):
-        '''Returns position for a symbol at a given date in number of contracts or shares.  Will cause calculation if Account has not previously calculated
-          up to this date'''
+    def position(self, contract_group, date):
+        '''Returns position for a contract_group at a given date in number of contracts or shares.  
+            Will cause calculation if Account has not previously calculated up to this date'''
         i = self.find_index_before(date)
         self.calc(i)
-        return self.contract_pnls[symbol].position[i]
+        position = 0
+        for contract in contract_group.contracts:
+            symbol = contract.symbol
+            if symbol not in self.symbol_pnls: continue
+            position += self.symbol_pnls[symbol].position[i]
+        return position
     
     def equity(self, date):
         '''Returns equity in this account in Account currency.  Will cause calculation if Account has not previously 
@@ -217,18 +240,23 @@ class Account:
         self.calc(i)
         return self._equity[i]
     
-    def trades(self, symbol = None, start_date = None, end_date = None):
+    def trades(self, contract_group = None, start_date = None, end_date = None):
         '''Returns a list of trades with the given symbol and with trade date between (and including) start date 
             and end date if they are specified.
             If symbol is None trades for all symbols are returned'''
         start_date, end_date = str2date(start_date), str2date(end_date)
-        if symbol is None:
+        if contract_group is None:
             trades = []
-            for symbol, sym_pnl in self.contract_pnls.items():
+            for symbol, sym_pnl in self.symbol_pnls.items():
                 trades += sym_pnl.trades(start_date, end_date)
             return trades
         else:
-            return self.contract_pnls[symbol].trades(start_date, end_date)
+            trades = []
+            for contract in contract_group.contracts:
+                symbol = contract.symbol
+                if symbol not in self.symbol_pnls: continue
+                trades += self.symbol_pnls[symbol].trades(start_date, end_date)
+            return trades
         
     def find_index_before(self, date):
         '''Returns the market data index before or at date'''
@@ -242,31 +270,47 @@ class Account:
         self._equity[i] -= amount
         return amount
 
-    def df_pnl(self, symbol = None):
-        '''Returns a dataframe with P&L columns.  If symbol is set to None (default), sums up P&L across symbols'''
-        if symbol:
-            ret = self.contract_pnls[symbol].df()
+    def df_pnl(self, contract_group = None):
+        '''Returns a dataframe with P&L columns.
+        Args:
+            contract_group (:obj:`ContractGroup`, optional): Return PNL for this contract group.  If None (default), sum up all contract groups
+        '''
+        if contract_group:
+            dfs = []
+            for contract in contract_group.contracts:
+                symbol = contract.symbol
+                if symbol not in self.symbol_pnls: continue
+                dfs.append(self.symbol_pnls[symbol].df())
+            ret_df = pd.concat(dfs)
         else:
             dfs = []
-            for symbol, symbol_pnl in self.contract_pnls.items():
+            for symbol, symbol_pnl in self.symbol_pnls.items():
                 df = symbol_pnl.df()
                 dfs.append(df)
-            ret = pd.concat(dfs)
-            ret = ret.groupby('timestamp').sum()
-        df_equity = pd.DataFrame({'timestamp' : self.timestamps, 'equity' : self._equity}).dropna()
-        ret = pd.merge(ret, df_equity, on = ['timestamp'], how = 'outer')
+            ret_df = pd.concat(dfs)
+            ret_df = ret_df.groupby('timestamp').sum()
+        equity_df = pd.DataFrame({'timestamp' : self.timestamps, 'equity' : self._equity}).dropna()
+        ret = pd.merge(ret_df, equity_df, on = ['timestamp'], how = 'outer')
         return ret.reset_index()
     
-    def df_trades(self, symbol = None, start_date = None, end_date = None):
-        '''Returns a dataframe with data from trades with the given symbol and with trade date between (and including) 
-            start date and end date if they are specified.  If symbol is None, trades for all symbols are returned'''
+    def df_trades(self, contract_group = None, start_date = None, end_date = None):
+        '''Returns a dataframe of trades
+        Args:
+            contract_group (:obj:`ContractGroup`, optional): Return trades for this contract group.  If None (default), include all contract groups
+            start_date (:obj:`np.datetime64`, optional): Include trades with date greater than or equal to this timestamp.
+            end_date (:obj:`np.datetime64`, optional): Include trades with date less than or equal to this timestamp.
+        '''
         start_date, end_date = str2date(start_date), str2date(end_date)
-        if symbol:
-            trades = self.contract_pnls[symbol].trades(start_date, end_date)
+        if contract_group:
+            trades = []
+            for contract in contract_group.contracts:
+                symbol = contract.symbol
+                if symbol not in self.symbol_pnls: continue
+                trades += self.symbol_pnls[symbol].trades(start_date, end_date)
         else:
-            trades = [v.trades(start_date, end_date) for v in self.contract_pnls.values()]
+            trades = [v.trades(start_date, end_date) for v in self.symbol_pnls.values()]
             trades = [trade for sublist in trades for trade in sublist] # flatten list
-        df = pd.DataFrame.from_records([(trade.symbol, trade.timestamp, trade.qty, trade.price, 
+        df = pd.DataFrame.from_records([(trade.contract.symbol, trade.timestamp, trade.qty, trade.price, 
                                          trade.fee, trade.commission, trade.order.timestamp, trade.order.qty, trade.order.params()
                                         ) for trade in trades],
                     columns = ['symbol', 'timestamp', 'qty', 'price', 'fee', 'commission', 'order_date', 'order_qty', 'order_params'])
@@ -283,15 +327,15 @@ def test_account():
         price = dict(zip(indices, prices))[idx]
         return price
     
-    symbol = 'IBM'
+    contract = Contract('IBM', contract_group = ContractGroup('IBM'))
     timestamps = np.array(['2018-01-01 05:35', '2018-01-02 08:00', '2018-01-02 09:00', '2018-01-05 13:35'], dtype = 'M8[m]')
-    account = Account([Contract(symbol)], timestamps, get_close_price, None)
+    account = Account([contract.contract_group], timestamps, get_close_price, None)
     #account = Account([Contract(symbol)], timestamps, get_close_price)
-    trade_1 = Trade(symbol, np.datetime64('2018-01-01 09:00'), 10, 10.1, 0.01, 
-                    order = MarketOrder(symbol, np.datetime64('2018-01-01 08:55'), 10))
-    trade_2 = Trade(symbol, np.datetime64('2018-01-04 13:55'), 20, 15.1, 0.02, 
-                    order = MarketOrder(symbol, np.datetime64('2018-01-03 13:03'), 20))
-    account._add_trades('IBM', [trade_1, trade_2])
+    trade_1 = Trade(contract, np.datetime64('2018-01-01 09:00'), 10, 10.1, 0.01, 
+                    order = MarketOrder(contract, np.datetime64('2018-01-01 08:55'), 10))
+    trade_2 = Trade(contract, np.datetime64('2018-01-04 13:55'), 20, 15.1, 0.02, 
+                    order = MarketOrder(contract, np.datetime64('2018-01-03 13:03'), 20))
+    account._add_trades([trade_1, trade_2])
     np.set_printoptions(formatter = {'float' : lambda x : f'{x:.4f}'})  # After numpy 1.13 positive floats don't have a leading space for sign
     account.calc(3)
     account.df_trades()

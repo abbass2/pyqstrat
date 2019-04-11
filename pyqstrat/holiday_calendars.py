@@ -65,6 +65,8 @@ def normalize_datetime(val):
         datetime = val.to_datetime64()
     elif isinstance(val, pd.Series) or isinstance(val, pd.DatetimeIndex):
         datetime = val.values
+    elif isinstance(val, np.ndarray) and np.issubdtype(val.dtype, np.datetime64): 
+        datetime = val
     else:
         datetime = np.datetime64(val)
         
