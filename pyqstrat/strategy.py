@@ -21,7 +21,10 @@ def _get_time_series_list(timestamps, names, values, properties):
         if properties is not None and name in properties:
             if 'line_type' in properties[name]: line_type = properties[name]['line_type']
             if 'color' in properties[name]: color = properties[name]['color']
-        ts = TimeSeries(name, timestamps, getattr(values, name), line_type = line_type, color = color)
+        y = getattr(values, name)
+        if not len(y): continue
+        if y.dtype.type in [np.str_, np.object_, np.datetime64]: continue
+        ts = TimeSeries(name, timestamps, y, line_type = line_type, color = color)
         ts_list.append(ts)
     return ts_list
 
@@ -484,7 +487,9 @@ class Strategy:
     def plot(self, 
              contract_groups = None, 
              primary_indicators = None,
+             primary_indicators_dual_axis = None,
              secondary_indicators = None,
+             secondary_indicators_dual_axis = None,
              indicator_properties = None,
              signals = None,
              signal_properties = None, 
@@ -554,10 +559,14 @@ class Strategy:
             else:
                 trade_sets = trade_sets_by_reason_code(self._trades[contract_group])
                 
-            primary_indicator_subplot = Subplot(primary_indicator_list + trade_sets, height_ratio = 0.5, ylabel = 'Primary Indicators')
+            primary_indicator_subplot = Subplot(primary_indicator_list + trade_sets, 
+                                                secondary_y = primary_indicators_dual_axis,
+                                                height_ratio = 0.5, ylabel = 'Primary Indicators')
  
             if len(secondary_indicator_list):
-                secondary_indicator_subplot = Subplot(secondary_indicator_list, height_ratio = 0.5, ylabel = 'Secondary Indicators')
+                secondary_indicator_subplot = Subplot(secondary_indicator_list, 
+                                                      secondary_y = secondary_indicators_dual_axis,
+                                                      height_ratio = 0.5, ylabel = 'Secondary Indicators')
             signal_subplot = Subplot(signal_list, ylabel = 'Signals', height_ratio = 0.167)
             pnl_subplot = Subplot(pnl_list, ylabel = 'Equity', height_ratio = 0.167, log_y = True, y_tick_format = '${x:,.0f}')
             position = df_pnl_.position.values
@@ -767,12 +776,11 @@ def test_strategy():
     assert(round(metrics['gmean'], 6) == -0.003986)
     assert(round(metrics['sharpe'], 4) == -0.3502)
     assert(round(metrics['mdd_pct'], 6) == -0.004439)
+    strategy.plot(primary_indicators = ['o', 'h', 'l', 'c', 'zscore'], primary_indicators_dual_axis=['zscore'])
+    return strategy
     
 if __name__ == "__main__":
-    test_strategy()
+    strategy = test_strategy()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
-
-#cell 2
-
 

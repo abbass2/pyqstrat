@@ -194,7 +194,8 @@ class TradeBarSeries:
         self.time_plot = True
         
     def df(self):
-        return pd.DataFrame({'o' : self.o, 'h' : self.h, 'l' : self.l, 'c' : self.c, 'v' : self.v, 'vwap' : self.vwap}, index = self.timestamps)[['o', 'h', 'l', 'c', 'v', 'vwap']]
+        return pd.DataFrame({'o' : self.o, 'h' : self.h, 'l' : self.l, 'c' : self.c, 'v' : self.v, 'vwap' : self.vwap}, 
+                            index = self.timestamps)[['o', 'h', 'l', 'c', 'v', 'vwap']]
         
     def reindex(self, all_timestamps):
         df = self.df()
@@ -257,8 +258,9 @@ def draw_candlestick(ax, index, o, h, l, c, v, vwap, colorup='darkgreen', colord
     '''Draw candlesticks given parrallel numpy arrays of o, h, l, c, v values.  v is optional.  
     See TradeBarSeries class __init__ for argument descriptions.'''
     width = 0.5
-                
-    if v is not None and not np.isnan(v).all(): # Have to do volume first because of a mpl bug with axes fonts if we use make_axes_locatable after plotting on top axis
+    
+    # Have to do volume first because of a mpl bug with axes fonts if we use make_axes_locatable after plotting on top axis
+    if v is not None and not np.isnan(v).all(): 
         divider = make_axes_locatable(ax)
         vol_ax = divider.append_axes('bottom', size = '25%', sharex = ax)
         _c = np.nan_to_num(c)
@@ -344,9 +346,9 @@ def draw_3d_plot(ax, x, y, z, plot_type, marker = 'X', marker_size = 50, marker_
     
 def _adjust_axis_limit(lim, values):
     '''If values + 10% buffer are outside current xlim or ylim, return expanded xlim or ylim for subplot'''
-    min_val, max_val = min(values), max(values)
-    lim_min = min(values) - .1 * (max_val - min_val)
-    lim_max = max(values) + .1 * (max_val - min_val)
+    min_val, max_val = np.nanmin(values), np.nanmax(values)
+    lim_min = np.nanmin(values) - .1 * (max_val - min_val)
+    lim_max = np.nanmax(values) + .1 * (max_val - min_val)
     return (min(lim[0], lim_min), max(lim[1], lim_max))
 
 def _plot_data(ax, data):
@@ -390,8 +392,13 @@ def _plot_data(ax, data):
         raise Exception(f'unknown plot type: {data.plot_type}')
         
     # For scatter and filled line, xlim and ylim does not seem to get set automatically
-    if x is not None: ax.set_xlim(_adjust_axis_limit(ax.get_xlim(), x))
-    if y is not None: ax.set_ylim(_adjust_axis_limit(ax.get_ylim(), y))
+    if x is not None:
+        xmin, xmax = _adjust_axis_limit(ax.get_xlim(), x)
+        if not np.isnan(xmin) and not np.isnan(xmax): ax.set_xlim((xmin, xmax))
+                
+    if y is not None:
+        ymin, ymax = _adjust_axis_limit(ax.get_ylim(), y)
+        if not np.isnan(ymin) and not np.isnan(ymax): ax.set_ylim((ymin, ymax))
 
     return line
 
@@ -448,27 +455,29 @@ def get_date_formatter(plot_timestamps, date_format):
     
 class Subplot:
     '''A top level plot contains a list of subplots, each of which contain a list of data objects to draw'''
-    def __init__(self, data_list, title = None, xlabel = None, ylabel = None, zlabel = None,
+    def __init__(self, data_list, secondary_y = None, title = None, xlabel = None, ylabel = None, zlabel = None,
                  date_lines = None, horizontal_lines = None, vertical_lines = None, xlim = None, ylim = None, 
                  height_ratio = 1.0, display_legend = True, legend_loc = 'best', log_y = False, y_tick_format = None):
-        
         '''
         Args:
             data_list: A list of objects to draw.  Each element can contain XYData, XYZData, TimeSeries, TradeBarSeries, BucketedValues or TradeSet
-            title: Title to show for this subplot. Default None
-            zlabel: Only applicable to 3d subplots.  Default None
-            date_lines: A list of DateLine objects to draw as vertical lines.  Only applicable when x axis is datetime.  Default None
-            horizontal_lines: A list of HorizontalLine objects to draw on the plot.  Default None
-            vertical_lines: A list of VerticalLine objects to draw on the plot
-            xlim: x limits for the plot as a tuple of numpy datetime objects when x-axis is datetime, or tuple of floats. Default None
-            ylim: y limits for the plot.  Tuple of floats.  Default None
-            height_ratio: If you have more than one subplot on a plot, use height ratio to determine how high each subplot should be.
+            secondary_y (list of str, optional): A list of objects to draw on the secondary y axis
+            title (str, optional): Title to show for this subplot. Default None
+            zlabel (str, optional): Only applicable to 3d subplots.  Default None
+            date_lines (list of :obj:`DateLine`, optional): A list of DateLine objects to draw as vertical lines.  
+                Only applicable when x axis is datetime.  Default None
+            horizontal_lines (list of :obj:`HorizontalLine`, optional): A list of HorizontalLine objects to draw on the plot.  Default None
+            vertical_lines (list of :obj:`VerticalLine`, optional): A list of VerticalLine objects to draw on the plot
+            xlim (tuple of datetime or float, optional): x limits for the plot as a tuple of numpy datetime objects when x-axis is datetime, 
+                or tuple of floats. Default None
+            ylim (tuple of float, optional): y limits for the plot.  Tuple of floats.  Default None
+            height_ratio (float, optional): If you have more than one subplot on a plot, use height ratio to determine how high each subplot should be.
                 For example, if you set height_ratio = 0.75 for the first subplot and 0.25 for the second, 
                 the first will be 3 times taller than the second one. Default 1.0
-            display_legend: Whether to show a legend on the plot.  Default True
-            legend_loc: Location for the legend. Default 'best'
-            log_y: whether the y axis should be logarithmic.  Default False
-            y_tick_format: Format string to use for y axis labels.  For example, you can decide to 
+            display_legend (bool, optional): Whether to show a legend on the plot.  Default True
+            legend_loc (str, optional): Location for the legend. Default 'best'
+            log_y (bool, optional): whether the y axis should be logarithmic.  Default False
+            y_tick_format (str, optional): Format string to use for y axis labels.  For example, you can decide to 
               use fixed notation instead of scientific notation or change number of decimal places shown.  Default None
         '''
         if not isinstance(data_list, list): data_list = [data_list]
@@ -483,6 +492,7 @@ class Subplot:
             raise Exception('cannot add a 2d plot on a subplot which has a 3d plot')
 
         self.data_list = data_list
+        self.secondary_y = secondary_y
         self.date_lines = [] if date_lines is None else date_lines
         self.horizontal_lines = [] if horizontal_lines is None else horizontal_lines
         self.vertical_lines = [] if vertical_lines is None else vertical_lines
@@ -542,11 +552,18 @@ class Subplot:
         
         lines = []
         
+        ax2 = None
+        if self.secondary_y is not None and len(self.secondary_y):
+            ax2 = ax.twinx()
+        
         for data in self.data_list:
             if _VERBOSE: print(f'plotting data: {data.name}')
-            line  = _plot_data(ax, data)
+            if ax2 and data.name in self.secondary_y:
+                line = _plot_data(ax2, data)
+            else:
+                line = _plot_data(ax, data)
             lines.append(line)
-            
+                        
         for date_line in self.date_lines: # vertical lines on time plot
             line = draw_date_line(ax, plot_timestamps, date_line.date, date_line.line_type, date_line.color)
             if date_line.name is not None: lines.append(line)
@@ -743,7 +760,8 @@ def test_plot():
     ind_subplot = Subplot([TimeSeries('slow_support', timestamps = timestamps, values = np.array([8.9, 8.9, 9.1, 9.1]), line_type = '--'),
                            TimeSeries('fast_support', timestamps = timestamps, values = np.array([8.9, 9.0, 9.1, 9.2]), line_type = '--'),
                            TimeSeries('slow_resistance', timestamps = timestamps, values = np.array([9.2, 9.2, 9.4, 9.4]), line_type = '--'),
-                           TimeSeries('fast_resistance', timestamps = timestamps, values = np.array([9.2, 9.3, 9.4, 9.5]), line_type = '--'), 
+                           TimeSeries('fast_resistance', timestamps = timestamps, values = np.array([9.2, 9.3, 9.4, 9.5]), line_type = '--'),
+                           TimeSeries('secondary_y_test', timestamps = timestamps, values = np.array([150, 160, 162, 135]), line_type = '--'),
                            TradeBarSeries('price', timestamps = timestamps, 
                                 o = np.array([8.9, 9.1, 9.3, 8.6]),
                                 h = np.array([9.0, 9.3, 9.4, 8.7]),
@@ -751,7 +769,9 @@ def test_plot():
                                 c = np.array([8.95, 9.2, 9.35, 8.5]),
                                 v = np.array([200, 100, 150, 300]),
                                 vwap = np.array([8.9, 9.15, 9.3, 8.55]))
-                          ] + trade_sets_by_reason_code(trades), ylabel = "Price", height_ratio = 0.3)
+                          ] + trade_sets_by_reason_code(trades), 
+                          secondary_y = ['secondary_y_test'], 
+                          ylabel = "Price", height_ratio = 0.3)
     
     sig_subplot = Subplot(TimeSeries('trend', timestamps = timestamps, values = np.array([1, 1, -1, -1])), height_ratio=0.1, ylabel = 'Trend')
     
@@ -782,4 +802,7 @@ if __name__ == "__main__":
     test_plot();
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 1
+
 
