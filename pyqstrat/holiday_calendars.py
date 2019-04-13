@@ -38,7 +38,7 @@ def _as_np_date(val):
         return val.astype('M8[D]')
     return None
 
-def normalize_datetime(val):
+def _normalize_datetime(val):
     '''
     Break up a datetime into date and time.  
     
@@ -50,15 +50,15 @@ def normalize_datetime(val):
         
         File "__main__", line 55, in __main__._normalize_date_time
     
-    >>> print(normalize_datetime(pd.Timestamp('2016-05-01 3:55:00')))
+    >>> print(_normalize_datetime(pd.Timestamp('2016-05-01 3:55:00')))
     (numpy.datetime64('2016-05-01'), numpy.timedelta64(14100000000000,'ns'))
-    >>> print(normalize_datetime('2016-05-01'))
+    >>> print(_normalize_datetime('2016-05-01'))
     (numpy.datetime64('2016-05-01'), numpy.timedelta64(0,'D'))
     >>> x = pd.DataFrame({'x' : [np.datetime64('2015-01-01 05:00:00'), np.datetime64('2015-02-01 06:00:00')]})
-    >>> print(normalize_datetime(x.x))
+    >>> print(_normalize_datetime(x.x))
     (array(['2015-01-01', '2015-02-01'], dtype='datetime64[D]'), array([18000000000000, 21600000000000], dtype='timedelta64[ns]'))
     >>> x = pd.DataFrame({'x' : [1, 2]}, index = [np.datetime64('2015-01-01 05:00:00'), np.datetime64('2015-02-01 06:00:00')])
-    >>> print(normalize_datetime(x.index))
+    >>> print(_normalize_datetime(x.index))
     (array(['2015-01-01', '2015-02-01'], dtype='datetime64[D]'), array([18000000000000, 21600000000000], dtype='timedelta64[ns]'))
     '''
     if isinstance(val, pd.Timestamp): 
@@ -73,6 +73,7 @@ def normalize_datetime(val):
     date = datetime.astype('M8[D]')
     time_delta = datetime - date
     return date, time_delta
+
 
 def _normalize(start, end, include_first, include_last):
     '''
@@ -178,7 +179,7 @@ class Calendar(object):
         
         >>> eurex = Calendar.get_calendar(Calendar.EUREX)
         >>> eurex.num_trading_days('2009-01-01', '2011-12-31')
-        772.0
+        772
         >>> dates = pd.date_range('20130101',periods=8)
         >>> increments = np.array([5, 0, 3, 9, 4, 10, 15, 29])
         >>> import warnings
@@ -193,20 +194,19 @@ class Calendar(object):
         >>> print(nyse.num_trading_days(df.x, df.y))
         [3.0 0.0 1.0 5.0 nan 8.0 nan 20.0]
         '''
+        iterable = isinstance(start, collections.abc.Iterable) and not isinstance(start, str)
         s_tmp, e_tmp = _normalize(start, end, include_first, include_last)
-        # np.busday_count does not like nat dates so convert them to known numbers and then check for them.
-        DUMMY_BEGIN_DATE = np.datetime64('1700-01-01')
-        DUMMY_END_DATE = np.datetime64('1829-03-08')
-        DUMMY_DIFF = 33701.
-        s = np.where((np.isnat(s_tmp) | np.isnat(e_tmp)), DUMMY_BEGIN_DATE, s_tmp)
-        e = np.where((np.isnat(s_tmp) | np.isnat(e_tmp)), DUMMY_END_DATE, e_tmp)
-        count = np.busday_count(s, e, busdaycal = self.bus_day_cal).astype(np.float)
-        count = np.where(count == DUMMY_DIFF, np.nan, count)
-        if isinstance(start, str) and isinstance(end, str):
-            return np.ndarray.item(count)
-        if not isinstance(start, collections.abc.Iterable) and not isinstance(end, collections.abc.Iterable):
-            return np.ndarray.item(count)
-        return count
+        # np.busday_count does not like nat dates
+        if iterable:
+            ret = np.full(len(s_tmp), np.nan)
+            mask = ~(np.isnat(s_tmp) | np.isnat(e_tmp))
+            count = np.busday_count(s_tmp[mask], e_tmp[mask], busdaycal = self.bus_day_cal)
+            ret[mask] = count
+            return ret
+        else:
+            if np.isnat(s_tmp) or np.isnat(s_tmp): return np.nan
+            count = np.busday_count(s_tmp, e_tmp, busdaycal = self.bus_day_cal)
+            return count
         
     def get_trading_days(self, start, end, include_first = False, include_last = True):
         '''
@@ -271,7 +271,7 @@ class Calendar(object):
         >>> calendar.add_trading_days(np.datetime64('2019-02-17 15:25'), -1, roll = 'allow')
         numpy.datetime64('2019-02-15T15:25')
         '''
-        start_date, time_delta = normalize_datetime(start)
+        start_date, time_delta = _normalize_datetime(start)
         if roll == 'allow':
             # If today is a holiday, roll forward but subtract 1 day so
             num_days = np.where(self.is_trading_day(start) | (num_days < 1), num_days, num_days - 1)
@@ -312,6 +312,4 @@ class Calendar(object):
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
-    
-
 

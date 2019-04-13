@@ -24,13 +24,10 @@ class ContractGroup:
         self.contracts_by_symbol[contract.symbol] = contract
         
     def get_contract(self, symbol):
-        try:
-            return self.contracts_by_symbol[symbol]
-        except KeyError:
-            return None
+        return self.contracts_by_symbol.get(symbol)
         
     def __repr__(self):
-        return self.name + f' {self.contracts}' if len(self.contracts) else ''
+        return self.name
 
 class Contract:
     '''A contract such as a stock, option or a future that can be traded'''
@@ -64,7 +61,7 @@ class Contract:
     def __repr__(self):
         return f'{self.symbol} {self.multiplier} ' + (
             f'group: {self.contract_group.name}' if self.contract_group else '') + (
-            f' {self.properties}' if self.properties.__dict__ else '')
+            f' {self.properties.__dict__}' if self.properties.__dict__ else '')
 
 class Trade:
     def __init__(self, contract, timestamp, qty, price, fee = 0., commission = 0., order = None):
@@ -101,7 +98,8 @@ class Trade:
         timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
         fee = f' fee: {self.fee:.6g}' if self.fee else ''
         commission = f' commission: {self.commission:.6g}' if self.commission else ''
-        return f'{self.contract.symbol}' + (f' {self.contract.properties}' if self.contract.properties.__dict__ else '') + (
+        return f'{self.contract.symbol}' + (
+            f' {self.contract.properties.__dict__}' if self.contract.properties.__dict__ else '') + (
             f' {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} prc: {self.price:.6g}{fee}{commission} order: {self.order}')
     
 if __name__ == "__main__":

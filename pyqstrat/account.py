@@ -228,7 +228,7 @@ class Account:
     def position(self, contract_group, timestamp):
         '''Returns position for a contract_group at a given date in number of contracts or shares.  
             Will cause calculation if Account has not previously calculated up to this date'''
-        i = self.find_index_before(timestamp)
+        i = np.searchsorted(self.timestamps, timestamp)
         self.calc(i)
         position = 0
         for contract in contract_group.contracts:
@@ -241,7 +241,7 @@ class Account:
         '''
         Returns all non-zero positions in a contract group
         '''
-        i = self.find_index_before(timestamp)
+        i = np.searchsorted(self.timestamps, timestamp)
         self.calc(i)
         positions = []
         for contract in contract_group.contracts:
@@ -254,7 +254,7 @@ class Account:
     def equity(self, timestamp):
         '''Returns equity in this account in Account currency.  Will cause calculation if Account has not previously 
             calculated up to this date'''
-        i = self.find_index_before(timestamp)
+        i = np.searchsorted(self.timestamps, timestamp)
         self.calc(i)
         return self._equity[i]
     
@@ -275,14 +275,10 @@ class Account:
                 if symbol not in self.symbol_pnls: continue
                 trades += self.symbol_pnls[symbol].trades(start_date, end_date)
             return trades
-        
-    def find_index_before(self, timestamp):
-        '''Returns the market data index before or at timestamp'''
-        return np.searchsorted(self.timestamps, timestamp)
-        
+               
     def transfer_cash(self, date, amount):
         '''Move cash from one portfolio to another'''
-        i = self.find_index_before(date)
+        i = np.searchsorted(self.timestamps, date)
         curr_equity = self.equity(date)
         if (amount > curr_equity): amount = curr_equity # Cannot make equity negative
         self._equity[i] -= amount
@@ -375,7 +371,4 @@ if __name__ == "__main__":
     test_account()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
-
-#cell 2
-
 
