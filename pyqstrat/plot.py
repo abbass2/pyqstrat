@@ -707,15 +707,17 @@ def _group_trades_by_reason_code(trades):
         trade_groups[trade.order.reason_code].append(trade)
     return trade_groups
 
-def trade_sets_by_reason_code(trades, marker_props = ReasonCode.MARKER_PROPERTIES):
+def trade_sets_by_reason_code(trades, marker_props = ReasonCode.MARKER_PROPERTIES, remove_missing_properties = True):
     '''
     Returns a list of TradeSet objects.  Each TradeSet contains trades with a different reason code.  The markers for each TradeSet
     are set by looking up marker properties for each reason code using the marker_props argument:
     
     Args:
-        trades: List of Trade objects, each containing an order attribute which in turn contains a reason_code attribute
-        marker_props: Dictionary from reason code string -> dictionary of marker properties.  See ReasonCode.MARKER_PROPERTIES for example.
-          Default ReasonCode.MARKER_PROPERTIES
+        trades (list of :obj:`Trade`): We look up reason codes using the reason code on the corresponding orders
+        marker_props (dict of str : dict, optional): Dictionary from reason code string -> dictionary of marker properties.  
+            See ReasonCode.MARKER_PROPERTIES for example.  Default ReasonCode.MARKER_PROPERTIES
+        remove_missing_properties (bool, optional): If set, we remove any reason codes that dont' have marker properties set.
+            Default True
      '''
     trade_groups = _group_trades_by_reason_code(trades)
     tradesets = []
@@ -723,6 +725,8 @@ def trade_sets_by_reason_code(trades, marker_props = ReasonCode.MARKER_PROPERTIE
         if reason_code in marker_props:
             mp = marker_props[reason_code]
             tradeset = TradeSet(reason_code, trades, marker = mp['symbol'], marker_color = mp['color'], marker_size = mp['size'])
+        elif remove_missing_properties: 
+            continue
         else:
             tradeset = TradeSet(reason_code, trades)
         tradesets.append(tradeset)
@@ -797,6 +801,11 @@ def test_plot():
     subplot_list = [ind_subplot, sig_subplot, pos_subplot, equity_subplot, annual_returns_subplot, xy_subplot, xyz_subplot]
     plot = Plot(subplot_list, figsize = (20,20), title = 'Plot Test', hspace = 0.35)
     plot.draw();
+    
+    plot = Plot(subplot_list, figsize = (20,20), title = 'Plot Test', hspace = 0.35)
+    plot.draw()
+
+
     
 if __name__ == "__main__":
     test_plot();

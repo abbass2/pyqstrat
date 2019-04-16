@@ -127,16 +127,18 @@ class ContractPNL:
             end_date: A string or numpy datetime64.  Trades with trade timestamps <= end_date will be returned.  Default None
         '''
         start_date, end_date = str2date(start_date), str2date(end_date)
-        trades = [trade for trade in self._trades if (start_date is None or trade.timestamp >= start_date) and (end_date is None or trade.timestamp <= end_date)]
+        trades = [trade for trade in self._trades if (start_date is None or trade.timestamp >= start_date) and (
+            end_date is None or trade.timestamp <= end_date)]
         return trades
          
     def df(self):
         '''Returns a pandas dataframe with pnl data, indexed by date'''
         df = pd.DataFrame({'timestamp' : self.timestamps, 'unrealized' : self.unrealized, 'realized' : self.realized, 
-                           'fee' : self.fee, 'net_pnl' : self.net_pnl, 'position' : self.position, 'price' : self.price})
+                           'commission' : self.commission, 'fee' : self.fee, 
+                           'net_pnl' : self.net_pnl, 'position' : self.position, 'price' : self.price})
         df.dropna(subset = ['unrealized', 'realized'], inplace = True)
         df['symbol'] = self.symbol
-        return df[['symbol', 'timestamp', 'unrealized', 'realized', 'fee', 'net_pnl', 'position', 'price']]
+        return df[['symbol', 'timestamp', 'unrealized', 'realized', 'commission', 'fee', 'net_pnl', 'position', 'price']]
     
 def _get_calc_indices(timestamps):
     calc_timestamps = np.unique(timestamps.astype('M8[D]'))
@@ -169,6 +171,8 @@ class Account:
         self._equity = np.full(len(timestamps), np.nan, dtype = np.float); 
         self._equity[0] = self.starting_equity
         
+        self.contracts = set()
+        
         self.symbol_pnls = {}
         self.symbols = set()
         
@@ -178,6 +182,7 @@ class Account:
     def add_contract(self, contract):
         self.symbol_pnls[contract.symbol] = ContractPNL(contract, self.timestamps, self.price_function, self.strategy_context)
         self.symbols.add(contract.symbol)
+        self.contracts.add(contract)
         
     def _add_trades(self, trades):
         for trade in trades:
@@ -284,30 +289,34 @@ class Account:
         self._equity[i] -= amount
         return amount
 
-    def df_pnl(self, contract_group = None):
+    def df_pnl(self, contract_groups = None):
         '''Returns a dataframe with P&L columns.
         Args:
-            contract_group (:obj:`ContractGroup`, optional): Return PNL for this contract group.  If None (default), sum up all contract groups
+            contract_group (:obj:`ContractGroup`, optional): Return PNL for this contract group.  
+                If None (default), include all contract groups
         '''
-        if contract_group:
+        
+        if contract_groups is None: 
+            contract_groups = set([contract.contract_group for contract in self.contracts])
+        
+        if isinstance(contract_groups, ContractGroup): contract_groups = [contract_groups]
+            
+        for contract_group in contract_groups:
             dfs = []
             for contract in contract_group.contracts:
                 symbol = contract.symbol
                 if symbol not in self.symbol_pnls: continue
                 df = self.symbol_pnls[symbol].df()
+                df['contract_group'] = contract_group.name
                 dfs.append(df)
-            ret_df = pd.concat(dfs)
-        else:
-            dfs = []
-            for symbol, symbol_pnl in self.symbol_pnls.items():
-                df = symbol_pnl.df()
-                dfs.append(df)
-            ret_df = pd.concat(dfs)
-            
-        ret_df = ret_df.groupby('timestamp', as_index = False).sum()
-        equity_df = pd.DataFrame({'timestamp' : self.timestamps, 'equity' : self._equity}).dropna()
-        ret = pd.merge(ret_df, equity_df, on = ['timestamp'], how = 'outer').sort_values(by = ['timestamp'])
-        return ret #[['symbol', 'timestamp', 'unrealized', 'realized', 'fee', 'net_pnl', 'position', 'price', 'equity']]
+        ret_df = pd.concat(dfs)
+        ret_df = ret_df[['timestamp', 'contract_group', 'symbol', 'position', 'price', 'unrealized', 'realized', 
+                         'commission', 'fee', 'net_pnl']]
+        df_equity = pd.DataFrame({'timestamp' : self.timestamps, 'equity' : self._equity}).dropna()
+        ret_df = pd.merge(ret_df, df_equity, on = ['timestamp'], how = 'outer')
+        ret_df = ret_df.sort_values(by = ['timestamp', 'contract_group', 'symbol'])
+        return ret_df[['timestamp', 'contract_group', 'symbol', 'position', 'price', 'unrealized', 'realized', 
+                       'commission', 'fee', 'net_pnl', 'equity']]
     
     def df_trades(self, contract_group = None, start_date = None, end_date = None):
         '''Returns a dataframe of trades
@@ -334,10 +343,11 @@ class Account:
                                         ) for trade in trades],
                     columns = ['symbol', 'timestamp', 'qty', 'price', 'fee', 'commission', 'order_date', 'order_qty', 
                                'reason_code', 'order_props', 'contract_props'])
+        df = df.sort_values(by = ['timestamp', 'symbol'])
         return df
     
 def test_account():
-    from pyqstrat.pq_types import Contract, Trade
+    from pyqstrat.pq_types import Contract, ContractGroup, Trade
     from pyqstrat.orders import MarketOrder
     import math
 
@@ -366,9 +376,13 @@ def test_account():
     assert(np.allclose(np.array([1000000, 1000018.99, 999986.97]), account.df_pnl().equity.values, rtol = 0))
     assert(np.allclose(np.array([0, 10, 30]), account.df_pnl().position.values, rtol = 0))
     assert(np.allclose(np.array([0, 10, 30]), account.df_pnl().position.values, rtol = 0))
+    assert(np.allclose(np.array([1000000, 1000018.99, 999986.97]), account.df_pnl([contract_group]).equity.values, rtol = 0))
     
 if __name__ == "__main__":
     test_account()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 2
+
 

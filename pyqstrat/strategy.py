@@ -270,6 +270,7 @@ class Strategy:
         ...                               aapl : types.SimpleNamespace(sig_a = np.array([0., 0., 0.]), 
         ...                                                    sig_b = np.array([0., -1., -1])
         ...                                                   )}
+        ...        self.signal_cgroups = {'sig_a' : [ibm, aapl], 'sig_b' : [ibm, aapl]}
         ...        self.indicator_values = {ibm : types.SimpleNamespace(), aapl : types.SimpleNamespace()}
         >>>
         >>> def market_sim_aapl(): pass
@@ -304,8 +305,10 @@ class Strategy:
             rule_function = self.rules[rule_name]
             for cgroup in contract_groups:
                 market_sim = self.market_sims[cgroup]
-                signal_name = self.rule_signals[rule_name][0]
-                sig_true_values = self.rule_signals[rule_name][1]
+                signal_name, sig_true_values = self.rule_signals[rule_name]
+                if cgroup not in self.signal_cgroups[signal_name]:
+                    # We don't need to call this rule for this contract group
+                    continue
                 sig_values = getattr(self.signal_values[cgroup], signal_name)
                 timestamps = self.timestamps
 
@@ -343,7 +346,12 @@ class Strategy:
                 rule_function, contract_group, params = tup
                 open_orders = self._get_orders(i, rule_function, contract_group, params)
                 self._orders += open_orders
-                if len(open_orders): self.trades_iter[i + 1].append((open_orders, contract_group, params))
+                if not len(open_orders): return
+                #contract_group_orders = defaultdict(list)
+                #for order in open_orders:
+                #    contract_group_orders[order.contract.contract_group].append(order)
+                #for contract_group, open_orders in contract_group_orders.items():
+                self.trades_iter[i + 1].append((open_orders, contract_group, params))
             except Exception as e:
                 raise type(e)(f'Exception: {str(e)} at rule: {type(tup[0])} contract_group: {tup[1]} index: {i}'
                              ).with_traceback(sys.exc_info()[2])
@@ -368,7 +376,8 @@ class Strategy:
         trades = market_sim_function(open_orders, idx, self.timestamps, params['indicator_values'], params['signal_values'], 
                                      self.strategy_context)
         if len(trades) == 0: return []
-        self._trades[contract_group] += trades
+        for trade in trades:
+            self._trades[trade.order.contract.contract_group].append(trade)
         self.account._add_trades(trades)
         #self.account.calc(idx)
         open_orders = [order for order in open_orders if order.status == 'open']
@@ -397,9 +406,8 @@ class Strategy:
         for contract_group in contract_groups:
             df = pd.DataFrame({'timestamp' : self.timestamps})
             if add_pnl: 
-                df_pnl = self.account.df_pnl(contract_group)
-                del df_pnl['contract_group']
-
+                df_pnl = self.df_pnl(contract_group, group_by_time = True)
+ 
             indicator_values = self.indicator_values[contract_group]
             
             for k in sorted(indicator_values.__dict__):
@@ -466,9 +474,15 @@ class Strategy:
                                               columns = ['symbol', 'type', 'timestamp', 'qty', 'reason_code', 'order_props', 'contract_props'])
         return df_orders
    
-    def df_pnl(self, contract_group = None):
+    def df_pnl(self, contract_group = None, group_by_time = False):
         '''Returns a dataframe with P&L columns.  If contract group is set to None (default), sums up P&L across all contract groups'''
-        return self.account.df_pnl(contract_group)
+        df_pnl = self.account.df_pnl(contract_group)
+        if group_by_time:
+            df_pnl = df_pnl[['timestamp', 'position', 'unrealized', 'realized', 'fee', 'net_pnl', 'equity']].groupby(
+                'timestamp', as_index = False).agg(
+                {'position' : np.sum, 'unrealized' : np.sum, 'realized' : np.sum, 'fee' : np.sum, 
+                 'net_pnl' : np.sum, 'equity' : lambda x : x.iloc[-1]})
+        return df_pnl
     
     def df_returns(self, contract_group = None, sampling_frequency = 'D'):
         '''Return a dataframe of returns and equity indexed by date.
@@ -478,7 +492,14 @@ class Strategy:
                 If set to None (default), we return the sum of PNL for all contract groups
             sampling_frequency: Downsampling frequency.  Default is None.  See pandas frequency strings for possible values
         '''
-        pnl = self.df_pnl(contract_group)[['timestamp', 'equity']]
+        if contract_group:
+            pnl = self.df_pnl(contract_group)[['timestamp', 'contract_group', 'net_pnl', 'equity']]
+            pnl = pnl.groupby(['timestamp'], as_index = False).sum()
+            # Recompute equity using just PNL for this contract group
+            pnl['equity'] = pnl.equity.iloc[0] + pnl.net_pnl.values
+        else:
+            pnl = self.df_pnl(group_by_time = True)[['timestamp', 'net_pnl', 'equity']]
+
         pnl.equity = pnl.equity.ffill()
         pnl = pnl.set_index('timestamp').resample(sampling_frequency).last().reset_index()
         pnl['ret'] = pnl.equity.pct_change()
@@ -493,7 +514,7 @@ class Strategy:
              indicator_properties = None,
              signals = None,
              signal_properties = None, 
-             pnl_columns = 'equity', 
+             pnl_columns = None, 
              title = None, 
              figsize = (20, 15), 
              date_range = None, 
@@ -514,7 +535,7 @@ class Strategy:
             indicator_properties (dict of str : dict, optional): If set, we use the line color, line type indicated 
                 for the given indicators
             signals (list of str, optional): Signals to plot.  Default None (plot everything).
-            pnl_columns (list of str, optional): List of P&L columns to plot.  Default is 'equity'
+            plot_equity (bool, optional): If set, we plot the equity curve.  Default is True
             title (list of str, optional): Title of plot. Default None
             figsize (tuple of int): Figure size.  Default (20, 15)
             date_range (tuple of str or np.datetime64, optional): Used to restrict the date range of the graph.
@@ -531,7 +552,8 @@ class Strategy:
         '''
         date_range = strtup2date(date_range)
         if contract_groups is None: contract_groups = self.contract_groups
-        if not isinstance(pnl_columns, list): pnl_columns = [pnl_columns]
+        if isinstance(contract_groups, ContractGroup): contract_groups = [contract_groups]
+        if pnl_columns is None: pnl_columns = ['equity']
         
         for contract_group in contract_groups:
             primary_indicator_names = [ind_name for ind_name in self.indicator_values[contract_group].__dict__ \
@@ -550,12 +572,13 @@ class Strategy:
             secondary_indicator_list = _get_time_series_list(self.timestamps, secondary_indicator_names, 
                                                              self.indicator_values[contract_group], indicator_properties)
             signal_list = _get_time_series_list(self.timestamps, signal_names, self.signal_values[contract_group], signal_properties)
-            df_pnl_ = self.df_pnl(contract_group)
+            df_pnl_ = self.df_pnl(contract_group, group_by_time = True)
             pnl_list = [TimeSeries(pnl_column, timestamps = df_pnl_.timestamp.values, values = df_pnl_[pnl_column].values
                                   ) for pnl_column in pnl_columns]
             
             if trade_marker_properties:
-                trade_sets = trade_sets_by_reason_code(self._trades[contract_group], trade_marker_properties)
+                trade_sets = trade_sets_by_reason_code(self._trades[contract_group], trade_marker_properties, 
+                                                       remove_missing_properties = True)
             else:
                 trade_sets = trade_sets_by_reason_code(self._trades[contract_group])
                 
@@ -783,4 +806,10 @@ if __name__ == "__main__":
     strategy = test_strategy()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 2
+
+
+#cell 3
+
 

@@ -134,7 +134,8 @@ def compute_maxdd_date(rolling_dd_dates, rolling_dd):
     return rolling_dd_dates[np.argmin(rolling_dd)]
 
 def compute_maxdd_start(rolling_dd_dates, rolling_dd, mdd_date):
-    '''Compute date when max drawdown starts, given numpy array of timestamps corresponding rolling dd percentages and date that max dd starts'''
+    '''Compute date when max drawdown starts, given numpy array of timestamps corresponding rolling dd 
+        percentages and date that max dd starts'''
     if not len(rolling_dd_dates) or pd.isnull(mdd_date): return pd.NaT
     assert(len(rolling_dd_dates) == len(rolling_dd))
     return rolling_dd_dates[(rolling_dd >= 0) & (rolling_dd_dates < mdd_date)][-1]
@@ -191,7 +192,8 @@ def compute_bucketed_returns(timestamps, returns):
     Bucket returns by year
     
     Returns:
-        A tuple with the first element being a list of years and the second a list of numpy arrays containing returns for each corresponding year
+        A tuple with the first element being a list of years and the second a list of 
+            numpy arrays containing returns for each corresponding year
     '''
     assert(len(timestamps) == len(returns))
     if not len(timestamps): return np.array([], dtype = np.str), np.array([], dtype = np.float)
@@ -220,8 +222,10 @@ def compute_annual_returns(timestamps, returns, periods_per_year):
     return ret_by_year.index.values, ret_by_year.values
 
 class Evaluator:
-    """You add functions to the evaluator that are dependent on the outputs of other functions.  The evaluator will call these functions in the right order
-    so dependencies are computed first before the functions that need their output.  You can retrieve the output of a metric using the metric member function
+    """You add functions to the evaluator that are dependent on the outputs of other functions.  
+    The evaluator will call these functions in the right order
+    so dependencies are computed first before the functions that need their output.  
+    You can retrieve the output of a metric using the metric member function
     
     >>> evaluator = Evaluator(initial_metrics={'x' : np.array([1, 2, 3]), 'y' : np.array([3, 4, 5])})
     >>> evaluator.add_metric('z', lambda x, y: sum(x, y), dependencies=['x', 'y'])
@@ -233,7 +237,8 @@ class Evaluator:
         """Inits Evaluator with a dictionary of initial metrics that are used to compute subsequent metrics
         
         Args:
-            initial_metrics: a dictionary of string name -> metric.  metric can be any object including a scalar, an array or a tuple
+            initial_metrics: a dictionary of string name -> metric.  metric can be any object including a scalar, 
+                an array or a tuple
         """
         assert(type(initial_metrics) == dict)
         self.metric_values = initial_metrics
@@ -351,7 +356,8 @@ def compute_return_metrics(timestamps, rets, starting_equity, leading_non_finite
     ev.add_metric('std', compute_std, dependencies = ['returns'])
     ev.add_metric('up_periods', lambda returns : len(returns[returns > 0]), dependencies = ['returns'])
     ev.add_metric('down_periods', lambda returns : len(returns[returns < 0]), dependencies = ['returns'])
-    ev.add_metric('up_pct', lambda up_periods, down_periods : up_periods * 1.0 / (up_periods + down_periods), dependencies=['up_periods', 'down_periods'])
+    ev.add_metric('up_pct', lambda up_periods, down_periods : up_periods * 1.0 / (up_periods + down_periods), 
+                  dependencies=['up_periods', 'down_periods'])
     ev.add_metric('gmean', compute_gmean, dependencies=['returns', 'periods_per_year'])
     ev.add_metric('sharpe', compute_sharpe, dependencies = ['returns', 'periods_per_year', 'amean'])
     ev.add_metric('sortino', compute_sortino, dependencies = ['returns', 'periods_per_year', 'amean'])
@@ -361,7 +367,8 @@ def compute_return_metrics(timestamps, rets, starting_equity, leading_non_finite
     ev.add_metric('rolling_dd', compute_rolling_dd, dependencies = ['timestamps', 'equity'])
     ev.add_metric('mdd_pct', lambda rolling_dd : compute_maxdd_pct(rolling_dd[1]), dependencies = ['rolling_dd'])
     ev.add_metric('mdd_date', lambda rolling_dd : compute_maxdd_date(rolling_dd[0], rolling_dd[1]), dependencies = ['rolling_dd'])
-    ev.add_metric('mdd_start', lambda rolling_dd, mdd_date : compute_maxdd_start(rolling_dd[0], rolling_dd[1], mdd_date), dependencies = ['rolling_dd', 'mdd_date'])
+    ev.add_metric('mdd_start', lambda rolling_dd, mdd_date : compute_maxdd_start(rolling_dd[0], rolling_dd[1], mdd_date), 
+                  dependencies = ['rolling_dd', 'mdd_date'])
     ev.add_metric('mar', compute_mar, dependencies = ['returns', 'periods_per_year', 'mdd_pct'])
     
     ev.add_metric('timestamps_3yr', compute_dates_3yr, dependencies = ['timestamps'])
@@ -369,8 +376,10 @@ def compute_return_metrics(timestamps, rets, starting_equity, leading_non_finite
 
     ev.add_metric('rolling_dd_3yr', compute_rolling_dd_3yr, dependencies = ['timestamps', 'equity'])
     ev.add_metric('mdd_pct_3yr', lambda rolling_dd_3yr : compute_maxdd_pct_3yr(rolling_dd_3yr[1]), dependencies = ['rolling_dd_3yr'])
-    ev.add_metric('mdd_date_3yr', lambda rolling_dd_3yr : compute_maxdd_date_3yr(rolling_dd_3yr[0], rolling_dd_3yr[1]) , dependencies = ['rolling_dd_3yr'])
-    ev.add_metric('mdd_start_3yr', lambda rolling_dd_3yr, mdd_date_3yr : compute_maxdd_start_3yr(rolling_dd_3yr[0], rolling_dd_3yr[1], mdd_date_3yr), 
+    ev.add_metric('mdd_date_3yr', lambda rolling_dd_3yr : compute_maxdd_date_3yr(rolling_dd_3yr[0], rolling_dd_3yr[1]) , 
+                  dependencies = ['rolling_dd_3yr'])
+    ev.add_metric('mdd_start_3yr', lambda rolling_dd_3yr, mdd_date_3yr : 
+                  compute_maxdd_start_3yr(rolling_dd_3yr[0], rolling_dd_3yr[1], mdd_date_3yr), 
                   dependencies = ['rolling_dd_3yr', 'mdd_date_3yr'])
     ev.add_metric('calmar', compute_calmar, dependencies = ['returns_3yr', 'periods_per_year', 'mdd_pct_3yr'])
 
@@ -385,13 +394,11 @@ def display_return_metrics(metrics, float_precision = 3):
     Creates a dataframe making it convenient to view the output of the metrics obtained using the compute_return_metrics function.
     
     Args:
-        float_precision: Change if you want to display floats with more or less significant figures than the default, 3 significant figures.
-        
+        float_precision: Change if you want to display floats with more or less significant figures than the default, 
+            3 significant figures.       
     Returns:
         A one row dataframe with formatted metrics.
     '''
-    
-    
     from IPython.core.display import display
     
     _metrics = {}

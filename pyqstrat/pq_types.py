@@ -7,8 +7,8 @@ import types
 class ContractGroup:
     '''A way to group contracts for figuring out which indicators, rules and signals to apply to a contract and for PNL reporting'''
 
-    @classmethod
-    def create(self, name):
+    @staticmethod
+    def create(name):
         '''
          Args:
             name (str): Name of the group
@@ -31,6 +31,7 @@ class ContractGroup:
 
 class Contract:
     '''A contract such as a stock, option or a future that can be traded'''
+    @staticmethod
     def create(symbol, contract_group, multiplier = 1., properties = None):
         '''
         Args:
@@ -44,7 +45,7 @@ class Contract:
                 so multiplier would be 50.  Default 1
         '''
         assert(isinstance(symbol, str) and len(symbol) > 0)
-        assert(isinstance(contract_group, ContractGroup))
+        #assert(isinstance(contract_group, ContractGroup))
         assert(multiplier > 0)
         contract = Contract()
         contract.symbol = symbol
