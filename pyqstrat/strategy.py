@@ -30,7 +30,7 @@ def _get_time_series_list(timestamps, names, values, properties):
 
 class Strategy:
     def __init__(self, timestamps, contract_groups, price_function, starting_equity = 1.0e6, calc_frequency = 'D', 
-                 strategy_context = None, exclude_order_timestamps = None, exclude_trade_timestamps = None):
+                 strategy_context = None):
         '''
         Args:
             timestamps (np.array of np.datetime64): The "heartbeat" of the strategy.  We will evaluate trading rules and 
@@ -39,14 +39,10 @@ class Strategy:
             contract_groups (list of :obj:`ContractGroup`): The contract groups we will potentially trade.
             starting_equity (float, optional): Starting equity in Strategy currency.  Default 1.e6
             calc_frequency (str, optional): How often P&L is calculated.  Default is 'D' for daily
-            exclude_order_timestamps (np.array of np.datetime64, optional): Don't evaluate trade rules at these times.  
-                Default None
             strategy_context (:obj:`types.SimpleNamespace`, optional): A storage class where you can store key / value pairs 
                 relevant to this strategy.  For example, you may have a pre-computed table of correlations that you use in the 
                 indicator or trade rule functions.  
                 If not set, the __init__ function will create an empty member strategy_context object that you can access.
-            exclude_trade_timestamps (np.array of np.datetime64, optional): Don't evaluate market simulators at these times.  
-                Default None
         '''
         self.name = None
         self.timestamps = timestamps
@@ -55,8 +51,6 @@ class Strategy:
         if strategy_context is None: strategy_context = types.SimpleNamespace()
         self.strategy_context = strategy_context
         self.account = Account(contract_groups, timestamps, price_function, strategy_context, starting_equity, calc_frequency)
-        self.exclude_order_timestamps = exclude_order_timestamps
-        self.exclude_trade_timestamps = exclude_trade_timestamps
         self.indicators = {}
         self.signals = {}
         self.signal_values = defaultdict(types.SimpleNamespace)
@@ -232,27 +226,6 @@ class Strategy:
                 setattr(self.signal_values[cgroup], signal_name, series_to_array(
                     signal_function(cgroup, self.timestamps, indicator_values, parent_values, self.strategy_context)))
                 
-    def run_rules(self, rule_names = None, contract_groups = None, start_date = None, end_date = None):
-        '''Run trading rules.
-        
-        Args:
-            rule_names: List of rule names.  If None (default) run all rules
-            contract_groups (list of :obj:`ContractGroup', optional): Contract groups to run this rule for.  
-                If None (default), we run it for all contract groups.
-            start_date: Run rules starting from this date. Default None 
-            end_date: Don't run rules after this date.  Default None
-        '''
-        start_date, end_date = str2date(start_date), str2date(end_date)
-        timestamps, orders_iter, trades_iter = self._get_iteration_indices(rule_names, contract_groups, start_date, end_date)
-        # Now we know which rules, contract groups need to be applied for each iteration, go through each iteration and apply them
-        # in the same order they were added to the strategy
-        for i, tup_list in enumerate(orders_iter):
-            timestamp = self.timestamps[i]
-            if timestamp not in self.exclude_trade_timestamps:
-                self._check_for_trades(i, trades_iter[i])
-                self.account.calc(idx)
-            if timestamp not in self.exclude_order_timestamps:
-                self._check_for_orders(i, tup_list)
 
 
         
@@ -329,12 +302,30 @@ class Strategy:
             self.trades_iter = trades_iter # For debugging
 
         return self.timestamps, orders_iter, trades_iter
-         
+    
+    def run_rules(self, rule_names = None, contract_groups = None, start_date = None, end_date = None):
+        '''Run trading rules.
+        
+        Args:
+            rule_names: List of rule names.  If None (default) run all rules
+            contract_groups (list of :obj:`ContractGroup', optional): Contract groups to run this rule for.  
+                If None (default), we run it for all contract groups.
+            start_date: Run rules starting from this date. Default None 
+            end_date: Don't run rules after this date.  Default None
+        '''
+        start_date, end_date = str2date(start_date), str2date(end_date)
+        timestamps, orders_iter, trades_iter = self._get_iteration_indices(rule_names, contract_groups, start_date, end_date)
+        # Now we know which rules, contract groups need to be applied for each iteration, go through each iteration and apply them
+        # in the same order they were added to the strategy
+        for i, tup_list in enumerate(orders_iter):
+            self._check_for_trades(i, trades_iter[i])
+            self._check_for_orders(i, tup_list)
+
     def _check_for_trades(self, i, tup_list):
         for tup in tup_list:
             try:
                 open_orders, contract_group, params = tup
-                open_orders = self._sim_market(i, open_orders, contract_group, params)
+                open_orders, trades = self._sim_market(i, open_orders, contract_group, params)
                 if len(open_orders): self.trades_iter[i + 1].append((open_orders, contract_group, params))
             except Exception as e:
                 raise type(e)(f'Exception: {str(e)} at rule: {type(tup[0])} contract_group: {tup[1]} index: {i}'
@@ -346,11 +337,7 @@ class Strategy:
                 rule_function, contract_group, params = tup
                 open_orders = self._get_orders(i, rule_function, contract_group, params)
                 self._orders += open_orders
-                if not len(open_orders): return
-                #contract_group_orders = defaultdict(list)
-                #for order in open_orders:
-                #    contract_group_orders[order.contract.contract_group].append(order)
-                #for contract_group, open_orders in contract_group_orders.items():
+                if not len(open_orders): continue
                 self.trades_iter[i + 1].append((open_orders, contract_group, params))
             except Exception as e:
                 raise type(e)(f'Exception: {str(e)} at rule: {type(tup[0])} contract_group: {tup[1]} index: {i}'
@@ -375,13 +362,12 @@ class Strategy:
         market_sim_function = params['market_sim']
         trades = market_sim_function(open_orders, idx, self.timestamps, params['indicator_values'], params['signal_values'], 
                                      self.strategy_context)
-        if len(trades) == 0: return []
+        if len(trades) == 0: return [], []
         for trade in trades:
             self._trades[trade.order.contract.contract_group].append(trade)
-        self.account._add_trades(trades)
-        #self.account.calc(idx)
+        self.account.add_trades(trades)
         open_orders = [order for order in open_orders if order.status == 'open']
-        return open_orders
+        return open_orders, trades
             
     def df_data(self, contract_groups = None, add_pnl = True, start_date = None, end_date = None):
         '''
@@ -646,8 +632,8 @@ class Strategy:
     def __repr__(self):
         return f'{pformat(self.indicators)} {pformat(self.rules)} {pformat(self.account)}'
     
-def test_strategy():
-#if __name__ == "__main__":
+#def test_strategy():
+if __name__ == "__main__":
 
     import math
     import datetime
@@ -800,16 +786,12 @@ def test_strategy():
     assert(round(metrics['sharpe'], 4) == -0.3502)
     assert(round(metrics['mdd_pct'], 6) == -0.004439)
     strategy.plot(primary_indicators = ['o', 'h', 'l', 'c', 'zscore'], primary_indicators_dual_axis=['zscore'])
-    return strategy
     
-if __name__ == "__main__":
+if __name__ == "__mainx__":
     strategy = test_strategy()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
 
 #cell 2
-
-
-#cell 3
 
 

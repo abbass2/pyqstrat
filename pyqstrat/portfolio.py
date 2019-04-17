@@ -82,18 +82,7 @@ class Portfolio:
 
         timestamps_list = [tup[1] for tup in orders_iter_list] + [tup[1] for tup in trades_iter_list]
         all_timestamps = np.array(reduce(np.union1d, timestamps_list))
-        order_iterations = [[] for x in range(len(all_timestamps))]
-
-        for tup in orders_iter_list: # per strategy
-            strategy = tup[0]
-            timestamps = tup[1]
-            orders_iter = tup[2] # vector with list of (rule, symbol, iter_params dict)
-
-            for i, timestamp in enumerate(timestamps):
-                idx = np.searchsorted(all_timestamps, timestamp)
-                args = (strategy, i, orders_iter[i])
-                order_iterations[idx].append((Strategy._check_for_orders, args))
-
+        
         trade_iterations = [[] for x in range(len(all_timestamps))]
 
         for tup in trades_iter_list: # per strategy
@@ -105,6 +94,19 @@ class Portfolio:
                 idx = np.searchsorted(all_timestamps, timestamp)
                 args = (strategy, i, trades_iter[i])
                 trade_iterations[idx].append((Strategy._check_for_trades, args))
+
+
+        order_iterations = [[] for x in range(len(all_timestamps))]
+
+        for tup in orders_iter_list: # per strategy
+            strategy = tup[0]
+            timestamps = tup[1]
+            orders_iter = tup[2] # vector with list of (rule, symbol, iter_params dict)
+
+            for i, timestamp in enumerate(timestamps):
+                idx = np.searchsorted(all_timestamps, timestamp)
+                args = (strategy, i, orders_iter[i])
+                order_iterations[idx].append((Strategy._check_for_orders, args))
 
         return order_iterations, trade_iterations
                 
