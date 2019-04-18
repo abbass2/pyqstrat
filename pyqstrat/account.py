@@ -141,21 +141,24 @@ class ContractPNL:
     
     def net_pnl(self, i):
         return self._net_pnl[i]
-         
+    
     def df(self):
-        '''Returns a pandas dataframe with pnl data, indexed by date'''
-        mask = (self._position != 0) & np.isfinite(self._unrealized) & np.isfinite(self._realized)
-        df = pd.DataFrame({'timestamp' : self.timestamps[mask], 
-                           'unrealized' : self._unrealized[mask],
-                           'realized' : self._realized[mask], 
-                           'commission' : self._commission[mask],
-                           'fee' : self._fee[mask], 
-                           'net_pnl' : self._net_pnl[mask],
-                           'position' : self._position[mask],
-                           'price' : self._price[mask]})
+        '''Returns a pandas dataframe with pnl data'''
+        first_valid_index = pd.Series(self._price).first_valid_index()
+        last_valid_index = pd.Series(self._net_pnl).last_valid_index()
+        #mask = (self._position != 0) & np.isfinite(self._unrealized) & np.isfinite(self._realized)
+        df = pd.DataFrame({'timestamp' : self.timestamps[first_valid_index:last_valid_index + 1], 
+                           'unrealized' : self._unrealized[first_valid_index:last_valid_index + 1],
+                           'realized' : self._realized[first_valid_index:last_valid_index + 1], 
+                           'commission' : self._commission[first_valid_index:last_valid_index + 1],
+                           'fee' : self._fee[first_valid_index:last_valid_index + 1], 
+                           'net_pnl' : self._net_pnl[first_valid_index:last_valid_index + 1],
+                           'position' : self._position[first_valid_index:last_valid_index + 1],
+                           'price' : self._price[first_valid_index:last_valid_index + 1]})
         df['symbol'] = self.symbol
         return df[['symbol', 'timestamp', 'unrealized', 'realized', 'commission', 'fee', 'net_pnl', 'position', 'price']]
-    
+
+         
 def _get_calc_indices(timestamps):
     calc_timestamps = np.unique(timestamps.astype('M8[D]'))
     calc_indices = np.searchsorted(timestamps, calc_timestamps, side='left') - 1
@@ -387,8 +390,6 @@ class Account:
     
 #def test_account():
 if __name__ == "__main__":
-
-
     from pyqstrat.pq_types import Contract, ContractGroup, Trade
     from pyqstrat.orders import MarketOrder
     import math
