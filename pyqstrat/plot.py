@@ -374,7 +374,7 @@ def _plot_data(ax, data):
     elif data.plot_type == 'bar':
         line = ax.bar(index, y, color = data.color)
     elif data.plot_type == 'filled_line':
-        values = np.nan_to_num(data.values)
+        x, y, values = np.nan_to_num(x), np.nan_to_num(y), np.nan_to_num(data.values)
         pos_values = np.where(y > 0, y, 0)
         neg_values = np.where(y < 0, y, 0)
         ax.fill_between(x, pos_values, color='blue', step = 'post', linewidth = 0.0)

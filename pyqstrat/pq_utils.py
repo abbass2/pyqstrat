@@ -79,7 +79,7 @@ def shift_np(array, n, fill_value = None):
         e[:n] = array[-n:]
     return e
 
-def set_defaults(df_float_sf = 4, df_display_max_rows = 200, df_display_max_columns = 99, np_seterr = 'raise', plot_style = 'ggplot', mpl_figsize = (8, 6)):
+def set_defaults(df_float_sf = 8, df_display_max_rows = 200, df_display_max_columns = 99, np_seterr = 'raise', plot_style = 'ggplot', mpl_figsize = (8, 6)):
     '''
     Set some display defaults to make it easier to view dataframes and graphs.
     

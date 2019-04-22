@@ -200,12 +200,14 @@ class Strategy:
         sig_names = []
         
         for sig_name, cgroup_list in self.signal_cgroups.items():
-            if len(set(contract_groups).intersection(cgroup_list)): sig_names.append(sig_name)
+            if len(set(contract_groups).intersection(cgroup_list)): 
+                sig_names.append(sig_name)
                 
         signal_names = list(set(sig_names).intersection(signal_names))
         
         for cgroup in contract_groups:
             for signal_name in signal_names:
+                if cgroup not in self.signal_cgroups[signal_name]: continue
                 # First run all parent signals
                 parent_names = self.signal_deps[signal_name]
                 for parent_name in parent_names:
@@ -216,7 +218,8 @@ class Strategy:
                 signal_function = self.signals[signal_name]
                 parent_values = types.SimpleNamespace()
                 for parent_name in parent_names:
-                    setattr(parent_values, parent_name, getattr(self.signal_values[cgroup], parent_name))
+                    sig_vals = getattr(self.signal_values[cgroup], parent_name)
+                    setattr(parent_values, parent_name, sig_vals)
                     
                 # Get indicators needed for this signal
                 indicator_values = types.SimpleNamespace()
@@ -365,7 +368,8 @@ class Strategy:
         if len(trades) == 0: return [], []
         for trade in trades:
             self._trades[trade.order.contract.contract_group].append(trade)
-        self.account.add_trades(trades)
+            #TODO: Put this back
+            self.account.add_trades([trade])
         open_orders = [order for order in open_orders if order.status == 'open']
         return open_orders, trades
             
@@ -488,6 +492,7 @@ class Strategy:
 
         pnl.equity = pnl.equity.ffill()
         pnl = pnl.set_index('timestamp').resample(sampling_frequency).last().reset_index()
+        pnl = pnl.dropna(subset = ['equity'])
         pnl['ret'] = pnl.equity.pct_change()
         return pnl
     
@@ -660,6 +665,12 @@ if __name__ == "__main__":
 
     ko_prices['timestamp'] = pd.to_datetime(ko_prices.date)
     pep_prices['timestamp'] = pd.to_datetime(pep_prices.date)
+    
+    end_time = '2019-01-30 12:00'
+    
+    ko_prices = ko_prices.query(f'timestamp <= "{end_time}"')
+    pep_prices = pep_prices.query(f'timestamp <= "{end_time}"')
+
 
     timestamps = ko_prices.timestamp.values
     
@@ -776,22 +787,24 @@ if __name__ == "__main__":
                       signal_name = 'pair_strategy_signal', sig_true_values = [-1, 1], rule_type = 'exit')
     
     strategy.add_market_sim(market_simulator)
+    
+    strategy.run_indicators()
+    strategy.run_signals()
+    strategy.run_rules()
 
-    portfolio = Portfolio()
-    portfolio.add_strategy('pair_strategy', strategy)
-    portfolio.run()
+    #portfolio = Portfolio()
+    #portfolio.add_strategy('pair_strategy', strategy)
+    #portfolio.run()
     
     metrics = strategy.evaluate_returns(plot = False, display_summary = False)
     assert(round(metrics['gmean'], 6) == -0.003986)
     assert(round(metrics['sharpe'], 4) == -0.3502)
     assert(round(metrics['mdd_pct'], 6) == -0.004439)
-    strategy.plot(primary_indicators = ['o', 'h', 'l', 'c', 'zscore'], primary_indicators_dual_axis=['zscore'])
+    #strategy.plot(primary_indicators = ['o', 'h', 'l', 'c', 'zscore'], primary_indicators_dual_axis=['zscore'])
+    #strategy.plot()
     
 if __name__ == "__mainx__":
     strategy = test_strategy()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
-
-#cell 2
-
 

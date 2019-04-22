@@ -2,6 +2,7 @@
 import pandas as pd
 import numpy as np
 import types
+import datetime
 
 #cell 1
 class ContractGroup:
@@ -32,7 +33,7 @@ class ContractGroup:
 class Contract:
     '''A contract such as a stock, option or a future that can be traded'''
     @staticmethod
-    def create(symbol, contract_group, multiplier = 1., properties = None):
+    def create(symbol, contract_group, expiry = None, multiplier = 1., properties = None):
         '''
         Args:
             symbol (str): A unique string reprenting this contract. e.g IBM or ESH9
@@ -40,6 +41,8 @@ class Contract:
                 which has 3 legs, a long option, a short option and a future or equity used to hedge delta.  In this case, you will be trading
                 different symbols over time as options and futures expire, but you may want to track PNL for each leg using a contract group for each leg.
                 So you could create contract groups 'Long Option', 'Short Option' and 'Hedge' and assign contracts to these.
+            expiry (obj:`np.datetime64` or :obj:`datetime.datetime`, optional): In the case of a future or option, the date and time when the 
+                contract expires.  For equities and other non expiring contracts, set this to None.  Default None.
             multiplier (float, optional): If the market price convention is per unit, and the unit is not the same as contract size, 
                 set the multiplier here. For example, for E-mini contracts, each contract is 50 units and the price is per unit, 
                 so multiplier would be 50.  Default 1
@@ -49,6 +52,13 @@ class Contract:
         assert(multiplier > 0)
         contract = Contract()
         contract.symbol = symbol
+        
+        assert(expiry is None or isinstance(expiry, datetime.datetime) or isinstance(expiry, np.datetime64))
+        
+        if expiry is not None and isinstance(expiry, datetime.datetime):
+            expiry = np.datetime64(expiry)
+            
+        contract.expiry = expiry
         contract.multiplier = multiplier
         
         if properties is None:
@@ -60,8 +70,9 @@ class Contract:
         return contract
     
     def __repr__(self):
-        return f'{self.symbol} {self.multiplier} ' + (
-            f'group: {self.contract_group.name}' if self.contract_group else '') + (
+        return f'{self.symbol}' + f' {self.multiplier}' if self.multiplier != 1 else '' + (
+            f' expiry: {expiry:%Y-%m-%d %H:%m}' if self.expiry is not None else '') + (
+            f' group: {self.contract_group.name}' if self.contract_group else '') + (
             f' {self.properties.__dict__}' if self.properties.__dict__ else '')
 
 class Trade:
