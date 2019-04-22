@@ -492,6 +492,7 @@ class Account:
         return df
     
 def test_account():
+    #TODO: Fix the tests here
 #if __name__ == "__main__":
     from pyqstrat.pq_types import Contract, ContractGroup, Trade
     from pyqstrat.orders import MarketOrder
@@ -526,22 +527,16 @@ def test_account():
     account.add_trades([trade_1, trade_2, trade_3, trade_4])
     # After numpy 1.13 positive floats don't have a leading space for sign
     np.set_printoptions(formatter = {'float' : lambda x : f'{x:.10g}'})
-    #account.calc(1)
-    #account.calc(2)
     account.calc(3)
-    display(account.df_trades())
-    #assert(len(account.df_trades()) == 4)
-    #assert(len(account.df_pnl()) == 5)
-    #assert(np.allclose(np.array([1000000, 1000123.9, 1000123.9, 1000133.88,1000133.88]
-    #                           ), account.df_pnl().equity.values, rtol = 0))
-    #assert(np.allclose(np.array([10, 40, 30, 40]), account.df_pnl().position.values[1:], rtol = 0))
-    #assert(np.allclose(np.array([1000000.0000, 1000123.9000, 1000133.8800]), account.df_pnl([ibm_cg]).equity.values, rtol = 0))
+    assert(len(account.df_trades()) == 4)
+    assert(len(account.df_pnl()) == 8)
+    assert(np.allclose(np.array([1000000, 1000000, 1000183.88, 1000183.88, 1000213.88, 1000213.88]), 
+                       account.df_pnl().equity.dropna().values, rtol = 0))
+    assert(np.allclose(np.array([0, 10, 20, -10, 40, -10, 40]), account.df_pnl().position.values[1:], rtol = 0))
+    assert(np.allclose(np.array([1000000, 1000183.88, 1000213.88]), account.df_pnl([ibm_cg]).equity.dropna().values, rtol = 0))
     
 if __name__ == "__main__":
     test_account()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
-
-#cell 2
-
 
