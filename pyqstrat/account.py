@@ -12,12 +12,12 @@ from pyqstrat.pq_types import ContractGroup
 def _calc_trade_pnl(open_qtys, open_prices, new_qtys, new_prices, multiplier):
     '''
     >>> print(_calc_trade_pnl(
-    ...          open_qtys = np.array([], dtype = np.int), open_prices = np.array([]), new_qtys = np.array([-8, 9, -4]), new_prices = np.array([10, 11, 6]),
-    ...          multiplier = 100))
-    (array([-3]), array([6]), -3, 6.0, -1300.0)
-    >>> print(_calc_trade_pnl(open_qtys = np.array([], dtype = np.int), open_prices = np.array([]), new_qtys = np.array([3, 10, -5]), 
+    ...          open_qtys = np.array([], dtype = np.float), open_prices = np.array([], dtype = np.float), 
+    ...            new_qtys = np.array([-8, 9, -4]), new_prices = np.array([10, 11, 6]), multiplier = 100))
+    (array([-3.]), array([6.]), -3.0, 6.0, -1300.0)
+    >>> print(_calc_trade_pnl(open_qtys = np.array([], dtype = np.float), open_prices = np.array([], dtype = np.float), new_qtys = np.array([3, 10, -5]), 
     ...          new_prices = np.array([51, 50, 45]), multiplier = 100))
-    (array([8]), array([50]), 8, 50.0, -2800.0)
+    (array([8.]), array([50.]), 8.0, 50.0, -2800.0)
     >>> print(_calc_trade_pnl(open_qtys = np.array([]), open_prices = np.array([]), 
     ...                new_qtys = np.array([-58, -5, -5, 6, -8, 5, 5, -5, 19, 7, 5, -5, 39]),
     ...                new_prices = np.array([2080, 2075.25, 2070.75, 2076, 2066.75, 2069.25, 2074.75, 2069.75, 2087.25, 2097.25, 2106, 2088.25, 2085.25]),
@@ -86,7 +86,21 @@ def _calc_trade_pnl(open_qtys, open_prices, new_qtys, new_prices, multiplier):
         weighted_avg_price = np.sum(open_qtys * open_prices) / open_qty
         
     return open_qtys, open_prices, open_qty, weighted_avg_price, realized * multiplier
-    
+
+def leading_nan_to_zero(df, columns):
+    for column in columns:
+        vals = df[column].values
+        first_non_nan_index = np.ravel(np.nonzero(~np.isnan(vals)))
+        if len(first_non_nan_index):
+            first_non_nan_index = first_non_nan_index[0]
+        else:
+            first_non_nan_index = -1
+
+        if first_non_nan_index > 0 and first_non_nan_index < len(vals):
+            vals[:first_non_nan_index] = np.nan_to_num(vals[:first_non_nan_index])
+            df[column] = vals
+    return df
+
 def find_last_non_nan_index(array):
     i = np.nonzero(np.isfinite(array))[0]
     if len(i): return i[-1]
@@ -125,6 +139,11 @@ class ContractPNL:
         '''
         if not len(trades): return
         timestamps = [trade.timestamp for trade in trades]
+        if len(self._trade_pnl):
+            k, v = self._trade_pnl.peekitem(0)
+            if timestamps[0] <= k:
+                raise Exception(f'Cannot only add a trade that is newer than last added current: {trade} prev max timestamp: {k}')
+                
         for i, timestamp in enumerate(timestamps):
             t_trades = [trade for trade in trades if trade.timestamp == timestamp]
             open_qtys, open_prices, open_qty, weighted_avg_price, realized_chg = _calc_trade_pnl(
@@ -144,14 +163,13 @@ class ContractPNL:
                 prev_timestamp, (prev_position, prev_realized, prev_fee, prev_commission, _, _) = self._trade_pnl.peekitem(index)
                 self._trade_pnl[timestamp] = (prev_position + position_chg, prev_realized + realized_chg, 
                                         prev_fee + fee_chg, prev_commission + commission_chg,  open_qty, weighted_avg_price)
-            self.calc_net_pnl(np.searchsorted(self._account_timestamps, timestamp))
+            self.calc_net_pnl(timestamp)
         
-    def calc_net_pnl(self, i):
-        timestamp = self._account_timestamps[i]
-        
+    def calc_net_pnl(self, timestamp):
         if timestamp in self._net_pnl: return
-        
         if self.contract.expiry is not None and timestamp > self.contract.expiry: return # We would have calc'ed when the exit trade came in
+        i = np.searchsorted(self._account_timestamps, timestamp)
+        assert(self._account_timestamps[i] == timestamp)
         price = self._price_function(self.contract, self._account_timestamps, i, self.strategy_context)
         
         # Find the index before or equal to current timestamp.  If not found, set to 0's
@@ -160,14 +178,14 @@ class ContractPNL:
             realized, fee, commission, open_qty, open_qty, weighted_avg_price  = 0, 0, 0, 0, 0, 0
         else:
             _, (_, realized, fee, commission, open_qty, weighted_avg_price) = self._trade_pnl.peekitem(trade_pnl_index)
-
-        index = find_index_before(self._net_pnl, timestamp)
-        if index == -1:
-            prev_unrealized = 0
-        else:
-            _, (_, prev_unrealized, _) = self._net_pnl.peekitem(index)
-            
+          
         if math.isnan(price):
+            index = find_index_before(self._net_pnl, timestamp)
+            if index == -1:
+                prev_unrealized = 0
+            else:
+                _, (_, prev_unrealized, _) = self._net_pnl.peekitem(index)
+  
             unrealized = prev_unrealized
         else:
             unrealized = open_qty * (price - weighted_avg_price) * self.contract.multiplier
@@ -175,10 +193,9 @@ class ContractPNL:
         net_pnl = realized + unrealized - commission - fee
 
         self._net_pnl[timestamp] = (price, unrealized, net_pnl)
-        
-        #print(f'net_pnl: {net_pnl} {self.contract.symbol} i: {i} {timestamp} price: {price} realized: {realized}' + (
-        #                    f' unrealized: {unrealized} commission: {commission} fee: {fee} open_qty: {open_qty}') + (
-        #f' wap: {weighted_avg_price}'))
+         
+        #print(f'{self._trade_pnl} net_pnl: {net_pnl} {self.contract.symbol} i: {i} {timestamp} price: {price} realized: {realized}' + (
+        #                        f' unrealized: {unrealized} commission: {commission} fee: {fee} open_qty: {open_qty} wap: {weighted_avg_price}'))
         
     def position(self, timestamp):
         index = find_index_before(self._trade_pnl, timestamp)
@@ -191,6 +208,17 @@ class ContractPNL:
         if index == -1: return 0.
         _, (_, _, net_pnl) = self._net_pnl.peekitem(index) # Less than or equal to timestamp
         return net_pnl
+    
+    def pnl(self, timestamp):
+        index = find_index_before(self._trade_pnl, timestamp)
+        position, realized, fee, commission, price, unrealized, net_pnl = 0, 0, 0, 0, 0, 0, 0
+        if index != -1:
+            _, (position, realized, fee, commission, _, _) = self._trade_pnl.peekitem(index) # Less than or equal to timestamp
+        
+        index = find_index_before(self._net_pnl, timestamp)
+        if index != -1:
+            _, (price, unrealized, net_pnl) = self._net_pnl.peekitem(index) # Less than or equal to timestamp
+        return position, price, realized, unrealized, fee, commission, net_pnl
 
     def df(self):
         '''Returns a pandas dataframe with pnl data'''
@@ -203,6 +231,7 @@ class ContractPNL:
         all_timestamps = np.unique(np.concatenate((df_trade_pnl.timestamp.values, df_net_pnl.timestamp.values)))
         #position = df_trade_pnl.set_index('timestamp').position.reindex(all_timestamps, fill_value = 0)
         df_trade_pnl = df_trade_pnl.set_index('timestamp').reindex(all_timestamps, method = 'ffill').reset_index()
+        df_trade_pnl = leading_nan_to_zero(df_trade_pnl, ['position', 'realized', 'fee', 'commission'])
         #df_trade_pnl.position = position.values
         df_net_pnl = df_net_pnl.set_index('timestamp').reindex(all_timestamps, method = 'ffill').reset_index()
         del df_net_pnl['timestamp']
@@ -211,26 +240,12 @@ class ContractPNL:
         df = df[['symbol', 'timestamp', 'position', 'price', 'unrealized', 'realized', 'commission', 'fee', 'net_pnl']]
         return df
          
-def _get_calc_indices(timestamps, pnl_calc_time):
+def _get_calc_timestamps(timestamps, pnl_calc_time):
     time_delta = np.timedelta64(pnl_calc_time, 'm')
     calc_timestamps = np.unique(timestamps.astype('M8[D]')) + time_delta
     calc_indices = np.searchsorted(timestamps, calc_timestamps, side='left') - 1
     if calc_indices[0] == -1: calc_indices[0] = 0
-    return calc_indices
-
-def leading_nan_to_zero(df, columns):
-    for column in columns:
-        vals = df[column].values
-        first_non_nan_index = np.ravel(np.nonzero(~math.isnan(vals)))
-        if len(first_non_nan_index):
-            first_non_nan_index = first_non_nan_index[0]
-        else:
-            first_non_nan_index = -1
-
-        if first_non_nan_index > 0 and first_non_nan_index < len(vals):
-            vals[:first_non_nan_index] = np.nan_to_num(vals[:first_non_nan_index])
-            df[column] = vals
-    return df
+    return np.unique(timestamps[calc_indices])
 
 class Account:
     '''An Account calculates pnl for a set of contracts'''
@@ -244,87 +259,67 @@ class Account:
             starting_equity (float, optional): Starting equity in account currency.  Default 1.e6
             pnl_calc_time (int, optional): Number of minutes past midnight that we should calculate PNL at.  Default 15 * 60, i.e. 3 pm
         '''
-        self.current_calc_index = 0
         self.starting_equity = starting_equity
         self._price_function = price_function
         self.strategy_context = strategy_context
         
         self.timestamps = timestamps
-        self.calc_indices = _get_calc_indices(timestamps, pnl_calc_time)
-        
-        self._equity = np.full(len(timestamps), np.nan, dtype = np.float); 
-        self._equity[0] = self.starting_equity
+        self.calc_timestamps = _get_calc_timestamps(timestamps, pnl_calc_time)
         
         self.contracts = set()
         self._trades = []
+        self._pnl = SortedDict()
         
         self.symbol_pnls = {}
-        self.symbols = set()
         
     def symbols(self):
-        return self.symbols
+        return [contract.symbol for contract in self.contracts]
         
     def _add_contract(self, contract, timestamp):
         self.symbol_pnls[contract.symbol] = ContractPNL(contract, self.timestamps, self._price_function, self.strategy_context)
-        self.symbols.add(contract.symbol)
         self.contracts.add(contract)
         
     def add_trades(self, trades):
         trades = sorted(trades, key = lambda x : getattr(x, 'timestamp'))
         for trade in trades:
             contract = trade.contract
-            if contract.symbol not in self.symbols: self._add_contract(contract, trade.timestamp)
+            if contract not in self.contracts: self._add_contract(contract, trade.timestamp)
             self.symbol_pnls[trade.contract.symbol]._add_trades([trade])
         self._trades += trades
         
-    def calc(self, i):
+    def calc(self, timestamp):
         '''
         Computes P&L and stores it internally for all contracts.
         
         Args:
-            i: Index to compute P&L at.  Account remembers the last index it computed P&L up to and will compute P&L
-                between these two indices.  If there is more than one day between the last index and current index, we will 
-                include pnl for end of day at those dates as well.
+            timestamp (np.datetime64): timestamp to compute P&L at.  Account remembers the last timestamp it computed P&L up to and will compute P&L
+                between these and including timestamp. If there is more than one day between the last index and current index, we will 
+                include pnl for at the defined pnl_calc_time for those dates as well.
         '''
-        calc_indices = self.calc_indices[:]
-        if self.current_calc_index == i: return
+        if timestamp in self._pnl: return
+            
+        prev_idx = find_index_before(self._pnl, timestamp)
+        prev_timestamp = None if prev_idx == -1 else self.timestamps[prev_idx]
+            
         # Find the last timestamp per day that is between the previous index we computed and the current index,
         # so we can compute daily pnl in addition to the current index pnl
-        intermediate_calc_indices = np.where((calc_indices > self.current_calc_index) & (calc_indices <= i))
-        # The previous operations gives us a nested array with one element so flatten it to a 1-D array
-        intermediate_calc_indices = np.ravel(intermediate_calc_indices)
+        calc_timestamps = self.calc_timestamps
+        intermediate_calc_timestamps = calc_timestamps[calc_timestamps <= timestamp]
+        if prev_timestamp is not None:
+            intermediate_calc_timestamps = intermediate_calc_timestamps[intermediate_calc_timestamps > prev_timestamp]
 
-        if not len(intermediate_calc_indices) or calc_indices[intermediate_calc_indices[-1]] != i: 
-            calc_indices = np.append(calc_indices, i)
-            intermediate_calc_indices = np.append(intermediate_calc_indices, len(calc_indices) - 1)
+        if not len(intermediate_calc_timestamps) or intermediate_calc_timestamps[-1] != timestamp: 
+            intermediate_calc_timestamps = np.append(intermediate_calc_timestamps, timestamp)
             
-        if not len(self.symbol_pnls):
-            prev_equity = self._equity[self.current_calc_index]
-            for idx in intermediate_calc_indices:
-                self._equity[calc_indices[idx]] = prev_equity
-            self.current_calc_index = i
-            return
-        
-        prev_calc_index = self.current_calc_index
-        for idx in intermediate_calc_indices:
-            calc_index = calc_indices[idx]
-            self._equity[calc_index] = self._equity[prev_calc_index]
-            calc_timestamp, prev_calc_timestamp = self.timestamps[calc_index], self.timestamps[prev_calc_index]
-            for symbol, symbol_pnl in self.symbol_pnls.items():
-                symbol_pnl.calc_net_pnl(calc_index)
-                #print(f'calcing: {calc_timestamp} {prev_calc_timestamp}')
-                net_pnl_diff = symbol_pnl.net_pnl(calc_timestamp) - symbol_pnl.net_pnl(prev_calc_timestamp)
-                if math.isfinite(net_pnl_diff): self._equity[calc_index] += net_pnl_diff
-                    
-                #print(f'prev_calc_index: {prev_calc_index} calc_index: {calc_index} prev_equity:' + 
-                #      f' {self._equity[prev_calc_index]} curr_equity: {self._equity[calc_index]}' + 
-                #      f' net_pnl: {symbol_pnl.net_pnl(calc_timestamp)}' + 
-                #      f' prev_net_pnl: {symbol_pnl.net_pnl(prev_calc_timestamp)}')
-            prev_calc_index = calc_index
-        self.current_calc_index = i
+        for ts in intermediate_calc_timestamps:
+            net_pnl = 0
+            for symbol_pnl in self.symbol_pnls.values():
+                symbol_pnl.calc_net_pnl(ts)
+                net_pnl += symbol_pnl.net_pnl(ts)
+            self._pnl[ts] = net_pnl
         
     def position(self, contract_group, timestamp):
-        '''Returns position for a contract_group at a given date in number of contracts or shares.'''
+        '''Returns netted position for a contract_group at a given date in number of contracts or shares.'''
         position = 0
         for contract in contract_group.contracts:
             symbol = contract.symbol
@@ -347,59 +342,93 @@ class Account:
     def equity(self, timestamp):
         '''Returns equity in this account in Account currency.  Will cause calculation if Account has not previously 
             calculated up to this date'''
-        i = np.searchsorted(self.timestamps, timestamp)
-        self.calc(i)
-        return self._equity[i]
+        pnl = self._pnl.get(timestamp)
+        if pnl is None:
+            self.calc(timestamp)
+            pnl = self._pnl[timestamp]
+        return self.starting_equity + pnl
     
     def trades(self, contract_group = None, start_date = None, end_date = None):
         '''Returns a list of trades with the given symbol and with trade date between (and including) start date 
-            and end date if they are specified.
-            If symbol is None trades for all symbols are returned'''
+            and end date if they are specified. If symbol is None trades for all symbols are returned'''
         start_date, end_date = str2date(start_date), str2date(end_date)
         return [trade for trade in self._trades if (start_date is None or trade.timestamp >= start_date) and (
             end_date is None or trade.timestamp <= end_date) and (
             contract_group is None or trade.contract.contract_group in contract_groups)]
                
-    def transfer_cash(self, date, amount):
-        '''Move cash from one portfolio to another'''
-        i = np.searchsorted(self.timestamps, date)
-        curr_equity = self.equity(date)
-        if (amount > curr_equity): amount = curr_equity # Cannot make equity negative
-        self._equity[i] -= amount
-        return amount
-
     def df_pnl(self, contract_groups = None):
-        '''Returns a dataframe with P&L columns.
+        '''
+        Returns a dataframe with P&L columns broken down by contract group and symbol
         Args:
             contract_group (:obj:`ContractGroup`, optional): Return PNL for this contract group.  
                 If None (default), include all contract groups
         '''
-        
         if contract_groups is None: 
             contract_groups = set([contract.contract_group for contract in self.contracts])
-        
+
         if isinstance(contract_groups, ContractGroup): contract_groups = [contract_groups]
-        
+
         dfs = []
         for contract_group in contract_groups:
             for contract in contract_group.contracts:
                 symbol = contract.symbol
                 if symbol not in self.symbol_pnls: continue
                 df = self.symbol_pnls[symbol].df()
+                if len(df) > 1:
+                    net_pnl_diff = np.diff(df.net_pnl.values) # np.diff returns a vector one shorter than the original
+                    last_index = np.nonzero(net_pnl_diff)
+                    if len(last_index[0]): 
+                        last_index = last_index[0][-1] + 1
+                        df = df.iloc[:last_index + 1]
                 df['contract_group'] = contract_group.name
                 dfs.append(df)
         ret_df = pd.concat(dfs)
+        ret_df = ret_df.sort_values(by = ['timestamp', 'contract_group', 'symbol'])
         ret_df = ret_df[['timestamp', 'contract_group', 'symbol', 'position', 'price', 'unrealized', 'realized', 
                          'commission', 'fee', 'net_pnl']]
-        df_equity = pd.DataFrame({'timestamp' : self.timestamps, 'equity' : self._equity})
-        df_equity.equity = df_equity.equity.fillna(method = 'ffill')
-        ret_df = pd.merge(ret_df, df_equity, on = ['timestamp'], how = 'left')
-        ret_df = ret_df.sort_values(by = ['timestamp', 'contract_group', 'symbol'])
-        return ret_df[['timestamp', 'contract_group', 'symbol', 'position', 'price', 'unrealized', 'realized', 
-                       'commission', 'fee', 'net_pnl', 'equity']]
+        return ret_df
+    
+    def df_account_pnl(self, contract_group = None):
+        '''
+        Returns PNL at the account level
+        Args:
+            contract_group (:obj:`ContractGroup`, optional): If set, we only return pnl for this contract_group
+        '''
+
+        if contract_group is not None:
+            symbols = [contract.symbol for contract in contract_group.contracts if contract.symbol in self.symbol_pnls]
+            symbol_pnls = [self.symbol_pnls[symbol] for symbol in symbols]
+        else:
+            symbol_pnls = self.symbol_pnls.values()
+
+        timestamps = self.calc_timestamps
+        position = np.full(len(timestamps), 0., dtype = np.float)
+        realized = np.full(len(timestamps), 0., dtype = np.float)
+        unrealized = np.full(len(timestamps), 0., dtype = np.float)
+        fee = np.full(len(timestamps), 0., dtype = np.float)
+        commission = np.full(len(timestamps), 0., dtype = np.float)
+        net_pnl = np.full(len(timestamps), 0., dtype = np.float)
+
+        for i, timestamp in enumerate(timestamps):
+            for symbol_pnl in symbol_pnls:
+                _position, _price, _realized, _unrealized, _fee, _commission, _net_pnl = symbol_pnl.pnl(timestamp)
+                if math.isfinite(_position): position[i] += _position
+                if math.isfinite(_realized): realized[i] += _realized
+                if math.isfinite(_unrealized): unrealized[i] += _unrealized
+                if math.isfinite(_fee): fee[i] += _fee
+                if math.isfinite(_commission): commission[i] += _commission
+                if math.isfinite(_net_pnl): net_pnl[i] += _net_pnl
+
+        df = pd.DataFrame.from_records(zip(timestamps, position, unrealized, realized, commission, fee, net_pnl), 
+                                       columns = ['timestamp', 'position', 'unrealized', 'realized', 'commission', 'fee', 'net_pnl'])
+        df['equity'] = self.starting_equity + df.net_pnl
+        return df[['timestamp', 'position', 'unrealized', 'realized', 'commission', 'fee', 'net_pnl', 'equity']]
+
+
     
     def df_trades(self, contract_group = None, start_date = None, end_date = None):
-        '''Returns a dataframe of trades
+        '''
+        Returns a dataframe of trades
         Args:
             contract_group (:obj:`ContractGroup`, optional): Return trades for this contract group.  
                 If None (default), include all contract groups
@@ -419,8 +448,9 @@ class Account:
         df = df.sort_values(by = ['timestamp', 'symbol'])
         return df
     
-def test_account():
-#if __name__ == "__main__":
+
+#def test_account():
+if __name__ == "__main__":
     from pyqstrat.pq_types import Contract, ContractGroup, Trade
     from pyqstrat.orders import MarketOrder
     import math
@@ -452,18 +482,20 @@ def test_account():
                     order = MarketOrder(msft_contract, timestamps[2], 20))
 
     account.add_trades([trade_1, trade_2, trade_3, trade_4])
-    # After numpy 1.13 positive floats don't have a leading space for sign
-    np.set_printoptions(formatter = {'float' : lambda x : f'{x:.10g}'})
-    account.calc(3)
+    account.calc(np.datetime64('2018-01-05 13:35'))
     assert(len(account.df_trades()) == 4)
-    assert(len(account.df_pnl()) == 6)
-    assert(np.allclose(np.array([1000000, 1000000, 1000183.88, 1000183.88, 1000213.88, 1000213.88]), 
-                       account.df_pnl().equity.values, rtol = 0))
-    assert(np.allclose(np.array([10, 20, -10, 40, -10, 40]), account.df_pnl().position.values, rtol = 0))
-    assert(np.allclose(np.array([1000000, 1000183.88, 1000213.88]), account.df_pnl([ibm_cg]).equity.values, rtol = 0))
+    assert(len(account.df_pnl()) == 8)
+    assert(np.allclose(np.array([  0.  ,   0.  ,   9.99,  61.96,  79.97, 103.91,  69.97, 143.91]), 
+                       account.df_pnl().net_pnl.values, rtol = 0))
+    assert(np.allclose(np.array([0, 0, 10, 20, -10, 40, -10, 40]), account.df_pnl().position.values, rtol = 0))
     
-if __name__ == "__main__":
+    assert(np.allclose(np.array([1000000.  , 1000183.88, 1000213.88]), account.df_account_pnl().equity.values, rtol = 0))
+    
+if __name__ == "__main_x_":
     test_account()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 2
+
 

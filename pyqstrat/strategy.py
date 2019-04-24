@@ -323,6 +323,7 @@ class Strategy:
         for i, tup_list in enumerate(orders_iter):
             self._check_for_trades(i, trades_iter[i])
             self._check_for_orders(i, tup_list)
+        self.account.calc(self.timestamps[-1])
 
     def _check_for_trades(self, i, tup_list):
         for tup in tup_list:
@@ -396,7 +397,7 @@ class Strategy:
         for contract_group in contract_groups:
             df = pd.DataFrame({'timestamp' : self.timestamps})
             if add_pnl: 
-                df_pnl = self.df_pnl(contract_group, group_by_time = True)
+                df_pnl = self.df_pnl(contract_group)
  
             indicator_values = self.indicator_values[contract_group]
             
@@ -464,15 +465,9 @@ class Strategy:
                                               columns = ['symbol', 'type', 'timestamp', 'qty', 'reason_code', 'order_props', 'contract_props'])
         return df_orders
    
-    def df_pnl(self, contract_group = None, group_by_time = False):
+    def df_pnl(self, contract_group = None):
         '''Returns a dataframe with P&L columns.  If contract group is set to None (default), sums up P&L across all contract groups'''
-        df_pnl = self.account.df_pnl(contract_group)
-        if group_by_time:
-            df_pnl = df_pnl[['timestamp', 'position', 'unrealized', 'realized', 'fee', 'net_pnl', 'equity']].groupby(
-                'timestamp', as_index = False).agg(
-                {'position' : np.sum, 'unrealized' : np.sum, 'realized' : np.sum, 'fee' : np.sum, 
-                 'net_pnl' : np.sum, 'equity' : lambda x : x.iloc[-1]})
-        return df_pnl
+        return self.account.df_account_pnl(contract_group)
     
     def df_returns(self, contract_group = None, sampling_frequency = 'D'):
         '''Return a dataframe of returns and equity indexed by date.
@@ -482,13 +477,7 @@ class Strategy:
                 If set to None (default), we return the sum of PNL for all contract groups
             sampling_frequency: Downsampling frequency.  Default is None.  See pandas frequency strings for possible values
         '''
-        if contract_group:
-            pnl = self.df_pnl(contract_group)[['timestamp', 'contract_group', 'net_pnl', 'equity']]
-            pnl = pnl.groupby(['timestamp'], as_index = False).sum()
-            # Recompute equity using just PNL for this contract group
-            pnl['equity'] = pnl.equity.iloc[0] + pnl.net_pnl.values
-        else:
-            pnl = self.df_pnl(group_by_time = True)[['timestamp', 'net_pnl', 'equity']]
+        pnl = self.df_pnl(contract_group)[['timestamp', 'net_pnl', 'equity']]
 
         pnl.equity = pnl.equity.ffill()
         pnl = pnl.set_index('timestamp').resample(sampling_frequency).last().reset_index()
@@ -563,7 +552,7 @@ class Strategy:
             secondary_indicator_list = _get_time_series_list(self.timestamps, secondary_indicator_names, 
                                                              self.indicator_values[contract_group], indicator_properties)
             signal_list = _get_time_series_list(self.timestamps, signal_names, self.signal_values[contract_group], signal_properties)
-            df_pnl_ = self.df_pnl(contract_group, group_by_time = True)
+            df_pnl_ = self.df_pnl(contract_group)
             pnl_list = [TimeSeries(pnl_column, timestamps = df_pnl_.timestamp.values, values = df_pnl_[pnl_column].values
                                   ) for pnl_column in pnl_columns]
             
