@@ -11,12 +11,13 @@ from pyqstrat.pq_types import ContractGroup
 #cell 1
 def _calc_trade_pnl(open_qtys, open_prices, new_qtys, new_prices, multiplier):
     '''
-    >>> print(_calc_trade_pnl(open_qtys = np.array([]), open_prices = np.array([]), new_qtys = np.array([-8, 9, -4]), new_prices = np.array([10, 11, 6]),
+    >>> print(_calc_trade_pnl(
+    ...          open_qtys = np.array([], dtype = np.int), open_prices = np.array([]), new_qtys = np.array([-8, 9, -4]), new_prices = np.array([10, 11, 6]),
     ...          multiplier = 100))
-    (array([-3]), array([6]), -3.0, 6.0, -1300.0)
-    >>> print(_calc_trade_pnl(open_qtys = np.array([]), open_prices = np.array([]), new_qtys = np.array([3, 10, -5]), new_prices = np.array([51, 50, 45]),
-    ...          multiplier = 100))
-    (array([8]), array([50]), 8.0, 50.0, -2800.0)
+    (array([-3]), array([6]), -3, 6.0, -1300.0)
+    >>> print(_calc_trade_pnl(open_qtys = np.array([], dtype = np.int), open_prices = np.array([]), new_qtys = np.array([3, 10, -5]), 
+    ...          new_prices = np.array([51, 50, 45]), multiplier = 100))
+    (array([8]), array([50]), 8, 50.0, -2800.0)
     >>> print(_calc_trade_pnl(open_qtys = np.array([]), open_prices = np.array([]), 
     ...                new_qtys = np.array([-58, -5, -5, 6, -8, 5, 5, -5, 19, 7, 5, -5, 39]),
     ...                new_prices = np.array([2080, 2075.25, 2070.75, 2076, 2066.75, 2069.25, 2074.75, 2069.75, 2087.25, 2097.25, 2106, 2088.25, 2085.25]),
@@ -418,8 +419,8 @@ class Account:
         df = df.sort_values(by = ['timestamp', 'symbol'])
         return df
     
-#def test_account():
-if __name__ == "__main__":
+def test_account():
+#if __name__ == "__main__":
     from pyqstrat.pq_types import Contract, ContractGroup, Trade
     from pyqstrat.orders import MarketOrder
     import math
@@ -461,11 +462,8 @@ if __name__ == "__main__":
     assert(np.allclose(np.array([10, 20, -10, 40, -10, 40]), account.df_pnl().position.values, rtol = 0))
     assert(np.allclose(np.array([1000000, 1000183.88, 1000213.88]), account.df_pnl([ibm_cg]).equity.values, rtol = 0))
     
-if __name__ == "__mainx__":
+if __name__ == "__main__":
     test_account()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
-
-#cell 2
-
 
