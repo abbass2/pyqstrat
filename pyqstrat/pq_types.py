@@ -46,6 +46,8 @@ class Contract:
             multiplier (float, optional): If the market price convention is per unit, and the unit is not the same as contract size, 
                 set the multiplier here. For example, for E-mini contracts, each contract is 50 units and the price is per unit, 
                 so multiplier would be 50.  Default 1
+            properties (obj:`types.SimpleNamespace`, optional): Any data you want to store with this contract.
+                For example, you may want to store option strike.  Default None
         '''
         assert(isinstance(symbol, str) and len(symbol) > 0)
         #assert(isinstance(contract_group, ContractGroup))
@@ -76,7 +78,7 @@ class Contract:
             f' {self.properties.__dict__}' if self.properties.__dict__ else '')
 
 class Trade:
-    def __init__(self, contract, timestamp, qty, price, fee = 0., commission = 0., order = None):
+    def __init__(self, contract, timestamp, qty, price, fee = 0., commission = 0., order = None, properties = None):
         '''
         Args:
             contract (:obj:`Contract`):
@@ -86,6 +88,8 @@ class Trade:
             fee (float, optional): Fees paid to brokers or others. Default 0
             commision (float, optional): Commission paid to brokers or others. Default 0
             order (:obj:`pq.Order`, optional): A reference to the order that created this trade. Default None
+            properties (obj:`types.SimpleNamespace`, optional): Any data you want to store with this contract.
+                For example, you may want to store bid / ask prices at time of trade.  Default None
         '''
         assert(isinstance(contract, Contract))
         assert(np.isfinite(qty))
@@ -102,6 +106,10 @@ class Trade:
         self.commission = commission
         self.order = order
         
+        if properties is None:
+            properties = types.SimpleNamespace()
+        self.properties = properties
+        
     def __repr__(self):
         '''
         >>> print(Trade(Contract.create('IBM', contract_group = ContractGroup.create('IBM')), np.datetime64('2019-01-01 15:00'), 100, 10.2130000, 0.01))
@@ -112,7 +120,8 @@ class Trade:
         commission = f' commission: {self.commission:.6g}' if self.commission else ''
         return f'{self.contract.symbol}' + (
             f' {self.contract.properties.__dict__}' if self.contract.properties.__dict__ else '') + (
-            f' {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} prc: {self.price:.6g}{fee}{commission} order: {self.order}')
+            f' {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} prc: {self.price:.6g}{fee}{commission} order: {self.order}') + (
+            f' {self.properties.__dict__}' if self.properties.__dict__ else '')
     
 if __name__ == "__main__":
     import doctest

@@ -29,7 +29,7 @@ def _get_time_series_list(timestamps, names, values, properties):
     return ts_list
 
 class Strategy:
-    def __init__(self, timestamps, contract_groups, price_function, starting_equity = 1.0e6, calc_frequency = 'D', 
+    def __init__(self, timestamps, contract_groups, price_function, starting_equity = 1.0e6, pnl_calc_time = 15 * 60 + 1, 
                  strategy_context = None):
         '''
         Args:
@@ -38,7 +38,7 @@ class Strategy:
             price_function: A function that returns the price of a contract at a given timestamp
             contract_groups (list of :obj:`ContractGroup`): The contract groups we will potentially trade.
             starting_equity (float, optional): Starting equity in Strategy currency.  Default 1.e6
-            calc_frequency (str, optional): How often P&L is calculated.  Default is 'D' for daily
+            pnl_calc_time (int, optional): Time of day used to calculate PNL.  Default 15 * 60 (3 pm)
             strategy_context (:obj:`types.SimpleNamespace`, optional): A storage class where you can store key / value pairs 
                 relevant to this strategy.  For example, you may have a pre-computed table of correlations that you use in the 
                 indicator or trade rule functions.  
@@ -50,7 +50,7 @@ class Strategy:
         self.contract_groups = contract_groups
         if strategy_context is None: strategy_context = types.SimpleNamespace()
         self.strategy_context = strategy_context
-        self.account = Account(contract_groups, timestamps, price_function, strategy_context, starting_equity, calc_frequency)
+        self.account = Account(contract_groups, timestamps, price_function, strategy_context, starting_equity, pnl_calc_time)
         self.indicators = {}
         self.signals = {}
         self.signal_values = defaultdict(types.SimpleNamespace)

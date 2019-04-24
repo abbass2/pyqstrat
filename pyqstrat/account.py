@@ -1,5 +1,6 @@
 #cell 0
-from collections import defaultdict, deque
+from collections import defaultdict
+from sortedcontainers import SortedDict
 import math
 import pandas as pd
 import numpy as np
@@ -20,7 +21,7 @@ def _calc_trade_pnl(open_qtys, open_prices, new_qtys, new_prices, multiplier):
     ...                new_qtys = np.array([-58, -5, -5, 6, -8, 5, 5, -5, 19, 7, 5, -5, 39]),
     ...                new_prices = np.array([2080, 2075.25, 2070.75, 2076, 2066.75, 2069.25, 2074.75, 2069.75, 2087.25, 2097.25, 2106, 2088.25, 2085.25]),
     ...                multiplier = 50))
-    (array([], dtype=float64), array([], dtype=float64), 0.0, nan, -33762.5)    '''
+    (array([], dtype=float64), array([], dtype=float64), 0.0, 0, -33762.5)    '''
     
     realized = 0.
     unrealized = 0.
@@ -79,7 +80,7 @@ def _calc_trade_pnl(open_qtys, open_prices, new_qtys, new_prices, multiplier):
     open_prices = open_prices[mask]
     open_qty = np.sum(open_qtys)
     if math.isclose(open_qty, 0):
-        weighted_avg_price = np.nan
+        weighted_avg_price = 0
     else:
         weighted_avg_price = np.sum(open_qtys * open_prices) / open_qty
         
@@ -90,195 +91,128 @@ def find_last_non_nan_index(array):
     if len(i): return i[-1]
     return 0
 
+def find_index_before(sorted_dict, key):
+    '''
+    Find index of the first key in a sorted dict that is less than or equal to the key passed in.
+    If the key is less than the first key in the dict, return -1
+    '''
+    size = len(sorted_dict)
+    if not size: return -1
+    i = sorted_dict.bisect_left(key)
+    if i == size: return size - 1
+    if sorted_dict.keys()[i] != key:
+        return i - 1
+    return i
+
 class ContractPNL:
     '''Computes pnl for a single contract over time given trades and market data'''
     def __init__(self, contract, account_timestamps, price_function, strategy_context):
-        self.symbol = contract.symbol
-        self.multiplier = contract.multiplier
         self.contract = contract
-        
         self._price_function = price_function
         self.strategy_context = strategy_context
-        
-        self.account_timestamps = account_timestamps
-        self._timestamps = None
-        
+        self._account_timestamps = account_timestamps
+        self._trade_pnl = SortedDict()
+        self._net_pnl = SortedDict()
         # Store trades that are not offset so when new trades come in we can offset against these to calc pnl
         self.open_qtys = np.empty(0, dtype = np.int)
         self.open_prices = np.empty(0, dtype = np.float)
-        
-        self.last_trade_calc_idx = 0
-        self.last_net_pnl_calc_idx = 0
- 
-        self._trade_timestamps = None
         
     def _add_trades(self, trades):
         '''
         Args:
             trades (list of :obj:`Trade`): Must be sorted by timestamp
         '''
-        num_trades = len(trades)
-        
-        if not num_trades: return
-        # Trades should already be sorted by timestamp
-        timestamps = np.empty(num_trades, dtype = trades[0].timestamp.dtype)
-        qtys = np.empty(num_trades, dtype = np.int)
-        prices = np.empty(num_trades, dtype = np.float)
-        commissions =  np.empty(num_trades, dtype = np.float)
-        fees = np.empty(num_trades, dtype = np.float)
-        
-        for i, trade in enumerate(trades):
-            timestamps[i] = trade.timestamp
-            qtys[i] = trade.qty
-            prices[i] = trade.price
-            commissions[i] =  trade.commission
-            fees[i] = trade.fee
-            
-        self.calc_trades(timestamps, qtys, prices, commissions, fees)
-            
-    def calc_trades(self, timestamps, qtys, prices, commissions, fees):
-        start_timestamp, end_timestamp = timestamps[0], timestamps[-1]
-        self._expand_arrays(start_timestamp, end_timestamp)
-        
-        prev_idx = self.last_trade_calc_idx
-         
-        open_qtys, open_prices, open_qty, weighted_avg_price, realized = _calc_trade_pnl(self.open_qtys, self.open_prices, qtys, prices, self.multiplier)
-       
-        self.open_qtys = open_qtys
-        self.open_prices = open_prices
-        
-        curr_idx = np.searchsorted(self.account_timestamps, end_timestamp)
-        assert(curr_idx < len(self.account_timestamps) and self.account_timestamps[curr_idx] == end_timestamp)
-        curr_idx -= self.offset
-
-        if curr_idx <= prev_idx: return
-        
-        self._position[curr_idx] = self._position[prev_idx] + np.sum(qtys)
-        self._realized[curr_idx] = self._realized[prev_idx] + realized
-        self._commission[curr_idx] = self._commission[prev_idx] + np.sum(commissions)
-        self._fee[curr_idx] = self._fee[prev_idx] + np.sum(fees)
-        
-        self._open_qty[curr_idx] = open_qty
-        self._weighted_avg_price[curr_idx] = weighted_avg_price
- 
-        self.last_trade_calc_idx = curr_idx
-    
-        self.calc_net_pnl(curr_idx + self.offset)
-        
-    def _expand_arrays(self, start_timestamp, end_timestamp):
-
-        start_idx = -1
-        if start_timestamp is not None:
-            start_idx = np.searchsorted(self.account_timestamps, start_timestamp)
-            assert(start_idx < len(self.account_timestamps) and self.account_timestamps[start_idx] == start_timestamp)
-        end_idx = np.searchsorted(self.account_timestamps, end_timestamp)
-        assert(end_idx < len(self.account_timestamps) and self.account_timestamps[end_idx] == end_timestamp)
-        
-        if self._timestamps is None: # First time we are called
-            assert(start_idx != 0)  # First time we cannot be called with index 0 since trade must occur after at least one bar
-            size = end_idx - start_idx + 2 # Create a zero row at the beginning
-            self._timestamps = self.account_timestamps[start_idx - 1: end_idx + 1]
-            self._unrealized = np.full(size, np.nan, dtype = np.float); self._unrealized[0] = 0
-            self._realized = np.full(size, np.nan, dtype = np.float); self._realized[0] = 0
-            self._commission = np.full(size, np.nan, dtype = np.float); self._commission[0] = 0
-            self._fee = np.full(size, np.nan, dtype = np.float); self._fee[0] = 0
-            self._net_pnl = np.full(size, np.nan, dtype = np.float); self._net_pnl[0] = 0
-            self._position = np.full(size, np.nan, dtype = np.float); self._position[0] = 0
-            self._price = np.full(size, np.nan, dtype = np.float); self._price[0] = np.nan
-            self._open_qty = np.full(size, np.nan, dtype = np.float); self._open_qty[0] = 0
-            self._weighted_avg_price = np.full(size, np.nan, dtype = np.float); self._weighted_avg_price[0] = np.nan
-            
-            self.offset = start_idx - 1
-            assert(self.offset >= 0)
-            self.size = size
-            
-        elif end_idx - self.offset >= self.size: # Expand arrays
-            size = end_idx - self.offset - self.size + 1
-            if size <= 0:
-                 return
-            new_timestamps_start = np.searchsorted(self.account_timestamps, self._timestamps[-1])
-            new_timestamps = self.account_timestamps[new_timestamps_start + 1:end_idx + 1]
-            self._timestamps = np.concatenate((self._timestamps, new_timestamps))
-            self._unrealized = np.concatenate((self._unrealized, np.full(size, np.nan, dtype = np.float)))
-            self._realized = np.concatenate((self._realized, np.full(size, np.nan, dtype = np.float)))
-            self._commission = np.concatenate((self._commission, np.full(size, np.nan, dtype = np.float)))
-            self._fee = np.concatenate((self._fee, np.full(size, np.nan, dtype = np.float)))
-            self._net_pnl = np.concatenate((self._net_pnl, np.full(size, np.nan, dtype = np.float)))
-            self._position = np.concatenate((self._position, np.full(size, np.nan, dtype = np.float)))
-            self._price = np.concatenate((self._price, np.full(size, np.nan, dtype = np.float)))
-            self._open_qty = np.concatenate((self._open_qty, np.full(size, np.nan, dtype = np.float)))
-            self._weighted_avg_price = np.concatenate((self._weighted_avg_price, np.full(size, np.nan, dtype = np.float)))
-            
-            self.size += size
+        if not len(trades): return
+        timestamps = [trade.timestamp for trade in trades]
+        for i, timestamp in enumerate(timestamps):
+            t_trades = [trade for trade in trades if trade.timestamp == timestamp]
+            open_qtys, open_prices, open_qty, weighted_avg_price, realized_chg = _calc_trade_pnl(
+                self.open_qtys, self.open_prices, 
+                np.array([trade.qty for trade in trades]), 
+                np.array([trade.price for trade in trades]),
+                self.contract.multiplier)
+            self.open_qtys = open_qtys
+            self.open_prices = open_prices
+            position_chg = sum([trade.qty for trade in t_trades])
+            commission_chg = sum([trade.commission for trade in t_trades])
+            fee_chg = sum([trade.fee for trade in t_trades])
+            index = find_index_before(self._trade_pnl, timestamp)
+            if index == -1:
+                self._trade_pnl[timestamp] = (position_chg, realized_chg, fee_chg, commission_chg, open_qty, weighted_avg_price)
+            else:
+                prev_timestamp, (prev_position, prev_realized, prev_fee, prev_commission, _, _) = self._trade_pnl.peekitem(index)
+                self._trade_pnl[timestamp] = (prev_position + position_chg, prev_realized + realized_chg, 
+                                        prev_fee + fee_chg, prev_commission + commission_chg,  open_qty, weighted_avg_price)
+            self.calc_net_pnl(np.searchsorted(self._account_timestamps, timestamp))
         
     def calc_net_pnl(self, i):
-        end_timestamp = self.account_timestamps[i]
+        timestamp = self._account_timestamps[i]
         
-        if self.contract.expiry is not None and end_timestamp > self.contract.expiry: return
-            #raise Exception(f'contract expired: {
-        price = self._price_function(self.contract, self.account_timestamps, i, self.strategy_context)
-        self._expand_arrays(None, end_timestamp)
+        if timestamp in self._net_pnl: return
         
-        i -= self.offset
-         
-        prev_idx = self.last_net_pnl_calc_idx
-        prev_trd_idx = find_last_non_nan_index(self._realized[:i + 1])
-
-        if i < prev_idx: return
-
-        if math.isnan(price):
-            self._unrealized[i] = self._unrealized[prev_idx]
-        elif math.isclose(self._open_qty[prev_trd_idx], 0):
-            self._unrealized[i] = 0
+        if self.contract.expiry is not None and timestamp > self.contract.expiry: return # We would have calc'ed when the exit trade came in
+        price = self._price_function(self.contract, self._account_timestamps, i, self.strategy_context)
+        
+        # Find the index before or equal to current timestamp.  If not found, set to 0's
+        trade_pnl_index = find_index_before(self._trade_pnl, timestamp)
+        if trade_pnl_index == -1:
+            realized, fee, commission, open_qty, open_qty, weighted_avg_price  = 0, 0, 0, 0, 0, 0
         else:
-            # unrealized is simply the difference in ending close and the price * qty of remaining trades
-            self._unrealized[i] =  self._open_qty[prev_trd_idx] * (price - self._weighted_avg_price[prev_trd_idx]) * self.multiplier
-            
-        self._price[i] = price
-        
-        prev_trd_idx = self.last_trade_calc_idx
-        
-        if i >= prev_trd_idx:
-            self._realized[i] = self._realized[prev_trd_idx]
-            self._commission[i] = self._commission[prev_trd_idx]
-            self._open_qty[i] = self._open_qty[prev_trd_idx]
-            self._weighted_avg_price[i] = self._weighted_avg_price[prev_trd_idx]
-            self._fee[i] = self._fee[prev_trd_idx]
-            self._position[i] = self._position[prev_trd_idx]
-            self.last_net_pnl_calc_idx = i
+            _, (_, realized, fee, commission, open_qty, weighted_avg_price) = self._trade_pnl.peekitem(trade_pnl_index)
 
-        self._net_pnl[i] = self._realized[i] + self._unrealized[i] - self._commission[i] - self._fee[i]
+        index = find_index_before(self._net_pnl, timestamp)
+        if index == -1:
+            prev_unrealized = 0
+        else:
+            _, (_, prev_unrealized, _) = self._net_pnl.peekitem(index)
+            
+        if math.isnan(price):
+            unrealized = prev_unrealized
+        else:
+            unrealized = open_qty * (price - weighted_avg_price) * self.contract.multiplier
+            
+        net_pnl = realized + unrealized - commission - fee
+
+        self._net_pnl[timestamp] = (price, unrealized, net_pnl)
         
-        if math.isnan(self._net_pnl[i]):
-            raise Exception(f'net_pnl: nan i: {i} realized: {self._realized[i]}' + (
-                            f' unrealized: {self._unrealized[i]} commission: f{self._commission[i]} fee: {self._fee[i]}'))
+        #print(f'net_pnl: {net_pnl} {self.contract.symbol} i: {i} {timestamp} price: {price} realized: {realized}' + (
+        #                    f' unrealized: {unrealized} commission: {commission} fee: {fee} open_qty: {open_qty}') + (
+        #f' wap: {weighted_avg_price}'))
         
-    def position(self, i):
-        if self.contract.expiry is not None and self.account_timestamps[i] > self.contract.expiry:
-            return self._position[-1]
-        return self._position[i - self.offset]
+    def position(self, timestamp):
+        index = find_index_before(self._trade_pnl, timestamp)
+        if index == -1: return 0.
+        _, (position, _, _, _, _, _) = self._trade_pnl.peekitem(index) # Less than or equal to timestamp
+        return position
     
-    def net_pnl(self, i):
-        if self.contract.expiry is not None and self.account_timestamps[i] > self.contract.expiry:
-            return self._net_pnl[-1]
-        return self._net_pnl[i - self.offset]
-    
+    def net_pnl(self, timestamp):
+        index = find_index_before(self._net_pnl, timestamp)
+        if index == -1: return 0.
+        _, (_, _, net_pnl) = self._net_pnl.peekitem(index) # Less than or equal to timestamp
+        return net_pnl
+
     def df(self):
         '''Returns a pandas dataframe with pnl data'''
-        df = pd.DataFrame({'timestamp' : self._timestamps, 
-                           'unrealized' : self._unrealized,
-                           'realized' : self._realized, 
-                           'commission' : self._commission,
-                           'fee' : self._fee, 
-                           'net_pnl' : self._net_pnl,
-                           'position' : self._position,
-                           'price' : self._price})
-        df['symbol'] = self.symbol
-        return df[['symbol', 'timestamp', 'unrealized', 'realized', 'commission', 'fee', 'net_pnl', 'position', 'price']]
-
+        df_trade_pnl = pd.DataFrame.from_records([
+            (k, v[0], v[1], v[2], v[3]) for k, v in self._trade_pnl.items()],
+            columns = ['timestamp', 'position', 'realized', 'fee', 'commission'])
+        df_net_pnl = pd.DataFrame.from_records([
+            (k, v[0], v[1], v[2]) for k, v in self._net_pnl.items()],
+            columns = ['timestamp', 'price', 'unrealized', 'net_pnl'])
+        all_timestamps = np.unique(np.concatenate((df_trade_pnl.timestamp.values, df_net_pnl.timestamp.values)))
+        #position = df_trade_pnl.set_index('timestamp').position.reindex(all_timestamps, fill_value = 0)
+        df_trade_pnl = df_trade_pnl.set_index('timestamp').reindex(all_timestamps, method = 'ffill').reset_index()
+        #df_trade_pnl.position = position.values
+        df_net_pnl = df_net_pnl.set_index('timestamp').reindex(all_timestamps, method = 'ffill').reset_index()
+        del df_net_pnl['timestamp']
+        df = pd.concat([df_trade_pnl, df_net_pnl], axis = 1)
+        df['symbol'] = self.contract.symbol
+        df = df[['symbol', 'timestamp', 'position', 'price', 'unrealized', 'realized', 'commission', 'fee', 'net_pnl']]
+        return df
          
-def _get_calc_indices(timestamps):
-    calc_timestamps = np.unique(timestamps.astype('M8[D]'))
+def _get_calc_indices(timestamps, pnl_calc_time):
+    time_delta = np.timedelta64(pnl_calc_time, 'm')
+    calc_timestamps = np.unique(timestamps.astype('M8[D]')) + time_delta
     calc_indices = np.searchsorted(timestamps, calc_timestamps, side='left') - 1
     if calc_indices[0] == -1: calc_indices[0] = 0
     return calc_indices
@@ -299,7 +233,7 @@ def leading_nan_to_zero(df, columns):
 
 class Account:
     '''An Account calculates pnl for a set of contracts'''
-    def __init__(self, contract_groups, timestamps, price_function, strategy_context, starting_equity = 1.0e6, calc_frequency = 'D'):
+    def __init__(self, contract_groups, timestamps, price_function, strategy_context, starting_equity = 1.0e6, pnl_calc_time = 15 * 60):
         '''
         Args:
             contract_groups (list of :obj:`ContractGroup`): Contract groups that we want to compute PNL for
@@ -307,17 +241,15 @@ class Account:
             price_function (function): Function that takes a symbol, timestamps, index, strategy context and 
                 returns the price used to compute pnl
             starting_equity (float, optional): Starting equity in account currency.  Default 1.e6
-            calc_frequency (str, optional): Account will calculate pnl at this frequency.  Default 'D' for daily
+            pnl_calc_time (int, optional): Number of minutes past midnight that we should calculate PNL at.  Default 15 * 60, i.e. 3 pm
         '''
-        if calc_frequency != 'D': raise Exception('unknown calc frequency: {}'.format(calc_frequency))
-        self.calc_freq = calc_frequency
         self.current_calc_index = 0
         self.starting_equity = starting_equity
         self._price_function = price_function
         self.strategy_context = strategy_context
         
         self.timestamps = timestamps
-        self.calc_indices = _get_calc_indices(timestamps)
+        self.calc_indices = _get_calc_indices(timestamps, pnl_calc_time)
         
         self._equity = np.full(len(timestamps), np.nan, dtype = np.float); 
         self._equity[0] = self.starting_equity
@@ -376,44 +308,38 @@ class Account:
         for idx in intermediate_calc_indices:
             calc_index = calc_indices[idx]
             self._equity[calc_index] = self._equity[prev_calc_index]
+            calc_timestamp, prev_calc_timestamp = self.timestamps[calc_index], self.timestamps[prev_calc_index]
             for symbol, symbol_pnl in self.symbol_pnls.items():
                 symbol_pnl.calc_net_pnl(calc_index)
-                net_pnl_diff = symbol_pnl.net_pnl(calc_index) - symbol_pnl.net_pnl(prev_calc_index)
+                #print(f'calcing: {calc_timestamp} {prev_calc_timestamp}')
+                net_pnl_diff = symbol_pnl.net_pnl(calc_timestamp) - symbol_pnl.net_pnl(prev_calc_timestamp)
                 if math.isfinite(net_pnl_diff): self._equity[calc_index] += net_pnl_diff
                     
-                if symbol == "XXXXXX":
-                    print(f'prev_calc_index: {prev_calc_index} calc_index: {calc_index} prev_equity:' + 
-                          f' {self._equity[prev_calc_index]} curr_equity: {self._equity[calc_index]}' + 
-                          f' net_pnl: {symbol_pnl.net_pnl(calc_index)}' + 
-                          f' prev_net_pnl: {symbol_pnl.net_pnl(prev_calc_index)}')
+                #print(f'prev_calc_index: {prev_calc_index} calc_index: {calc_index} prev_equity:' + 
+                #      f' {self._equity[prev_calc_index]} curr_equity: {self._equity[calc_index]}' + 
+                #      f' net_pnl: {symbol_pnl.net_pnl(calc_timestamp)}' + 
+                #      f' prev_net_pnl: {symbol_pnl.net_pnl(prev_calc_timestamp)}')
             prev_calc_index = calc_index
         self.current_calc_index = i
         
     def position(self, contract_group, timestamp):
-        '''Returns position for a contract_group at a given date in number of contracts or shares.  
-            Will cause calculation if Account has not previously calculated up to this date'''
-        i = np.searchsorted(self.timestamps, timestamp)
-        if i == len(self.timestamps) or self.timestamps[i] != timestamp:
-            raise Exception(f'Invalid timestamp: {timestamp}')
-        self.calc(i)
+        '''Returns position for a contract_group at a given date in number of contracts or shares.'''
         position = 0
         for contract in contract_group.contracts:
             symbol = contract.symbol
             if symbol not in self.symbol_pnls: continue
-            position += self.symbol_pnls[symbol].position(i)
+            position += self.symbol_pnls[symbol].position(timestamp)
         return position
     
     def positions(self, contract_group, timestamp):
         '''
         Returns all non-zero positions in a contract group
         '''
-        i = np.searchsorted(self.timestamps, timestamp)
-        self.calc(i)
         positions = []
         for contract in contract_group.contracts:
             symbol = contract.symbol
             if symbol not in self.symbol_pnls: continue
-            position = self.symbol_pnls[symbol].position(i)
+            position = self.symbol_pnls[symbol].position(timestamp)
             if not math.isclose(position, 0): positions.append((contract, position))
         return positions
     
@@ -464,7 +390,8 @@ class Account:
         ret_df = pd.concat(dfs)
         ret_df = ret_df[['timestamp', 'contract_group', 'symbol', 'position', 'price', 'unrealized', 'realized', 
                          'commission', 'fee', 'net_pnl']]
-        df_equity = pd.DataFrame({'timestamp' : self.timestamps, 'equity' : self._equity}).dropna()
+        df_equity = pd.DataFrame({'timestamp' : self.timestamps, 'equity' : self._equity})
+        df_equity.equity = df_equity.equity.fillna(method = 'ffill')
         ret_df = pd.merge(ret_df, df_equity, on = ['timestamp'], how = 'left')
         ret_df = ret_df.sort_values(by = ['timestamp', 'contract_group', 'symbol'])
         return ret_df[['timestamp', 'contract_group', 'symbol', 'position', 'price', 'unrealized', 'realized', 
@@ -491,9 +418,8 @@ class Account:
         df = df.sort_values(by = ['timestamp', 'symbol'])
         return df
     
-def test_account():
-    #TODO: Fix the tests here
-#if __name__ == "__main__":
+#def test_account():
+if __name__ == "__main__":
     from pyqstrat.pq_types import Contract, ContractGroup, Trade
     from pyqstrat.orders import MarketOrder
     import math
@@ -529,14 +455,17 @@ def test_account():
     np.set_printoptions(formatter = {'float' : lambda x : f'{x:.10g}'})
     account.calc(3)
     assert(len(account.df_trades()) == 4)
-    assert(len(account.df_pnl()) == 8)
+    assert(len(account.df_pnl()) == 6)
     assert(np.allclose(np.array([1000000, 1000000, 1000183.88, 1000183.88, 1000213.88, 1000213.88]), 
-                       account.df_pnl().equity.dropna().values, rtol = 0))
-    assert(np.allclose(np.array([0, 10, 20, -10, 40, -10, 40]), account.df_pnl().position.values[1:], rtol = 0))
-    assert(np.allclose(np.array([1000000, 1000183.88, 1000213.88]), account.df_pnl([ibm_cg]).equity.dropna().values, rtol = 0))
+                       account.df_pnl().equity.values, rtol = 0))
+    assert(np.allclose(np.array([10, 20, -10, 40, -10, 40]), account.df_pnl().position.values, rtol = 0))
+    assert(np.allclose(np.array([1000000, 1000183.88, 1000213.88]), account.df_pnl([ibm_cg]).equity.values, rtol = 0))
     
-if __name__ == "__main__":
+if __name__ == "__mainx__":
     test_account()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 2
+
 
