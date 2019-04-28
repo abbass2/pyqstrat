@@ -121,6 +121,21 @@ def np_get_index(array, value):
     if len(x[0]): return x[0][0]
     return -1
 
+def np_find_closest(a, v):
+    '''
+    From https://stackoverflow.com/questions/8914491/finding-the-nearest-value-and-return-the-index-of-array-in-python
+    Find index of closest value to array v in array a.  Returns an array of the same size as v
+    a must be sorted
+    >>> assert(all(np_find_closest(np.array([3, 4, 6]), np.array([4, 2])) == np.array([1, 0])))
+    '''
+    #a must be sorted
+    idx = a.searchsorted(v)
+    idx = np.clip(idx, 1, len(a)-1)
+    left = a[idx-1]
+    right = a[idx]
+    idx -= v - left < right - v
+    return idx
+
 def date_2_num(d):
     '''
     Adopted from matplotlib.mdates.date2num so we don't have to add a dependency on matplotlib here
@@ -393,4 +408,11 @@ def linear_interpolate(a1, a2, x1, x2, x):
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 1
+assert(all(np_find_closest(np.array([3, 4, 6]), np.array([4, 2])) == np.array([1, 0])))
+
+
+#cell 2
+
 
