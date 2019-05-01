@@ -207,8 +207,7 @@ setup(
 		      'ipython>=6.5.0',
                       'pybind11>=2.2',
                       'pyarrow>=0.1.0',
-                      'sortedcontainers>=2.0.5',
-                      'dateutil'
+                      'sortedcontainers>=2.0.5'
                     ],
     description='fast / extensible library for backtesting quantitative strategies',
     long_description=long_description,
