@@ -1,11 +1,19 @@
-#cell 0
+
+# coding: utf-8
+
+# In[1]:
+
+
 import warnings
 import pandas as pd
 import numpy as np
 from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
-#cell 1
+
+# In[2]:
+
+
 _VERBOSE = False
 
 def compute_amean(returns):
@@ -526,5 +534,4 @@ if __name__ == "__main__":
     test_evaluator()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
-
 

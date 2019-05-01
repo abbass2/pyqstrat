@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[40]:
+# In[1]:
 
 
 import numpy as np
@@ -283,11 +283,13 @@ def _cost_func_2d(suggestion):
 
             
 def test_optimize():
-    optimizer_1d = Optimizer('test', _generator_1d(), _cost_func_1d, max_processes = 4)
+    max_processes = 1 if os.name == 'nt' else 4
+
+    optimizer_1d = Optimizer('test', _generator_1d(), _cost_func_1d, max_processes = max_processes)
     optimizer_1d.run(raise_on_error = True)
     optimizer_1d.plot_2d(x = 'x', plot_type = 'line', marker = 'o', marker_color = 'blue')
     
-    optimizer_2d = Optimizer('test', _generator_2d(), _cost_func_2d, max_processes = 1)
+    optimizer_2d = Optimizer('test', _generator_2d(), _cost_func_2d, max_processes = max_processes)
     optimizer_2d.run()
     optimizer_2d.plot_3d(x = 'x', y = 'y')
             
