@@ -36,65 +36,139 @@
 <span></span>
 <span class="c1"># coding: utf-8</span>
 
-<span class="c1"># In[ ]:</span>
+<span class="c1"># In[2]:</span>
 
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">types</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
 
 
-<span class="c1"># In[ ]:</span>
+<span class="c1"># In[3]:</span>
 
 
-<div class="viewcode-block" id="Trade"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Trade">[docs]</a><span class="k">class</span> <span class="nc">Trade</span><span class="p">:</span>
-<div class="viewcode-block" id="Trade.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Trade.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">qty</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">fee</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">commission</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">order</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Args:</span>
-<span class="sd">            symbol: a string</span>
-<span class="sd">            date: Trade execution datetime</span>
-<span class="sd">            qty: Number of contracts or shares filled</span>
-<span class="sd">            price: Trade price</span>
-<span class="sd">            fee: Fees paid to brokers or others. Default 0</span>
-<span class="sd">            commision: Commission paid to brokers or others. Default 0</span>
-<span class="sd">            order: A reference to the order that created this trade. Default None</span>
+<div class="viewcode-block" id="ContractGroup"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup">[docs]</a><span class="k">class</span> <span class="nc">ContractGroup</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;A way to group contracts for figuring out which indicators, rules and signals to apply to a contract and for PNL reporting&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="ContractGroup.create"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup.create">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">         Args:</span>
+<span class="sd">            name (str): Name of the group</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">contract_group</span> <span class="o">=</span> <span class="n">ContractGroup</span><span class="p">()</span>
+        <span class="n">contract_group</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">contract_group</span><span class="o">.</span><span class="n">contracts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">contract_group</span><span class="o">.</span><span class="n">contracts_by_symbol</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="n">contract_group</span></div>
+        
+<div class="viewcode-block" id="ContractGroup.add_contract"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup.add_contract">[docs]</a>    <span class="k">def</span> <span class="nf">add_contract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contract</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contracts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">contract</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contracts_by_symbol</span><span class="p">[</span><span class="n">contract</span><span class="o">.</span><span class="n">symbol</span><span class="p">]</span> <span class="o">=</span> <span class="n">contract</span></div>
+        
+<div class="viewcode-block" id="ContractGroup.get_contract"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup.get_contract">[docs]</a>    <span class="k">def</span> <span class="nf">get_contract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contracts_by_symbol</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span></div>
+        
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span></div>
+
+<div class="viewcode-block" id="Contract"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Contract">[docs]</a><span class="k">class</span> <span class="nc">Contract</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;A contract such as a stock, option or a future that can be traded&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="Contract.create"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Contract.create">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">contract_group</span><span class="p">,</span> <span class="n">expiry</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">multiplier</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span> <span class="n">properties</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            symbol (str): A unique string reprenting this contract. e.g IBM or ESH9</span>
+<span class="sd">            contract_group (:obj:`ContractGroup`): We sometimes need to group contracts for calculating PNL, for example, you may have a strategy</span>
+<span class="sd">                which has 3 legs, a long option, a short option and a future or equity used to hedge delta.  In this case, you will be trading</span>
+<span class="sd">                different symbols over time as options and futures expire, but you may want to track PNL for each leg using a contract group for each leg.</span>
+<span class="sd">                So you could create contract groups &#39;Long Option&#39;, &#39;Short Option&#39; and &#39;Hedge&#39; and assign contracts to these.</span>
+<span class="sd">            expiry (obj:`np.datetime64` or :obj:`datetime.datetime`, optional): In the case of a future or option, the date and time when the </span>
+<span class="sd">                contract expires.  For equities and other non expiring contracts, set this to None.  Default None.</span>
+<span class="sd">            multiplier (float, optional): If the market price convention is per unit, and the unit is not the same as contract size, </span>
+<span class="sd">                set the multiplier here. For example, for E-mini contracts, each contract is 50 units and the price is per unit, </span>
+<span class="sd">                so multiplier would be 50.  Default 1</span>
+<span class="sd">            properties (obj:`types.SimpleNamespace`, optional): Any data you want to store with this contract.</span>
+<span class="sd">                For example, you may want to store option strike.  Default None</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="c1">#assert(isinstance(contract_group, ContractGroup))</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">multiplier</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">contract</span> <span class="o">=</span> <span class="n">Contract</span><span class="p">()</span>
+        <span class="n">contract</span><span class="o">.</span><span class="n">symbol</span> <span class="o">=</span> <span class="n">symbol</span>
+        
+        <span class="k">assert</span><span class="p">(</span><span class="n">expiry</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expiry</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expiry</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">))</span>
+        
+        <span class="k">if</span> <span class="n">expiry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expiry</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+            <span class="n">expiry</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="n">expiry</span><span class="p">)</span>
+            
+        <span class="n">contract</span><span class="o">.</span><span class="n">expiry</span> <span class="o">=</span> <span class="n">expiry</span>
+        <span class="n">contract</span><span class="o">.</span><span class="n">multiplier</span> <span class="o">=</span> <span class="n">multiplier</span>
+        
+        <span class="k">if</span> <span class="n">properties</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">properties</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">SimpleNamespace</span><span class="p">()</span>
+        <span class="n">contract</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">properties</span>
+        
+        <span class="n">contract_group</span><span class="o">.</span><span class="n">add_contract</span><span class="p">(</span><span class="n">contract</span><span class="p">)</span>
+        <span class="n">contract</span><span class="o">.</span><span class="n">contract_group</span> <span class="o">=</span> <span class="n">contract_group</span>
+        <span class="k">return</span> <span class="n">contract</span></div>
+    
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.symbol}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.multiplier}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multiplier</span> <span class="o">!=</span> <span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; expiry: {expiry:%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%m}&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expiry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; group: </span><span class="si">{self.contract_group.name}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract_group</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.properties.__dict__}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="vm">__dict__</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Trade"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Trade">[docs]</a><span class="k">class</span> <span class="nc">Trade</span><span class="p">:</span>
+<div class="viewcode-block" id="Trade.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Trade.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contract</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">qty</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">fee</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">commission</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">order</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">properties</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            contract (:obj:`Contract`):</span>
+<span class="sd">            timestamp (:obj:`np.datetime64`): Trade execution datetime</span>
+<span class="sd">            qty (float): Number of contracts or shares filled</span>
+<span class="sd">            price (float): Trade price</span>
+<span class="sd">            fee (float, optional): Fees paid to brokers or others. Default 0</span>
+<span class="sd">            commision (float, optional): Commission paid to brokers or others. Default 0</span>
+<span class="sd">            order (:obj:`pq.Order`, optional): A reference to the order that created this trade. Default None</span>
+<span class="sd">            properties (obj:`types.SimpleNamespace`, optional): Any data you want to store with this contract.</span>
+<span class="sd">                For example, you may want to store bid / ask prices at time of trade.  Default None</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">contract</span><span class="p">,</span> <span class="n">Contract</span><span class="p">))</span>
         <span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">qty</span><span class="p">))</span>
         <span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">price</span><span class="p">))</span>
         <span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">fee</span><span class="p">))</span>
         <span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">commission</span><span class="p">))</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">))</span>
         
-        <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span> <span class="o">=</span> <span class="n">symbol</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">date</span> <span class="o">=</span> <span class="n">date</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contract</span> <span class="o">=</span> <span class="n">contract</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">qty</span> <span class="o">=</span> <span class="n">qty</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">price</span> <span class="o">=</span> <span class="n">price</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fee</span> <span class="o">=</span> <span class="n">fee</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">commission</span> <span class="o">=</span> <span class="n">commission</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span>
+        
+        <span class="k">if</span> <span class="n">properties</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">properties</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">SimpleNamespace</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">properties</span></div>
         
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> {:%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M} qty: </span><span class="si">{}</span><span class="s1"> prc: </span><span class="si">{}{}{}</span><span class="s1"> order: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">symbol</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">)</span><span class="o">.</span><span class="n">to_pydatetime</span><span class="p">(),</span> 
-                                                <span class="bp">self</span><span class="o">.</span><span class="n">qty</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">price</span><span class="p">,</span> 
-                                                <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fee</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fee</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> 
-                                                <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">commission</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">commission</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> 
-                                                <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">)</span></div>
-    
-<div class="viewcode-block" id="Contract"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Contract">[docs]</a><span class="k">class</span> <span class="nc">Contract</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;A Contract can be a real or virtual instrument. For example, for futures you may wish to create a single continous contract instead of</span>
-<span class="sd">       a contract for each future series</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-<div class="viewcode-block" id="Contract.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Contract.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">multiplier</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Args:</span>
-<span class="sd">            symbol: A unique string reprenting this contract. e.g IBM or WTI_FUTURE</span>
-<span class="sd">            multiplier: If you have to multiply price to get price per contract, set that multiplier there.</span>
+<span class="sd">        &gt;&gt;&gt; print(Trade(Contract.create(&#39;IBM&#39;, contract_group = ContractGroup.create(&#39;IBM&#39;)), np.datetime64(&#39;2019-01-01 15:00&#39;), 100, 10.2130000, 0.01))</span>
+<span class="sd">        IBM 2019-01-01 15:00:00 qty: 100 prc: 10.213 fee: 0.01 order: None</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="k">assert</span><span class="p">(</span><span class="n">multiplier</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span> <span class="o">=</span> <span class="n">symbol</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">multiplier</span> <span class="o">=</span> <span class="n">multiplier</span></div>
-        
-    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.symbol}</span><span class="s1"> multiplier: </span><span class="si">{self.multiplier}</span><span class="s1">&#39;</span></div>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span><span class="o">.</span><span class="n">to_pydatetime</span><span class="p">()</span>
+        <span class="n">fee</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39; fee: </span><span class="si">{self.fee:.6g}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fee</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">commission</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39; commission: </span><span class="si">{self.commission:.6g}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">commission</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.contract.symbol}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.contract.properties.__dict__}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="vm">__dict__</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; {timestamp:%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S} qty: </span><span class="si">{self.qty}</span><span class="s1"> prc: </span><span class="si">{self.price:.6g}{fee}{commission}</span><span class="s1"> order: </span><span class="si">{self.order}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.properties.__dict__}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="vm">__dict__</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span></div>
+    
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">optionflags</span> <span class="o">=</span> <span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
 
 </pre></div>
 

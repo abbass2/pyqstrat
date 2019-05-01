@@ -67,13 +67,17 @@ class Optimizer:
         
         
     def _run_single_process(self):
-        for suggestion in self.generator:
-            if suggestion is None: continue
-            cost, other_costs = self.cost_func(suggestion)
-            self.generator.send((cost, other_costs))
-            self.experiments.append(Experiment(suggestion, cost, other_costs))
+        try:
+            for suggestion in self.generator:
+                if suggestion is None: continue
+                cost, other_costs = self.cost_func(suggestion)
+                self.generator.send(cost)
+                self.experiments.append(Experiment(suggestion, cost, other_costs))
+        except StopIteration:
+            # Exhausted generator
+            return
     
-    #TODO: Needs to be rewritten to send costs back to generator when we do parrallel gradient descent, etc.
+    #TODO: Needs to be rewritten to send costs back to generator when we do parallel gradient descent, etc.
     def _run_multi_process(self, raise_on_error):
         fut_map = {}
         with concurrent.futures.ProcessPoolExecutor(self.max_processes) as executor:
@@ -92,8 +96,6 @@ class Optimizer:
                     continue
                 suggestion = fut_map[future]
                 self.experiments.append(Experiment(suggestion, cost, other_costs))
-                #print(f'completed suggestion: {suggestion} result: {cost} {other_costs}')
-                
     
     def run(self, raise_on_error = False):
         '''Run the optimizer.
@@ -129,7 +131,7 @@ class Optimizer:
         if len(self.experiments) == 0: return None
         pc_keys = list(self.experiments[0].other_costs.keys())
         sugg_keys = list(self.experiments[0].suggestion.keys())
-        records = [[exp.suggestion[k] for k in sugg_keys] + [exp.cost] + [exp.other_costs[k] for k in pc_keys] for exp in self.experiments]
+        records = [[exp.suggestion[k] for k in sugg_keys] + [exp.cost] + [exp.other_costs[k] for k in pc_keys] for exp in self.experiments if exp.valid()]
         df = pd.DataFrame.from_records(records, columns = sugg_keys + ['cost'] + pc_keys)
         df.sort_values(by = [sort_column], ascending = ascending, inplace = True)
         return df
@@ -154,11 +156,17 @@ class Optimizer:
             hspace: Vertical space between subplots
          """
         
-        if len(self.experiments) == 0: return
+        if len(self.experiments) == 0: 
+            print('No experiments found')
+            return
         if not has_display(): return
 
         # Get rid of nans since matplotlib does not like them
         experiments = [experiment for experiment in self.experiments if experiment.valid()]
+        if not len(experiments):
+            print('No valid experiments found')
+            return
+        
         if xlim:
             experiments = [experiment for experiment in experiments if experiment.suggestion[x] >= xlim[0] and experiment.suggestion[x] <= xlim[1]]
         if ylim:
@@ -170,9 +178,10 @@ class Optimizer:
 
         if z == 'all':
             zvalues.append(('cost', np.array([experiment.cost for experiment in experiments])))
-            other_cost_keys = experiments[0].other_costs.keys()
-            for key in other_cost_keys:
-                zvalues.append((key, np.array([experiment.other_costs[key] for experiment in experiments])))
+            if len(experiments[0].other_costs):
+                other_cost_keys = experiments[0].other_costs.keys()
+                for key in other_cost_keys:
+                    zvalues.append((key, np.array([experiment.other_costs[key] for experiment in experiments])))
         elif z == 'cost':
             zvalues.append(('cost', np.array([experiment.cost for experiment in experiments])))
         else:
@@ -231,50 +240,61 @@ class Optimizer:
         else:
             yvalues.append((y, np.array([experiment.other_costs[zname] for experiment in experiments])))
             
+        xvalues = np.array(xvalues)
+        x_sort_indices = np.argsort(xvalues)
+        xvalues = xvalues[x_sort_indices]
         subplots = []
         for tup in yvalues:
             name = tup[0]
             yarray = tup[1]
+            idx = np.argsort(xvalues)
+            yarray = yarray[x_sort_indices]
             subplots.append(Subplot(data_list = [
                 XYData(name, xvalues, yarray, plot_type = plot_type, 
                         marker = marker, marker_size = marker_size, marker_color = marker_color
                     )], xlabel = x, ylabel = name, xlim = xlim))
         plot = Plot(subplots, figsize = figsize, title = 'Optimizer 1D Test')
         plot.draw()
+        
+        
+        
+# Functions used in unit testing
+
+def _generator_1d():
+    for x in np.arange(0, np.pi * 2, 0.1):
+        costs = (yield {'x' : x})
+
+def _cost_func_1d(suggestion):
+    x = suggestion['x']
+    cost = np.sin(x)
+    ret = cost, {'std' : -0.1 * cost}
+    return ret
+
+def _generator_2d():
+    for x in np.arange(0, np.pi * 2, 0.5):
+        for y in np.arange(0, np.pi * 2, 0.5):
+            costs = (yield {'x' : x, 'y' : y})
+
+def _cost_func_2d(suggestion):
+    x = suggestion['x']
+    y = suggestion['y']
+    cost = np.sin(np.sqrt(x**2 + y ** 2))
+    return cost, {'sharpe' : cost, 'std' : -0.1 * cost}
+
             
 def test_optimize():
+    max_processes = 1 if os.name == 'nt' else 4
+
+    optimizer_1d = Optimizer('test', _generator_1d(), _cost_func_1d, max_processes = max_processes)
+    optimizer_1d.run(raise_on_error = True)
+    optimizer_1d.plot_2d(x = 'x', plot_type = 'line', marker = 'o', marker_color = 'blue')
     
-    def generator_2d():
-        for x in range(0,5):
-            for y in range(0,5):
-                costs = (yield {'x' : x, 'y' : y})
-                yield
-
-    def cost_func_2d(suggestion):
-        x = suggestion['x']
-        y = suggestion['y']
-        cost = x ** 2 + y ** 2
-        cost = np.sin(np.sqrt(x ** 2 + y ** 2))
-        return cost, {'sharpe' : cost, 'std' : -0.1 * cost}
-
-    optimizer_2d = Optimizer('test', generator_2d(), cost_func_2d, max_processes = 1)
+    optimizer_2d = Optimizer('test', _generator_2d(), _cost_func_2d, max_processes = max_processes)
     optimizer_2d.run()
     optimizer_2d.plot_3d(x = 'x', y = 'y')
-
-    def generator_1d():
-        for x in range(0,5):
-            costs = (yield {'x' : x})
-            yield
-
-    def cost_func_1d(suggestion):
-        x = suggestion['x']
-        cost = np.sin(x)
-        return cost, {'std' : -0.1 * cost}
-
-    optimizer_1d = Optimizer('test', generator_1d(), cost_func_1d, max_processes = 1)
-    optimizer_1d.run()
-    optimizer_1d.plot_2d(x = 'x', plot_type = 'line', marker = 'o', marker_color = 'blue')
             
 if __name__ == "__main__":
     test_optimize()
+    import doctest
+    doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
 
