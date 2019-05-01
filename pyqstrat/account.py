@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 from collections import defaultdict
 from sortedcontainers import SortedDict
 import math
@@ -13,10 +8,7 @@ from copy import copy
 from pyqstrat.pq_utils import str2date
 from pyqstrat.pq_types import ContractGroup
 
-
-# In[11]:
-
-
+#cell 1
 def _calc_trade_pnl(open_qtys, open_prices, new_qtys, new_prices, multiplier):
     '''
     >>> print(_calc_trade_pnl(
@@ -367,6 +359,7 @@ class Account:
     def df_pnl(self, contract_groups = None):
         '''
         Returns a dataframe with P&L columns broken down by contract group and symbol
+        
         Args:
             contract_group (:obj:`ContractGroup`, optional): Return PNL for this contract group.  
                 If None (default), include all contract groups
@@ -398,7 +391,8 @@ class Account:
     
     def df_account_pnl(self, contract_group = None):
         '''
-        Returns PNL at the account level
+        Returns PNL at the account level.
+        
         Args:
             contract_group (:obj:`ContractGroup`, optional): If set, we only return pnl for this contract_group
         '''
@@ -437,6 +431,7 @@ class Account:
     def df_trades(self, contract_group = None, start_date = None, end_date = None):
         '''
         Returns a dataframe of trades
+        
         Args:
             contract_group (:obj:`ContractGroup`, optional): Return trades for this contract group.  
                 If None (default), include all contract groups
@@ -503,4 +498,7 @@ if __name__ == "__main_x_":
     test_account()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 2
+
 

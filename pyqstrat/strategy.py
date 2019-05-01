@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import numpy as np
 import pandas as pd
 import types
@@ -18,10 +13,7 @@ from pyqstrat.pq_utils import *
 from pyqstrat.pq_types import ContractGroup
 from pyqstrat.plot import TimeSeries, trade_sets_by_reason_code, Subplot, Plot
 
-
-# In[7]:
-
-
+#cell 1
 def _get_time_series_list(timestamps, names, values, properties):
     ts_list = []
     for name in names:
@@ -82,7 +74,7 @@ class Strategy:
             indicator:  A function that takes strategy timestamps and other indicators and returns a numpy array
               containing indicator values.  The return array must have the same length as the timestamps object.
               Can also be a numpy array or a pandas Series in which case we just store the values.
-            contract_groups (list of :obj:`ContractGroup', optional): Contract groups that this indicator applies to.  
+            contract_groups (list of :obj:`ContractGroup`, optional): Contract groups that this indicator applies to.  
                 If not set, it applies to all contract groups.  Default None.
             depends_on (list of str, optional): Names of other indicators that we need to compute this indicator.
                 Default None.
@@ -103,7 +95,7 @@ class Strategy:
             signal_function (function):  A function that takes timestamps and a dictionary of indicator value arrays and 
                 returns a numpy array
                 containing signal values.  The return array must have the same length as the input timestamps
-            contract_groups (list of :obj:`ContractGroup', optional): Contract groups that this signal applies to.  
+            contract_groups (list of :obj:`ContractGroup`, optional): Contract groups that this signal applies to.  
                 If not set, it applies to all contract groups.  Default None.
             depends_on_indicators (list of str, optional): Names of indicators that we need to compute this signal. Default None.
             depends_on_signals (list of str, optional): Names of other signals that we need to compute this signal. Default None.
@@ -142,7 +134,7 @@ class Strategy:
         Args:
             market_sim_function (function): A function that takes a list of Orders and Indicators as input 
                 and returns a list of Trade objects
-            contract_groups (list of :obj:`ContractGroup', optional): Contract groups that this simulator applies to.  
+            contract_groups (list of :obj:`ContractGroup`, optional): Contract groups that this simulator applies to.  
                 If not set, it applies to all contract groups.  Default None.
 
         '''
@@ -154,7 +146,7 @@ class Strategy:
         
         Args:
             indicator_names (list of str, optional): List of indicator names.  If None (default) run all indicators
-            contract_groups (list of :obj:`ContractGroup', optional): Contract group to run this indicator for.  
+            contract_groups (list of :obj:`ContractGroup`, optional): Contract group to run this indicator for.  
                 If None (default), we run it for all contract groups.
             clear_all (bool, optional): If set, clears all indicator values before running.  Default False.
         '''
@@ -196,7 +188,7 @@ class Strategy:
         
         Args:
             signal_names (list of str, optional): List of signal names.  If None (default) run all signals
-            contract_groups (list of :obj:`ContractGroup', optional): Contract groups to run this signal for.  
+            contract_groups (list of :obj:`ContractGroup`, optional): Contract groups to run this signal for.  
                 If None (default), we run it for all contract groups.
             clear_all (bool, optional): If set, clears all signal values before running.  Default False.
         '''
@@ -319,7 +311,7 @@ class Strategy:
         
         Args:
             rule_names: List of rule names.  If None (default) run all rules
-            contract_groups (list of :obj:`ContractGroup', optional): Contract groups to run this rule for.  
+            contract_groups (list of :obj:`ContractGroup`, optional): Contract groups to run this rule for.  
                 If None (default), we run it for all contract groups.
             start_date: Run rules starting from this date. Default None 
             end_date: Don't run rules after this date.  Default None
@@ -519,7 +511,7 @@ class Strategy:
         '''Plot indicators, signals, trades, position, pnl
         
         Args:
-            contract_groups (list of :obj:`ContractGroup', optional): Contract groups to plot or None (default) for all 
+            contract_groups (list of :obj:`ContractGroup`, optional): Contract groups to plot or None (default) for all 
                 contract groups. 
             primary indicators (list of str, optional): List of indicators to plot in the main indicator section. 
                 Default None (plot everything)
@@ -549,7 +541,8 @@ class Strategy:
         if pnl_columns is None: pnl_columns = ['equity']
         
         for contract_group in contract_groups:
-            primary_indicator_names = [ind_name for ind_name in self.indicator_values[contract_group].__dict__                                        if hasattr(self.indicator_values[contract_group], ind_name)]
+            primary_indicator_names = [ind_name for ind_name in self.indicator_values[contract_group].__dict__ \
+                                       if hasattr(self.indicator_values[contract_group], ind_name)]
             if primary_indicators:
                 primary_indicator_names = list(set(primary_indicator_names).intersection(primary_indicators))
             secondary_indicator_names = []
@@ -713,7 +706,8 @@ if __name__ == "__main__":
         curr_equity = account.equity(timestamp)
         order_qty = np.round(curr_equity * risk_percent / indicators.c[i] * np.sign(signal_value))
         trigger_price = indicators.c[i]
-        print(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp}' +               f' risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
+        print(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp}' + \
+              f' risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
         reason_code = ReasonCode.ENTER_LONG if order_qty > 0 else ReasonCode.ENTER_SHORT
         orders.append(MarketOrder(contract, timestamp, order_qty, reason_code = reason_code))
         return orders

@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import math
 import types
 import numpy as np
@@ -14,7 +9,7 @@ class MarketOrder:
     def __init__(self, contract, timestamp, qty, reason_code = ReasonCode.NONE, properties = None, status = 'open'):
         '''
         Args:
-            contract (:obj:`Contract):
+            contract (:obj:`Contract`):
             timestamp (:obj:`np.datetime64`): Time the order was placed
             qty (float):  Number of contracts or shares.  Use a negative quantity for sell orders
             reason_code (str, optional): The reason this order was created.
@@ -43,7 +38,7 @@ class LimitOrder:
     def __init__(self, contract, timestamp, qty, limit_price, reason_code = ReasonCode.NONE, properties = None, status = 'open'):
         '''
         Args:
-            contract (:obj:`Contract):
+            contract (:obj:`Contract`):
             timestamp (:obj:`np.datetime64`): Time the order was placed
             qty (float):  Number of contracts or shares.  Use a negative quantity for sell orders
             limit_price (float): Limit price (float)
@@ -78,7 +73,7 @@ class RollOrder:
                  status = 'open'):
         '''
         Args:
-            contract (:obj:`Contract):
+            contract (:obj:`Contract`):
             timestamp (:obj:`np.datetime64`): Time the order was placed
             close_qty (float): Quantity of the future you are rolling
             reopen_qty (float): Quantity of the future you are rolling to
@@ -117,7 +112,7 @@ class StopLimitOrder:
                  properties = None, status = 'open'):
         '''
         Args:
-            contract (:obj:`Contract):
+            contract (:obj:`Contract`):
             timestamp (:obj:`np.datetime64`): Time the order was placed
             qty (float):  Number of contracts or shares.  Use a negative quantity for sell orders
             trigger_price (float): Order becomes a market or limit order if price crosses trigger_price.

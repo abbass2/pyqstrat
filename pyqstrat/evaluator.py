@@ -1,19 +1,11 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import warnings
 import pandas as pd
 import numpy as np
 from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
-
-# In[2]:
-
-
+#cell 1
 _VERBOSE = False
 
 def compute_amean(returns):
@@ -52,7 +44,8 @@ def compute_periods_per_year(timestamps):
 
 def compute_num_periods(timestamps, periods_per_year):
     """ Given an array of timestamps, we compute how many periods there are between the first and last element, where the length
-        of a period is defined by periods_per_year.  For example, if there are 6 periods per year, then each period would be approx. 2 months long
+        of a period is defined by periods_per_year.  For example, if there are 6 periods per year, then each period would be approx. 2 months long.
+        
     Args:
         timestamps (np.ndarray of np.datetime64): a numpy array of returns, can contain nans
         periods_per_year (int): number of periods between first and last return
@@ -533,4 +526,5 @@ if __name__ == "__main__":
     test_evaluator()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
 
