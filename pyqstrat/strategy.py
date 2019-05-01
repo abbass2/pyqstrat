@@ -324,6 +324,11 @@ class Strategy:
             self._check_for_trades(i, trades_iter[i])
             self._check_for_orders(i, tup_list)
         self.account.calc(self.timestamps[-1])
+        
+    def run(self):
+        self.run_indicators()
+        self.run_signals()
+        self.run_rules()
 
     def _check_for_trades(self, i, tup_list):
         for tup in tup_list:
@@ -459,8 +464,8 @@ class Strategy:
         orders = self.orders(contract_group, start_date, end_date)
         order_records = [(order.contract.symbol, type(order).__name__, order.timestamp, order.qty, 
                           order.reason_code, 
-                          (order.properties.__dict__ if order.properties.__dict__ else ''),
-                          (order.contract.properties.__dict__ if order.contract.properties.__dict__ else '')) for order in orders]
+                          (str(order.properties.__dict__) if order.properties.__dict__ else ''),
+                          (str(order.contract.properties.__dict__) if order.contract.properties.__dict__ else '')) for order in orders]
         df_orders = pd.DataFrame.from_records(order_records,
                                               columns = ['symbol', 'type', 'timestamp', 'qty', 'reason_code', 'order_props', 'contract_props'])
         return df_orders
@@ -786,11 +791,9 @@ if __name__ == "__main__":
     #portfolio.run()
     
     metrics = strategy.evaluate_returns(plot = False, display_summary = False)
-    assert(round(metrics['gmean'], 6) == -0.003986)
-    assert(round(metrics['sharpe'], 4) == -0.3502)
-    assert(round(metrics['mdd_pct'], 6) == -0.004439)
-    #strategy.plot(primary_indicators = ['o', 'h', 'l', 'c', 'zscore'], primary_indicators_dual_axis=['zscore'])
-    #strategy.plot()
+    assert(round(metrics['gmean'], 6) == -0.062878)
+    assert(round(metrics['sharpe'], 4) == -9.7079)
+    assert(round(metrics['mdd_pct'], 6) == -0.002574)
     
 if __name__ == "__mainx__":
     strategy = test_strategy()

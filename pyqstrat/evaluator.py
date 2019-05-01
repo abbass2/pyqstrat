@@ -40,24 +40,45 @@ def compute_periods_per_year(timestamps):
     """
     if not len(timestamps): return np.nan
     freq = infer_frequency(timestamps)
-    return 252. / freq
+    return 252. / freq if freq != 0 else np.nan
 
-def compute_gmean(returns, periods_per_year):
-    """ Computes geometric mean of an array of returns
-    
+def compute_num_periods(timestamps, periods_per_year):
+    """ Given an array of timestamps, we compute how many periods there are between the first and last element, where the length
+        of a period is defined by periods_per_year.  For example, if there are 6 periods per year, then each period would be approx. 2 months long
     Args:
-        returns: a numpy array of returns
-        periods_per_year: number of trading periods per year
+        timestamps (np.ndarray of np.datetime64): a numpy array of returns, can contain nans
+        periods_per_year (int): number of periods between first and last return
         
     Returns:
         a float
         
-    >>> round(compute_gmean(np.array([0.001, 0.002, 0.003]), 252.), 6)
-    0.654358
+    >>> compute_num_periods(np.array(['2015-01-01', '2015-03-01', '2015-05-01'], dtype = 'M8[D]'), 6)
+    2.0
     """
-    assert(periods_per_year > 0)
+    if not len(timestamps): return np.nan
+    assert(monotonically_increasing(timestamps))
+    fraction_of_year = (timestamps[-1] - timestamps[0]) / (np.timedelta64(1, 's') * 365 * 24 * 60 * 60)
+    return round(fraction_of_year * periods_per_year)
+    
+
+def compute_gmean(timestamps, returns, periods_per_year):
+    """ Computes geometric mean of an array of returns
+    
+    Args:
+        returns: a numpy array of returns, can contain nans
+        periods_per_year: Used for annualizing returns
+    Returns:
+        a float
+        
+    >>> round(compute_gmean(np.array(['2015-01-01', '2015-03-01', '2015-05-01'], dtype = 'M8[D]'), np.array([0.001, 0.002, 0.003]), 252.), 6)
+    0.018362
+    """
     if not len(returns): return np.nan
-    g_mean = ((1.0 + returns).prod())**(1.0/len(returns))
+    assert(len(returns) == len(timestamps))
+    assert(isinstance(timestamps, np.ndarray) and isinstance(returns, np.ndarray))
+    returns = returns[np.isfinite(returns)]
+    num_periods = compute_num_periods(timestamps, periods_per_year)
+    g_mean = ((1.0 + returns).prod())**(1.0/num_periods)
     g_mean = np.power(g_mean, periods_per_year) - 1.0
     return g_mean
 
@@ -142,7 +163,7 @@ def compute_maxdd_start(rolling_dd_dates, rolling_dd, mdd_date):
 
 def compute_mar(returns, periods_per_year, mdd_pct):
     '''Compute MAR ratio, which is annualized return divided by biggest drawdown since inception.'''
-    if not len(returns) or np.isnan(mdd_pct): return np.nan
+    if not len(returns) or np.isnan(mdd_pct) or mdd_pct == 0: return np.nan
     return np.mean(returns) * periods_per_year / mdd_pct
 
 def compute_dates_3yr(timestamps):
@@ -216,10 +237,13 @@ def compute_annual_returns(timestamps, returns, periods_per_year):
     '''
     assert(len(timestamps) == len(returns) and periods_per_year > 0)
     if not len(timestamps): return np.array([], dtype = np.str), np.array([], dtype = np.float)
-    s = pd.Series(returns, index = timestamps)
-    ret_by_year = s.groupby(s.index.map(lambda x: x.year)).agg(
-        lambda y: compute_gmean(y, periods_per_year))
-    return ret_by_year.index.values, ret_by_year.values
+    df = pd.DataFrame({'ret' : returns, 'timestamp' : timestamps})
+    years = []
+    gmeans = []
+    for k, g in df.groupby(df.timestamp.map(lambda x: x.year)):
+        years.append(k)
+        gmeans.append(compute_gmean(g.timestamp.values, g.ret.values, periods_per_year))
+    return np.array(years), np.array(gmeans)
 
 class Evaluator:
     """You add functions to the evaluator that are dependent on the outputs of other functions.  
@@ -340,6 +364,15 @@ def compute_return_metrics(timestamps, rets, starting_equity, leading_non_finite
         An Evaluator object containing computed metrics off the returns passed in.  
         If needed, you can add your own metrics to this object based on the values of existing metrics and recompute the Evaluator.
         Otherwise, you can just use the output of the evaluator using the metrics function.
+        
+    >>> timestamps = np.array(['2015-01-01', '2015-03-01', '2015-05-01', '2015-09-01'], dtype = 'M8[D]')
+    >>> rets = np.array([0.01, 0.02, np.nan, -0.015])
+    >>> starting_equity = 1.e6
+    >>> ev = compute_return_metrics(timestamps, rets, starting_equity)
+    >>> metrics = ev.metrics()
+    >>> assert(round(metrics['gmean'], 6) == 0.021061)
+    >>> assert(round(metrics['sharpe'], 6) == 0.599382)
+    >>> assert(all(metrics['returns_3yr'] == np.array([0.01, 0.02, 0, -0.015])))
     '''
     
     assert(starting_equity > 0.)
@@ -356,9 +389,10 @@ def compute_return_metrics(timestamps, rets, starting_equity, leading_non_finite
     ev.add_metric('std', compute_std, dependencies = ['returns'])
     ev.add_metric('up_periods', lambda returns : len(returns[returns > 0]), dependencies = ['returns'])
     ev.add_metric('down_periods', lambda returns : len(returns[returns < 0]), dependencies = ['returns'])
-    ev.add_metric('up_pct', lambda up_periods, down_periods : up_periods * 1.0 / (up_periods + down_periods), 
+    ev.add_metric('up_pct', 
+                  lambda up_periods, down_periods : up_periods * 1.0 / (up_periods + down_periods) if (up_periods + down_periods) != 0 else np.nan, 
                   dependencies=['up_periods', 'down_periods'])
-    ev.add_metric('gmean', compute_gmean, dependencies=['returns', 'periods_per_year'])
+    ev.add_metric('gmean', compute_gmean, dependencies=['timestamps', 'returns', 'periods_per_year'])
     ev.add_metric('sharpe', compute_sharpe, dependencies = ['returns', 'periods_per_year', 'amean'])
     ev.add_metric('sortino', compute_sortino, dependencies = ['returns', 'periods_per_year', 'amean'])
     ev.add_metric('equity', compute_equity, dependencies = ['timestamps', 'starting_equity', 'returns'])
@@ -467,7 +501,8 @@ def plot_return_metrics(metrics, title = None):
     
     plt = Plot([equity_subplot, dd_subplot, ann_ret_subplot], title = title)
     plt.draw()
-    
+ 
+#if __name__ == "__main__":
 def test_evaluator():
     from datetime import datetime, timedelta
     np.random.seed(10)
@@ -482,7 +517,7 @@ def test_evaluator():
     assert(round(ev.metric('sharpe'), 6) == 2.932954)
     assert(round(ev.metric('sortino'), 6) == 5.690878)
     assert(ev.metric('annual_returns')[0] == [2018])
-    assert(round(ev.metric('annual_returns')[1][0], 6) == [0.042643])
+    assert(round(ev.metric('annual_returns')[1][0], 6) == [0.063530])
     assert(ev.metric('mdd_start') == np.datetime64('2018-01-19'))
     assert(ev.metric('mdd_date') == np.datetime64('2018-01-22'))
     
@@ -490,8 +525,5 @@ if __name__ == "__main__":
     test_evaluator()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
-
-
-#cell 2
 
 

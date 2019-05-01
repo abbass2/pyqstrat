@@ -4,39 +4,45 @@ import math
 from types import SimpleNamespace
 import pyqstrat as pq
 
-
-def sma(symbol, timestamps, indicators, strategy_context): # simple moving average
+def sma(contract_group, timestamps, indicators, strategy_context): # simple moving average
     sma = pd.Series(indicators.c).rolling(window = strategy_context.lookback_period).mean()
     return sma.values
 
-def band(symbol, timestamps, indicators, strategy_context, upper):
+def band(contract_group, timestamps, indicators, strategy_context, upper):
     std = pd.Series(indicators.c).rolling(window = strategy_context.lookback_period).std()
     return indicators.sma + strategy_context.num_std * std * (1 if upper else -1)
 
-upper_band = lambda symbol, timestamps, bb_indicators, strategy_context : \
-    band(symbol, timestamps, bb_indicators, strategy_context, upper = True)
+upper_band = lambda contract_group, timestamps, indicators, strategy_context : \
+    band(contract_group, timestamps, indicators, strategy_context, upper = True)
 
-lower_band = lambda symbol, timestamps, bb_indicators, strategy_context : \
-    band(symbol, timestamps, bb_indicators, strategy_context, upper = False)
+lower_band = lambda contract_group, timestamps, indicators, strategy_context : \
+    band(contract_group, timestamps, indicators, strategy_context, upper = False)
 
-def bollinger_band_signal(symbol, timestamps, indicators, parent_signals, strategy_context):
+def bollinger_band_signal(contract_group, timestamps, indicators, parent_signals, strategy_context):
     # Replace nans with 0 so we don't get errors later when comparing nans to floats
+    h = np.nan_to_num(indicators.h)
+    l = np.nan_to_num(indicators.l)
+    
     upper_band = np.nan_to_num(indicators.upper_band)
     lower_band = np.nan_to_num(indicators.lower_band)
     sma = np.nan_to_num(indicators.sma)
     
-    signal = np.where(indicators.h > upper_band, 2, 0)
-    signal = np.where(indicators.l < lower_band, -2, signal)
-    signal = np.where((indicators.h > sma) & (signal == 0), 1, signal) # price crossed above simple moving avg but not above upper band
-    signal = np.where((indicators.l < sma) & (signal == 0), -1, signal) # price crossed below simple moving avg but not below lower band
+    signal = np.where(h > upper_band, 2, 0)
+    signal = np.where(l < lower_band, -2, signal)
+    signal = np.where((h > sma) & (signal == 0), 1, signal) # price crossed above simple moving avg but not above upper band
+    signal = np.where((l < sma) & (signal == 0), -1, signal) # price crossed below simple moving avg but not below lower band
     return signal
 
-def bollinger_band_trading_rule(symbol, i, timestamps, indicators, signal, account, strategy_context):
+def bollinger_band_trading_rule(contract_group, i, timestamps, indicators, signal, account, strategy_context):
     timestamp = timestamps[i]
-    curr_pos = account.position(symbol, timestamp)
+    curr_pos = account.position(contract_group, timestamp)
     signal_value = signal[i]
     risk_percent = 0.1
     close_price = indicators.c[i]
+    
+    contract = contract_group.get_contract('PEP')
+    if contract is None:
+        contract = pq.Contract.create(symbol = 'PEP', contract_group = contract_group)
     
     # if we don't already have a position, check if we should enter a trade
     if math.isclose(curr_pos, 0):
@@ -45,13 +51,13 @@ def bollinger_band_trading_rule(symbol, i, timestamps, indicators, signal, accou
             order_qty = np.round(curr_equity * risk_percent / close_price * np.sign(signal_value))
             trigger_price = close_price
             reason_code = pq.ReasonCode.ENTER_LONG if order_qty > 0 else pq.ReasonCode.ENTER_SHORT
-            return [pq.StopLimitOrder(symbol, timestamp, order_qty, trigger_price, reason_code = reason_code)]
+            return [pq.StopLimitOrder(contract, timestamp, order_qty, trigger_price, reason_code = reason_code)]
         
     else: # We have a current position, so check if we should exit
         if (curr_pos > 0 and signal_value == -1) or (curr_pos < 0 and signal_value == 1):
             order_qty = -curr_pos
             reason_code = pq.ReasonCode.EXIT_LONG if order_qty < 0 else pq.ReasonCode.EXIT_SHORT
-            return [pq.MarketOrder(symbol, timestamp, order_qty, reason_code = reason_code)]
+            return [pq.MarketOrder(contract, timestamp, order_qty, reason_code = reason_code)]
     return []
 
 def market_simulator(orders, i, timestamps, indicators, signals, strategy_context):
@@ -73,7 +79,7 @@ def market_simulator(orders, i, timestamps, indicators, signals, strategy_contex
             
         if np.isnan(trade_price): continue
             
-        trade = pq.Trade(order.symbol, timestamp, order.qty, trade_price, order = order, commission = order.qty * 5, fee = 0)
+        trade = pq.Trade(order.contract, timestamp, order.qty, trade_price, order = order, commission = order.qty * 5, fee = 0)
         order.status = 'filled'
                            
         trades.append(trade)
@@ -83,41 +89,39 @@ def market_simulator(orders, i, timestamps, indicators, signals, strategy_contex
 def get_price(symbol, timestamps, i, strategy_context):
     return strategy_context.c[i]
 
-def build_example_strategy(lookback_period, num_std):
-    
+def build_example_strategy(strategy_context):
+
     try:
-        file_path = os.path.dirname(os.path.realpath(__file__)) + '/../notebooks/support/bitcoin_1min.csv' # If we are running from unit tests
+        file_path = os.path.dirname(os.path.realpath(__file__)) + '/../notebooks/support/pepsi_15_min_prices.csv.gz' # If we are running from unit tests
     except:
-        file_path = '../notebooks/support/bitcoin_1min.csv'
+        file_path = '../notebooks/support/pepsi_15_min_prices.csv.gz'
     
-        prices = pd.read_csv(file_path)
-        
-        trade_bars = pq.TradeBars(timestamps = pd.to_datetime(prices.date),
-                                  o = prices.o,
-                                  h = prices.h,
-                                  l = prices.l,
-                                  c = prices.c).resample(sampling_frequency='5 min')
-    timestamps, o, h, l, c = trade_bars.timestamps, trade_bars.o, trade_bars.h, trade_bars.l, trade_bars.c
+    prices = pd.read_csv(file_path)
+    prices.date = pd.to_datetime(prices.date)
 
-    contract = pq.Contract('BTC')
+    timestamps = prices.date.values
 
-    strategy_context = SimpleNamespace(lookback_period = lookback_period, num_std = num_std, c = c)
+    contract_group = pq.ContractGroup.create('PEP')
 
-    strategy = pq.Strategy([contract], timestamps, get_price, strategy_context = strategy_context)
+    strategy_context.c = prices.c.values # For use in the get_price function
 
-    strategy.add_indicator('o', o)
-    strategy.add_indicator('c', c)
-    strategy.add_indicator('h', h)
-    strategy.add_indicator('l', l)
+    strategy = pq.Strategy(timestamps, [contract_group], get_price, strategy_context = strategy_context)
+    
+    strategy.add_indicator('o', prices.o.values)
+    strategy.add_indicator('h', prices.h.values)
+    strategy.add_indicator('l', prices.l.values)
+    strategy.add_indicator('c', prices.c.values)
+
     strategy.add_indicator('sma', sma, depends_on = ['c'])
     strategy.add_indicator('upper_band', upper_band, depends_on = ['c', 'sma'])
     strategy.add_indicator('lower_band', lower_band, depends_on = ['c', 'sma'])
-    strategy.add_signal('bb_signal', bollinger_band_signal, 
-                        depends_on_indicators = ['h', 'l', 'sma', 'upper_band', 'lower_band'])
+    
+    strategy.add_signal('bb_signal', bollinger_band_signal, depends_on_indicators = ['h', 'l', 'sma', 'upper_band', 'lower_band'])
 
     # ask pqstrat to call our trading rule when the signal has one of the values [-2, -1, 1, 2]
     strategy.add_rule('bb_trading_rule', bollinger_band_trading_rule, 
                       signal_name = 'bb_signal', sig_true_values = [-2, -1, 1, 2])
 
-    strategy.add_market_sim(market_simulator, symbols = ['BTC'])
+    strategy.add_market_sim(market_simulator)
+
     return strategy

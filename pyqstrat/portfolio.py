@@ -139,6 +139,10 @@ class Portfolio:
                 args = tup[1]
                 func(*args)
                 
+        # Make sure we calc to the end for each strategy
+        for strategy in strategies:
+            strategy.account.calc(strategy.timestamps[-1])
+                
     def run(self, strategy_names = None, start_date = None, end_date = None):
         '''
         Run indicators, signals and rules.

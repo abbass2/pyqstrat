@@ -440,8 +440,8 @@ class Account:
         df = pd.DataFrame.from_records([(trade.contract.symbol, trade.timestamp, trade.qty, trade.price, 
                                          trade.fee, trade.commission, trade.order.timestamp, trade.order.qty, 
                                          trade.order.reason_code, 
-                                         (trade.order.properties.__dict__ if trade.order.properties.__dict__ else ''), 
-                                         (trade.contract.properties.__dict__ if trade.contract.properties.__dict__ else '')
+                                         (str(trade.order.properties.__dict__) if trade.order.properties.__dict__ else ''), 
+                                         (str(trade.contract.properties.__dict__) if trade.contract.properties.__dict__ else '')
                                         ) for trade in trades],
                     columns = ['symbol', 'timestamp', 'qty', 'price', 'fee', 'commission', 'order_date', 'order_qty', 
                                'reason_code', 'order_props', 'contract_props'])
