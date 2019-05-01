@@ -1,4 +1,9 @@
-#cell 0
+
+# coding: utf-8
+
+# In[ ]:
+
+
 import glob
 import os
 import sys
@@ -13,7 +18,10 @@ from timeit import default_timer as timer
 
 from pyqstrat import *
 
-#cell 1
+
+# In[ ]:
+
+
 VERBOSE = False
 
 class PathFileNameProvider:
@@ -332,7 +340,4 @@ def process_marketdata(input_filename_provider, file_processor, num_processes = 
                     else: 
                         print(str(new_exc))
                         continue
-
-#cell 2
-
 

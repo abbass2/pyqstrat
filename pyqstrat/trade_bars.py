@@ -1,4 +1,9 @@
-#cell 0
+
+# coding: utf-8
+
+# In[2]:
+
+
 import pandas as pd
 import numpy as np
 import IPython.display as dsp
@@ -6,7 +11,10 @@ import matplotlib.dates as trade_barates
 from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
-#cell 1
+
+# In[4]:
+
+
 def sort_trade_bars_key(a):
     l = ['timestamp', 'o', 'h', 'l', 'c', 'v', 'vwap']
     if a in l:
@@ -436,7 +444,4 @@ if __name__ == "__main__":
     test_trade_bars()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
-
-#cell 2
-
 

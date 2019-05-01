@@ -1,4 +1,9 @@
-#cell 0
+
+# coding: utf-8
+
+# In[7]:
+
+
 import os
 import tempfile
 import numpy as np
@@ -409,10 +414,9 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
 
-#cell 1
+
+# In[9]:
+
+
 assert(all(np_find_closest(np.array([3, 4, 6]), np.array([4, 2])) == np.array([1, 0])))
-
-
-#cell 2
-
 

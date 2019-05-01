@@ -1,10 +1,18 @@
-#cell 0
+
+# coding: utf-8
+
+# In[2]:
+
+
 import pandas as pd
 import numpy as np
 import types
 import datetime
 
-#cell 1
+
+# In[3]:
+
+
 class ContractGroup:
     '''A way to group contracts for figuring out which indicators, rules and signals to apply to a contract and for PNL reporting'''
 
