@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import numpy as np
 import pandas as pd
 import types
@@ -18,10 +13,7 @@ from pyqstrat.pq_utils import *
 from pyqstrat.pq_types import ContractGroup
 from pyqstrat.plot import TimeSeries, trade_sets_by_reason_code, Subplot, Plot
 
-
-# In[7]:
-
-
+#cell 1
 def _get_time_series_list(timestamps, names, values, properties):
     ts_list = []
     for name in names:
@@ -38,7 +30,7 @@ def _get_time_series_list(timestamps, names, values, properties):
 
 class Strategy:
     def __init__(self, timestamps, contract_groups, price_function, starting_equity = 1.0e6, pnl_calc_time = 15 * 60 + 1, 
-                 strategy_context = None):
+                 run_final_calc = True, strategy_context = None):
         '''
         Args:
             timestamps (np.array of np.datetime64): The "heartbeat" of the strategy.  We will evaluate trading rules and 
@@ -47,6 +39,8 @@ class Strategy:
             contract_groups (list of :obj:`ContractGroup`): The contract groups we will potentially trade.
             starting_equity (float, optional): Starting equity in Strategy currency.  Default 1.e6
             pnl_calc_time (int, optional): Time of day used to calculate PNL.  Default 15 * 60 (3 pm)
+            run_final_calc (bool, optional): If set, calculates unrealized pnl and net pnl as well as realized pnl when strategy is done.
+                If you don't need unrealized pnl, turn this off for faster run time. Default True
             strategy_context (:obj:`types.SimpleNamespace`, optional): A storage class where you can store key / value pairs 
                 relevant to this strategy.  For example, you may have a pre-computed table of correlations that you use in the 
                 indicator or trade rule functions.  
@@ -59,11 +53,12 @@ class Strategy:
         if strategy_context is None: strategy_context = types.SimpleNamespace()
         self.strategy_context = strategy_context
         self.account = Account(contract_groups, timestamps, price_function, strategy_context, starting_equity, pnl_calc_time)
+        self.run_final_calc = run_final_calc
         self.indicators = {}
         self.signals = {}
         self.signal_values = defaultdict(types.SimpleNamespace)
         self.rules = {}
-        self.rule_types = {}
+        self.position_filters = {}
         self.rule_signals = {}
         self.market_sims = {}
         self._trades = defaultdict(list)
@@ -114,7 +109,7 @@ class Strategy:
         if contract_groups is None: contract_groups = self.contract_groups
         self.signal_cgroups[name] = contract_groups
         
-    def add_rule(self, name, rule_function, signal_name, sig_true_values = None, rule_type = None):
+    def add_rule(self, name, rule_function, signal_name, sig_true_values = None, position_filter = None):
         '''Add a trading rule
         
         Args:
@@ -123,18 +118,18 @@ class Strategy:
             signal_name (str): The strategy will call the trading rule function when the signal with this name matches sig_true_values
             sig_true_values (numpy array, optional): If the signal value at a bar is equal to one of these values, 
                 the Strategy will call the trading rule function.  Default [TRUE]
-            rule_type (str, optional): Can be "entry", "exit" or None.  Entry rules are only triggered when 
+            position_filter (str, optional): Can be "zero", "nonzero" or None.  Zero rules are only triggered when 
                 the corresponding contract positions are 0
-                exit rules are only triggered when the corresponding contract positions are non-zero.  
+                Nonzero rules are only triggered when the corresponding contract positions are non-zero.  
                 If not set, we don't look at position before triggering the rule.
                 Default None
         '''
         if sig_true_values is None: sig_true_values = [True]
         self.rule_signals[name] = (signal_name, sig_true_values)
         self.rules[name] = rule_function
-        if rule_type is not None:
-            assert(rule_type in ['entry', 'exit'])
-        self.rule_types[name] = rule_type
+        if position_filter is not None:
+            assert(position_filter in ['zero', 'nonzero'])
+        self.position_filters[name] = position_filter
         
     def add_market_sim(self, market_sim_function, contract_groups = None):
         '''Add a market simulator.  A market simulator takes a list of Orders as input and returns a list of Trade objects.
@@ -236,8 +231,6 @@ class Strategy:
                     
                 setattr(self.signal_values[cgroup], signal_name, series_to_array(
                     signal_function(cgroup, self.timestamps, indicator_values, parent_values, self.strategy_context)))
-                
-
 
         
     def _get_iteration_indices(self, rule_names = None, contract_groups = None, start_date = None, end_date = None):
@@ -331,7 +324,8 @@ class Strategy:
         for i, tup_list in enumerate(orders_iter):
             self._check_for_trades(i, trades_iter[i])
             self._check_for_orders(i, tup_list)
-        self.account.calc(self.timestamps[-1])
+        if self.run_final_calc:
+            self.account.calc(self.timestamps[-1])
         
     def run(self):
         self.run_indicators()
@@ -362,11 +356,11 @@ class Strategy:
                     
     def _get_orders(self, idx, rule_function, contract_group, params):
         indicator_values, signal_values, rule_name = (params['indicator_values'], params['signal_values'], params['rule_name'])
-        rule_type = self.rule_types[rule_name]
-        if rule_type is not None:
+        position_filter = self.position_filters[rule_name]
+        if position_filter is not None:
             curr_pos = self.account.position(contract_group, self.timestamps[idx])
-            if rule_type == 'entry' and not math.isclose(curr_pos, 0): return []
-            if rule_type == 'exit' and math.isclose(curr_pos, 0): return []
+            if position_filter == 'zero' and not math.isclose(curr_pos, 0): return []
+            if position_filter == 'nonzero' and math.isclose(curr_pos, 0): return []
         open_orders = rule_function(contract_group, idx, self.timestamps, indicator_values, signal_values, self.account, 
                                     self.strategy_context)
         return open_orders
@@ -380,10 +374,11 @@ class Strategy:
         trades = market_sim_function(open_orders, idx, self.timestamps, params['indicator_values'], params['signal_values'], 
                                      self.strategy_context)
         if len(trades) == 0: return [], []
-        for trade in trades:
-            self._trades[trade.order.contract.contract_group].append(trade)
-            #TODO: Put this back
-            self.account.add_trades([trade])
+        
+        self.account.add_trades(trades)
+        
+        for trade in trades: self._trades[trade.order.contract.contract_group].append(trade)
+            
         open_orders = [order for order in open_orders if order.status == 'open']
         return open_orders, trades
             
@@ -549,7 +544,8 @@ class Strategy:
         if pnl_columns is None: pnl_columns = ['equity']
         
         for contract_group in contract_groups:
-            primary_indicator_names = [ind_name for ind_name in self.indicator_values[contract_group].__dict__                                        if hasattr(self.indicator_values[contract_group], ind_name)]
+            primary_indicator_names = [ind_name for ind_name in self.indicator_values[contract_group].__dict__ \
+                                       if hasattr(self.indicator_values[contract_group], ind_name)]
             if primary_indicators:
                 primary_indicator_names = list(set(primary_indicator_names).intersection(primary_indicators))
             secondary_indicator_names = []
@@ -713,7 +709,8 @@ if __name__ == "__main__":
         curr_equity = account.equity(timestamp)
         order_qty = np.round(curr_equity * risk_percent / indicators.c[i] * np.sign(signal_value))
         trigger_price = indicators.c[i]
-        print(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp}' +               f' risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
+        print(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp}' + \
+              f' risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
         reason_code = ReasonCode.ENTER_LONG if order_qty > 0 else ReasonCode.ENTER_SHORT
         orders.append(MarketOrder(contract, timestamp, order_qty, reason_code = reason_code))
         return orders
@@ -781,10 +778,10 @@ if __name__ == "__main__":
 
     # ask pqstrat to call our trading rule when the signal has one of the values [-2, -1, 1, 2]
     strategy.add_rule('pair_entry_rule', pair_entry_rule, 
-                      signal_name = 'pair_strategy_signal', sig_true_values = [-2, 2], rule_type = 'entry')
+                      signal_name = 'pair_strategy_signal', sig_true_values = [-2, 2], position_filter = 'zero')
     
     strategy.add_rule('pair_exit_rule', pair_exit_rule, 
-                      signal_name = 'pair_strategy_signal', sig_true_values = [-1, 1], rule_type = 'exit')
+                      signal_name = 'pair_strategy_signal', sig_true_values = [-1, 1], position_filter = 'nonzero')
     
     strategy.add_market_sim(market_simulator)
     
@@ -797,8 +794,8 @@ if __name__ == "__main__":
     #portfolio.run()
     
     metrics = strategy.evaluate_returns(plot = False, display_summary = False)
-    assert(round(metrics['gmean'], 6) == -0.062878)
-    assert(round(metrics['sharpe'], 4) == -9.7079)
+    assert(round(metrics['gmean'], 6)   == -0.062878)
+    assert(round(metrics['sharpe'], 4)  == -9.7079)
     assert(round(metrics['mdd_pct'], 6) == -0.002574)
     
 if __name__ == "__mainx__":

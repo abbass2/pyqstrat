@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 from collections import defaultdict
 from sortedcontainers import SortedDict
 import math
@@ -13,10 +8,7 @@ from copy import copy
 from pyqstrat.pq_utils import str2date
 from pyqstrat.pq_types import ContractGroup
 
-
-# In[11]:
-
-
+#cell 1
 def _calc_trade_pnl(open_qtys, open_prices, new_qtys, new_prices, multiplier):
     '''
     >>> print(_calc_trade_pnl(
@@ -150,14 +142,14 @@ class ContractPNL:
         if len(self._trade_pnl):
             k, v = self._trade_pnl.peekitem(0)
             if timestamps[0] <= k:
-                raise Exception(f'Cannot only add a trade that is newer than last added current: {trade} prev max timestamp: {k}')
+                raise Exception(f'Can only add a trade that is newer than last added current: {timestamps[0]} prev max timestamp: {k}')
                 
         for i, timestamp in enumerate(timestamps):
             t_trades = [trade for trade in trades if trade.timestamp == timestamp]
             open_qtys, open_prices, open_qty, weighted_avg_price, realized_chg = _calc_trade_pnl(
                 self.open_qtys, self.open_prices, 
-                np.array([trade.qty for trade in trades]), 
-                np.array([trade.price for trade in trades]),
+                np.array([trade.qty for trade in t_trades]), 
+                np.array([trade.price for trade in t_trades]),
                 self.contract.multiplier)
             self.open_qtys = open_qtys
             self.open_prices = open_prices
@@ -289,10 +281,17 @@ class Account:
         
     def add_trades(self, trades):
         trades = sorted(trades, key = lambda x : getattr(x, 'timestamp'))
+        # Break up trades by contract so we can add them in a batch
+        trades_by_contract = defaultdict(list)
         for trade in trades:
             contract = trade.contract
             if contract not in self.contracts: self._add_contract(contract, trade.timestamp)
-            self.symbol_pnls[trade.contract.symbol]._add_trades([trade])
+            trades_by_contract[contract].append(trade)
+            
+        for contract, contract_trades in trades_by_contract.items():
+            contract_trades.sort(key=lambda x: x.timestamp)
+            self.symbol_pnls[contract.symbol]._add_trades(contract_trades)
+            
         self._trades += trades
         
     def calc(self, timestamp):
@@ -433,8 +432,6 @@ class Account:
                                        columns = ['timestamp', 'position', 'unrealized', 'realized', 'commission', 'fee', 'net_pnl'])
         df['equity'] = self.starting_equity + df.net_pnl
         return df[['timestamp', 'position', 'unrealized', 'realized', 'commission', 'fee', 'net_pnl', 'equity']]
-
-
     
     def df_trades(self, contract_group = None, start_date = None, end_date = None):
         '''
@@ -458,7 +455,6 @@ class Account:
                                'reason_code', 'order_props', 'contract_props'])
         df = df.sort_values(by = ['timestamp', 'symbol'])
         return df
-    
 
 #def test_account():
 if __name__ == "__main__":
@@ -487,10 +483,8 @@ if __name__ == "__main__":
                     order = MarketOrder(ibm_contract, np.datetime64('2018-01-01 09:00'), 10))
     trade_2 = Trade(ibm_contract, np.datetime64('2018-01-02 09:00'), -20, 15.1, commission = 0.02, 
                     order = MarketOrder(ibm_contract, np.datetime64('2018-01-01 09:00'), -20))
-    trade_3 = Trade(msft_contract, timestamps[1], 20, 13.2, commission = 0.04, 
-                    order = MarketOrder(msft_contract, timestamps[1], 15))
-    trade_4 = Trade(msft_contract, timestamps[2], 20, 16.2, commission = 0.05, 
-                    order = MarketOrder(msft_contract, timestamps[2], 20))
+    trade_3 = Trade(msft_contract, timestamps[1], 20, 13.2, commission = 0.04, order = MarketOrder(msft_contract, timestamps[1], 15))
+    trade_4 = Trade(msft_contract, timestamps[2], 20, 16.2, commission = 0.05, order = MarketOrder(msft_contract, timestamps[2], 20))
 
     account.add_trades([trade_1, trade_2, trade_3, trade_4])
     account.calc(np.datetime64('2018-01-05 13:35'))
