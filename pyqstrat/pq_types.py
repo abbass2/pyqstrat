@@ -1,27 +1,24 @@
-
-# coding: utf-8
-
-# In[2]:
-
-
+#cell 0
 import pandas as pd
 import numpy as np
 import types
 import datetime
 
-
-# In[3]:
-
-
+#cell 1
 class ContractGroup:
     '''A way to group contracts for figuring out which indicators, rules and signals to apply to a contract and for PNL reporting'''
 
+    _group_names = set()
+    
     @staticmethod
     def create(name):
         '''
          Args:
             name (str): Name of the group
         '''
+        if name in ContractGroup._group_names:
+            raise Exception(f'Contract group: {name} already exists')
+        ContractGroup._group_names.add(name)
         contract_group = ContractGroup()
         contract_group.name = name
         contract_group.contracts = set()
@@ -39,6 +36,9 @@ class ContractGroup:
         return self.name
 
 class Contract:
+    _symbol_names = set()
+
+
     '''A contract such as a stock, option or a future that can be traded'''
     @staticmethod
     def create(symbol, contract_group, expiry = None, multiplier = 1., properties = None):
@@ -58,8 +58,14 @@ class Contract:
                 For example, you may want to store option strike.  Default None
         '''
         assert(isinstance(symbol, str) and len(symbol) > 0)
+        if symbol in Contract._symbol_names:
+            raise Exception(f'Contract with symbol: {symbol} already exists')
+        Contract._symbol_names.add(symbol)
+
         #assert(isinstance(contract_group, ContractGroup))
         assert(multiplier > 0)
+
+
         contract = Contract()
         contract.symbol = symbol
         
@@ -80,8 +86,8 @@ class Contract:
         return contract
     
     def __repr__(self):
-        return f'{self.symbol}' + f' {self.multiplier}' if self.multiplier != 1 else '' + (
-            f' expiry: {expiry:%Y-%m-%d %H:%m}' if self.expiry is not None else '') + (
+        return f'{self.symbol}' + (f' {self.multiplier}' if self.multiplier != 1 else '') + (
+            f' expiry: {self.expiry.astype(datetime.datetime):%Y-%m-%d %H:%M:%S}' if self.expiry is not None else '') + (
             f' group: {self.contract_group.name}' if self.contract_group else '') + (
             f' {self.properties.__dict__}' if self.properties.__dict__ else '')
 
@@ -130,6 +136,13 @@ class Trade:
             f' {self.contract.properties.__dict__}' if self.contract.properties.__dict__ else '') + (
             f' {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} prc: {self.price:.6g}{fee}{commission} order: {self.order}') + (
             f' {self.properties.__dict__}' if self.properties.__dict__ else '')
+    
+class OrderStatus:
+    '''
+    Enum for order status
+    '''
+    OPEN = 'open'
+    FILLED = 'filled'
     
 if __name__ == "__main__":
     import doctest

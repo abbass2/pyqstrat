@@ -182,9 +182,13 @@ class Strategy:
 
                 for parent_name in parent_names:
                     setattr(parent_values, parent_name, getattr(cgroup_ind_namespace, parent_name))
+                    
+                if isinstance(indicator_function, np.ndarray) or isinstance(indicator_function, pd.Series):
+                    indicator_values = indicator_function
+                else:
+                    indicator_values = indicator_function(cgroup, self.timestamps, parent_values, self.strategy_context)
 
-                setattr(cgroup_ind_namespace, indicator_name, series_to_array(
-                    indicator_function(cgroup, self.timestamps, parent_values, self.strategy_context)))
+                setattr(cgroup_ind_namespace, indicator_name, series_to_array(indicator_values))
                 
     def run_signals(self, signal_names = None, contract_groups = None, clear_all = False):
         '''Calculate values of the signals specified and store them.
@@ -668,7 +672,6 @@ if __name__ == "__main__":
     ko_prices = ko_prices.query(f'timestamp <= "{end_time}"')
     pep_prices = pep_prices.query(f'timestamp <= "{end_time}"')
 
-
     timestamps = ko_prices.timestamp.values
     
     ratio = ko_prices.c / pep_prices.c
@@ -802,4 +805,7 @@ if __name__ == "__mainx__":
     strategy = test_strategy()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 2
+
 

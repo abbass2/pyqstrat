@@ -276,6 +276,8 @@ class Account:
         return [contract.symbol for contract in self.contracts]
         
     def _add_contract(self, contract, timestamp):
+        if contract.symbol in self.symbol_pnls: 
+            raise Exception(f'Already have contract with symbol: {contract.symbol} {contract}')
         self.symbol_pnls[contract.symbol] = ContractPNL(contract, self.timestamps, self._price_function, self.strategy_context)
         self.contracts.add(contract)
         
