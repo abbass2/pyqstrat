@@ -260,6 +260,7 @@ class Strategy:
         >>> def rule_b(): pass
         >>> timestamps = np.array(['2018-01-01', '2018-01-02', '2018-01-03'], dtype = 'M8[D]')
         >>> rule_names = ['rule_a', 'rule_b']
+        >>> ContractGroup.clear()
         >>> ibm = ContractGroup.create('IBM')
         >>> aapl = ContractGroup.create('AAPL')
         >>> contract_groups = [ibm, aapl]

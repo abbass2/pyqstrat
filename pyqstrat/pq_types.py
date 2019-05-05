@@ -11,6 +11,14 @@ class ContractGroup:
     _group_names = set()
     
     @staticmethod
+    def clear():
+        '''
+        When running Python interactively you may create a ContractGroup with a given name multiple times because you don't restart Python 
+        therefore global variables are not cleared.  This function clears global ContractGroups
+        '''
+        ContractGroup._group_names = set()
+        
+    @staticmethod
     def create(name):
         '''
          Args:
@@ -85,6 +93,14 @@ class Contract:
         contract.contract_group = contract_group
         return contract
     
+    @staticmethod
+    def clear():
+        '''
+        When running Python interactively you may create a Contract with a given symbol multiple times because you don't restart Python 
+        therefore global variables are not cleared.  This function clears global Contracts
+        '''
+        Contract._symbol_names = set()
+   
     def __repr__(self):
         return f'{self.symbol}' + (f' {self.multiplier}' if self.multiplier != 1 else '') + (
             f' expiry: {self.expiry.astype(datetime.datetime):%Y-%m-%d %H:%M:%S}' if self.expiry is not None else '') + (
