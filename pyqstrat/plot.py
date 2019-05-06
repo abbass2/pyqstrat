@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[2]:
-
-
+#cell 0
 from collections import defaultdict
 from functools import reduce
 import pandas as pd
@@ -351,9 +346,12 @@ def draw_3d_plot(ax, x, y, z, plot_type, marker = 'X', marker_size = 50, marker_
     
 def _adjust_axis_limit(lim, values):
     '''If values + 10% buffer are outside current xlim or ylim, return expanded xlim or ylim for subplot'''
+    if values.dtype == np.bool_:
+        values = values.astype(np.float)
     min_val, max_val = np.nanmin(values), np.nanmax(values)
-    lim_min = np.nanmin(values) - .1 * (max_val - min_val)
-    lim_max = np.nanmax(values) + .1 * (max_val - min_val)
+    val_range = max_val - min_val
+    lim_min = np.nanmin(values) - .1 * val_range
+    lim_max = np.nanmax(values) - .1 * val_range
     return (min(lim[0], lim_min), max(lim[1], lim_max))
 
 def _plot_data(ax, data):
@@ -816,4 +814,7 @@ if __name__ == "__main__":
     test_plot();
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 1
+
 

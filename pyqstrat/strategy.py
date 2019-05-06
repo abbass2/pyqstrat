@@ -594,9 +594,14 @@ class Strategy:
                 if title is None: title = ''
                 title_full = f'{title} {contract_group.name}'
                 
-            plot_list = [primary_indicator_subplot]
+            plot_list = []
+            if len(primary_indicator_list): plot_list.append(primary_indicator_subplot)
             if len(secondary_indicator_list): plot_list.append(secondary_indicator_subplot)
-            plot_list += [signal_subplot, pos_subplot, pnl_subplot]
+            if len(signal_list) : plot_list.append(signal_subplot)
+            if len(position): plot_list.append(pos_subplot)
+            if len(pnl_list): plot_list.append(pnl_subplot)
+            
+            if not len(plot_list): return
                 
             plot = Plot(plot_list, figsize = figsize, date_range = date_range, date_format = date_format, 
                         sampling_frequency = sampling_frequency, 
@@ -793,10 +798,6 @@ if __name__ == "__main__":
     strategy.run_signals()
     strategy.run_rules()
 
-    #portfolio = Portfolio()
-    #portfolio.add_strategy('pair_strategy', strategy)
-    #portfolio.run()
-    
     metrics = strategy.evaluate_returns(plot = False, display_summary = False)
     assert(round(metrics['gmean'], 6)   == -0.062878)
     assert(round(metrics['sharpe'], 4)  == -9.7079)
