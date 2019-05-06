@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -297,4 +292,5 @@ if __name__ == "__main__":
     test_optimize()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
 

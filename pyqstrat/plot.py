@@ -346,6 +346,8 @@ def draw_3d_plot(ax, x, y, z, plot_type, marker = 'X', marker_size = 50, marker_
     
 def _adjust_axis_limit(lim, values):
     '''If values + 10% buffer are outside current xlim or ylim, return expanded xlim or ylim for subplot'''
+    if isinstance(values, list):
+        values = np.array(values)
     if values.dtype == np.bool_:
         values = values.astype(np.float)
     min_val, max_val = np.nanmin(values), np.nanmax(values)
