@@ -1,9 +1,4 @@
-
-# coding: utf-8
-
-# In[7]:
-
-
+#cell 0
 import os
 import tempfile
 import numpy as np
@@ -140,6 +135,18 @@ def np_find_closest(a, v):
     right = a[idx]
     idx -= v - left < right - v
     return idx
+
+def percentile_of_score(a):
+    '''
+    For each element in a, find the percentile of a its in.  From stackoverflow.com/a/29989971/5351549
+    Like scipy.stats.percentileofscore but runs in O(n log(n)) time.
+    >>> a = np.array([4, 3, 1, 2, 4.1])
+    >>> percentiles = percentile_of_score(a)
+    >>> assert(all(np.isclose(np.array([ 75.,  50.,   0.,  25., 100.]), percentiles)))
+    '''
+    assert isinstance(a, np.ndarray), f'expected numpy array, got: {a}'
+    if not len(a): return None
+    return np.argsort(np.argsort(a)) * 100. / (len(a) - 1)
 
 def date_2_num(d):
     '''
@@ -413,10 +420,4 @@ def linear_interpolate(a1, a2, x1, x2, x):
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
-
-
-# In[9]:
-
-
-assert(all(np_find_closest(np.array([3, 4, 6]), np.array([4, 2])) == np.array([1, 0])))
 

@@ -101,6 +101,9 @@ def build_example_strategy(strategy_context):
 
     timestamps = prices.date.values
 
+    pq.ContractGroup.clear()
+    pq.Contract.clear()
+
     contract_group = pq.ContractGroup.create('PEP')
 
     strategy_context.c = prices.c.values # For use in the get_price function
