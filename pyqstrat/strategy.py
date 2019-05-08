@@ -1,4 +1,9 @@
-#cell 0
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 import numpy as np
 import pandas as pd
 import types
@@ -13,7 +18,10 @@ from pyqstrat.pq_utils import *
 from pyqstrat.pq_types import ContractGroup
 from pyqstrat.plot import TimeSeries, trade_sets_by_reason_code, Subplot, Plot
 
-#cell 1
+
+# In[2]:
+
+
 def _get_time_series_list(timestamps, names, values, properties):
     ts_list = []
     for name in names:
@@ -549,8 +557,7 @@ class Strategy:
         if pnl_columns is None: pnl_columns = ['equity']
         
         for contract_group in contract_groups:
-            primary_indicator_names = [ind_name for ind_name in self.indicator_values[contract_group].__dict__ \
-                                       if hasattr(self.indicator_values[contract_group], ind_name)]
+            primary_indicator_names = [ind_name for ind_name in self.indicator_values[contract_group].__dict__                                        if hasattr(self.indicator_values[contract_group], ind_name)]
             if primary_indicators:
                 primary_indicator_names = list(set(primary_indicator_names).intersection(primary_indicators))
             secondary_indicator_names = []
@@ -718,8 +725,7 @@ if __name__ == "__main__":
         curr_equity = account.equity(timestamp)
         order_qty = np.round(curr_equity * risk_percent / indicators.c[i] * np.sign(signal_value))
         trigger_price = indicators.c[i]
-        print(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp}' + \
-              f' risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
+        print(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp}' +               f' risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
         reason_code = ReasonCode.ENTER_LONG if order_qty > 0 else ReasonCode.ENTER_SHORT
         orders.append(MarketOrder(contract, timestamp, order_qty, reason_code = reason_code))
         return orders
@@ -808,6 +814,9 @@ if __name__ == "__mainx__":
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
 
-#cell 2
+
+# In[ ]:
+
+
 
 

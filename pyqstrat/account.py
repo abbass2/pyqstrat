@@ -1,4 +1,9 @@
-#cell 0
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 from collections import defaultdict
 from sortedcontainers import SortedDict
 import math
@@ -8,7 +13,10 @@ from copy import copy
 from pyqstrat.pq_utils import str2date
 from pyqstrat.pq_types import ContractGroup
 
-#cell 1
+
+# In[2]:
+
+
 def _calc_trade_pnl(open_qtys, open_prices, new_qtys, new_prices, multiplier):
     '''
     >>> print(_calc_trade_pnl(

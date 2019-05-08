@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 # coding: utf-8
 
 # In[ ]:
@@ -340,4 +340,10 @@ def process_marketdata(input_filename_provider, file_processor, num_processes = 
                     else: 
                         print(str(new_exc))
                         continue
+
+
+# In[ ]:
+
+
+
 

@@ -1,4 +1,9 @@
-#cell 0
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[2]:
+
+
 from collections import defaultdict
 from functools import reduce
 import pandas as pd
@@ -817,6 +822,9 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
 
-#cell 1
+
+# In[ ]:
+
+
 
 

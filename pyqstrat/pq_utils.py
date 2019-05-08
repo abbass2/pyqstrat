@@ -1,4 +1,9 @@
-#cell 0
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 import os
 import tempfile
 import numpy as np
@@ -135,6 +140,23 @@ def np_find_closest(a, v):
     right = a[idx]
     idx -= v - left < right - v
     return idx
+
+def day_of_week_num(a):
+    '''
+    From https://stackoverflow.com/questions/52398383/finding-day-of-the-week-for-a-datetime64
+    Get day of week for a numpy array of datetimes 
+    Monday is 0, Sunday is 6
+    
+    Args:
+        a (numpy datetime64 or array of datetime64):
+        
+    Return:
+        numpy int or numpy ndarray of int: Monday is 0, Sunday is 6
+
+    >>> day_of_week_num(np.datetime64('2015-01-04'))
+    6
+    '''
+    return (a.astype('datetime64[D]').view('int64') - 4) % 7
 
 def percentile_of_score(a):
     '''
