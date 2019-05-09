@@ -197,7 +197,7 @@ class Portfolio:
             plot: If set to True, display plots of equity, drawdowns and returns.  Default False
             float_precision: Number of significant figures to show in returns.  Default 4
         '''
-        returns = self.df_returns(sampling_freq, strategy_names)
+        returns = self.df_returns(sampling_frequency, strategy_names)
         ev = compute_return_metrics(returns.timestamp.values, returns.ret.values, returns.equity.values[0])
         display_return_metrics(ev.metrics(), float_precision = float_precision)
         if plot: plot_return_metrics(ev.metrics())
