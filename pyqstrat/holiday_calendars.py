@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
 
 import numpy as np
 import pandas as pd
@@ -309,7 +307,7 @@ class Calendar(object):
         
         if exchange_name not in Calendar._calendars:
             if exchange_name not in [Calendar.NYSE, Calendar.EUREX]:
-                raise Exception(f'calendar not found: {exchange}')
+                raise Exception(f'calendar not found: {exchange_name}')
             holidays = read_holidays(exchange_name)
             Calendar.add_calendar(exchange_name, holidays)
         return Calendar._calendars[exchange_name]
