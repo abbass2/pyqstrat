@@ -142,6 +142,7 @@ class Trade:
         
     def __repr__(self):
         '''
+        >>> Contract.clear()
         >>> ContractGroup.clear()
         >>> print(Trade(Contract.create('IBM', contract_group = ContractGroup.create('IBM')), np.datetime64('2019-01-01 15:00'), 100, 10.2130000, 0.01))
         IBM 2019-01-01 15:00:00 qty: 100 prc: 10.213 fee: 0.01 order: None
