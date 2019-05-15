@@ -1,18 +1,10 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import pandas as pd
 import numpy as np
 import types
 import datetime
 
-
-# In[2]:
-
-
+#cell 1
 class ContractGroup:
     '''A way to group contracts for figuring out which indicators, rules and signals to apply to a contract and for PNL reporting'''
 
@@ -150,6 +142,7 @@ class Trade:
         
     def __repr__(self):
         '''
+        >>> ContractGroup.clear()
         >>> print(Trade(Contract.create('IBM', contract_group = ContractGroup.create('IBM')), np.datetime64('2019-01-01 15:00'), 100, 10.2130000, 0.01))
         IBM 2019-01-01 15:00:00 qty: 100 prc: 10.213 fee: 0.01 order: None
         '''
