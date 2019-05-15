@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 from collections import defaultdict
 from sortedcontainers import SortedDict
 import math
@@ -13,11 +8,8 @@ from copy import copy
 from pyqstrat.pq_utils import str2date
 from pyqstrat.pq_types import ContractGroup
 
-
-# In[2]:
-
-
-def _calc_trade_pnl(open_qtys, open_prices, new_qtys, new_prices, multiplier):
+#cell 1
+def calc_trade_pnl(open_qtys_, open_prices_, new_qtys, new_prices, multiplier):
     '''
     >>> print(_calc_trade_pnl(
     ...          open_qtys = np.array([], dtype = np.float), open_prices = np.array([], dtype = np.float), 
@@ -31,33 +23,46 @@ def _calc_trade_pnl(open_qtys, open_prices, new_qtys, new_prices, multiplier):
     ...                new_prices = np.array([2080, 2075.25, 2070.75, 2076, 2066.75, 2069.25, 2074.75, 2069.75, 2087.25, 2097.25, 2106, 2088.25, 2085.25]),
     ...                multiplier = 50))
     (array([], dtype=float64), array([], dtype=float64), 0.0, 0, -33762.5)    '''
+    #TODO: Cythonize this
     
     realized = 0.
     unrealized = 0.
     
-    open_qtys = open_qtys.copy()
     new_qtys = new_qtys.copy()
-    open_prices = open_prices.copy()
     new_prices = new_prices.copy()
+
+    open_prices = np.zeros(len(open_prices_) + len(new_prices), dtype = np.float)
+    open_prices[:len(open_prices_)] = open_prices_
+    
+    open_qtys = np.zeros(len(open_qtys_) + len(new_qtys), dtype = np.float)
+    open_qtys[:len(open_qtys_)] = open_qtys_
+    
+    new_qty_indices =  np.nonzero(new_qtys)[0]
+    open_qty_indices = np.nonzero(open_qtys)[0]
+
+    i = 0 # index of  the new pos we are netting
+    j = 0 # index of the open pos we are currently netting
+    k = len(open_qty_indices)
     
     # Try to net all new trades against existing non-netted trades.
     # Append any remaining non-netted new trades to end of existing trades
-    while not all(new_qtys == 0):
+    while i < len(new_qty_indices):
         # Always try to net first non-zero new trade against first non-zero existing trade
         # FIFO acccounting
-        new_idx = np.nonzero(new_qtys)[0][0]
+        new_idx = new_qty_indices[i]
         new_qty, new_price = new_qtys[new_idx], new_prices[new_idx]
-        open_idx_array = np.nonzero(open_qtys)[0]
         
-        if len(open_idx_array): 
-            open_idx = open_idx_array[0]
+        if j < k: # while we still have open positions to net against
+            open_idx = open_qty_indices[j] if j < len(open_qty_indices) else k
             open_qty, open_price = open_qtys[open_idx], open_prices[open_idx]
             
             if math.copysign(1, open_qty) == math.copysign(1, new_qty):
                 # Nothing to net against so add this trade to the deque and wait for the next offsetting trade
-                open_qtys = np.append(open_qtys, new_qty)
-                open_prices = np.append(open_prices, new_price)
+                open_qtys[k] = new_qty
+                open_prices[k] = new_price
+                k += 1
                 new_qtys[new_idx] = 0
+                i += 1
 
             elif abs(new_qty) > abs(open_qty):
                 # New trade has more qty than offsetting trade so:
@@ -67,6 +72,7 @@ def _calc_trade_pnl(open_qtys, open_prices, new_qtys, new_prices, multiplier):
                 open_qty, open_price = open_qtys[open_idx], open_prices[open_idx]
                 realized += open_qty * (new_price - open_price)
                 open_qtys[open_idx] = 0
+                j += 1
                 new_qtys[new_idx] += open_qty
             else:
                 # New trade has less qty than offsetting trade so:
@@ -75,14 +81,15 @@ def _calc_trade_pnl(open_qtys, open_prices, new_qtys, new_prices, multiplier):
                 # c. reduce qty of offsetting trade
                 realized += new_qty * (open_price - new_price)
                 new_qtys[new_idx] = 0
+                i += 1
                 open_qtys[open_idx] += new_qty
-                
         else:
 
             # Nothing to net against so add this trade to the open trades queue and wait for the next offsetting trade
             open_qtys = np.append(open_qtys, new_qty)
             open_prices = np.append(open_prices, new_price)
             new_qtys[new_idx] = 0
+            i += 1
             
     mask = open_qtys != 0
     open_qtys = open_qtys[mask]
@@ -154,7 +161,7 @@ class ContractPNL:
                 
         for i, timestamp in enumerate(timestamps):
             t_trades = [trade for trade in trades if trade.timestamp == timestamp]
-            open_qtys, open_prices, open_qty, weighted_avg_price, realized_chg = _calc_trade_pnl(
+            open_qtys, open_prices, open_qty, weighted_avg_price, realized_chg = calc_trade_pnl(
                 self.open_qtys, self.open_prices, 
                 np.array([trade.qty for trade in t_trades]), 
                 np.array([trade.price for trade in t_trades]),
@@ -466,8 +473,8 @@ class Account:
         df = df.sort_values(by = ['timestamp', 'symbol'])
         return df
 
-#def test_account():
-if __name__ == "__main__":
+def test_account():
+#if __name__ == "__main__":
     from pyqstrat.pq_types import Contract, ContractGroup, Trade
     from pyqstrat.orders import MarketOrder
     import math
@@ -480,7 +487,8 @@ if __name__ == "__main__":
         else:
             raise Exception(f'unknown contract: {contract}')
         return price
-    
+    ContractGroup.clear()
+    Contract.clear()
     ibm_cg = ContractGroup.create('IBM')
     msft_cg = ContractGroup.create('MSFT')
     
@@ -506,8 +514,11 @@ if __name__ == "__main__":
     
     assert(np.allclose(np.array([1000000.  , 1000183.88, 1000213.88]), account.df_account_pnl().equity.values, rtol = 0))
     
-if __name__ == "__main_x_":
+if __name__ == "__main_":
     test_account()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 2
+
 
