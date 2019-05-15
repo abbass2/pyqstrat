@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import numpy as np
 import pandas as pd
 import types
@@ -18,10 +13,7 @@ from pyqstrat.pq_utils import *
 from pyqstrat.pq_types import ContractGroup
 from pyqstrat.plot import TimeSeries, trade_sets_by_reason_code, Subplot, Plot
 
-
-# In[2]:
-
-
+#cell 1
 def _get_time_series_list(timestamps, names, values, properties):
     ts_list = []
     for name in names:
@@ -330,26 +322,6 @@ class Strategy:
             start_date: Run rules starting from this date. Default None 
             end_date: Don't run rules after this date.  Default None
         '''
-        
-        fut_map = {}
-        with concurrent.futures.ProcessPoolExecutor(self.max_processes) as executor:
-            for suggestion in self.generator:
-                if suggestion is None: continue
-                future = executor.submit(self.cost_func, suggestion)
-                fut_map[future] = suggestion
-                
-            for future in concurrent.futures.as_completed(fut_map):
-                try:
-                    cost, other_costs = future.result()
-                except Exception as e:
-                    new_exc = type(e)(f'Exception: {str(e)} with suggestion: {suggestion}').with_traceback(sys.exc_info()[2])
-                    if raise_on_error: raise new_exc
-                    else: print(str(new_exc))
-                    continue
-                suggestion = fut_map[future]
-                self.experiments.append(Experiment(suggestion, cost, other_costs))
-        
-        
         start_date, end_date = str2date(start_date), str2date(end_date)
         timestamps, orders_iter, trades_iter = self._get_iteration_indices(rule_names, contract_groups, start_date, end_date)
         # Now we know which rules, contract groups need to be applied for each iteration, go through each iteration and apply them
@@ -577,7 +549,8 @@ class Strategy:
         if pnl_columns is None: pnl_columns = ['equity']
         
         for contract_group in contract_groups:
-            primary_indicator_names = [ind_name for ind_name in self.indicator_values[contract_group].__dict__                                        if hasattr(self.indicator_values[contract_group], ind_name)]
+            primary_indicator_names = [ind_name for ind_name in self.indicator_values[contract_group].__dict__ \
+                                       if hasattr(self.indicator_values[contract_group], ind_name)]
             if primary_indicators:
                 primary_indicator_names = list(set(primary_indicator_names).intersection(primary_indicators))
             secondary_indicator_names = []
@@ -745,7 +718,8 @@ if __name__ == "__main__":
         curr_equity = account.equity(timestamp)
         order_qty = np.round(curr_equity * risk_percent / indicators.c[i] * np.sign(signal_value))
         trigger_price = indicators.c[i]
-        print(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp}' +               f' risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
+        print(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp}' + \
+              f' risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
         reason_code = ReasonCode.ENTER_LONG if order_qty > 0 else ReasonCode.ENTER_SHORT
         orders.append(MarketOrder(contract, timestamp, order_qty, reason_code = reason_code))
         return orders
@@ -834,9 +808,6 @@ if __name__ == "__mainx__":
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
 
-
-# In[ ]:
-
-
+#cell 2
 
 
