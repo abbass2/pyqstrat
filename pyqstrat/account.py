@@ -162,6 +162,7 @@ class ContractPNL:
         # Store trades that are not offset so when new trades come in we can offset against these to calc pnl
         self.open_qtys = np.empty(0, dtype = np.int)
         self.open_prices = np.empty(0, dtype = np.float)
+        self.first_trade_timestamp = None
         
     def _add_trades(self, trades):
         '''
@@ -174,6 +175,8 @@ class ContractPNL:
             k, v = self._trade_pnl.peekitem(0)
             if timestamps[0] <= k:
                 raise Exception(f'Can only add a trade that is newer than last added current: {timestamps[0]} prev max timestamp: {k}')
+                
+        if self.first_trade_timestamp is None: self.first_trade_timestamp = timestamps[0]
                 
         for i, timestamp in enumerate(timestamps):
             t_trades = [trade for trade in trades if trade.timestamp == timestamp]
@@ -198,10 +201,10 @@ class ContractPNL:
         
     def calc_net_pnl(self, timestamp):
         if timestamp in self._net_pnl: return
+        if timestamp < self.first_trade_timestamp: return
         if self.contract.expiry is not None and timestamp > self.contract.expiry: return # We would have calc'ed when the exit trade came in
         i = np.searchsorted(self._account_timestamps, timestamp)
         assert(self._account_timestamps[i] == timestamp)
-        price = self._price_function(self.contract, self._account_timestamps, i, self.strategy_context)
         
         # Find the index before or equal to current timestamp.  If not found, set to 0's
         trade_pnl_index = find_index_before(self._trade_pnl, timestamp)
@@ -209,9 +212,14 @@ class ContractPNL:
             realized, fee, commission, open_qty, open_qty, weighted_avg_price  = 0, 0, 0, 0, 0, 0
         else:
             _, (_, realized, fee, commission, open_qty, weighted_avg_price) = self._trade_pnl.peekitem(trade_pnl_index)
+            
+        price = np.nan
+            
+        if not math.isclose(open_qty, 0):
+            price = self._price_function(self.contract, self._account_timestamps, i, self.strategy_context)
           
         if math.isnan(price):
-            index = find_index_before(self._net_pnl, timestamp)
+            index = find_index_before(self._net_pnl, timestamp) # Last index we computed net pnl for
             if index == -1:
                 prev_unrealized = 0
             else:
@@ -394,7 +402,7 @@ class Account:
         start_date, end_date = str2date(start_date), str2date(end_date)
         return [trade for trade in self._trades if (start_date is None or trade.timestamp >= start_date) and (
             end_date is None or trade.timestamp <= end_date) and (
-            contract_group is None or trade.contract.contract_group in contract_groups)]
+            contract_group is None or trade.contract.contract_group == contract_group)]
                
     def df_pnl(self, contract_groups = None):
         '''
@@ -523,10 +531,10 @@ def test_account():
     account.add_trades([trade_1, trade_2, trade_3, trade_4])
     account.calc(np.datetime64('2018-01-05 13:35'))
     assert(len(account.df_trades()) == 4)
-    assert(len(account.df_pnl()) == 8)
-    assert(np.allclose(np.array([  0.  ,   0.  ,   9.99,  61.96,  79.97, 103.91,  69.97, 143.91]), 
+    assert(len(account.df_pnl()) == 6)
+    assert(np.allclose(np.array([9.99,  61.96,  79.97, 103.91,  69.97, 143.91]), 
                        account.df_pnl().net_pnl.values, rtol = 0))
-    assert(np.allclose(np.array([0, 0, 10, 20, -10, 40, -10, 40]), account.df_pnl().position.values, rtol = 0))
+    assert(np.allclose(np.array([10, 20, -10, 40, -10, 40]), account.df_pnl().position.values, rtol = 0))
     
     assert(np.allclose(np.array([1000000.  , 1000183.88, 1000213.88]), account.df_account_pnl().equity.values, rtol = 0))
     

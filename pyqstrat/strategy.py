@@ -29,7 +29,7 @@ def _get_time_series_list(timestamps, names, values, properties):
     return ts_list
 
 class Strategy:
-    def __init__(self, timestamps, contract_groups, price_function, starting_equity = 1.0e6, pnl_calc_time = 15 * 60 + 1, 
+    def __init__(self, timestamps, contract_groups, price_function, starting_equity = 1.0e6, pnl_calc_time = 15 * 60 + 1, trade_delay_bars = 1,
                  run_final_calc = True, strategy_context = None):
         '''
         Args:
@@ -39,6 +39,9 @@ class Strategy:
             contract_groups (list of :obj:`ContractGroup`): The contract groups we will potentially trade.
             starting_equity (float, optional): Starting equity in Strategy currency.  Default 1.e6
             pnl_calc_time (int, optional): Time of day used to calculate PNL.  Default 15 * 60 (3 pm)
+            trade_delay_bars (int, optional): Number of bars you want between the order and the trade.  For example, if you think it will take
+                5 minutes after you place the order to execute the trade, and your bar size is 1 minute, set this to 5.  Set this to 0 if you
+                want to execute your trade at the same time as you place the order, for example, if you have daily bars.  Default 1.
             run_final_calc (bool, optional): If set, calculates unrealized pnl and net pnl as well as realized pnl when strategy is done.
                 If you don't need unrealized pnl, turn this off for faster run time. Default True
             strategy_context (:obj:`types.SimpleNamespace`, optional): A storage class where you can store key / value pairs 
@@ -48,11 +51,13 @@ class Strategy:
         '''
         self.name = None
         self.timestamps = timestamps
-        assert(len(contract_groups)) and isinstance(contract_groups[0], ContractGroup)
+        assert(len(contract_groups) and isinstance(contract_groups[0], ContractGroup))
         self.contract_groups = contract_groups
         if strategy_context is None: strategy_context = types.SimpleNamespace()
         self.strategy_context = strategy_context
         self.account = Account(contract_groups, timestamps, price_function, strategy_context, starting_equity, pnl_calc_time)
+        assert trade_delay_bars >= 0, f'trade_delay_bars cannot be negative: {trade_delay_bars}'
+        self.trade_delay_bars = trade_delay_bars
         self.run_final_calc = run_final_calc
         self.indicators = {}
         self.signals = {}
@@ -329,6 +334,8 @@ class Strategy:
         for i, tup_list in enumerate(orders_iter):
             self._check_for_trades(i, trades_iter[i])
             self._check_for_orders(i, tup_list)
+            if self.trade_delay_bars == 0:
+                 self._check_for_trades(i, trades_iter[i])
         if self.run_final_calc:
             self.account.calc(self.timestamps[-1])
         
@@ -354,7 +361,7 @@ class Strategy:
                 open_orders = self._get_orders(i, rule_function, contract_group, params)
                 self._orders += open_orders
                 if not len(open_orders): continue
-                self.trades_iter[i + 1].append((open_orders, contract_group, params))
+                self.trades_iter[i + self.trade_delay_bars].append((open_orders, contract_group, params))
             except Exception as e:
                 raise type(e)(f'Exception: {str(e)} at rule: {type(tup[0])} contract_group: {tup[1]} index: {i}'
                              ).with_traceback(sys.exc_info()[2])
@@ -644,8 +651,8 @@ class Strategy:
     def __repr__(self):
         return f'{pformat(self.indicators)} {pformat(self.rules)} {pformat(self.account)}'
     
-#def test_strategy():
-if __name__ == "__main__":
+def test_strategy():
+#if __name__ == "__main__":
 
     import math
     import datetime
@@ -771,6 +778,9 @@ if __name__ == "__main__":
             return strategy_context.pep_price[i]
         raise Exception(f'Unknown contract: {contract}')
         
+    Contract.clear()
+    ContractGroup.clear()
+        
     ko_contract_group = ContractGroup.create('KO')
     pep_contract_group = ContractGroup.create('PEP')
 
@@ -799,15 +809,12 @@ if __name__ == "__main__":
     strategy.run_rules()
 
     metrics = strategy.evaluate_returns(plot = False, display_summary = False)
-    assert(round(metrics['gmean'], 6)   == -0.062878)
-    assert(round(metrics['sharpe'], 4)  == -9.7079)
-    assert(round(metrics['mdd_pct'], 6) == -0.002574)
+    assert(round(metrics['gmean'], 6)   == -0.062874) #-0.062878)
+    assert(round(metrics['sharpe'], 4)  == -7.2709)
+    assert(round(metrics['mdd_pct'], 6) == -0.002841)
     
-if __name__ == "__mainx__":
+if __name__ == "__main__":
     strategy = test_strategy()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
-
-#cell 2
-
 
