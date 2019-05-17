@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import pandas as pd
 import numpy as np
 from functools import reduce
@@ -13,10 +8,7 @@ from pyqstrat.pq_utils import *
 from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, plot_return_metrics
 from pyqstrat.strategy import Strategy
 
-
-# In[2]:
-
-
+#cell 1
 class Portfolio:
     '''A portfolio contains one or more strategies that run concurrently so you can test running strategies that are uncorrelated together.'''
     def __init__(self, name = 'main'):
@@ -103,7 +95,6 @@ class Portfolio:
                 args = (strategy, i, trades_iter[i])
                 trade_iterations[idx].append((Strategy._check_for_trades, args))
 
-
         order_iterations = [[] for x in range(len(all_timestamps))]
 
         for tup in orders_iter_list: # per strategy
@@ -134,17 +125,26 @@ class Portfolio:
         if end_date: max_date = min(max_date, end_date)
             
         order_iterations, trade_iterations = self._get_iterations(strategies, start_date, end_date)
+        
+        rerun_trades = []
                 
-        for i, orders_iter in enumerate(order_iterations):
-            trades_iter = trade_iterations[i] # Per date
+        for i, orders_iter in enumerate(order_iterations): # Per timestamp
+            trades_iter = trade_iterations[i] 
             for tup in trades_iter: # Per strategy
                 func = tup[0]
                 args = tup[1]
+                strategy = args[0]
+                if strategy.trade_lag == 0: # When trade lag is 0, we have to rerun trades after we run orders
+                    rerun_trades.append((func, args))
+                    continue
                 func(*args)
             
             for tup in orders_iter: # Per strategy
                 func = tup[0]
                 args = tup[1]
+                func(*args)
+                
+            for (func, args) in rerun_trades:
                 func(*args)
                 
         # Make sure we calc to the end for each strategy

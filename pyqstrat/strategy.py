@@ -29,7 +29,7 @@ def _get_time_series_list(timestamps, names, values, properties):
     return ts_list
 
 class Strategy:
-    def __init__(self, timestamps, contract_groups, price_function, starting_equity = 1.0e6, pnl_calc_time = 15 * 60 + 1, trade_delay_bars = 1,
+    def __init__(self, timestamps, contract_groups, price_function, starting_equity = 1.0e6, pnl_calc_time = 15 * 60 + 1, trade_lag = 1,
                  run_final_calc = True, strategy_context = None):
         '''
         Args:
@@ -39,8 +39,8 @@ class Strategy:
             contract_groups (list of :obj:`ContractGroup`): The contract groups we will potentially trade.
             starting_equity (float, optional): Starting equity in Strategy currency.  Default 1.e6
             pnl_calc_time (int, optional): Time of day used to calculate PNL.  Default 15 * 60 (3 pm)
-            trade_delay_bars (int, optional): Number of bars you want between the order and the trade.  For example, if you think it will take
-                5 minutes after you place the order to execute the trade, and your bar size is 1 minute, set this to 5.  Set this to 0 if you
+            trade_lag (int, optional): Number of bars you want between the order and the trade.  For example, if you think it will take
+                5 seconds to place your order in the market, and your bar size is 1 second, set this to 5.  Set this to 0 if you
                 want to execute your trade at the same time as you place the order, for example, if you have daily bars.  Default 1.
             run_final_calc (bool, optional): If set, calculates unrealized pnl and net pnl as well as realized pnl when strategy is done.
                 If you don't need unrealized pnl, turn this off for faster run time. Default True
@@ -56,8 +56,8 @@ class Strategy:
         if strategy_context is None: strategy_context = types.SimpleNamespace()
         self.strategy_context = strategy_context
         self.account = Account(contract_groups, timestamps, price_function, strategy_context, starting_equity, pnl_calc_time)
-        assert trade_delay_bars >= 0, f'trade_delay_bars cannot be negative: {trade_delay_bars}'
-        self.trade_delay_bars = trade_delay_bars
+        assert trade_lag >= 0, f'trade_lag cannot be negative: {trade_lag}'
+        self.trade_lag = trade_lag
         self.run_final_calc = run_final_calc
         self.indicators = {}
         self.signals = {}
@@ -332,10 +332,13 @@ class Strategy:
         # Now we know which rules, contract groups need to be applied for each iteration, go through each iteration and apply them
         # in the same order they were added to the strategy
         for i, tup_list in enumerate(orders_iter):
-            self._check_for_trades(i, trades_iter[i])
-            self._check_for_orders(i, tup_list)
-            if self.trade_delay_bars == 0:
-                 self._check_for_trades(i, trades_iter[i])
+            if self.trade_lag == 0:
+                self._check_for_orders(i, tup_list)
+                self._check_for_trades(i, trades_iter[i])
+            else:
+                self._check_for_trades(i, trades_iter[i])
+                self._check_for_orders(i, tup_list)
+            
         if self.run_final_calc:
             self.account.calc(self.timestamps[-1])
         
@@ -349,6 +352,12 @@ class Strategy:
             try:
                 open_orders, contract_group, params = tup
                 open_orders, trades = self._sim_market(i, open_orders, contract_group, params)
+                # If we failed to fully execute any orders, add them to the next iteration so we can execute them
+                # TODO: Test the following scenario:
+                #   1.  Order not executed
+                #   2.  New order for same contract
+                #   Only second order should get executed in next iteration.  However, from the code it seems like both would 
+                #   get executed.
                 if len(open_orders): self.trades_iter[i + 1].append((open_orders, contract_group, params))
             except Exception as e:
                 raise type(e)(f'Exception: {str(e)} at rule: {type(tup[0])} contract_group: {tup[1]} index: {i}'
@@ -361,7 +370,7 @@ class Strategy:
                 open_orders = self._get_orders(i, rule_function, contract_group, params)
                 self._orders += open_orders
                 if not len(open_orders): continue
-                self.trades_iter[i + self.trade_delay_bars].append((open_orders, contract_group, params))
+                self.trades_iter[i + self.trade_lag].append((open_orders, contract_group, params))
             except Exception as e:
                 raise type(e)(f'Exception: {str(e)} at rule: {type(tup[0])} contract_group: {tup[1]} index: {i}'
                              ).with_traceback(sys.exc_info()[2])
