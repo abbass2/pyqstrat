@@ -217,6 +217,8 @@ class ContractPNL:
             
         if not math.isclose(open_qty, 0):
             price = self._price_function(self.contract, self._account_timestamps, i, self.strategy_context)
+            assert isinstance(price, float) or isinstance(price, np.float), \
+                f'Unexpected price type: {price} {type(price)} for contract: {self.contract} timestamp: {self.account_timestamps[i]}'
           
         if math.isnan(price):
             index = find_index_before(self._net_pnl, timestamp) # Last index we computed net pnl for
