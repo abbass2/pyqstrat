@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import math
 import types
 import numpy as np
@@ -146,7 +141,7 @@ class StopLimitOrder:
     def __repr__(self):
         timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
         return f'{self.contract.symbol} {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} trigger_prc: {self.trigger_price} limit_prc: {self.limit_price}' + (
-            '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + '' if not self.properties.__dict__ else f' {self.properties}'+ (
+            '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + ('' if not self.properties.__dict__ else f' {self.properties}') + (
             f' {self.status}')
     
 if __name__ == "__main__":

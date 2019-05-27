@@ -48,66 +48,42 @@ class Portfolio:
         if len(strategy_names) == 0: raise Exception('a portfolio must have at least one strategy')
         for name in strategy_names: self.strategies[name].run_signals()
             
-    def _get_iterations(self, strategies, start_date, end_date):
+    def _generate_order_iterations(self, strategies, start_date, end_date):
         '''
         >>> class Strategy:
         ...    def __init__(self, num): 
-        ...        self.num = num
         ...        self.timestamps = [
         ...            np.array(['2018-01-01', '2018-01-02', '2018-01-03'], dtype = 'M8[D]'),
-        ...            np.array(['2018-01-02', '2018-01-03', '2018-01-04'], dtype = 'M8[D]')]
-        ...    def _check_for_orders(self, args): pass
-        ...    def _check_for_trades(self, args): pass
-        ...    def _get_iteration_indices(self, start_date, end_date):
-        ...        i = self.num
-        ...        return self.timestamps[self.num - 1], [f'oarg_1_{1}', f'oarg_2_{i}', f'oarg_3_{i}'], [f'targ_1_{i}', f'targ_2_{i}', f'targ_3_{i}']
+        ...            np.array(['2018-01-02', '2018-01-03', '2018-01-04'], dtype = 'M8[D]')][num]
+        ...        self.num = num
+        ...    def _generate_order_iterations(self, start_date, end_date):
+        ...        pass
         ...    def __repr__(self):
         ...        return f'{self.num}'
-
-        >>> orders_iter, trades_iter = Portfolio._get_iterations(None, [Strategy(1), Strategy(2)], None, None)
-        >>> assert(len(orders_iter) == 4)
-        >>> assert(len(trades_iter) == 4)
-        >>> print(orders_iter[2]) #doctest: +ELLIPSIS
-        [(<function Strategy._check_for_orders at ...>, (1, 2, 'oarg_3_1')), (<function Strategy._check_for_orders at ...>, (2, 1, 'oarg_2_2'))]
-        >>> print(trades_iter[3]) #doctest: +ELLIPSIS
-        [(<function Strategy._check_for_trades at ...>, (2, 2, 'targ_3_2'))]
+        >>> all_timestamps, orders_iter = Portfolio._generate_order_iterations(None, [Strategy(0), Strategy(1)], None, None)
+        >>> assert(all(all_timestamps == np.array(['2018-01-01', '2018-01-02', '2018-01-03','2018-01-04'], dtype = 'M8[D]')))
+        >>> assert(all(orders_iter[0][1] == np.array([0, 1, 2, 3])))
+        >>> assert(all(orders_iter[1][1] == np.array([0, 0, 1, 2])))
         '''
-        orders_iter_list = []
-        trades_iter_list = []
-
-        for strategy in strategies:
-            timestamps, orders_iter, trades_iter = strategy._get_iteration_indices(start_date = start_date, end_date = end_date)
-            orders_iter_list.append((strategy, timestamps, orders_iter))
-            trades_iter_list.append((strategy, timestamps, trades_iter))
-
-        timestamps_list = [tup[1] for tup in orders_iter_list] + [tup[1] for tup in trades_iter_list]
+        if strategies is None: strategies = self.strategies.values
+            
+        timestamps_list = [strategy.timestamps for strategy in strategies]
+        
         all_timestamps = np.array(reduce(np.union1d, timestamps_list))
         
-        trade_iterations = [[] for x in range(len(all_timestamps))]
-
-        for tup in trades_iter_list: # per strategy
-            strategy = tup[0]
-            timestamps = tup[1]
-            trades_iter = tup[2] # vector with list of (rule, symbol, iter_params dict)
-
-            for i, timestamp in enumerate(timestamps):
-                idx = np.searchsorted(all_timestamps, timestamp)
-                args = (strategy, i, trades_iter[i])
-                trade_iterations[idx].append((Strategy._check_for_trades, args))
-
-        order_iterations = [[] for x in range(len(all_timestamps))]
-
-        for tup in orders_iter_list: # per strategy
-            strategy = tup[0]
-            timestamps = tup[1]
-            orders_iter = tup[2] # vector with list of (rule, symbol, iter_params dict)
-
-            for i, timestamp in enumerate(timestamps):
-                idx = np.searchsorted(all_timestamps, timestamp)
-                args = (strategy, i, orders_iter[i])
-                order_iterations[idx].append((Strategy._check_for_orders, args))
-
-        return order_iterations, trade_iterations
+        if start_date is not None:
+            all_timestamps = all_timestamps[(all_timestamps >= start_date)]
+        if end_date is not None:
+            all_timestamps = all_timestamps[(all_timestamps <= end_date)]
+        
+        iterations = []
+        
+        for strategy in strategies:
+            indices = np.searchsorted(strategy.timestamps, all_timestamps)
+            iterations.append((strategy, indices))
+            strategy._generate_order_iterations(start_date = start_date, end_date = end_date)
+            
+        return all_timestamps, iterations
                 
     def run_rules(self, strategy_names = None, start_date = None, end_date = None):
         '''Run rules for the strategies specified.  Must be called after run_indicators and run_signals.  
@@ -124,29 +100,15 @@ class Portfolio:
         max_date = max([strategy.timestamps[-1] for strategy in strategies])
         if end_date: max_date = min(max_date, end_date)
             
-        order_iterations, trade_iterations = self._get_iterations(strategies, start_date, end_date)
+        all_timestamps, iterations = self._generate_order_iterations(strategies, start_date, end_date)
         
-        rerun_trades = []
-                
-        for i, orders_iter in enumerate(order_iterations): # Per timestamp
-            trades_iter = trade_iterations[i] 
-            for tup in trades_iter: # Per strategy
-                func = tup[0]
-                args = tup[1]
-                strategy = args[0]
-                if strategy.trade_lag == 0: # When trade lag is 0, we have to rerun trades after we run orders
-                    rerun_trades.append((func, args))
-                    continue
-                func(*args)
-            
-            for tup in orders_iter: # Per strategy
-                func = tup[0]
-                args = tup[1]
-                func(*args)
-                
-            for (func, args) in rerun_trades:
-                func(*args)
-                
+        for i, timestamp in enumerate(all_timestamps):
+            for (strategy, indices) in iterations:
+                # index into strategy timestamps
+                idx = indices[i]
+                if idx != len(strategy.timestamps) and strategy.timestamps[idx] == timestamp:
+                    strategy._run_iteration(idx)
+                    
         # Make sure we calc to the end for each strategy
         for strategy in strategies:
             strategy.account.calc(strategy.timestamps[-1])

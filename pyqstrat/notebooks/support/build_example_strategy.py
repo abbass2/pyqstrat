@@ -64,10 +64,14 @@ def market_simulator(orders, i, timestamps, indicators, signals, strategy_contex
     trades = []
     timestamp = timestamps[i]
     
-    o, h, l, c = indicators.o[i], indicators.h[i], indicators.l[i], indicators.c[i]
     
     for order in orders:
         trade_price = np.nan
+        
+        cgroup = order.contract.contract_group
+        ind = indicators[cgroup]
+        
+        o, h, l, c = ind.o[i], ind.h[i], ind.l[i], ind.c[i]
         
         if isinstance(order, pq.MarketOrder):
             trade_price = 0.5 * (o + h) if order.qty > 0 else 0.5 * (o + l)

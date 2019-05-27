@@ -62,18 +62,21 @@ class Strategy:
         self.indicators = {}
         self.signals = {}
         self.signal_values = defaultdict(types.SimpleNamespace)
+        self.rule_names = []
         self.rules = {}
         self.position_filters = {}
         self.rule_signals = {}
-        self.market_sims = {}
-        self._trades = defaultdict(list)
+        self.market_sims = []
+        self._trades = []
         self._orders = []
+        self._open_orders = defaultdict(list)
         self.indicator_deps = {}
         self.indicator_cgroups = {}
         self.indicator_values = defaultdict(types.SimpleNamespace)
         self.signal_indicator_deps = {}
         self.signal_deps = {}
         self.signal_cgroups = {}
+        self.trades_iter =  [[] for x in range(len(timestamps))] # For debugging, we don't really need this as a member variable
         
     def add_indicator(self, name, indicator, contract_groups = None, depends_on = None):
         '''
@@ -115,7 +118,9 @@ class Strategy:
         self.signal_cgroups[name] = contract_groups
         
     def add_rule(self, name, rule_function, signal_name, sig_true_values = None, position_filter = None):
-        '''Add a trading rule
+        '''Add a trading rule.  Trading rules are guaranteed to run in the order in which you add them.  For example, if you set trade_lag to 0,
+               and want to exit positions and re-enter new ones in the same bar, make sure you add the exit rule before you add the entry rule to the 
+               strategy.
         
         Args:
             name (str): Name of the trading rule
@@ -129,25 +134,28 @@ class Strategy:
                 If not set, we don't look at position before triggering the rule.
                 Default None
         '''
+
+            
         if sig_true_values is None: sig_true_values = [True]
+            
+        if name in self.rule_names:
+            raise Exception(f'Rule {name} already exists')
+        # Rules should be run in order
+        self.rule_names.append(name)
         self.rule_signals[name] = (signal_name, sig_true_values)
         self.rules[name] = rule_function
         if position_filter is not None:
             assert(position_filter in ['zero', 'nonzero'])
         self.position_filters[name] = position_filter
         
-    def add_market_sim(self, market_sim_function, contract_groups = None):
+    def add_market_sim(self, market_sim_function):
         '''Add a market simulator.  A market simulator takes a list of Orders as input and returns a list of Trade objects.
         
         Args:
             market_sim_function (function): A function that takes a list of Orders and Indicators as input 
                 and returns a list of Trade objects
-            contract_groups (list of :obj:`ContractGroup`, optional): Contract groups that this simulator applies to.  
-                If not set, it applies to all contract groups.  Default None.
-
         '''
-        if contract_groups is None: contract_groups = self.contract_groups
-        for contract_group in contract_groups: self.market_sims[contract_group] = market_sim_function
+        self.market_sims.append(market_sim_function)
         
     def run_indicators(self, indicator_names = None, contract_groups = None, clear_all = False):
         '''Calculate values of the indicators specified and store them.
@@ -242,7 +250,7 @@ class Strategy:
                     signal_function(cgroup, self.timestamps, indicator_values, parent_values, self.strategy_context)))
 
         
-    def _get_iteration_indices(self, rule_names = None, contract_groups = None, start_date = None, end_date = None):
+    def _generate_order_iterations(self, rule_names = None, contract_groups = None, start_date = None, end_date = None):
         '''
         >>> class MockStrat:
         ...    def __init__(self):
@@ -271,8 +279,9 @@ class Strategy:
         >>> contract_groups = [ibm, aapl]
         >>> start_date = np.datetime64('2018-01-01')
         >>> end_date = np.datetime64('2018-02-05')
-        >>> timestamps, orders_iter, trades_iter = Strategy._get_iteration_indices(MockStrat(), rule_names, contract_groups, 
-        ...    start_date, end_date)
+        >>> strategy = MockStrat()
+        >>> Strategy._generate_order_iterations(strategy, rule_names, contract_groups, start_date, end_date)
+        >>> orders_iter = strategy.orders_iter
         >>> assert(len(orders_iter[0]) == 0)
         >>> assert(len(orders_iter[1]) == 2)
         >>> assert(orders_iter[1][0][1] == ibm)
@@ -280,18 +289,17 @@ class Strategy:
         >>> assert(len(orders_iter[2]) == 0)
         '''
         start_date, end_date = str2date(start_date), str2date(end_date)
-        if rule_names is None: rule_names = self.rules.keys()
+        if rule_names is None: rule_names = self.rule_names
         if contract_groups is None: contract_groups = self.contract_groups
 
         num_timestamps = len(self.timestamps)
-
+        
+        # List of lists, i -> list of orders
         orders_iter = [[] for x in range(num_timestamps)]
-        trades_iter = [[] for x in range(num_timestamps)]
 
         for rule_name in rule_names:
             rule_function = self.rules[rule_name]
             for cgroup in contract_groups:
-                market_sim = self.market_sims[cgroup]
                 signal_name, sig_true_values = self.rule_signals[rule_name]
                 if cgroup not in self.signal_cgroups[signal_name]:
                     # We don't need to call this rule for this contract group
@@ -308,14 +316,10 @@ class Strategy:
                 # Don't run rules on last index since we cannot fill any orders
                 if len(indices) and indices[-1] == len(sig_values) -1: indices = indices[:-1] 
                 indicator_values = self.indicator_values[cgroup]
-                iteration_params = {'market_sim' : market_sim, 'indicator_values' : indicator_values, 
-                                    'signal_values' : sig_values, 'rule_name' : rule_name}
+                iteration_params = {'indicator_values' : indicator_values, 'signal_values' : sig_values, 'rule_name' : rule_name}
                 for idx in indices: orders_iter[idx].append((rule_function, cgroup, iteration_params))
 
-            self.orders_iter = orders_iter
-            self.trades_iter = trades_iter # For debugging
-
-        return self.timestamps, orders_iter, trades_iter
+        self.orders_iter = orders_iter
     
     def run_rules(self, rule_names = None, contract_groups = None, start_date = None, end_date = None):
         '''Run trading rules.
@@ -328,80 +332,78 @@ class Strategy:
             end_date: Don't run rules after this date.  Default None
         '''
         start_date, end_date = str2date(start_date), str2date(end_date)
-        timestamps, orders_iter, trades_iter = self._get_iteration_indices(rule_names, contract_groups, start_date, end_date)
+        self._generate_order_iterations(rule_names, contract_groups, start_date, end_date)
+        
         # Now we know which rules, contract groups need to be applied for each iteration, go through each iteration and apply them
         # in the same order they were added to the strategy
-        for i, tup_list in enumerate(orders_iter):
-            if self.trade_lag == 0:
-                self._check_for_orders(i, tup_list)
-                self._check_for_trades(i, trades_iter[i])
-            else:
-                self._check_for_trades(i, trades_iter[i])
-                self._check_for_orders(i, tup_list)
+        for i in range(len(self.orders_iter)):
+            self._run_iteration(i)
             
         if self.run_final_calc:
             self.account.calc(self.timestamps[-1])
         
+    def _run_iteration(self, i):
+        
+        self._sim_market(i)
+        
+        rules = self.orders_iter[i]
+        
+        for (rule_function, contract_group, params) in rules:
+            orders = self._get_orders(i, rule_function, contract_group, params)
+            self._orders += orders
+            self._open_orders[i + self.trade_lag] += orders
+            # If the lag is 0, then run rules one by one, and after each rule, run market sim to generate trades and update
+            # positions.  For example, if we have a rule to exit a position and enter a new one, we should make sure 
+            # positions are updated after the first rule before running the second rule.  If the lag is not 0, 
+            # run all rules and collect the orders, we don't need to run market sim after each rule
+            if self.trade_lag == 0: self._sim_market(i)
+        # If we failed to fully execute any orders in this iteration, add them to the next iteration so we get another chance to execute
+        open_orders = self._open_orders.get(i)
+        if open_orders is not None and len(open_orders):
+            self._open_orders[i + 1] += open_orders
+            
     def run(self):
         self.run_indicators()
         self.run_signals()
         self.run_rules()
-
-    def _check_for_trades(self, i, tup_list):
-        for tup in tup_list:
-            try:
-                open_orders, contract_group, params = tup
-                open_orders, trades = self._sim_market(i, open_orders, contract_group, params)
-                # If we failed to fully execute any orders, add them to the next iteration so we can execute them
-                # TODO: Test the following scenario:
-                #   1.  Order not executed
-                #   2.  New order for same contract
-                #   Only second order should get executed in next iteration.  However, from the code it seems like both would 
-                #   get executed.
-                if len(open_orders): self.trades_iter[i + 1].append((open_orders, contract_group, params))
-            except Exception as e:
-                raise type(e)(f'Exception: {str(e)} at rule: {type(tup[0])} contract_group: {tup[1]} index: {i}'
-                             ).with_traceback(sys.exc_info()[2])
-                
-    def _check_for_orders(self, i, tup_list):
-        for tup in tup_list:
-            try:
-                rule_function, contract_group, params = tup
-                open_orders = self._get_orders(i, rule_function, contract_group, params)
-                self._orders += open_orders
-                if not len(open_orders): continue
-                self.trades_iter[i + self.trade_lag].append((open_orders, contract_group, params))
-            except Exception as e:
-                raise type(e)(f'Exception: {str(e)} at rule: {type(tup[0])} contract_group: {tup[1]} index: {i}'
-                             ).with_traceback(sys.exc_info()[2])
-                    
+        
     def _get_orders(self, idx, rule_function, contract_group, params):
-        indicator_values, signal_values, rule_name = (params['indicator_values'], params['signal_values'], params['rule_name'])
-        position_filter = self.position_filters[rule_name]
-        if position_filter is not None:
-            curr_pos = self.account.position(contract_group, self.timestamps[idx])
-            if position_filter == 'zero' and not math.isclose(curr_pos, 0): return []
-            if position_filter == 'nonzero' and math.isclose(curr_pos, 0): return []
-        open_orders = rule_function(contract_group, idx, self.timestamps, indicator_values, signal_values, self.account, 
-                                    self.strategy_context)
-        return open_orders
+        try:
+            indicator_values, signal_values, rule_name = (params['indicator_values'], params['signal_values'], params['rule_name'])
+            position_filter = self.position_filters[rule_name]
+            if position_filter is not None:
+                curr_pos = self.account.position(contract_group, self.timestamps[idx])
+                if position_filter == 'zero' and not math.isclose(curr_pos, 0): return []
+                if position_filter == 'nonzero' and math.isclose(curr_pos, 0): return []
+            orders = rule_function(contract_group, idx, self.timestamps, indicator_values, signal_values, self.account, 
+                                        self.strategy_context)
+        except Exception as e:
+            raise type(e)(f'Exception: {str(e)} at rule: {type(rule_function)} contract_group: {contract_group} index: {idx}'
+                         ).with_traceback(sys.exc_info()[2])
+        return orders
         
-    def _sim_market(self, idx, open_orders, contract_group, params):
+    def _sim_market(self, i):
         '''
-        Keep iterating while we have open orders since they may get filled
-        TODO: For limit orders and trigger orders we can be smarter here and reduce indices like quantstrat does
-        '''
-        market_sim_function = params['market_sim']
-        trades = market_sim_function(open_orders, idx, self.timestamps, params['indicator_values'], params['signal_values'], 
-                                     self.strategy_context)
-        if len(trades) == 0: return [], []
+        Go through all open orders and run market simulators to generate a list of trades and return any orders that were not filled.
+       '''
         
-        self.account.add_trades(trades)
+        orders = self._open_orders.get(i)
+        if orders is None or len(orders) == 0: return [], []
         
-        for trade in trades: self._trades[trade.order.contract.contract_group].append(trade)
+        # If there is more than one order for a contract, throw away any but the last one.
+        seen = set()
+        seen_add = seen.add
+        open_orders = list(reversed([order for order in reversed(orders) if not (order.contract in seen or seen_add(order.contract))]))
             
-        open_orders = [order for order in open_orders if order.status == 'open']
-        return open_orders, trades
+        for market_sim_function in self.market_sims:
+            try:
+                trades = market_sim_function(open_orders, i, self.timestamps, self.indicator_values, self.signal_values, self.strategy_context)
+                if len(trades): self.account.add_trades(trades)
+                self._trades += trades
+            except Exception as e:
+                raise type(e)(f'Exception: {str(e)} at index: {i} function: {market_sim_function}').with_traceback(sys.exc_info()[2])
+            
+        self._open_orders[i] = [order for order in open_orders if order.status != 'filled']
             
     def df_data(self, contract_groups = None, add_pnl = True, start_date = None, end_date = None):
         '''
@@ -585,11 +587,11 @@ class Strategy:
             pnl_list = [TimeSeries(pnl_column, timestamps = df_pnl_.timestamp.values, values = df_pnl_[pnl_column].values
                                   ) for pnl_column in pnl_columns]
             
+            trades = [trade for trade in self._trades if trade.order.contract.contract_group == contract_group]
             if trade_marker_properties:
-                trade_sets = trade_sets_by_reason_code(self._trades[contract_group], trade_marker_properties, 
-                                                       remove_missing_properties = True)
+                trade_sets = trade_sets_by_reason_code(trades, trade_marker_properties, remove_missing_properties = True)
             else:
-                trade_sets = trade_sets_by_reason_code(self._trades[contract_group])
+                trade_sets = trade_sets_by_reason_code(trades)
                 
             primary_indicator_subplot = Subplot(primary_indicator_list + trade_sets, 
                                                 secondary_y = primary_indicators_dual_axis,
@@ -760,15 +762,16 @@ def test_strategy():
 
         timestamp = timestamps[i]
 
-        o, h, l, c = indicators.o[i], indicators.h[i], indicators.l[i], indicators.c[i]
-
         for order in orders:
             trade_price = np.nan
+            
+            cgroup = order.contract.contract_group
+            ind = indicators[cgroup]
+            
+            o, h, l, c = ind.o[i], ind.h[i], ind.l[i], ind.c[i]
 
-            if isinstance(order, MarketOrder):
-                trade_price = 0.5 * (o + h) if order.qty > 0 else 0.5 * (o + l)
-            else:
-                raise Exception(f'unexpected order type: {order}')
+            assert isinstance(order, MarketOrder), f'Unexpected order type: {order}'
+            trade_price = 0.5 * (o + h) if order.qty > 0 else 0.5 * (o + l)
 
             if np.isnan(trade_price): continue
 
@@ -826,4 +829,7 @@ if __name__ == "__main__":
     strategy = test_strategy()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 2
+
 
