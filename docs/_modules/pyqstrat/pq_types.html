@@ -1,9 +1,11 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>pyqstrat.pq_types &#8212; pyqstrat 0.1.0 documentation</title>
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -31,35 +33,30 @@
           <div class="body" role="main">
             
   <h1>Source code for pyqstrat.pq_types</h1><div class="highlight"><pre>
-<span></span><span class="c1">#cell 0</span>
+<span></span>
+<span class="c1"># coding: utf-8</span>
+
+<span class="c1"># In[2]:</span>
+
+
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">types</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 
-<span class="c1">#cell 1</span>
+
+<span class="c1"># In[3]:</span>
+
+
 <div class="viewcode-block" id="ContractGroup"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup">[docs]</a><span class="k">class</span> <span class="nc">ContractGroup</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;A way to group contracts for figuring out which indicators, rules and signals to apply to a contract and for PNL reporting&#39;&#39;&#39;</span>
 
-    <span class="n">_group_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-    
-<div class="viewcode-block" id="ContractGroup.clear"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup.clear">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">clear</span><span class="p">():</span>
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        When running Python interactively you may create a ContractGroup with a given name multiple times because you don&#39;t restart Python </span>
-<span class="sd">        therefore global variables are not cleared.  This function clears global ContractGroups</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">ContractGroup</span><span class="o">.</span><span class="n">_group_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span></div>
-        
 <div class="viewcode-block" id="ContractGroup.create"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup.create">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">         Args:</span>
 <span class="sd">            name (str): Name of the group</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">ContractGroup</span><span class="o">.</span><span class="n">_group_names</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Contract group: </span><span class="si">{name}</span><span class="s1"> already exists&#39;</span><span class="p">)</span>
-        <span class="n">ContractGroup</span><span class="o">.</span><span class="n">_group_names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="n">contract_group</span> <span class="o">=</span> <span class="n">ContractGroup</span><span class="p">()</span>
         <span class="n">contract_group</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="n">contract_group</span><span class="o">.</span><span class="n">contracts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -77,9 +74,6 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span></div>
 
 <div class="viewcode-block" id="Contract"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Contract">[docs]</a><span class="k">class</span> <span class="nc">Contract</span><span class="p">:</span>
-    <span class="n">_symbol_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-
-
     <span class="sd">&#39;&#39;&#39;A contract such as a stock, option or a future that can be traded&#39;&#39;&#39;</span>
 <div class="viewcode-block" id="Contract.create"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Contract.create">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">contract_group</span><span class="p">,</span> <span class="n">expiry</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">multiplier</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span> <span class="n">properties</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
@@ -99,14 +93,8 @@
 <span class="sd">                For example, you may want to store option strike.  Default None</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">Contract</span><span class="o">.</span><span class="n">_symbol_names</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Contract with symbol: </span><span class="si">{symbol}</span><span class="s1"> already exists&#39;</span><span class="p">)</span>
-        <span class="n">Contract</span><span class="o">.</span><span class="n">_symbol_names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
-
         <span class="c1">#assert(isinstance(contract_group, ContractGroup))</span>
         <span class="k">assert</span><span class="p">(</span><span class="n">multiplier</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
-
-
         <span class="n">contract</span> <span class="o">=</span> <span class="n">Contract</span><span class="p">()</span>
         <span class="n">contract</span><span class="o">.</span><span class="n">symbol</span> <span class="o">=</span> <span class="n">symbol</span>
         
@@ -126,17 +114,9 @@
         <span class="n">contract</span><span class="o">.</span><span class="n">contract_group</span> <span class="o">=</span> <span class="n">contract_group</span>
         <span class="k">return</span> <span class="n">contract</span></div>
     
-<div class="viewcode-block" id="Contract.clear"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Contract.clear">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">clear</span><span class="p">():</span>
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        When running Python interactively you may create a Contract with a given symbol multiple times because you don&#39;t restart Python </span>
-<span class="sd">        therefore global variables are not cleared.  This function clears global Contracts</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">Contract</span><span class="o">.</span><span class="n">_symbol_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span></div>
-   
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.symbol}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="p">(</span><span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.multiplier}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multiplier</span> <span class="o">!=</span> <span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
-            <span class="n">f</span><span class="s1">&#39; expiry: {self.expiry.astype(datetime.datetime):%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S}&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expiry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.symbol}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.multiplier}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multiplier</span> <span class="o">!=</span> <span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; expiry: {expiry:%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%m}&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expiry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
             <span class="n">f</span><span class="s1">&#39; group: </span><span class="si">{self.contract_group.name}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract_group</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
             <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.properties.__dict__}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="vm">__dict__</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span></div>
 
@@ -175,8 +155,6 @@
         
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        &gt;&gt;&gt; Contract.clear()</span>
-<span class="sd">        &gt;&gt;&gt; ContractGroup.clear()</span>
 <span class="sd">        &gt;&gt;&gt; print(Trade(Contract.create(&#39;IBM&#39;, contract_group = ContractGroup.create(&#39;IBM&#39;)), np.datetime64(&#39;2019-01-01 15:00&#39;), 100, 10.2130000, 0.01))</span>
 <span class="sd">        IBM 2019-01-01 15:00:00 qty: 100 prc: 10.213 fee: 0.01 order: None</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -187,13 +165,6 @@
             <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.contract.properties.__dict__}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="vm">__dict__</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
             <span class="n">f</span><span class="s1">&#39; {timestamp:%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S} qty: </span><span class="si">{self.qty}</span><span class="s1"> prc: </span><span class="si">{self.price:.6g}{fee}{commission}</span><span class="s1"> order: </span><span class="si">{self.order}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
             <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.properties.__dict__}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="vm">__dict__</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span></div>
-    
-<div class="viewcode-block" id="OrderStatus"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.OrderStatus">[docs]</a><span class="k">class</span> <span class="nc">OrderStatus</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Enum for order status</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">OPEN</span> <span class="o">=</span> <span class="s1">&#39;open&#39;</span>
-    <span class="n">FILLED</span> <span class="o">=</span> <span class="s1">&#39;filled&#39;</span></div>
     
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">doctest</span>
@@ -237,6 +208,8 @@
     <form class="search" action="../../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -257,7 +230,7 @@
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.3</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
