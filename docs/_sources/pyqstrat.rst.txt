@@ -116,7 +116,6 @@ pyqstrat.trade\_bars module
     :show-inheritance:
     :special-members: __call__, __init__
 
-
 Module contents
 ---------------
 
