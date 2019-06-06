@@ -345,6 +345,8 @@ class Strategy:
     def _run_iteration(self, i):
         
         self._sim_market(i)
+        # Treat all orders as IOC, i.e. if the order was not executed, then its cancelled.
+        self._open_orders[i] = []
         
         rules = self.orders_iter[i]
         
@@ -385,15 +387,14 @@ class Strategy:
     def _sim_market(self, i):
         '''
         Go through all open orders and run market simulators to generate a list of trades and return any orders that were not filled.
-       '''
-        
-        orders = self._open_orders.get(i)
-        if orders is None or len(orders) == 0: return [], []
+        '''
+        open_orders = self._open_orders.get(i)
+        if open_orders is None or len(open_orders) == 0: return [], []
         
         # If there is more than one order for a contract, throw away any but the last one.
-        seen = set()
-        seen_add = seen.add
-        open_orders = list(reversed([order for order in reversed(orders) if not (order.contract in seen or seen_add(order.contract))]))
+        #seen = set()
+        #seen_add = seen.add
+        #open_orders = list(reversed([order for order in reversed(orders) if not (order.contract in seen or seen_add(order.contract))]))
             
         for market_sim_function in self.market_sims:
             try:
@@ -645,19 +646,13 @@ class Strategy:
         '''Display plots of equity, drawdowns and returns for the given contract group or for all contract groups if contract_group 
             is None (default)'''
         if contract_group is None:
-            contract_groups = self.contract_groups()
+            returns = self.df_returns()
         else:
-            contract_groups = [contract_groups]
-            
-        df_list = []
-            
-        for contract_group in contract_groups:
-            df_list.append(self.df_returns(contract_group))
-        
-        df = pd.concat(df_list, axis = 1)
-            
-        ev = compute_return_metrics(returns.timestamp.values, returns.ret.values, self.account.starting_equity)
-        plot_return_metrics(ev.metrics())
+            returns = self.df_returns(contract_group)
+
+        ev = pq.compute_return_metrics(returns.timestamp.values, returns.ret.values, self.account.starting_equity)
+        fig, ax = pq.plot_return_metrics(ev.metrics())
+        return fig, ax
        
     def __repr__(self):
         return f'{pformat(self.indicators)} {pformat(self.rules)} {pformat(self.account)}'

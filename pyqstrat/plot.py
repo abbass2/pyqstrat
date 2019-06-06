@@ -704,7 +704,7 @@ class Plot:
             ax.relim()
             ax.autoscale_view()
             
-        return ax_list
+        return fig, ax_list
                 
 def _group_trades_by_reason_code(trades):
     trade_groups = defaultdict(list)

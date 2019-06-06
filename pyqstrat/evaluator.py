@@ -1,19 +1,11 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import warnings
 import pandas as pd
 import numpy as np
 from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
-
-# In[2]:
-
-
+#cell 1
 _VERBOSE = False
 
 def compute_amean(returns):
@@ -509,7 +501,8 @@ def plot_return_metrics(metrics, title = None):
     
     
     plt = Plot([equity_subplot, dd_subplot, ann_ret_subplot], title = title)
-    plt.draw()
+    fig, ax = plt.draw()
+    return fig, ax
  
 #if __name__ == "__main__":
 def test_evaluator():
@@ -534,4 +527,5 @@ if __name__ == "__main__":
     test_evaluator()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
 

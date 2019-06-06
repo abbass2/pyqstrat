@@ -163,6 +163,7 @@ class ContractPNL:
         self.open_qtys = np.empty(0, dtype = np.int)
         self.open_prices = np.empty(0, dtype = np.float)
         self.first_trade_timestamp = None
+        self.final_pnl = None
         
     def _add_trades(self, trades):
         '''
@@ -198,8 +199,50 @@ class ContractPNL:
                 self._trade_pnl[timestamp] = (prev_position + position_chg, prev_realized + realized_chg, 
                                         prev_fee + fee_chg, prev_commission + commission_chg,  open_qty, weighted_avg_price)
             self.calc_net_pnl(timestamp)
-        
+            
     def calc_net_pnl(self, timestamp):
+        if timestamp in self._net_pnl: return
+        if timestamp < self.first_trade_timestamp: return
+        # TODO: Option expiry should be a special case.  If option expires at 3:00 pm, we put in an expiry order at 3 pm and the
+        # trade comes in at 3:01 pm.  In this case, the final pnl is recorded at 3:01 but should be at 3 pm.
+        if self.contract.expiry is not None and timestamp > self.contract.expiry and self.final_pnl is not None: return
+        i = np.searchsorted(self._account_timestamps, timestamp)
+        assert(self._account_timestamps[i] == timestamp)
+
+        # Find the index before or equal to current timestamp.  If not found, set to 0's
+        trade_pnl_index = find_index_before(self._trade_pnl, timestamp)
+        if trade_pnl_index == -1:
+            realized, fee, commission, open_qty, open_qty, weighted_avg_price  = 0, 0, 0, 0, 0, 0
+        else:
+            _, (_, realized, fee, commission, open_qty, weighted_avg_price) = self._trade_pnl.peekitem(trade_pnl_index)
+
+        price = np.nan
+
+        if math.isclose(open_qty, 0):
+            unrealized = 0
+        else:
+            price = self._price_function(self.contract, self._account_timestamps, i, self.strategy_context)
+            assert np.isreal(price), \
+                f'Unexpected price type: {price} {type(price)} for contract: {self.contract} timestamp: {self._account_timestamps[i]}'
+
+            if math.isnan(price):
+                index = find_index_before(self._net_pnl, timestamp) # Last index we computed net pnl for
+                if index == -1:
+                    prev_unrealized = 0
+                else:
+                    _, (_, prev_unrealized, _) = self._net_pnl.peekitem(index)
+
+                unrealized = prev_unrealized
+            else:
+                unrealized = open_qty * (price - weighted_avg_price) * self.contract.multiplier
+ 
+        net_pnl = realized + unrealized - commission - fee
+
+        self._net_pnl[timestamp] = (price, unrealized, net_pnl)
+        if self.contract.expiry is not None and timestamp > self.contract.expiry:
+            self.final_pnl = net_pnl
+        
+    def calc_net_pnl_old(self, timestamp):
         if timestamp in self._net_pnl: return
         if timestamp < self.first_trade_timestamp: return
         if self.contract.expiry is not None and timestamp > self.contract.expiry: return # We would have calc'ed when the exit trade came in
@@ -217,8 +260,8 @@ class ContractPNL:
             
         if not math.isclose(open_qty, 0):
             price = self._price_function(self.contract, self._account_timestamps, i, self.strategy_context)
-            assert isinstance(price, float) or isinstance(price, np.float), \
-                f'Unexpected price type: {price} {type(price)} for contract: {self.contract} timestamp: {self.account_timestamps[i]}'
+            assert np.isreal(price), \
+                f'Unexpected price type: {price} {type(price)} for contract: {self.contract} timestamp: {self._account_timestamps[i]}'
           
         if math.isnan(price):
             index = find_index_before(self._net_pnl, timestamp) # Last index we computed net pnl for
@@ -245,6 +288,8 @@ class ContractPNL:
         return position
     
     def net_pnl(self, timestamp):
+        if self.contract.expiry is not None and timestamp > self.contract.expiry and self.final_pnl is not None:
+            return self.final_pnl
         index = find_index_before(self._net_pnl, timestamp)
         if index == -1: return 0.
         _, (_, _, net_pnl) = self._net_pnl.peekitem(index) # Less than or equal to timestamp
@@ -310,6 +355,7 @@ class Account:
         self.contracts = set()
         self._trades = []
         self._pnl = SortedDict()
+        self.symbol_pnls_by_contract_group = defaultdict(list)
         
         self.symbol_pnls = {}
         
@@ -319,7 +365,10 @@ class Account:
     def _add_contract(self, contract, timestamp):
         if contract.symbol in self.symbol_pnls: 
             raise Exception(f'Already have contract with symbol: {contract.symbol} {contract}')
-        self.symbol_pnls[contract.symbol] = ContractPNL(contract, self.timestamps, self._price_function, self.strategy_context)
+        contract_pnl = ContractPNL(contract, self.timestamps, self._price_function, self.strategy_context)
+        self.symbol_pnls[contract.symbol] = contract_pnl
+        # For fast lookup in position function
+        self.symbol_pnls_by_contract_group[contract.contract_group.name].append(contract_pnl)
         self.contracts.add(contract)
         
     def add_trades(self, trades):
@@ -371,11 +420,15 @@ class Account:
     def position(self, contract_group, timestamp):
         '''Returns netted position for a contract_group at a given date in number of contracts or shares.'''
         position = 0
-        for contract in contract_group.contracts:
-            symbol = contract.symbol
-            if symbol not in self.symbol_pnls: continue
-            position += self.symbol_pnls[symbol].position(timestamp)
+        for symbol_pnl in self.symbol_pnls_by_contract_group[contract_group.name]:
+            position += symbol_pnl.position(timestamp)
         return position
+            
+        #for contract in contract_group.contracts:
+        #    symbol = contract.symbol
+        #    if symbol not in self.symbol_pnls: continue
+        #    position += self.symbol_pnls[symbol].position(timestamp)
+        #return position
     
     def positions(self, contract_group, timestamp):
         '''
@@ -544,4 +597,7 @@ if __name__ == "__main__":
     test_account()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 2
+
 
