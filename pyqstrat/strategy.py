@@ -650,8 +650,8 @@ class Strategy:
         else:
             returns = self.df_returns(contract_group)
 
-        ev = pq.compute_return_metrics(returns.timestamp.values, returns.ret.values, self.account.starting_equity)
-        fig, ax = pq.plot_return_metrics(ev.metrics())
+        ev = compute_return_metrics(returns.timestamp.values, returns.ret.values, self.account.starting_equity)
+        fig, ax = plot_return_metrics(ev.metrics())
         return fig, ax
        
     def __repr__(self):
