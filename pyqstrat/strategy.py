@@ -627,20 +627,22 @@ class Strategy:
                         title = title_full, hspace = hspace)
             plot.draw()
             
-    def evaluate_returns(self, contract_group = None, plot = True, display_summary = True, float_precision = 4):
+    def evaluate_returns(self, contract_group = None, plot = True, display_summary = True, float_precision = 4, return_metrics = False):
         '''Returns a dictionary of common return metrics.
         
         Args:
             contract_group (:obj:`ContractGroup`, optional): Contract group to evaluate or None (default) for all contract groups
             plot (bool): If set to True, display plots of equity, drawdowns and returns.  Default False
             float_precision (float, optional): Number of significant figures to show in returns.  Default 4
+            return_metrics (bool, optional): If set, we return the computed metrics as a dictionary
         '''
         returns = self.df_returns(contract_group)
         ev = compute_return_metrics(returns.timestamp.values, returns.ret.values, self.account.starting_equity)
         if display_summary:
             display_return_metrics(ev.metrics(), float_precision = float_precision)
         if plot: plot_return_metrics(ev.metrics())
-        return ev.metrics()
+        if return_metrics:
+            return ev.metrics()
     
     def plot_returns(self, contract_group = None):
         '''Display plots of equity, drawdowns and returns for the given contract group or for all contract groups if contract_group 
