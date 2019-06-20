@@ -136,6 +136,17 @@ def np_find_closest(a, v):
     idx -= v - left < right - v
     return idx
 
+def np_rolling_window(a, window):
+    '''
+    For applying rolling window functions to a numpy array
+    See: https://stackoverflow.com/questions/6811183/rolling-window-for-1d-arrays-in-numpy
+    >>> print(np.std(np_rolling_window(np.array([1, 2, 3, 4]), 2), 1))
+    [0.5 0.5 0.5]
+    '''
+    shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
+    strides = a.strides + (a.strides[-1],)
+    return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
+
 def day_of_week_num(a):
     '''
     From https://stackoverflow.com/questions/52398383/finding-day-of-the-week-for-a-datetime64
