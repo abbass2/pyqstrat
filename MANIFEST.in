@@ -1,4 +1,15 @@
 global-include *.txt *.cpp *.hpp *.h *.py *.ipynb *.html *.csv
+
+include pytest.ini
+include *.sh
+include *.yaml
+include *.yml
+recursive-include pyqstrat *.gz
+recursive-include apidocs *.rst
+recursive-include apidocs *.sh
+recursive-include pyqstrat *.rst
+recursive-include pyqstrat *.sh
+
 recursive-exclude pyqstrat/notebooks *.py
 prune dist
 prune docs
@@ -8,4 +19,4 @@ global-exclude *~
 global-exclude *.pyc
 global-exclude *.pyo
 global-exclude .git
-global-exclude .ipynb_checkpoints
+global-exclude *.ipynb_checkpoints*
