@@ -256,6 +256,33 @@ a must be sorted
 </dd></dl>
 
 <dl class="function">
+<dt id="pyqstrat.pq_utils.np_rolling_window">
+<code class="descclassname">pyqstrat.pq_utils.</code><code class="descname">np_rolling_window</code><span class="sig-paren">(</span><em>a</em>, <em>window</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#np_rolling_window"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.np_rolling_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>For applying rolling window functions to a numpy array
+See: <a class="reference external" href="https://stackoverflow.com/questions/6811183/rolling-window-for-1d-arrays-in-numpy">https://stackoverflow.com/questions/6811183/rolling-window-for-1d-arrays-in-numpy</a>
+&gt;&gt;&gt; print(np.std(np_rolling_window(np.array([1, 2, 3, 4]), 2), 1))
+[0.5 0.5 0.5]</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pq_utils.np_round">
+<code class="descclassname">pyqstrat.pq_utils.</code><code class="descname">np_round</code><span class="sig-paren">(</span><em>a</em>, <em>clip</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#np_round"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.np_round" title="Permalink to this definition">¶</a></dt>
+<dd><p>Round an array to the nearest clip</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>numpy numeric array</em>) – </p></li>
+<li><p><strong>clip</strong> (<em>float</em>) – rounding value</p></li>
+</ul>
+</dd>
+</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">np_round</span><span class="p">(</span><span class="mf">15.8</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">)</span>
+<span class="go">15.75</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyqstrat.pq_utils.percentile_of_score">
 <code class="descclassname">pyqstrat.pq_utils.</code><code class="descname">percentile_of_score</code><span class="sig-paren">(</span><em>a</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#percentile_of_score"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.percentile_of_score" title="Permalink to this definition">¶</a></dt>
 <dd><p>For each element in a, find the percentile of a its in.  From stackoverflow.com/a/29989971/5351549
@@ -836,6 +863,11 @@ and end date if they are specified. If symbol is None trades for all symbols are
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="pyqstrat.account.ContractPNL.calc_net_pnl_old">
+<code class="descname">calc_net_pnl_old</code><span class="sig-paren">(</span><em>timestamp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/account.html#ContractPNL.calc_net_pnl_old"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.account.ContractPNL.calc_net_pnl_old" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="pyqstrat.account.ContractPNL.df">
 <code class="descname">df</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/account.html#ContractPNL.df"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.account.ContractPNL.df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a pandas dataframe with pnl data</p>
@@ -1015,11 +1047,11 @@ Default None</p></li>
 <span id="pyqstrat-strategy-module"></span><h2>pyqstrat.strategy module<a class="headerlink" href="#module-pyqstrat.strategy" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyqstrat.strategy.Strategy">
-<em class="property">class </em><code class="descclassname">pyqstrat.strategy.</code><code class="descname">Strategy</code><span class="sig-paren">(</span><em>timestamps</em>, <em>contract_groups</em>, <em>price_function</em>, <em>starting_equity=1000000.0</em>, <em>pnl_calc_time=901</em>, <em>trade_lag=1</em>, <em>run_final_calc=True</em>, <em>strategy_context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Strategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Strategy" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyqstrat.strategy.</code><code class="descname">Strategy</code><span class="sig-paren">(</span><em>timestamps</em>, <em>contract_groups</em>, <em>price_function</em>, <em>starting_equity=1000000.0</em>, <em>pnl_calc_time=901</em>, <em>trade_lag=0</em>, <em>run_final_calc=True</em>, <em>strategy_context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Strategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Strategy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="pyqstrat.strategy.Strategy.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>timestamps</em>, <em>contract_groups</em>, <em>price_function</em>, <em>starting_equity=1000000.0</em>, <em>pnl_calc_time=901</em>, <em>trade_lag=1</em>, <em>run_final_calc=True</em>, <em>strategy_context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Strategy.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Strategy.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>timestamps</em>, <em>contract_groups</em>, <em>price_function</em>, <em>starting_equity=1000000.0</em>, <em>pnl_calc_time=901</em>, <em>trade_lag=0</em>, <em>run_final_calc=True</em>, <em>strategy_context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Strategy.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Strategy.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1031,7 +1063,7 @@ simulate the market at these times.</p></li>
 <li><p><strong>pnl_calc_time</strong> (<em>int</em><em>, </em><em>optional</em>) – Time of day used to calculate PNL.  Default 15 * 60 (3 pm)</p></li>
 <li><p><strong>trade_lag</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of bars you want between the order and the trade.  For example, if you think it will take
 5 seconds to place your order in the market, and your bar size is 1 second, set this to 5.  Set this to 0 if you
-want to execute your trade at the same time as you place the order, for example, if you have daily bars.  Default 1.</p></li>
+want to execute your trade at the same time as you place the order, for example, if you have daily bars.  Default 0.</p></li>
 <li><p><strong>run_final_calc</strong> (<em>bool</em><em>, </em><em>optional</em>) – If set, calculates unrealized pnl and net pnl as well as realized pnl when strategy is done.
 If you don’t need unrealized pnl, turn this off for faster run time. Default True</p></li>
 <li><p><strong>strategy_context</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">types.SimpleNamespace</span></code>, optional) – A storage class where you can store key / value pairs
@@ -1174,7 +1206,7 @@ if they are specified. If contract_group is None trades for all contract_groups 
 
 <dl class="method">
 <dt id="pyqstrat.strategy.Strategy.evaluate_returns">
-<code class="descname">evaluate_returns</code><span class="sig-paren">(</span><em>contract_group=None</em>, <em>plot=True</em>, <em>display_summary=True</em>, <em>float_precision=4</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Strategy.evaluate_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Strategy.evaluate_returns" title="Permalink to this definition">¶</a></dt>
+<code class="descname">evaluate_returns</code><span class="sig-paren">(</span><em>contract_group=None</em>, <em>plot=True</em>, <em>display_summary=True</em>, <em>float_precision=4</em>, <em>return_metrics=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy.html#Strategy.evaluate_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.strategy.Strategy.evaluate_returns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a dictionary of common return metrics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1182,6 +1214,7 @@ if they are specified. If contract_group is None trades for all contract_groups 
 <li><p><strong>contract_group</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">ContractGroup</span></code>, optional) – Contract group to evaluate or None (default) for all contract groups</p></li>
 <li><p><strong>plot</strong> (<em>bool</em>) – If set to True, display plots of equity, drawdowns and returns.  Default False</p></li>
 <li><p><strong>float_precision</strong> (<em>float</em><em>, </em><em>optional</em>) – Number of significant figures to show in returns.  Default 4</p></li>
+<li><p><strong>return_metrics</strong> (<em>bool</em><em>, </em><em>optional</em>) – If set, we return the computed metrics as a dictionary</p></li>
 </ul>
 </dd>
 </dl>
@@ -1984,7 +2017,7 @@ an array or a tuple</p>
 
 <dl class="function">
 <dt id="pyqstrat.evaluator.compute_amean">
-<code class="descclassname">pyqstrat.evaluator.</code><code class="descname">compute_amean</code><span class="sig-paren">(</span><em>returns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/evaluator.html#compute_amean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.evaluator.compute_amean" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyqstrat.evaluator.</code><code class="descname">compute_amean</code><span class="sig-paren">(</span><em>returns</em>, <em>periods_per_year</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/evaluator.html#compute_amean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.evaluator.compute_amean" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes arithmetic mean of a return array, ignoring NaNs</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1994,8 +2027,8 @@ an array or a tuple</p>
 <dd class="field-even"><p>a float</p>
 </dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">compute_amean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]))</span>
-<span class="go">3.5</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">compute_amean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.003</span><span class="p">,</span> <span class="mf">0.004</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]),</span> <span class="mi">252</span><span class="p">)</span>
+<span class="go">0.882</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -2232,7 +2265,7 @@ of the last date in the datetime array</p>
 </dd>
 </dl>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">round</span><span class="p">(</span><span class="n">compute_sharpe</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.001</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.002</span><span class="p">]),</span> <span class="mf">0.001</span><span class="p">,</span> <span class="mi">252</span><span class="p">),</span> <span class="mi">6</span><span class="p">)</span>
-<span class="go">12.727922</span>
+<span class="go">0.050508</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -2251,7 +2284,7 @@ of the last date in the datetime array</p>
 </dd>
 </dl>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">compute_sortino</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.001</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.002</span><span class="p">]),</span> <span class="mf">0.001</span><span class="p">,</span> <span class="mi">252</span><span class="p">),</span> <span class="mi">6</span><span class="p">))</span>
-<span class="go">33.674916</span>
+<span class="go">0.133631</span>
 </pre></div>
 </div>
 </dd></dl>

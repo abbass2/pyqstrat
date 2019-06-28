@@ -31,7 +31,12 @@
           <div class="body" role="main">
             
   <h1>Source code for pyqstrat.account</h1><div class="highlight"><pre>
-<span></span><span class="c1">#cell 0</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># coding: utf-8</span>
+
+<span class="c1"># In[1]:</span>
+
+
 <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">sortedcontainers</span> <span class="k">import</span> <span class="n">SortedDict</span>
 <span class="kn">import</span> <span class="nn">math</span>
@@ -41,7 +46,10 @@
 <span class="kn">from</span> <span class="nn">pyqstrat.pq_utils</span> <span class="k">import</span> <span class="n">str2date</span>
 <span class="kn">from</span> <span class="nn">pyqstrat.pq_types</span> <span class="k">import</span> <span class="n">ContractGroup</span>
 
-<span class="c1">#cell 1</span>
+
+<span class="c1"># In[2]:</span>
+
+
 <div class="viewcode-block" id="calc_trade_pnl"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.account.calc_trade_pnl">[docs]</a><span class="k">def</span> <span class="nf">calc_trade_pnl</span><span class="p">(</span><span class="n">open_qtys</span><span class="p">,</span> <span class="n">open_prices</span><span class="p">,</span> <span class="n">new_qtys</span><span class="p">,</span> <span class="n">new_prices</span><span class="p">,</span> <span class="n">multiplier</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    &gt;&gt;&gt; print(calc_trade_pnl(</span>
@@ -196,6 +204,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">open_qtys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">open_prices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">first_trade_timestamp</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">final_pnl</span> <span class="o">=</span> <span class="kc">None</span>
         
     <span class="k">def</span> <span class="nf">_add_trades</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trades</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
@@ -231,8 +240,49 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_trade_pnl</span><span class="p">[</span><span class="n">timestamp</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">prev_position</span> <span class="o">+</span> <span class="n">position_chg</span><span class="p">,</span> <span class="n">prev_realized</span> <span class="o">+</span> <span class="n">realized_chg</span><span class="p">,</span> 
                                         <span class="n">prev_fee</span> <span class="o">+</span> <span class="n">fee_chg</span><span class="p">,</span> <span class="n">prev_commission</span> <span class="o">+</span> <span class="n">commission_chg</span><span class="p">,</span>  <span class="n">open_qty</span><span class="p">,</span> <span class="n">weighted_avg_price</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">calc_net_pnl</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
-        
+            
 <div class="viewcode-block" id="ContractPNL.calc_net_pnl"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.account.ContractPNL.calc_net_pnl">[docs]</a>    <span class="k">def</span> <span class="nf">calc_net_pnl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">timestamp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_net_pnl</span><span class="p">:</span> <span class="k">return</span>
+        <span class="k">if</span> <span class="n">timestamp</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">first_trade_timestamp</span><span class="p">:</span> <span class="k">return</span>
+        <span class="c1"># TODO: Option expiry should be a special case.  If option expires at 3:00 pm, we put in an expiry order at 3 pm and the</span>
+        <span class="c1"># trade comes in at 3:01 pm.  In this case, the final pnl is recorded at 3:01 but should be at 3 pm.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">expiry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">timestamp</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">expiry</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_pnl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="k">return</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_account_timestamps</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_account_timestamps</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">timestamp</span><span class="p">)</span>
+
+        <span class="c1"># Find the index before or equal to current timestamp.  If not found, set to 0&#39;s</span>
+        <span class="n">trade_pnl_index</span> <span class="o">=</span> <span class="n">find_index_before</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_trade_pnl</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">trade_pnl_index</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">realized</span><span class="p">,</span> <span class="n">fee</span><span class="p">,</span> <span class="n">commission</span><span class="p">,</span> <span class="n">open_qty</span><span class="p">,</span> <span class="n">open_qty</span><span class="p">,</span> <span class="n">weighted_avg_price</span>  <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">realized</span><span class="p">,</span> <span class="n">fee</span><span class="p">,</span> <span class="n">commission</span><span class="p">,</span> <span class="n">open_qty</span><span class="p">,</span> <span class="n">weighted_avg_price</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trade_pnl</span><span class="o">.</span><span class="n">peekitem</span><span class="p">(</span><span class="n">trade_pnl_index</span><span class="p">)</span>
+
+        <span class="n">price</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">open_qty</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">unrealized</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">price</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_price_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_account_timestamps</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy_context</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isreal</span><span class="p">(</span><span class="n">price</span><span class="p">),</span>                 <span class="n">f</span><span class="s1">&#39;Unexpected price type: </span><span class="si">{price}</span><span class="s1"> {type(price)} for contract: </span><span class="si">{self.contract}</span><span class="s1"> timestamp: </span><span class="si">{self._account_timestamps[i]}</span><span class="s1">&#39;</span>
+
+            <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">price</span><span class="p">):</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="n">find_index_before</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_net_pnl</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span> <span class="c1"># Last index we computed net pnl for</span>
+                <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="n">prev_unrealized</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">prev_unrealized</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_net_pnl</span><span class="o">.</span><span class="n">peekitem</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+
+                <span class="n">unrealized</span> <span class="o">=</span> <span class="n">prev_unrealized</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">unrealized</span> <span class="o">=</span> <span class="n">open_qty</span> <span class="o">*</span> <span class="p">(</span><span class="n">price</span> <span class="o">-</span> <span class="n">weighted_avg_price</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">multiplier</span>
+ 
+        <span class="n">net_pnl</span> <span class="o">=</span> <span class="n">realized</span> <span class="o">+</span> <span class="n">unrealized</span> <span class="o">-</span> <span class="n">commission</span> <span class="o">-</span> <span class="n">fee</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_net_pnl</span><span class="p">[</span><span class="n">timestamp</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">price</span><span class="p">,</span> <span class="n">unrealized</span><span class="p">,</span> <span class="n">net_pnl</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">expiry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">timestamp</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">expiry</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">final_pnl</span> <span class="o">=</span> <span class="n">net_pnl</span></div>
+        
+<div class="viewcode-block" id="ContractPNL.calc_net_pnl_old"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.account.ContractPNL.calc_net_pnl_old">[docs]</a>    <span class="k">def</span> <span class="nf">calc_net_pnl_old</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">timestamp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_net_pnl</span><span class="p">:</span> <span class="k">return</span>
         <span class="k">if</span> <span class="n">timestamp</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">first_trade_timestamp</span><span class="p">:</span> <span class="k">return</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">expiry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">timestamp</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">expiry</span><span class="p">:</span> <span class="k">return</span> <span class="c1"># We would have calc&#39;ed when the exit trade came in</span>
@@ -250,8 +300,7 @@
             
         <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">open_qty</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
             <span class="n">price</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_price_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_account_timestamps</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy_context</span><span class="p">)</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">price</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">price</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">),</span> \
-                <span class="n">f</span><span class="s1">&#39;Unexpected price type: </span><span class="si">{price}</span><span class="s1"> {type(price)} for contract: </span><span class="si">{self.contract}</span><span class="s1"> timestamp: </span><span class="si">{self.account_timestamps[i]}</span><span class="s1">&#39;</span>
+            <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isreal</span><span class="p">(</span><span class="n">price</span><span class="p">),</span>                 <span class="n">f</span><span class="s1">&#39;Unexpected price type: </span><span class="si">{price}</span><span class="s1"> {type(price)} for contract: </span><span class="si">{self.contract}</span><span class="s1"> timestamp: </span><span class="si">{self._account_timestamps[i]}</span><span class="s1">&#39;</span>
           
         <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">price</span><span class="p">):</span>
             <span class="n">index</span> <span class="o">=</span> <span class="n">find_index_before</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_net_pnl</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span> <span class="c1"># Last index we computed net pnl for</span>
@@ -278,6 +327,8 @@
         <span class="k">return</span> <span class="n">position</span></div>
     
 <div class="viewcode-block" id="ContractPNL.net_pnl"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.account.ContractPNL.net_pnl">[docs]</a>    <span class="k">def</span> <span class="nf">net_pnl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">expiry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">timestamp</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">expiry</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_pnl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_pnl</span>
         <span class="n">index</span> <span class="o">=</span> <span class="n">find_index_before</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_net_pnl</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="k">return</span> <span class="mf">0.</span>
         <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">net_pnl</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_net_pnl</span><span class="o">.</span><span class="n">peekitem</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="c1"># Less than or equal to timestamp</span>
@@ -343,6 +394,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">contracts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_trades</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pnl</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">symbol_pnls_by_contract_group</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">symbol_pnls</span> <span class="o">=</span> <span class="p">{}</span></div>
         
@@ -352,7 +404,10 @@
     <span class="k">def</span> <span class="nf">_add_contract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contract</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">contract</span><span class="o">.</span><span class="n">symbol</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">symbol_pnls</span><span class="p">:</span> 
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Already have contract with symbol: </span><span class="si">{contract.symbol}</span><span class="s1"> </span><span class="si">{contract}</span><span class="s1">&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">symbol_pnls</span><span class="p">[</span><span class="n">contract</span><span class="o">.</span><span class="n">symbol</span><span class="p">]</span> <span class="o">=</span> <span class="n">ContractPNL</span><span class="p">(</span><span class="n">contract</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_price_function</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy_context</span><span class="p">)</span>
+        <span class="n">contract_pnl</span> <span class="o">=</span> <span class="n">ContractPNL</span><span class="p">(</span><span class="n">contract</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_price_function</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy_context</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">symbol_pnls</span><span class="p">[</span><span class="n">contract</span><span class="o">.</span><span class="n">symbol</span><span class="p">]</span> <span class="o">=</span> <span class="n">contract_pnl</span>
+        <span class="c1"># For fast lookup in position function</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">symbol_pnls_by_contract_group</span><span class="p">[</span><span class="n">contract</span><span class="o">.</span><span class="n">contract_group</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">contract_pnl</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contracts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">contract</span><span class="p">)</span>
         
 <div class="viewcode-block" id="Account.add_trades"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.account.Account.add_trades">[docs]</a>    <span class="k">def</span> <span class="nf">add_trades</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trades</span><span class="p">):</span>
@@ -404,11 +459,15 @@
 <div class="viewcode-block" id="Account.position"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.account.Account.position">[docs]</a>    <span class="k">def</span> <span class="nf">position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contract_group</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Returns netted position for a contract_group at a given date in number of contracts or shares.&#39;&#39;&#39;</span>
         <span class="n">position</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">contract</span> <span class="ow">in</span> <span class="n">contract_group</span><span class="o">.</span><span class="n">contracts</span><span class="p">:</span>
-            <span class="n">symbol</span> <span class="o">=</span> <span class="n">contract</span><span class="o">.</span><span class="n">symbol</span>
-            <span class="k">if</span> <span class="n">symbol</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">symbol_pnls</span><span class="p">:</span> <span class="k">continue</span>
-            <span class="n">position</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">symbol_pnls</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span><span class="o">.</span><span class="n">position</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">symbol_pnl</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">symbol_pnls_by_contract_group</span><span class="p">[</span><span class="n">contract_group</span><span class="o">.</span><span class="n">name</span><span class="p">]:</span>
+            <span class="n">position</span> <span class="o">+=</span> <span class="n">symbol_pnl</span><span class="o">.</span><span class="n">position</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">position</span></div>
+            
+        <span class="c1">#for contract in contract_group.contracts:</span>
+        <span class="c1">#    symbol = contract.symbol</span>
+        <span class="c1">#    if symbol not in self.symbol_pnls: continue</span>
+        <span class="c1">#    position += self.symbol_pnls[symbol].position(timestamp)</span>
+        <span class="c1">#return position</span>
     
 <div class="viewcode-block" id="Account.positions"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.account.Account.positions">[docs]</a>    <span class="k">def</span> <span class="nf">positions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contract_group</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
@@ -577,6 +636,12 @@
     <span class="n">test_account</span><span class="p">()</span>
     <span class="kn">import</span> <span class="nn">doctest</span>
     <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">optionflags</span> <span class="o">=</span> <span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
+
+
+<span class="c1"># In[ ]:</span>
+
+
+
 
 </pre></div>
 

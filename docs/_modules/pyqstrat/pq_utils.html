@@ -31,7 +31,12 @@
           <div class="body" role="main">
             
   <h1>Source code for pyqstrat.pq_utils</h1><div class="highlight"><pre>
-<span></span><span class="c1">#cell 0</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># coding: utf-8</span>
+
+<span class="c1"># In[1]:</span>
+
+
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -168,6 +173,30 @@
     <span class="n">right</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
     <span class="n">idx</span> <span class="o">-=</span> <span class="n">v</span> <span class="o">-</span> <span class="n">left</span> <span class="o">&lt;</span> <span class="n">right</span> <span class="o">-</span> <span class="n">v</span>
     <span class="k">return</span> <span class="n">idx</span></div>
+
+<div class="viewcode-block" id="np_rolling_window"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_rolling_window">[docs]</a><span class="k">def</span> <span class="nf">np_rolling_window</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">window</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    For applying rolling window functions to a numpy array</span>
+<span class="sd">    See: https://stackoverflow.com/questions/6811183/rolling-window-for-1d-arrays-in-numpy</span>
+<span class="sd">    &gt;&gt;&gt; print(np.std(np_rolling_window(np.array([1, 2, 3, 4]), 2), 1))</span>
+<span class="sd">    [0.5 0.5 0.5]</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">shape</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">window</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>
+    <span class="n">strides</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">strides</span> <span class="o">+</span> <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">stride_tricks</span><span class="o">.</span><span class="n">as_strided</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="n">strides</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="np_round"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_round">[docs]</a><span class="k">def</span> <span class="nf">np_round</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">clip</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Round an array to the nearest clip</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        a (numpy numeric array):</span>
+<span class="sd">        clip (float): rounding value</span>
+<span class="sd">    &gt;&gt;&gt; np_round(15.8, 0.25)</span>
+<span class="sd">    15.75</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+        
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">clip</span><span class="p">)</span> <span class="o">*</span> <span class="n">clip</span></div>
 
 <div class="viewcode-block" id="day_of_week_num"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.day_of_week_num">[docs]</a><span class="k">def</span> <span class="nf">day_of_week_num</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>

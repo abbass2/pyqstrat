@@ -31,7 +31,12 @@
           <div class="body" role="main">
             
   <h1>Source code for pyqstrat.strategy</h1><div class="highlight"><pre>
-<span></span><span class="c1">#cell 0</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># coding: utf-8</span>
+
+<span class="c1"># In[1]:</span>
+
+
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">types</span>
@@ -46,7 +51,10 @@
 <span class="kn">from</span> <span class="nn">pyqstrat.pq_types</span> <span class="k">import</span> <span class="n">ContractGroup</span>
 <span class="kn">from</span> <span class="nn">pyqstrat.plot</span> <span class="k">import</span> <span class="n">TimeSeries</span><span class="p">,</span> <span class="n">trade_sets_by_reason_code</span><span class="p">,</span> <span class="n">Subplot</span><span class="p">,</span> <span class="n">Plot</span>
 
-<span class="c1">#cell 1</span>
+
+<span class="c1"># In[3]:</span>
+
+
 <span class="k">def</span> <span class="nf">_get_time_series_list</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">properties</span><span class="p">):</span>
     <span class="n">ts_list</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
@@ -62,7 +70,7 @@
     <span class="k">return</span> <span class="n">ts_list</span>
 
 <div class="viewcode-block" id="Strategy"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.strategy.Strategy">[docs]</a><span class="k">class</span> <span class="nc">Strategy</span><span class="p">:</span>
-<div class="viewcode-block" id="Strategy.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.strategy.Strategy.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamps</span><span class="p">,</span> <span class="n">contract_groups</span><span class="p">,</span> <span class="n">price_function</span><span class="p">,</span> <span class="n">starting_equity</span> <span class="o">=</span> <span class="mf">1.0e6</span><span class="p">,</span> <span class="n">pnl_calc_time</span> <span class="o">=</span> <span class="mi">15</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">trade_lag</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+<div class="viewcode-block" id="Strategy.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.strategy.Strategy.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamps</span><span class="p">,</span> <span class="n">contract_groups</span><span class="p">,</span> <span class="n">price_function</span><span class="p">,</span> <span class="n">starting_equity</span> <span class="o">=</span> <span class="mf">1.0e6</span><span class="p">,</span> <span class="n">pnl_calc_time</span> <span class="o">=</span> <span class="mi">15</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">trade_lag</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
                  <span class="n">run_final_calc</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">strategy_context</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Args:</span>
@@ -74,7 +82,7 @@
 <span class="sd">            pnl_calc_time (int, optional): Time of day used to calculate PNL.  Default 15 * 60 (3 pm)</span>
 <span class="sd">            trade_lag (int, optional): Number of bars you want between the order and the trade.  For example, if you think it will take</span>
 <span class="sd">                5 seconds to place your order in the market, and your bar size is 1 second, set this to 5.  Set this to 0 if you</span>
-<span class="sd">                want to execute your trade at the same time as you place the order, for example, if you have daily bars.  Default 1.</span>
+<span class="sd">                want to execute your trade at the same time as you place the order, for example, if you have daily bars.  Default 0.</span>
 <span class="sd">            run_final_calc (bool, optional): If set, calculates unrealized pnl and net pnl as well as realized pnl when strategy is done.</span>
 <span class="sd">                If you don&#39;t need unrealized pnl, turn this off for faster run time. Default True</span>
 <span class="sd">            strategy_context (:obj:`types.SimpleNamespace`, optional): A storage class where you can store key / value pairs </span>
@@ -378,6 +386,8 @@
     <span class="k">def</span> <span class="nf">_run_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">_sim_market</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="c1"># Treat all orders as IOC, i.e. if the order was not executed, then its cancelled.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_open_orders</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         
         <span class="n">rules</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">orders_iter</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
         
@@ -418,15 +428,14 @@
     <span class="k">def</span> <span class="nf">_sim_market</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Go through all open orders and run market simulators to generate a list of trades and return any orders that were not filled.</span>
-<span class="sd">       &#39;&#39;&#39;</span>
-        
-        <span class="n">orders</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_orders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">orders</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">orders</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="p">[],</span> <span class="p">[]</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">open_orders</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_orders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">open_orders</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">open_orders</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="p">[],</span> <span class="p">[]</span>
         
         <span class="c1"># If there is more than one order for a contract, throw away any but the last one.</span>
-        <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="n">seen_add</span> <span class="o">=</span> <span class="n">seen</span><span class="o">.</span><span class="n">add</span>
-        <span class="n">open_orders</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">([</span><span class="n">order</span> <span class="k">for</span> <span class="n">order</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">orders</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">contract</span> <span class="ow">in</span> <span class="n">seen</span> <span class="ow">or</span> <span class="n">seen_add</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">contract</span><span class="p">))]))</span>
+        <span class="c1">#seen = set()</span>
+        <span class="c1">#seen_add = seen.add</span>
+        <span class="c1">#open_orders = list(reversed([order for order in reversed(orders) if not (order.contract in seen or seen_add(order.contract))]))</span>
             
         <span class="k">for</span> <span class="n">market_sim_function</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">market_sims</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -600,8 +609,7 @@
         <span class="k">if</span> <span class="n">pnl_columns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">pnl_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;equity&#39;</span><span class="p">]</span>
         
         <span class="k">for</span> <span class="n">contract_group</span> <span class="ow">in</span> <span class="n">contract_groups</span><span class="p">:</span>
-            <span class="n">primary_indicator_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">ind_name</span> <span class="k">for</span> <span class="n">ind_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">indicator_values</span><span class="p">[</span><span class="n">contract_group</span><span class="p">]</span><span class="o">.</span><span class="vm">__dict__</span> \
-                                       <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indicator_values</span><span class="p">[</span><span class="n">contract_group</span><span class="p">],</span> <span class="n">ind_name</span><span class="p">)]</span>
+            <span class="n">primary_indicator_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">ind_name</span> <span class="k">for</span> <span class="n">ind_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">indicator_values</span><span class="p">[</span><span class="n">contract_group</span><span class="p">]</span><span class="o">.</span><span class="vm">__dict__</span>                                        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indicator_values</span><span class="p">[</span><span class="n">contract_group</span><span class="p">],</span> <span class="n">ind_name</span><span class="p">)]</span>
             <span class="k">if</span> <span class="n">primary_indicators</span><span class="p">:</span>
                 <span class="n">primary_indicator_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">primary_indicator_names</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">primary_indicators</span><span class="p">))</span>
             <span class="n">secondary_indicator_names</span> <span class="o">=</span> <span class="p">[]</span>
@@ -659,38 +667,34 @@
                         <span class="n">title</span> <span class="o">=</span> <span class="n">title_full</span><span class="p">,</span> <span class="n">hspace</span> <span class="o">=</span> <span class="n">hspace</span><span class="p">)</span>
             <span class="n">plot</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
             
-<div class="viewcode-block" id="Strategy.evaluate_returns"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.strategy.Strategy.evaluate_returns">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contract_group</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">display_summary</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">float_precision</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
+<div class="viewcode-block" id="Strategy.evaluate_returns"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.strategy.Strategy.evaluate_returns">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contract_group</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">display_summary</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">float_precision</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">return_metrics</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Returns a dictionary of common return metrics.</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
 <span class="sd">            contract_group (:obj:`ContractGroup`, optional): Contract group to evaluate or None (default) for all contract groups</span>
 <span class="sd">            plot (bool): If set to True, display plots of equity, drawdowns and returns.  Default False</span>
 <span class="sd">            float_precision (float, optional): Number of significant figures to show in returns.  Default 4</span>
+<span class="sd">            return_metrics (bool, optional): If set, we return the computed metrics as a dictionary</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">returns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_returns</span><span class="p">(</span><span class="n">contract_group</span><span class="p">)</span>
         <span class="n">ev</span> <span class="o">=</span> <span class="n">compute_return_metrics</span><span class="p">(</span><span class="n">returns</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">returns</span><span class="o">.</span><span class="n">ret</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">starting_equity</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">display_summary</span><span class="p">:</span>
             <span class="n">display_return_metrics</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">(),</span> <span class="n">float_precision</span> <span class="o">=</span> <span class="n">float_precision</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">plot</span><span class="p">:</span> <span class="n">plot_return_metrics</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">()</span></div>
+        <span class="k">if</span> <span class="n">return_metrics</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">()</span></div>
     
 <div class="viewcode-block" id="Strategy.plot_returns"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.strategy.Strategy.plot_returns">[docs]</a>    <span class="k">def</span> <span class="nf">plot_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contract_group</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Display plots of equity, drawdowns and returns for the given contract group or for all contract groups if contract_group </span>
 <span class="sd">            is None (default)&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">contract_group</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">contract_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract_groups</span><span class="p">()</span>
+            <span class="n">returns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_returns</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">contract_groups</span> <span class="o">=</span> <span class="p">[</span><span class="n">contract_groups</span><span class="p">]</span>
-            
-        <span class="n">df_list</span> <span class="o">=</span> <span class="p">[]</span>
-            
-        <span class="k">for</span> <span class="n">contract_group</span> <span class="ow">in</span> <span class="n">contract_groups</span><span class="p">:</span>
-            <span class="n">df_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df_returns</span><span class="p">(</span><span class="n">contract_group</span><span class="p">))</span>
-        
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">df_list</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
-            
+            <span class="n">returns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_returns</span><span class="p">(</span><span class="n">contract_group</span><span class="p">)</span>
+
         <span class="n">ev</span> <span class="o">=</span> <span class="n">compute_return_metrics</span><span class="p">(</span><span class="n">returns</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">returns</span><span class="o">.</span><span class="n">ret</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">starting_equity</span><span class="p">)</span>
-        <span class="n">plot_return_metrics</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">())</span></div>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_return_metrics</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span></div>
        
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;{pformat(self.indicators)} {pformat(self.rules)} {pformat(self.account)}&#39;</span></div>
@@ -769,8 +773,7 @@
         <span class="n">curr_equity</span> <span class="o">=</span> <span class="n">account</span><span class="o">.</span><span class="n">equity</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
         <span class="n">order_qty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">curr_equity</span> <span class="o">*</span> <span class="n">risk_percent</span> <span class="o">/</span> <span class="n">indicators</span><span class="o">.</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">signal_value</span><span class="p">))</span>
         <span class="n">trigger_price</span> <span class="o">=</span> <span class="n">indicators</span><span class="o">.</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;order_qty: </span><span class="si">{order_qty}</span><span class="s1"> curr_equity: </span><span class="si">{curr_equity}</span><span class="s1"> timestamp: </span><span class="si">{timestamp}</span><span class="s1">&#39;</span> <span class="o">+</span> \
-              <span class="n">f</span><span class="s1">&#39; risk_percent: </span><span class="si">{risk_percent}</span><span class="s1"> indicator: </span><span class="si">{indicators.c[i]}</span><span class="s1"> signal_value: </span><span class="si">{signal_value}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;order_qty: </span><span class="si">{order_qty}</span><span class="s1"> curr_equity: </span><span class="si">{curr_equity}</span><span class="s1"> timestamp: </span><span class="si">{timestamp}</span><span class="s1">&#39;</span> <span class="o">+</span>               <span class="n">f</span><span class="s1">&#39; risk_percent: </span><span class="si">{risk_percent}</span><span class="s1"> indicator: </span><span class="si">{indicators.c[i]}</span><span class="s1"> signal_value: </span><span class="si">{signal_value}</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="n">reason_code</span> <span class="o">=</span> <span class="n">ReasonCode</span><span class="o">.</span><span class="n">ENTER_LONG</span> <span class="k">if</span> <span class="n">order_qty</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">ReasonCode</span><span class="o">.</span><span class="n">ENTER_SHORT</span>
         <span class="n">orders</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MarketOrder</span><span class="p">(</span><span class="n">contract</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">order_qty</span><span class="p">,</span> <span class="n">reason_code</span> <span class="o">=</span> <span class="n">reason_code</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">orders</span>
@@ -831,7 +834,7 @@
 
     <span class="n">strategy_context</span> <span class="o">=</span> <span class="n">SimpleNamespace</span><span class="p">(</span><span class="n">ko_price</span> <span class="o">=</span> <span class="n">ko_prices</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">pep_price</span> <span class="o">=</span> <span class="n">pep_prices</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
 
-    <span class="n">strategy</span> <span class="o">=</span> <span class="n">Strategy</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="p">[</span><span class="n">ko_contract_group</span><span class="p">,</span> <span class="n">pep_contract_group</span><span class="p">],</span> <span class="n">get_price</span><span class="p">,</span> <span class="n">strategy_context</span> <span class="o">=</span> <span class="n">strategy_context</span><span class="p">)</span>
+    <span class="n">strategy</span> <span class="o">=</span> <span class="n">Strategy</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="p">[</span><span class="n">ko_contract_group</span><span class="p">,</span> <span class="n">pep_contract_group</span><span class="p">],</span> <span class="n">get_price</span><span class="p">,</span> <span class="n">trade_lag</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">strategy_context</span> <span class="o">=</span> <span class="n">strategy_context</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">tup</span> <span class="ow">in</span> <span class="p">[(</span><span class="n">ko_contract_group</span><span class="p">,</span> <span class="n">ko_prices</span><span class="p">),</span> <span class="p">(</span><span class="n">pep_contract_group</span><span class="p">,</span> <span class="n">pep_prices</span><span class="p">)]:</span>
         <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">]:</span>
             <span class="n">strategy</span><span class="o">.</span><span class="n">add_indicator</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">tup</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">column</span><span class="p">],</span> <span class="n">contract_groups</span> <span class="o">=</span> <span class="p">[</span><span class="n">tup</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
@@ -853,17 +856,21 @@
     <span class="n">strategy</span><span class="o">.</span><span class="n">run_signals</span><span class="p">()</span>
     <span class="n">strategy</span><span class="o">.</span><span class="n">run_rules</span><span class="p">()</span>
 
-    <span class="n">metrics</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">evaluate_returns</span><span class="p">(</span><span class="n">plot</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">display_summary</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="k">assert</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;gmean&#39;</span><span class="p">],</span> <span class="mi">6</span><span class="p">)</span>   <span class="o">==</span> <span class="o">-</span><span class="mf">0.062874</span><span class="p">)</span> <span class="c1">#-0.062878)</span>
-    <span class="k">assert</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;sharpe&#39;</span><span class="p">],</span> <span class="mi">4</span><span class="p">)</span>  <span class="o">==</span> <span class="o">-</span><span class="mf">7.2709</span><span class="p">)</span>
-    <span class="k">assert</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mdd_pct&#39;</span><span class="p">],</span> <span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mf">0.002841</span><span class="p">)</span></div>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">evaluate_returns</span><span class="p">(</span><span class="n">plot</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">display_summary</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">return_metrics</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="k">assert</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;gmean&#39;</span><span class="p">],</span> <span class="mi">6</span><span class="p">)</span>   <span class="o">==</span>  <span class="o">-</span><span class="mf">0.062878</span><span class="p">)</span>
+    <span class="k">assert</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;sharpe&#39;</span><span class="p">],</span> <span class="mi">4</span><span class="p">)</span>  <span class="o">==</span> <span class="o">-</span><span class="mf">9.7079</span><span class="p">)</span> <span class="c1"># -7.2709)</span>
+    <span class="k">assert</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mdd_pct&#39;</span><span class="p">],</span> <span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mf">0.002574</span><span class="p">)</span> <span class="c1">#-0.002841)</span>
+    <span class="k">return</span> <span class="n">strategy</span></div>
     
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">strategy</span> <span class="o">=</span> <span class="n">test_strategy</span><span class="p">()</span>
     <span class="kn">import</span> <span class="nn">doctest</span>
     <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">optionflags</span> <span class="o">=</span> <span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
 
-<span class="c1">#cell 2</span>
+
+<span class="c1"># In[ ]:</span>
+
+
 
 
 </pre></div>

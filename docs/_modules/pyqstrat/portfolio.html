@@ -31,7 +31,12 @@
           <div class="body" role="main">
             
   <h1>Source code for pyqstrat.portfolio</h1><div class="highlight"><pre>
-<span></span><span class="c1">#cell 0</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># coding: utf-8</span>
+
+<span class="c1"># In[1]:</span>
+
+
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">reduce</span>
@@ -41,7 +46,10 @@
 <span class="kn">from</span> <span class="nn">pyqstrat.evaluator</span> <span class="k">import</span> <span class="n">compute_return_metrics</span><span class="p">,</span> <span class="n">display_return_metrics</span><span class="p">,</span> <span class="n">plot_return_metrics</span>
 <span class="kn">from</span> <span class="nn">pyqstrat.strategy</span> <span class="k">import</span> <span class="n">Strategy</span>
 
-<span class="c1">#cell 1</span>
+
+<span class="c1"># In[2]:</span>
+
+
 <div class="viewcode-block" id="Portfolio"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio">[docs]</a><span class="k">class</span> <span class="nc">Portfolio</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;A portfolio contains one or more strategies that run concurrently so you can test running strategies that are uncorrelated together.&#39;&#39;&#39;</span>
 <div class="viewcode-block" id="Portfolio.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;main&#39;</span><span class="p">):</span>

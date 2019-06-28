@@ -31,7 +31,12 @@
           <div class="body" role="main">
             
   <h1>Source code for pyqstrat.plot</h1><div class="highlight"><pre>
-<span></span><span class="c1">#cell 0</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># coding: utf-8</span>
+
+<span class="c1"># In[1]:</span>
+
+
 <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">reduce</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -737,7 +742,7 @@
             <span class="n">ax</span><span class="o">.</span><span class="n">relim</span><span class="p">()</span>
             <span class="n">ax</span><span class="o">.</span><span class="n">autoscale_view</span><span class="p">()</span>
             
-        <span class="k">return</span> <span class="n">ax_list</span></div></div>
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax_list</span></div></div>
                 
 <span class="k">def</span> <span class="nf">_group_trades_by_reason_code</span><span class="p">(</span><span class="n">trades</span><span class="p">):</span>
     <span class="n">trade_groups</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
@@ -850,7 +855,10 @@
     <span class="kn">import</span> <span class="nn">doctest</span>
     <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">optionflags</span> <span class="o">=</span> <span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
 
-<span class="c1">#cell 1</span>
+
+<span class="c1"># In[ ]:</span>
+
+
 
 
 </pre></div>
