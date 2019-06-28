@@ -8,7 +8,7 @@ from pyqstrat.plot import *
 #cell 1
 _VERBOSE = False
 
-def compute_amean(returns):
+def compute_amean(returns, periods_per_year):
     """Computes arithmetic mean of a return array, ignoring NaNs
     
     Args:
@@ -17,11 +17,11 @@ def compute_amean(returns):
     Returns:
         a float
         
-    >>> compute_amean(np.array([3, 4, np.nan]))
-    3.5
+    >>> compute_amean(np.array([0.003, 0.004, np.nan]), 252)
+    0.882
     """
     if not len(returns): return np.nan
-    return np.nanmean(returns)
+    return np.nanmean(returns) * periods_per_year
 
 def compute_periods_per_year(timestamps):
     """Computes trading periods per year for an array of numpy datetime64's.
@@ -98,13 +98,13 @@ def compute_sortino(returns, amean, periods_per_year):
         periods_per_year: number of trading periods per year
         
     >>> print(round(compute_sortino(np.array([0.001, -0.001, 0.002]), 0.001, 252), 6))
-    33.674916
+    0.133631
     '''
     if not len(returns) or not np.isfinite(amean) or periods_per_year <= 0: return np.nan
     returns = np.where((~np.isfinite(returns)), 0.0, returns)
     normalized_rets = np.where(returns > 0.0, 0.0, returns)
     sortino_denom = np.std(normalized_rets)
-    sortino = np.nan if sortino_denom == 0 else amean / sortino_denom * np.sqrt(periods_per_year)
+    sortino = np.nan if sortino_denom == 0 else amean / (sortino_denom * np.sqrt(periods_per_year))
     return sortino
 
 def compute_sharpe(returns, amean, periods_per_year):
@@ -117,12 +117,12 @@ def compute_sharpe(returns, amean, periods_per_year):
         periods_per_year: number of trading periods per year
         
     >>> round(compute_sharpe(np.array([0.001, -0.001, 0.002]), 0.001, 252), 6)
-    12.727922
+    0.050508
     '''
     if not len(returns) or not np.isfinite(amean) or periods_per_year <= 0: return np.nan
     returns = np.where((~np.isfinite(returns)), 0.0, returns)
     s = np.std(returns)
-    sharpe = np.nan if s == 0 else amean / s * np.sqrt(periods_per_year)
+    sharpe = np.nan if s == 0 else amean / (s * np.sqrt(periods_per_year))
     return sharpe
 
 def compute_equity(timestamps, starting_equity, returns):
@@ -386,7 +386,7 @@ def compute_return_metrics(timestamps, rets, starting_equity, leading_non_finite
 
     ev = Evaluator({'timestamps' : timestamps, 'returns' : rets, 'starting_equity' : starting_equity})
     ev.add_metric('periods_per_year', compute_periods_per_year, dependencies = ['timestamps'])
-    ev.add_metric('amean', compute_amean, dependencies = ['returns'])
+    ev.add_metric('amean', compute_amean, dependencies = ['returns', 'periods_per_year'])
     ev.add_metric('std', compute_std, dependencies = ['returns'])
     ev.add_metric('up_periods', lambda returns : len(returns[returns > 0]), dependencies = ['returns'])
     ev.add_metric('down_periods', lambda returns : len(returns[returns < 0]), dependencies = ['returns'])
@@ -527,5 +527,4 @@ if __name__ == "__main__":
     test_evaluator()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
-
 

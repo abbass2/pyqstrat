@@ -147,6 +147,19 @@ def np_rolling_window(a, window):
     strides = a.strides + (a.strides[-1],)
     return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
 
+def np_round(a, clip):
+    '''
+    Round an array to the nearest clip
+    
+    Args:
+        a (numpy numeric array):
+        clip (float): rounding value
+    >>> np_round(15.8, 0.25)
+    15.75
+    '''
+        
+    return np.round(np.array(a, dtype = np.float) / clip) * clip
+
 def day_of_week_num(a):
     '''
     From https://stackoverflow.com/questions/52398383/finding-day-of-the-week-for-a-datetime64

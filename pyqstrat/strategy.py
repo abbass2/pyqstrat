@@ -659,8 +659,8 @@ class Strategy:
     def __repr__(self):
         return f'{pformat(self.indicators)} {pformat(self.rules)} {pformat(self.account)}'
     
-def test_strategy():
-#if __name__ == "__main__":
+#def test_strategy():
+if __name__ == "__main__":
 
     import math
     import datetime
@@ -817,12 +817,12 @@ def test_strategy():
     strategy.run_signals()
     strategy.run_rules()
 
-    metrics = strategy.evaluate_returns(plot = False, display_summary = False)
-    assert(round(metrics['gmean'], 6)   == -0.062874) #-0.062878)
-    assert(round(metrics['sharpe'], 4)  == -7.2709)
-    assert(round(metrics['mdd_pct'], 6) == -0.002841)
+    metrics = strategy.evaluate_returns(plot = False, display_summary = False, return_metrics = True)
+    assert(round(metrics['gmean'], 6)   ==  -0.062878)
+    assert(round(metrics['sharpe'], 4)  == -9.7079) # -7.2709)
+    assert(round(metrics['mdd_pct'], 6) == -0.002574) #-0.002841)
     
-if __name__ == "__main__":
+if __name__ == "__mainx__":
     strategy = test_strategy()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
