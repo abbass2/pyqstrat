@@ -112,7 +112,7 @@ def build_example_strategy(strategy_context):
 
     strategy_context.c = prices.c.values # For use in the get_price function
 
-    strategy = pq.Strategy(timestamps, [contract_group], get_price, strategy_context = strategy_context)
+    strategy = pq.Strategy(timestamps, [contract_group], get_price, trade_lag = 1, strategy_context = strategy_context)
     
     strategy.add_indicator('o', prices.o.values)
     strategy.add_indicator('h', prices.h.values)

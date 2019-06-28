@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[2]:
+# In[1]:
 
 
 import pandas as pd
@@ -12,7 +12,7 @@ from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
 
-# In[4]:
+# In[2]:
 
 
 def sort_trade_bars_key(a):

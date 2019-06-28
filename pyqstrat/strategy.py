@@ -1,4 +1,9 @@
-#cell 0
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 import numpy as np
 import pandas as pd
 import types
@@ -13,7 +18,10 @@ from pyqstrat.pq_utils import *
 from pyqstrat.pq_types import ContractGroup
 from pyqstrat.plot import TimeSeries, trade_sets_by_reason_code, Subplot, Plot
 
-#cell 1
+
+# In[3]:
+
+
 def _get_time_series_list(timestamps, names, values, properties):
     ts_list = []
     for name in names:
@@ -29,7 +37,7 @@ def _get_time_series_list(timestamps, names, values, properties):
     return ts_list
 
 class Strategy:
-    def __init__(self, timestamps, contract_groups, price_function, starting_equity = 1.0e6, pnl_calc_time = 15 * 60 + 1, trade_lag = 1,
+    def __init__(self, timestamps, contract_groups, price_function, starting_equity = 1.0e6, pnl_calc_time = 15 * 60 + 1, trade_lag = 0,
                  run_final_calc = True, strategy_context = None):
         '''
         Args:
@@ -41,7 +49,7 @@ class Strategy:
             pnl_calc_time (int, optional): Time of day used to calculate PNL.  Default 15 * 60 (3 pm)
             trade_lag (int, optional): Number of bars you want between the order and the trade.  For example, if you think it will take
                 5 seconds to place your order in the market, and your bar size is 1 second, set this to 5.  Set this to 0 if you
-                want to execute your trade at the same time as you place the order, for example, if you have daily bars.  Default 1.
+                want to execute your trade at the same time as you place the order, for example, if you have daily bars.  Default 0.
             run_final_calc (bool, optional): If set, calculates unrealized pnl and net pnl as well as realized pnl when strategy is done.
                 If you don't need unrealized pnl, turn this off for faster run time. Default True
             strategy_context (:obj:`types.SimpleNamespace`, optional): A storage class where you can store key / value pairs 
@@ -568,8 +576,7 @@ class Strategy:
         if pnl_columns is None: pnl_columns = ['equity']
         
         for contract_group in contract_groups:
-            primary_indicator_names = [ind_name for ind_name in self.indicator_values[contract_group].__dict__ \
-                                       if hasattr(self.indicator_values[contract_group], ind_name)]
+            primary_indicator_names = [ind_name for ind_name in self.indicator_values[contract_group].__dict__                                        if hasattr(self.indicator_values[contract_group], ind_name)]
             if primary_indicators:
                 primary_indicator_names = list(set(primary_indicator_names).intersection(primary_indicators))
             secondary_indicator_names = []
@@ -659,8 +666,8 @@ class Strategy:
     def __repr__(self):
         return f'{pformat(self.indicators)} {pformat(self.rules)} {pformat(self.account)}'
     
-#def test_strategy():
-if __name__ == "__main__":
+def test_strategy():
+#if __name__ == "__main__":
 
     import math
     import datetime
@@ -733,8 +740,7 @@ if __name__ == "__main__":
         curr_equity = account.equity(timestamp)
         order_qty = np.round(curr_equity * risk_percent / indicators.c[i] * np.sign(signal_value))
         trigger_price = indicators.c[i]
-        print(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp}' + \
-              f' risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
+        print(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp}' +               f' risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
         reason_code = ReasonCode.ENTER_LONG if order_qty > 0 else ReasonCode.ENTER_SHORT
         orders.append(MarketOrder(contract, timestamp, order_qty, reason_code = reason_code))
         return orders
@@ -795,7 +801,7 @@ if __name__ == "__main__":
 
     strategy_context = SimpleNamespace(ko_price = ko_prices.c.values, pep_price = pep_prices.c.values)
 
-    strategy = Strategy(timestamps, [ko_contract_group, pep_contract_group], get_price, strategy_context = strategy_context)
+    strategy = Strategy(timestamps, [ko_contract_group, pep_contract_group], get_price, trade_lag = 1, strategy_context = strategy_context)
     for tup in [(ko_contract_group, ko_prices), (pep_contract_group, pep_prices)]:
         for column in ['o', 'h', 'l', 'c']:
             strategy.add_indicator(column, tup[1][column], contract_groups = [tup[0]])
@@ -821,12 +827,16 @@ if __name__ == "__main__":
     assert(round(metrics['gmean'], 6)   ==  -0.062878)
     assert(round(metrics['sharpe'], 4)  == -9.7079) # -7.2709)
     assert(round(metrics['mdd_pct'], 6) == -0.002574) #-0.002841)
+    return strategy
     
-if __name__ == "__mainx__":
+if __name__ == "__main__":
     strategy = test_strategy()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
 
-#cell 2
+
+# In[ ]:
+
+
 
 

@@ -1,4 +1,9 @@
-#cell 0
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 import math
 import types
 import numpy as np

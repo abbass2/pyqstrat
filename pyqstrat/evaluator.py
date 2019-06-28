@@ -1,11 +1,19 @@
-#cell 0
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 import warnings
 import pandas as pd
 import numpy as np
 from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
-#cell 1
+
+# In[2]:
+
+
 _VERBOSE = False
 
 def compute_amean(returns, periods_per_year):
@@ -77,7 +85,9 @@ def compute_gmean(timestamps, returns, periods_per_year):
     if not len(returns): return np.nan
     assert(len(returns) == len(timestamps))
     assert(isinstance(timestamps, np.ndarray) and isinstance(returns, np.ndarray))
-    returns = returns[np.isfinite(returns)]
+    mask = np.isfinite(returns)
+    timestamps = timestamps[mask]
+    returns = returns[mask]
     num_periods = compute_num_periods(timestamps, periods_per_year)
     g_mean = ((1.0 + returns).prod())**(1.0/num_periods)
     g_mean = np.power(g_mean, periods_per_year) - 1.0
