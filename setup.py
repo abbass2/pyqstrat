@@ -73,6 +73,9 @@ else:
 if sys.platform in ["unix"]:
     extra_link_args.append("-D_GLIBCXX_USE_CXX11_ABI=0")
 
+if sys.platform in ["win32", "cygwin"]:
+    extra_link_args.append("-DH5_BUILT_AS_DYNAMIC_LIB")
+
 if sys.platform in ["darwin"]:
     extra_link_args.append("-stdlib=libc++")
     extra_link_args.append("-mmacosx-version-min=10.7")
