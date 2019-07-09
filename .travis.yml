@@ -25,8 +25,7 @@ install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  #- conda create --channel conda-forge --override-channels -q -n test-environment python=$TRAVIS_PYTHON_VERSION arrow-cpp pybind11 pytest pandas numpy matplotlib scipy ipython pyarrow
-  - conda create --channel conda-forge -vv -q -n test-environment python=$TRAVIS_PYTHON_VERSION arrow-cpp pybind11 pytest pandas numpy matplotlib scipy ipython pyarrow sortedcontainers
+  - conda create --channel conda-forge -vv -q -n test-environment python=$TRAVIS_PYTHON_VERSION arrow-cpp pybind11 pytest pandas numpy matplotlib scipy ipython pyarrow sortedcontainers libzip hdf5
   - source activate test-environment
   - CXX=g++-5 CC=g++-5 python setup.py build_ext --inplace
 
