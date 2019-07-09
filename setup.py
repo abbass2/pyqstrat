@@ -86,7 +86,8 @@ libraries = [
     'z',
     'arrow',
     'zip',
-    'hdf5_cpp'
+    'hdf5_cpp',
+    'hdf5'
 ]
 
 if sys.platform not in ["win32", "cygwin"]:
