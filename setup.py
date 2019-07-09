@@ -169,6 +169,7 @@ class BuildExt(build_ext):
         elif ct == 'msvc':
             opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
             opts.append('/DH5_BUILT_AS_DYNAMIC_LIB')
+            opts.append('/DHDF5_PLUGIN')
         for ext in self.extensions:
             ext.extra_compile_args = opts
         try:
