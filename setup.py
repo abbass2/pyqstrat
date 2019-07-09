@@ -73,9 +73,6 @@ else:
 if sys.platform in ["unix"]:
     extra_link_args.append("-D_GLIBCXX_USE_CXX11_ABI=0")
 
-if sys.platform in ["win32", "cygwin"]:
-    extra_link_args.append("-DH5_BUILT_AS_DYNAMIC_LIB")
-
 if sys.platform in ["darwin"]:
     extra_link_args.append("-stdlib=libc++")
     extra_link_args.append("-mmacosx-version-min=10.7")
@@ -169,8 +166,7 @@ class BuildExt(build_ext):
                 opts.append('-fvisibility=hidden')
         elif ct == 'msvc':
             opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
-            opts.append('/DH5_BUILT_AS_DYNAMIC_LIB')
-            opts.append('/DHDF5_PLUGIN')
+            opts.append('/DH5_BUILT_AS_DYNAMIC_LIB') # For windows, we need this so we link against dynamic hdf5 lib instead of static linking
         for ext in self.extensions:
             ext.extra_compile_args = opts
         try:
