@@ -6,6 +6,13 @@
 #include <sys/types.h>
 #include<iostream>
 
+#ifdef _WIN32
+
+#include <process.h> // For getpid on Windows
+
+#endif
+
+
 #include "text_file_processor.hpp"
 
 using namespace std;

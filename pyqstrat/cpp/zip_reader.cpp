@@ -19,7 +19,7 @@ private:
     char buffer_[s_size];
     int underflow() {
         zip_int64_t rc(zip_fread(this->file_, this->buffer_, s_size));
-        this->setg(this->buffer_, this->buffer_, this->buffer_ + std::max(0ll, rc));
+        this->setg(this->buffer_, this->buffer_, this->buffer_ + std::max(static_cast<zip_int64_t>(0), rc));
         return this->gptr() == this->egptr() ? traits_type::eof() : traits_type::to_int_type(*this->gptr());
     }
 };

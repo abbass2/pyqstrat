@@ -7,11 +7,8 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <fstream>
 
-#else
-
-#include <process.h>
-
 #endif
+
 
 #include "utils.hpp"
 #include "zip_reader.hpp"
