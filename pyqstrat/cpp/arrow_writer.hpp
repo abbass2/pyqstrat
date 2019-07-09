@@ -33,10 +33,10 @@ inline void check_arrow_status(arrow::Status status,
 
 class ArrowWriter : public Writer {
 public:
-    explicit ArrowWriter(const std::string& output_file_prefix, const Schema& schema, bool create_batch_id_file, int max_batch_size = -1);
+    explicit ArrowWriter(const std::string& output_file_prefix, const Schema& schema);
     void add_record(int line_number, const Tuple& tuple) override;
     void add_tuple(int line_number, const py::tuple& py_tuple);
-    void write_batch(const std::string& batch_id = "") override;
+    void write_batch(const std::string& batch_id) override;
     void close(bool success = true) override;
     virtual ~ArrowWriter();
 private:
@@ -58,11 +58,8 @@ private:
     std::string _output_file_prefix;
     std::shared_ptr<arrow::Schema> _schema;
     std::shared_ptr<arrow::Schema> _id_schema;
-    bool _create_batch_id_file;
-    int _max_batch_size;
     std::vector<std::string> _batch_ids;
     std::vector<int> _line_num;
-    int _record_num;
     std::shared_ptr<arrow::ipc::RecordBatchWriter> _batch_writer;
     std::shared_ptr<arrow::io::OutputStream> _output_stream;
     std::vector<void*> _arrays;
@@ -70,12 +67,7 @@ private:
 };
 
 struct ArrowWriterCreator : public WriterCreator {
-    std::shared_ptr<Writer> call(const std::string& output_file_prefix, const Schema& schema, bool create_batch_id_file, int batch_size) override;
+    std::shared_ptr<Writer> call(const std::string& output_file_prefix, const Schema& schema) override;
 };
-
-/*inline std::shared_ptr<Writer> arrow_writer_creator(const std::string& output_file_prefix, const Schema& schema, bool create_batch_id_file, int batch_size) {
-    std::shared_ptr<ArrowWriter> ptr(new ArrowWriter(output_file_prefix, schema, create_batch_id_file, batch_size));
-    return std::dynamic_pointer_cast<Writer>(ptr);
-}*/
 
 #endif /* arrow_writer_hpp */

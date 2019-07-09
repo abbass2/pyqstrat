@@ -48,13 +48,10 @@ void open_arrow_file(const string& filename, shared_ptr<arrow::Schema> schema,
     check_arrow(RecordBatchFileWriter::Open(output_stream.get(), schema, &batch_writer));
 }
 
-ArrowWriter::ArrowWriter(const std::string& output_file_prefix, const Schema& schema, bool create_batch_id_file, int max_batch_size) :
+ArrowWriter::ArrowWriter(const std::string& output_file_prefix, const Schema& schema) :
     _output_file_prefix(output_file_prefix),
-    _create_batch_id_file(create_batch_id_file),
-    _max_batch_size(max_batch_size),
     _batch_ids(vector<string>()),
     _line_num(vector<int>()),
-    _record_num(0),
     _batch_writer(0),
     _output_stream(0),
     _closed(true) {
@@ -67,7 +64,6 @@ ArrowWriter::ArrowWriter(const std::string& output_file_prefix, const Schema& sc
         _arrays.push_back(get_builder(schema_record.second));
     }
     _schema = make_shared<arrow::Schema>(fields);
-    if (_max_batch_size == -1) max_batch_size = 1000000;
     if (_output_file_prefix[_output_file_prefix.size() - 1] == '.')
         _output_file_prefix = _output_file_prefix.substr(0, _output_file_prefix.size() - 1);
     open_arrow_file(_output_file_prefix + ".arrow.tmp", _schema, _batch_writer, _output_stream);
@@ -113,11 +109,6 @@ void ArrowWriter::add_record(int line_number, const Tuple& tuple) {
         i++;
     }
     _line_num.push_back(line_number);
-    _record_num ++;
-    if (_record_num == _max_batch_size) {
-        write_batch();
-        _record_num = 0;
-    }
 }
 
 void ArrowWriter::add_tuple(int line_number, const py::tuple& tuple) {
@@ -170,11 +161,6 @@ void ArrowWriter::add_tuple(int line_number, const py::tuple& tuple) {
         i++;
     }
     _line_num.push_back(line_number);
-    _record_num++;
-    if (_record_num == _max_batch_size) {
-        write_batch();
-        _record_num = 0;
-    }
 }
 
 arrow::ArrayBuilder* ArrowWriter::get_array_builder(int i) {
@@ -201,10 +187,9 @@ arrow::ArrayBuilder* ArrowWriter::get_array_builder(int i) {
 }
 
 void ArrowWriter::write_batch(const std::string& batch_id) {
-    if (_create_batch_id_file) {
-        if (batch_id.size() == 0) error("batch id must be provided if create_batch_id_file was set");
-        _batch_ids.push_back(batch_id);
-    }
+    if (batch_id.size() == 0) error("batch id was empty");
+    _batch_ids.push_back(batch_id);
+
     vector<shared_ptr<arrow::Array>> arrays;
     for (int i = 0; i < static_cast<int>(_arrays.size()); ++i) {
         shared_ptr<arrow::Array> array;
@@ -215,9 +200,7 @@ void ArrowWriter::write_batch(const std::string& batch_id) {
     size_t batch_size = arrays[0]->length();
     if (batch_size == 0) return;
     auto batch = arrow::RecordBatch::Make(_schema, batch_size, arrays);
-    if (_record_num < _max_batch_size) batch = batch->Slice(0, _record_num);
     check_arrow(_batch_writer->WriteRecordBatch(*batch));
-    _record_num = 0;
     
     for (int i = 0; i < static_cast<int>(_arrays.size()); ++i) {
         auto builder = get_array_builder(i);
@@ -227,40 +210,34 @@ void ArrowWriter::write_batch(const std::string& batch_id) {
 
 void ArrowWriter::close(bool success) {
     if (_closed) return;
-    if (_record_num > 0) {
-        if (_create_batch_id_file) error("unsaved rows remaining: " << _record_num << " please call write_batch");
-        write_batch();
-    }
     if (_batch_writer) check_arrow(_batch_writer->Close());
     if (_output_stream) check_arrow(_output_stream->Close());
             
-    if (_create_batch_id_file) {
-        auto id_schema = make_shared<arrow::Schema>(vector<shared_ptr<arrow::Field>>{
-            arrow::field("id", arrow::utf8()),
-            arrow::field("batch_id", arrow::int32())
-        });
+    auto id_schema = make_shared<arrow::Schema>(vector<shared_ptr<arrow::Field>>{
+        arrow::field("id", arrow::utf8()),
+        arrow::field("batch_id", arrow::int32())
+    });
 
-        auto id_builder = shared_ptr<arrow::StringBuilder>(new arrow::StringBuilder());
-        check_arrow(id_builder->AppendValues(_batch_ids));
-        
-        auto batch_id_builder = shared_ptr<arrow::Int32Builder>(new arrow::Int32Builder());
-        auto vals = arange<int>(0, static_cast<int>(_batch_ids.size()));
-        check_arrow(batch_id_builder->AppendValues(vals));
-        
-        std::shared_ptr<arrow::Array> id_array; check_arrow(id_builder->Finish(&id_array));
-        std::shared_ptr<arrow::Array> batch_id_array; check_arrow(batch_id_builder->Finish(&batch_id_array));
-        
-        size_t id_batch_size = id_array->length();
-        
-        auto id_batch = arrow::RecordBatch::Make(id_schema, id_batch_size, {id_array, batch_id_array});
-        std::shared_ptr<arrow::ipc::RecordBatchWriter> batch_id_writer;
-        std::shared_ptr<arrow::io::OutputStream> batch_id_output_stream;
-        open_arrow_file(_output_file_prefix + ".batch_ids.arrow.tmp", id_schema, batch_id_writer, batch_id_output_stream);
-        check_arrow(batch_id_writer->WriteRecordBatch(*id_batch));
-        check_arrow(batch_id_writer->Close());
-        check_arrow(batch_id_output_stream->Close());
-    }
-        
+    auto id_builder = shared_ptr<arrow::StringBuilder>(new arrow::StringBuilder());
+    check_arrow(id_builder->AppendValues(_batch_ids));
+    
+    auto batch_id_builder = shared_ptr<arrow::Int32Builder>(new arrow::Int32Builder());
+    auto vals = arange<int>(0, static_cast<int>(_batch_ids.size()));
+    check_arrow(batch_id_builder->AppendValues(vals));
+    
+    std::shared_ptr<arrow::Array> id_array; check_arrow(id_builder->Finish(&id_array));
+    std::shared_ptr<arrow::Array> batch_id_array; check_arrow(batch_id_builder->Finish(&batch_id_array));
+    
+    size_t id_batch_size = id_array->length();
+    
+    auto id_batch = arrow::RecordBatch::Make(id_schema, id_batch_size, {id_array, batch_id_array});
+    std::shared_ptr<arrow::ipc::RecordBatchWriter> batch_id_writer;
+    std::shared_ptr<arrow::io::OutputStream> batch_id_output_stream;
+    open_arrow_file(_output_file_prefix + ".batch_ids.arrow.tmp", id_schema, batch_id_writer, batch_id_output_stream);
+    check_arrow(batch_id_writer->WriteRecordBatch(*id_batch));
+    check_arrow(batch_id_writer->Close());
+    check_arrow(batch_id_output_stream->Close());
+    
     if (success) {
         std::rename((_output_file_prefix + ".arrow.tmp").c_str(), (_output_file_prefix + ".arrow").c_str());
         std::rename((_output_file_prefix + ".batch_ids.arrow.tmp").c_str(), (_output_file_prefix + ".batch_ids.arrow").c_str());
@@ -280,7 +257,7 @@ void test_arrow_writer() {
     
     Schema schema;
     schema.types = vector<pair<string, Schema::Type>>{make_pair("a", Schema::BOOL), make_pair("b", Schema::INT32)};
-    auto writer = ArrowWriter("/tmp/test", schema, false, 1);
+    auto writer = ArrowWriter("/tmp/test", schema);
     
     Tuple tuple;
     tuple.add(true);
@@ -297,10 +274,10 @@ void test_arrow_writer() {
     tuple3.add(9);
     writer.add_record(3, tuple3);
     
-    //writer.write_batch();
+    writer.write_batch("batch_1");
     writer.close();
 }
 
-std::shared_ptr<Writer> ArrowWriterCreator::call(const std::string& output_file_prefix, const Schema& schema, bool create_batch_id_file, int batch_size) {
-    return shared_ptr<Writer>(new ArrowWriter(output_file_prefix, schema, create_batch_id_file, batch_size));
+std::shared_ptr<Writer> ArrowWriterCreator::call(const std::string& output_file_prefix, const Schema& schema) {
+    return shared_ptr<Writer>(new ArrowWriter(output_file_prefix, schema));
 }

@@ -6,30 +6,9 @@
 #include <sys/types.h>
 #include<iostream>
 
-#ifndef _WIN32
-
-#include <boost/iostreams/filter/bzip2.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
-#include <boost/iostreams/filter/lzma.hpp>
-#include <boost/iostreams/filter/zlib.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
-
-#else
-
-#include <process.h>
-
-#endif
-
-#include "utils.hpp"
 #include "text_file_processor.hpp"
 
 using namespace std;
-
-#ifndef _WIN32
-
-namespace io = boost::iostreams;
-
-#endif
 
 void PriceQtyMissingDataHandler::call(shared_ptr<Record> record) {
     shared_ptr<QuotePairRecord> quote_pair = dynamic_pointer_cast<QuotePairRecord>(record);
@@ -68,27 +47,6 @@ shared_ptr<Record> PrintBadLineHandler::call(int line_number, const std::string&
     return nullptr;
 }
 
-shared_ptr<StreamHolder> TextFileDecompressor::call(const string& input_filename, const string& compression) {
-    if (!compression.empty()) {
-#ifdef _WIN32
-        error("Reading compressed marketdata files not currently supported on windows");
-#endif
-    } else {
-        std::shared_ptr<ifstream> file = shared_ptr<ifstream>(new ifstream(input_filename, std::ios_base::in));
-        return shared_ptr<StreamHolder>(new StreamHolder(nullptr, nullptr, file));
-    }
-#ifndef _WIN32
-    std::shared_ptr<ifstream> file = shared_ptr<ifstream>(new ifstream(input_filename, std::ios_base::in | std::ios_base::binary));
-    auto buf = shared_ptr<io::filtering_streambuf<io::input>>(new io::filtering_streambuf<io::input>());
-    if (compression == "gzip") buf->push(boost::iostreams::gzip_decompressor());
-    else if (compression == "bz2") buf->push(io::bzip2_decompressor());
-    else if (compression == "xz") buf->push(io::lzma_decompressor());
-    else error("invalid compression: " << compression);
-    buf->push(*file);
-    auto istr = shared_ptr<istream>(new istream(buf.get()));
-    return shared_ptr<StreamHolder>(new StreamHolder(file, buf, istr));
-#endif
-}
 
 RegExLineFilter::RegExLineFilter(const std::string& pattern) : _pattern (pattern) {}
     
@@ -150,10 +108,10 @@ int TextFileProcessor::call(const std::string& input_filename, const std::string
 #else
     cout << "processing file: " << input_filename << " process id: " << getpid() << endl;
 #endif
-    shared_ptr<StreamHolder> istr = _record_generator->call(input_filename, compression);
+    shared_ptr<LineReader> istr = _record_generator->call(input_filename, compression);
     string line;
     int line_number = 0;
-    while ((*istr)(line)) {
+    while (istr->call(line)) {
         line_number++;
         //if (line_number > 200000) break;
         if (line_number <= _skip_rows) continue;

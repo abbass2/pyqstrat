@@ -82,6 +82,8 @@ if sys.platform in ["darwin"]:
 libraries = [
     'z',
     'arrow',
+    'zip',
+    'hdf5_cpp'
 ]
 
 if sys.platform not in ["win32", "cygwin"]:
@@ -101,6 +103,9 @@ ext_modules = [
             'pyqstrat/cpp/py_import_call_execute.cpp',
             'pyqstrat/cpp/pybind_options.cpp',
             'pyqstrat/cpp/options.cpp',
+            'pyqstrat/cpp/file_reader.cpp',
+            'pyqstrat/cpp/zip_reader.cpp',
+            'pyqstrat/cpp/hdf5_writer.cpp',
             'pyqstrat/cpp/lets_be_rational/normaldistribution.cpp',
             'pyqstrat/cpp/lets_be_rational/erf_cody.cpp',
             'pyqstrat/cpp/lets_be_rational/rationalcubic.cpp',
