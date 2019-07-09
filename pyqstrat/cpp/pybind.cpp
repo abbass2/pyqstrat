@@ -381,17 +381,19 @@ py::class_<type>(m, #type) \
     R"pqdoc(
     Writes out every quote we see
     )pqdoc")
-    .def(py::init<WriterCreator*, const std::string&, Schema::Type>(),
+    .def(py::init<WriterCreator*, const std::string&, bool, Schema::Type>(),
          "writer_creator"_a,
          "output_file_prefix"_a,
+         "consecutive_ids"_a,
          "timestamp_unit"_a = Schema::TIMESTAMP_MILLI,
          R"pqdoc(
-             Args:
-                 writer_creator: A function that takes an output_file_prefix, schema and returns an object
-                    implementing the :obj:`Writer` interface
-                 output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind
+            Args:
+                writer_creator: A function that takes an output_file_prefix, schema and returns an object implementing the :obj:`Writer` interface
+                    output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind
                     of data and format the file creates.  E.g. "/tmp/output_file_1"
-                timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
+                 consecutive_ids (bool): Whether we expect to see interleaved quote ids or not.  If set, we expect to see quotes for the same instrument
+                    together, and write out a batch after each instrument is done.
+                 timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
                     Defaults to Schema.TIMESTAMP_MILLI
          )pqdoc")
 
@@ -408,15 +410,18 @@ py::class_<type>(m, #type) \
                                                R"pqdoc(
                                                Writes out every quote pair we find
                                                )pqdoc")
-    .def(py::init<WriterCreator*, const std::string&, Schema::Type>(),
+    .def(py::init<WriterCreator*, const std::string&, bool, Schema::Type>(),
          "writer_creator"_a,
          "output_file_prefix"_a,
+         "consecutive_ids"_a,
          "timestamp_unit"_a = Schema::TIMESTAMP_MILLI,
          R"pqdoc(
              Args:
                  writer_creator: A function that takes an output_file_prefix, schema and returns an object
                     implementing the :obj:`Writer` interface
                  output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind of data and format the file creates.  E.g. "/tmp/output_file_1"
+                consecutive_ids (bool): Whether we expect to see interleaved quote ids or not.  If set, we expect to see quotes for the same instrument
+                    together, and write out a batch after each instrument is done.
                  timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch. Defaults to Schema.TIMESTAMP_MILLI
          )pqdoc")
     

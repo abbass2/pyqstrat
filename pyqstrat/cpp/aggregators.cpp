@@ -272,7 +272,9 @@ QuoteTOBAggregator::~QuoteTOBAggregator() {
 }
 
 AllQuoteAggregator::AllQuoteAggregator(WriterCreator* writer_creator, const std::string& output_file_prefix,
-                       Schema::Type timestamp_unit)  {
+                                       bool consecutive_ids, Schema::Type timestamp_unit) :
+_consecutive_ids(consecutive_ids),
+_line_number_offset(0) {
     if (!writer_creator) error("writer creator must be specified");
     Schema schema;
     schema.types = {
@@ -291,6 +293,11 @@ void AllQuoteAggregator::call(const Record* record, int line_number) {
     auto pquote = dynamic_cast<const QuoteRecord*>(record);
     if (pquote == nullptr) return;
     auto quote = *pquote;
+    
+    if ((_consecutive_ids) && (_prev_id != quote.id) && (!_prev_id.empty())) {
+        _writer->write_batch(_prev_id);
+        _line_number_offset = line_number;
+    }
 
     Tuple tuple;
     tuple.add(quote.id);
@@ -299,17 +306,23 @@ void AllQuoteAggregator::call(const Record* record, int line_number) {
     tuple.add(quote.qty);
     tuple.add(quote.price);
     tuple.add(quote.metadata);
-    _writer->add_record(line_number, tuple);
+    _writer->add_record(line_number - _line_number_offset + 1, tuple);
+    _prev_id = quote.id;
 }
 
 AllQuoteAggregator::~AllQuoteAggregator() {
-    if (_writer) {
+    if (!_writer) return;
+    if (!_consecutive_ids) {
         _writer->write_batch("all");
+        return;
     }
+    if (_prev_id.size()) _writer->write_batch(_prev_id);
 }
 
 AllQuotePairAggregator::AllQuotePairAggregator(WriterCreator* writer_creator, const std::string& output_file_prefix,
-                                       Schema::Type timestamp_unit)  {
+                                               bool consecutive_ids, Schema::Type timestamp_unit):
+    _consecutive_ids(consecutive_ids),
+    _line_number_offset(0) {
     if (!writer_creator) error("writer creator must be specified");
     Schema schema;
     schema.types = {
@@ -329,6 +342,11 @@ void AllQuotePairAggregator::call(const Record* record, int line_number) {
     auto pquote = dynamic_cast<const QuotePairRecord*>(record);
     if (pquote == nullptr) return;
     auto quote = *pquote;
+    
+    if ((_consecutive_ids) && (_prev_id != quote.id) && (!_prev_id.empty())) {
+        _writer->write_batch(_prev_id);
+        _line_number_offset = line_number; // Start line number from 0 when we do a new batch
+    }
 
     Tuple tuple;
     tuple.add(quote.id);
@@ -338,13 +356,17 @@ void AllQuotePairAggregator::call(const Record* record, int line_number) {
     tuple.add(quote.ask_price);
     tuple.add(quote.ask_qty);
     tuple.add(quote.metadata);
-    _writer->add_record(line_number, tuple);
+    _writer->add_record(line_number - _line_number_offset + 1, tuple);
+    _prev_id = quote.id;
 }
 
 AllQuotePairAggregator::~AllQuotePairAggregator() {
-    if (_writer) {
+    if (!_writer) return;
+    if (!_consecutive_ids) {
         _writer->write_batch("all");
+        return;
     }
+    if (_prev_id.size()) _writer->write_batch(_prev_id);
 }
 
 AllTradeAggregator::AllTradeAggregator(WriterCreator* writer_creator, const std::string& output_file_prefix,

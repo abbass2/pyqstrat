@@ -73,8 +73,9 @@ void delete_array(Schema::Type type, void* array) {
 
 }
 
-DSetCreatPropList get_dataset_props() {
+DSetCreatPropList get_dataset_props(size_t max_size) {
     DSetCreatPropList ds_props;  // create dataset creation prop list
+    if (max_size < 10000) return ds_props;
     hsize_t chunk_size[1]{10000};
     ds_props.setChunk( 1, chunk_size);  // then modify it for compression
     ds_props.setDeflate( 6 ); // Compression level set to 6
@@ -82,19 +83,17 @@ DSetCreatPropList get_dataset_props() {
 }
 
 void write(const std::string& name, Group& group, vector<uint8_t>* vec) {
-    hsize_t dims[1];
-    dims[0] = vec->size();
+    hsize_t dims[1]{vec->size()};
     DataSpace space( 1, dims);
-    DataSet dataset = group.createDataSet(name, PredType::NATIVE_UINT8, space, get_dataset_props());
+    DataSet dataset = group.createDataSet(name, PredType::NATIVE_UINT8, space, get_dataset_props(vec->size()));
     dataset.write(vec->data(), PredType::NATIVE_UINT8);
     vec->clear();
 }
 
 void write(const std::string& name, Group& group, vector<int32_t>* vec) {
-    hsize_t dims[1];
-    dims[0] = vec->size();
+    hsize_t dims[1]{vec->size()};
     DataSpace space( 1, dims);
-    DataSet dataset = group.createDataSet(name, PredType::NATIVE_INT32, space, get_dataset_props());
+    DataSet dataset = group.createDataSet(name, PredType::NATIVE_INT32, space, get_dataset_props(vec->size()));
     dataset.write(vec->data(), PredType::NATIVE_INT32);
     vec->clear();
 }
@@ -102,7 +101,7 @@ void write(const std::string& name, Group& group, vector<int32_t>* vec) {
 void write(const std::string& name, Group& group, vector<int64_t>* vec) {
     hsize_t dims[1]{vec->size()};
     DataSpace space( 1, dims);
-    DataSet dataset = group.createDataSet(name, PredType::NATIVE_INT64, space, get_dataset_props());
+    DataSet dataset = group.createDataSet(name, PredType::NATIVE_INT64, space, get_dataset_props(vec->size()));
     dataset.write(vec->data(), PredType::NATIVE_INT64);
     vec->clear();
 }
@@ -110,7 +109,7 @@ void write(const std::string& name, Group& group, vector<int64_t>* vec) {
 void write(const std::string& name, Group& group, vector<float>* vec) {
     hsize_t dims[1]{vec->size()};
     DataSpace space( 1, dims);
-    DataSet dataset = group.createDataSet(name, PredType::NATIVE_FLOAT, space, get_dataset_props());
+    DataSet dataset = group.createDataSet(name, PredType::NATIVE_FLOAT, space, get_dataset_props(vec->size()));
     dataset.write(vec->data(), PredType::NATIVE_FLOAT);
     vec->clear();
 }
@@ -118,7 +117,7 @@ void write(const std::string& name, Group& group, vector<float>* vec) {
 void write(const std::string& name, Group& group, vector<double>* vec) {
     hsize_t dims[1]{vec->size()};
     DataSpace space( 1, dims);
-    DataSet dataset = group.createDataSet(name, PredType::NATIVE_DOUBLE, space, get_dataset_props());
+    DataSet dataset = group.createDataSet(name, PredType::NATIVE_DOUBLE, space, get_dataset_props(vec->size()));
     dataset.write(vec->data(), PredType::NATIVE_DOUBLE);
     vec->clear();
 }
@@ -126,7 +125,7 @@ void write(const std::string& name, Group& group, vector<double>* vec) {
 void write(const std::string& name, Group& group, vector<string>* vec) {
     hsize_t dims[1]{vec->size()};
     DataSpace space( 1, dims);
-    DataSet dataset = group.createDataSet(name, STR_TYPE, space, get_dataset_props());
+    DataSet dataset = group.createDataSet(name, STR_TYPE, space, get_dataset_props(vec->size()));
     vector<const char*> strvec = vector<const char*>(vec->size());
     for (size_t i = 0; i < vec->size(); ++i) {
         strvec[i] = (*vec)[i].c_str();
@@ -134,8 +133,6 @@ void write(const std::string& name, Group& group, vector<string>* vec) {
     dataset.write(strvec.data(), STR_TYPE);
     vec->clear();
 }
-
-//TODO: Add batch ids
 
 void write_data(Group& group, const std::pair<std::string, Schema::Type>& field, void* array) {
     if (field.second == Schema::Type::INT32) write(field.first, group, reinterpret_cast<vector<int32_t>*>(array));
@@ -268,8 +265,9 @@ void HDF5Writer::write_batch(const std::string& batch_id) {
     
     Group group = _file->createGroup(tmp_group_name);
     
-    DataSet dataset = group.createDataSet("line_num", PredType::NATIVE_INT, dspace, get_dataset_props());
+    DataSet dataset = group.createDataSet("line_num", PredType::NATIVE_INT, dspace, get_dataset_props(_line_num.size()));
     dataset.write(_line_num.data(), PredType::NATIVE_INT);
+    _line_num.clear();
     
     int i = 0;
     for (auto field : _schema.types) {
