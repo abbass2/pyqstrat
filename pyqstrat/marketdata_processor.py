@@ -131,7 +131,8 @@ class TextHeaderParser:
             return headers
         
             parts = input_filename.split('.')
- 
+            
+            
 def text_file_record_generator(filename, compression):
     """
     A helper function that returns an object that we can use to iterate through lines in the input file
@@ -150,10 +151,10 @@ def text_file_record_generator(filename, compression):
         return bz2.BZ2File(filename, 'r')
     if compression == 'zip':
         import zipfile
-        zf = zipfile.ZipFile(filename, mode, zipfile.ZIP_DEFLATED)
-        zip_names = zf.namelist()
+        zf = zipfile.ZipFile(filename, mode = 'r', compression = zipfile.ZIP_DEFLATED)
+        zip_infos = zf.infolist()
+        zip_names = [zi.filename for zi in zip_infos if not zi.is_dir() ]
         if len(zip_names) == 0: raise ValueError(f'zero files found in ZIP file {filename}')
-        if len(zip_names) > 1: raise ValueError(f'{len(zip_names)} files found in ZIP file {filename} {zip_names}.  Only 1 allowed')
         return zf.open(zip_names.pop())
     if compression == 'xz':
         import_lzma

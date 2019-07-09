@@ -73,11 +73,19 @@ void delete_array(Schema::Type type, void* array) {
 
 }
 
+DSetCreatPropList get_dataset_props() {
+    DSetCreatPropList ds_props;  // create dataset creation prop list
+    hsize_t chunk_size[1]{10000};
+    ds_props.setChunk( 1, chunk_size);  // then modify it for compression
+    ds_props.setDeflate( 6 ); // Compression level set to 6
+    return ds_props;
+}
+
 void write(const std::string& name, Group& group, vector<uint8_t>* vec) {
     hsize_t dims[1];
     dims[0] = vec->size();
     DataSpace space( 1, dims);
-    DataSet dataset = group.createDataSet(name, PredType::NATIVE_UINT8, space);
+    DataSet dataset = group.createDataSet(name, PredType::NATIVE_UINT8, space, get_dataset_props());
     dataset.write(vec->data(), PredType::NATIVE_UINT8);
     vec->clear();
 }
@@ -86,7 +94,7 @@ void write(const std::string& name, Group& group, vector<int32_t>* vec) {
     hsize_t dims[1];
     dims[0] = vec->size();
     DataSpace space( 1, dims);
-    DataSet dataset = group.createDataSet(name, PredType::NATIVE_INT32, space);
+    DataSet dataset = group.createDataSet(name, PredType::NATIVE_INT32, space, get_dataset_props());
     dataset.write(vec->data(), PredType::NATIVE_INT32);
     vec->clear();
 }
@@ -94,7 +102,7 @@ void write(const std::string& name, Group& group, vector<int32_t>* vec) {
 void write(const std::string& name, Group& group, vector<int64_t>* vec) {
     hsize_t dims[1]{vec->size()};
     DataSpace space( 1, dims);
-    DataSet dataset = group.createDataSet(name, PredType::NATIVE_INT64, space);
+    DataSet dataset = group.createDataSet(name, PredType::NATIVE_INT64, space, get_dataset_props());
     dataset.write(vec->data(), PredType::NATIVE_INT64);
     vec->clear();
 }
@@ -102,7 +110,7 @@ void write(const std::string& name, Group& group, vector<int64_t>* vec) {
 void write(const std::string& name, Group& group, vector<float>* vec) {
     hsize_t dims[1]{vec->size()};
     DataSpace space( 1, dims);
-    DataSet dataset = group.createDataSet(name, PredType::NATIVE_FLOAT, space);
+    DataSet dataset = group.createDataSet(name, PredType::NATIVE_FLOAT, space, get_dataset_props());
     dataset.write(vec->data(), PredType::NATIVE_FLOAT);
     vec->clear();
 }
@@ -110,7 +118,7 @@ void write(const std::string& name, Group& group, vector<float>* vec) {
 void write(const std::string& name, Group& group, vector<double>* vec) {
     hsize_t dims[1]{vec->size()};
     DataSpace space( 1, dims);
-    DataSet dataset = group.createDataSet(name, PredType::NATIVE_DOUBLE, space);
+    DataSet dataset = group.createDataSet(name, PredType::NATIVE_DOUBLE, space, get_dataset_props());
     dataset.write(vec->data(), PredType::NATIVE_DOUBLE);
     vec->clear();
 }
@@ -118,7 +126,7 @@ void write(const std::string& name, Group& group, vector<double>* vec) {
 void write(const std::string& name, Group& group, vector<string>* vec) {
     hsize_t dims[1]{vec->size()};
     DataSpace space( 1, dims);
-    DataSet dataset = group.createDataSet(name, STR_TYPE, space);
+    DataSet dataset = group.createDataSet(name, STR_TYPE, space, get_dataset_props());
     vector<const char*> strvec = vector<const char*>(vec->size());
     for (size_t i = 0; i < vec->size(); ++i) {
         strvec[i] = (*vec)[i].c_str();
@@ -260,7 +268,7 @@ void HDF5Writer::write_batch(const std::string& batch_id) {
     
     Group group = _file->createGroup(tmp_group_name);
     
-    DataSet dataset = group.createDataSet("line_num", PredType::NATIVE_INT, dspace);
+    DataSet dataset = group.createDataSet("line_num", PredType::NATIVE_INT, dspace, get_dataset_props());
     dataset.write(_line_num.data(), PredType::NATIVE_INT);
     
     int i = 0;
