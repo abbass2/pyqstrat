@@ -5,11 +5,10 @@
 #include <boost/iostreams/filter/lzma.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
-#include <fstream>
 
 #endif
 
-
+#include <fstream>
 #include "utils.hpp"
 #include "zip_reader.hpp"
 
