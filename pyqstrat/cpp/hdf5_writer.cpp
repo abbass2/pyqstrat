@@ -10,6 +10,8 @@
 using namespace std;
 using namespace H5;
 
+static const hsize_t CHUNK_SIZE = 10000;
+
 hid_t create_strtype() {
     hid_t str_type = H5Tcopy (H5T_C_S1);
     H5Tset_size (str_type, H5T_VARIABLE);
@@ -70,15 +72,16 @@ void delete_array(Schema::Type type, void* array) {
         default:
             error("unknown type:" << type);
     }
-
 }
 
 DSetCreatPropList get_dataset_props(size_t max_size) {
     DSetCreatPropList ds_props;  // create dataset creation prop list
-    if (max_size < 10000) return ds_props;
-    hsize_t chunk_size[1]{10000};
-    ds_props.setChunk( 1, chunk_size);  // then modify it for compression
-    ds_props.setDeflate( 6 ); // Compression level set to 6
+    if (max_size < CHUNK_SIZE) return ds_props;
+    ds_props.setShuffle(); // Supposed to improve gzip and szip compression
+    ds_props.setFletcher32();  // Add checksum for corruption
+    hsize_t chunk_size[1]{CHUNK_SIZE};
+    ds_props.setChunk(1, chunk_size);  // then modify it for compression
+    ds_props.setDeflate(6); // Compression level set to 6
     return ds_props;
 }
 
@@ -157,6 +160,13 @@ HDF5Writer::HDF5Writer(const std::string& output_file_prefix, const Schema& sche
     }
     if (_output_file_prefix[_output_file_prefix.size() - 1] == '.')
         _output_file_prefix = _output_file_prefix.substr(0, _output_file_prefix.size() - 1);
+        
+    /*H5::FileAccPropList fileAccPropList = H5::FileAccPropList::DEFAULT;
+    int    mdc_nelmts  = 4096; // h5: number of items in meta data cache
+    size_t rdcc_nelmts = 4096; // h5: number of items in raw data chunk cache
+    size_t rdcc_nbytes = 5 * 1024 * 1024; // h5: raw data chunk cache size (in bytes) per dataset
+    double rdcc_w0     = 1.0;    // h5: preemption policy
+    fileAccPropList.setCache(mdc_nelmts, rdcc_nelmts, rdcc_nbytes, rdcc_w0); */
     
     _file = shared_ptr<H5File>(new H5File(output_file_prefix + ".hdf5.tmp", H5F_ACC_TRUNC));
     _closed = false;
@@ -165,8 +175,7 @@ HDF5Writer::HDF5Writer(const std::string& output_file_prefix, const Schema& sche
 
 void HDF5Writer::add_record(int line_number, const Tuple& tuple) {
     int i = 0;
-    for (auto field : _schema.types)
-    {
+    for (auto field : _schema.types) {
         Schema::Type id = field.second;
         switch (id) {
             case Schema::Type::BOOL:
@@ -210,8 +219,7 @@ void HDF5Writer::add_tuple(int line_number, const py::tuple& tuple) {
     string sval;
     
     int i = 0;
-    for (auto field : _schema.types)
-    {
+    for (auto field : _schema.types) {
         if (i == 0) { //skip line number
             i = 1;
             continue;
@@ -283,20 +291,10 @@ void HDF5Writer::write_batch(const std::string& batch_id) {
 void HDF5Writer::close(bool success) {
     if (_closed) return;
     
-    if (!_batch_ids.size()) {
+    if (!_batch_ids.empty()) {
         if (_file->exists("index.tmp")) _file->unlink("index.tmp");
         Group group = _file->createGroup("index.tmp");
-        hsize_t dims[1];
-        dims[0] = _batch_ids.size();
-        DataSpace dspace( 1, dims);
-        DataSet dataset = group.createDataSet("group_names", STR_TYPE, dspace);
-        //Convert vector<string> to vector<const char*> so we can write to hdf5
-        vector<const char*> batch_ids;
-        for (auto batch_id : _batch_ids) {
-            batch_ids.push_back(batch_id.c_str());
-        }
-        dataset.write(batch_ids.data(), STR_TYPE);
-        dataset.close();
+        write("group_names", group, &_batch_ids);
         if (_file->exists("index")) _file->unlink("index");
         _file->move("index.tmp", "index");
     }
