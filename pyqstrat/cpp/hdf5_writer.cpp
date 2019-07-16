@@ -197,7 +197,8 @@ std::pair<size_t, void*> get_vec_props(void *array, Schema::Type type) {
 void write_data(Group& group, const std::pair<std::string, Schema::Type>& field, void* array) {
     if (field.second == Schema::Type::STRING) {
         vector<string>* vec = reinterpret_cast<vector<string>*>(array);
-        const char* strvec[vec->size()];
+        size_t len = vec->size();
+        const char* strvec[len];
         int i = 0;
         for (const string& str : *vec) {
             strvec[i] = str.c_str();
