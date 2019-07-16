@@ -198,7 +198,7 @@ void write_data(Group& group, const std::pair<std::string, Schema::Type>& field,
     if (field.second == Schema::Type::STRING) {
         vector<string>* vec = reinterpret_cast<vector<string>*>(array);
         size_t len = vec->size();
-        const char* strvec[len];
+        const char** strvec = new const char*[len];
         int i = 0;
         for (const string& str : *vec) {
             strvec[i] = str.c_str();
@@ -206,6 +206,7 @@ void write_data(Group& group, const std::pair<std::string, Schema::Type>& field,
         }
         DataSet dataset = group.openDataSet(field.first);
         write_array(dataset, field.second, vec->size(), static_cast<const void*>(strvec));
+        delete[] strvec;
     } else {
         pair<size_t, const void*> vec_props = get_vec_props(array, field.second);
         DataSet dataset = group.openDataSet(field.first);

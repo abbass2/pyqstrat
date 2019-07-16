@@ -5,7 +5,7 @@
 #include "text_file_parsers.hpp"
 #include "test_quote_pair.hpp"
 
-int run_python2() {
+int run_python() {
     // Run python
     int argc = 4;
     const char *argv2[] = {
@@ -17,23 +17,13 @@ int run_python2() {
     return import_call_execute(argc, argv2);
 }
 
-int run_python() {
-    // Run python
-    int argc = 4;
-    const char *argv2[] = {
-        "ipython","/Users/sal/Developer/pyqstrat:/Users/sal/Developer/pyqdata:/Users/sal/Developer:/Users/sal/Developer/obc/apps/research/spx_options",
-        "obc.apps.research.spx_options.enrich_option_prices_minute",
-        "run"};
-    return import_call_execute(argc, argv2);
-}
-
 int main() {
     //test_zip_reader(); //TODO: Create test zip file
-    /*test_zip_file_reader();
+    //test_zip_file_reader();
     test_fixed_width_time_parser();
     test_hdf5_writer();
     test_hdf5_lib();
-    test_quote_pair_processing();*/
-    run_python();
+    test_quote_pair_processing();
+    //run_python();
     return 0;
 }
