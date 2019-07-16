@@ -257,9 +257,9 @@ def process_marketdata_file(input_filename,
     
     if base_date_mapper is not None: base_date = base_date_mapper(input_filename)
     
-    if not is_newer(input_filename, output_file_prefix + '.done'):
-        print(f'{output_file_prefix + ".done"} exists and is not older than: {input_filename}')
-        return
+    #if not is_newer(input_filename, output_file_prefix + '.done'):
+    #    print(f'{output_file_prefix + ".done"} exists and is not older than: {input_filename}')
+    #    return
                                 
     header_parser = header_parser_creator(header_record_generator)
     print(f'starting file: {input_filename}')

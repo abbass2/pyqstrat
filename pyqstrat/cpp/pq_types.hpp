@@ -171,7 +171,7 @@ public:
     virtual ~RecordParser() {};
 };
 
-using WriterCreator = Function<std::shared_ptr<Writer>(const std::string&, const Schema&)>;
+using WriterCreator = Function<std::shared_ptr<Writer>(const std::string&, const std::string&, const Schema&)>;
 using CheckFields = Function<bool(const std::vector<std::string>&)>;
 using TimestampParser = Function<int64_t(const std::string&)>;
 using QuoteParser = Function<std::shared_ptr<Record> (const std::vector<std::string>&)>;

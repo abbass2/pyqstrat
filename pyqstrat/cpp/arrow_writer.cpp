@@ -278,6 +278,6 @@ void test_arrow_writer() {
     writer.close();
 }
 
-std::shared_ptr<Writer> ArrowWriterCreator::call(const std::string& output_file_prefix, const Schema& schema) {
+std::shared_ptr<Writer> ArrowWriterCreator::call(const std::string& output_file_prefix, const std::string& id, const Schema& schema) {
     return shared_ptr<Writer>(new ArrowWriter(output_file_prefix, schema));
 }

@@ -128,7 +128,7 @@ TradeBarAggregator::TradeBarAggregator(WriterCreator* writer_creator, const std:
         std::make_pair("v", Schema::FLOAT32),
         std::make_pair("vwap", Schema::FLOAT32)
     };
-    _writer = writer_creator->call(output_file_prefix + "." + frequency, schema);
+    _writer = writer_creator->call(output_file_prefix + "." + frequency, "", schema);
 }
     
 void TradeBarAggregator::call(const Record* record, int line_number) {
@@ -246,7 +246,7 @@ QuoteTOBAggregator::QuoteTOBAggregator(WriterCreator* writer_creator, const std:
     schema.types.push_back(std::make_pair("bid_size", Schema::FLOAT32));
     schema.types.push_back(std::make_pair("ask", Schema::FLOAT32));
     schema.types.push_back(std::make_pair("ask_size", Schema::FLOAT32));
-    _writer = writer_creator->call(output_file_prefix + "." + frequency, schema);
+    _writer = writer_creator->call(output_file_prefix + "." + frequency, "", schema);
 }
 
 void QuoteTOBAggregator::call(const Record* record, int line_number) {
@@ -285,7 +285,7 @@ _line_number_offset(0) {
         std::make_pair("price", Schema::FLOAT32),
         std::make_pair("meta", Schema::STRING),
     };
-    _writer = writer_creator->call(output_file_prefix, schema);
+    _writer = writer_creator->call(output_file_prefix, "", schema);
 }
 
 void AllQuoteAggregator::call(const Record* record, int line_number) {
@@ -320,21 +320,18 @@ AllQuoteAggregator::~AllQuoteAggregator() {
 }
 
 AllQuotePairAggregator::AllQuotePairAggregator(WriterCreator* writer_creator, const std::string& output_file_prefix,
-                                               bool consecutive_ids, Schema::Type timestamp_unit):
-    _consecutive_ids(consecutive_ids),
-    _line_number_offset(0) {
-    if (!writer_creator) error("writer creator must be specified");
-    Schema schema;
-    schema.types = {
-        std::make_pair("id", Schema::STRING),
-        std::make_pair("timestamp", timestamp_unit),
-        std::make_pair("bid_price", Schema::FLOAT32),
-        std::make_pair("bid_qty", Schema::FLOAT32),
-        std::make_pair("ask_price", Schema::FLOAT32),
-        std::make_pair("ask_qty", Schema::FLOAT32),
-        std::make_pair("meta", Schema::STRING),
-    };
-    _writer = writer_creator->call(output_file_prefix, schema);
+                                               Schema::Type timestamp_unit):
+    _writer_creator(writer_creator),
+    _output_file_prefix(output_file_prefix) {
+    _schema.types = {
+            std::make_pair("id", Schema::STRING),
+            std::make_pair("timestamp", timestamp_unit),
+            std::make_pair("bid_price", Schema::FLOAT32),
+            std::make_pair("bid_qty", Schema::FLOAT32),
+            std::make_pair("ask_price", Schema::FLOAT32),
+            std::make_pair("ask_qty", Schema::FLOAT32),
+            std::make_pair("meta", Schema::STRING),
+        };
 }
 
 void AllQuotePairAggregator::call(const Record* record, int line_number) {
@@ -343,11 +340,14 @@ void AllQuotePairAggregator::call(const Record* record, int line_number) {
     if (pquote == nullptr) return;
     auto quote = *pquote;
     
-    if ((_consecutive_ids) && (_prev_id != quote.id) && (!_prev_id.empty())) {
-        _writer->write_batch(_prev_id);
-        _line_number_offset = line_number; // Start line number from 0 when we do a new batch
+    auto pair = _writers.find(quote.id);
+    std::shared_ptr<Writer> writer;
+    if (pair == _writers.end()) {
+        writer = _writer_creator->call(_output_file_prefix, quote.id, _schema);
+        _writers.insert(make_pair(quote.id, writer));
+    } else {
+        writer = pair->second;
     }
-
     Tuple tuple;
     tuple.add(quote.id);
     tuple.add(quote.timestamp);
@@ -356,17 +356,7 @@ void AllQuotePairAggregator::call(const Record* record, int line_number) {
     tuple.add(quote.ask_price);
     tuple.add(quote.ask_qty);
     tuple.add(quote.metadata);
-    _writer->add_record(line_number - _line_number_offset + 1, tuple);
-    _prev_id = quote.id;
-}
-
-AllQuotePairAggregator::~AllQuotePairAggregator() {
-    if (!_writer) return;
-    if (!_consecutive_ids) {
-        _writer->write_batch("all");
-        return;
-    }
-    if (_prev_id.size()) _writer->write_batch(_prev_id);
+    writer->add_record(line_number, tuple);
 }
 
 AllTradeAggregator::AllTradeAggregator(WriterCreator* writer_creator, const std::string& output_file_prefix,
@@ -380,7 +370,7 @@ AllTradeAggregator::AllTradeAggregator(WriterCreator* writer_creator, const std:
         std::make_pair("price", Schema::FLOAT32),
         std::make_pair("meta", Schema::STRING),
     };
-    _writer = writer_creator->call(output_file_prefix, schema);
+    _writer = writer_creator->call(output_file_prefix, "", schema);
 }
 
 void AllTradeAggregator::call(const Record* record, int line_number) {
@@ -414,7 +404,7 @@ AllOpenInterestAggregator::AllOpenInterestAggregator(WriterCreator* writer_creat
         std::make_pair("qty", Schema::FLOAT32),
         std::make_pair("meta", Schema::STRING),
     };
-    _writer = writer_creator->call(output_file_prefix, schema);
+    _writer = writer_creator->call(output_file_prefix, "", schema);
 }
 
 void AllOpenInterestAggregator::call(const Record* record, int line_number) {
@@ -447,7 +437,7 @@ AllOtherAggregator::AllOtherAggregator(WriterCreator* writer_creator, const std:
         std::make_pair("timestamp", timestamp_unit),
         std::make_pair("meta", Schema::STRING),
     };
-    _writer = writer_creator->call(output_file_prefix, schema);
+    _writer = writer_creator->call(output_file_prefix, "", schema);
 }
 
 void AllOtherAggregator::call(const Record* record, int line_number) {

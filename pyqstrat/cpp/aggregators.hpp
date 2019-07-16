@@ -114,16 +114,15 @@ private:
 
 class AllQuotePairAggregator final : public Aggregator {
 public:
-    AllQuotePairAggregator(WriterCreator*, const std::string& output_file_prefix, bool consecutive_ids,
+    AllQuotePairAggregator(WriterCreator*, const std::string& output_file_prefix,
                        Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
     void call(const Record* quote, int line_number) override;
-    ~AllQuotePairAggregator();
 private:
-    std::shared_ptr<Writer> _writer;
-    bool _consecutive_ids;
     std::string _id;
-    std::string _prev_id;
-    int _line_number_offset;
+    WriterCreator* _writer_creator;
+    std::string _output_file_prefix;
+    Schema _schema;
+    std::map<std::string, std::shared_ptr<Writer>> _writers;
 };
 
 class AllTradeAggregator final : public Aggregator {

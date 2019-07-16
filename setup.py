@@ -111,6 +111,7 @@ ext_modules = [
             'pyqstrat/cpp/lets_be_rational/erf_cody.cpp',
             'pyqstrat/cpp/lets_be_rational/rationalcubic.cpp',
             'pyqstrat/cpp/lets_be_rational/lets_be_rational.cpp',
+            'pyqstrat/cpp/test_quote_pair.cpp'
         ],
         include_dirs=include_dirs,
         library_dirs=library_dirs,

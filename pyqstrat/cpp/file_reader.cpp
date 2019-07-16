@@ -1,3 +1,6 @@
+#include <algorithm>
+
+
 #ifndef _WIN32
 
 #include <boost/iostreams/filter/bzip2.hpp>
@@ -68,14 +71,36 @@ shared_ptr<LineReader> TextFileDecompressor::call(const string& input_filename, 
 #endif
 }
 
+/*vector<string> intersection(const vector<string> &v1_, const vector<string> &v2_){
+    vector<string> v3;
+    vector<string> v1 = v1_;
+    vector<string> v2 = v2_;
+    sort(v1.begin(), v1.end());
+    sort(v2.begin(), v2.end());
+    set_intersection(v1.begin(),v1.end(), v2.begin(),v2.end(), back_inserter(v3));
+    return v3;
+} */
+
+
+
 class ZipLineReader : public LineReader {
 public:
-    ZipLineReader(const string& filename) :
-    _zr(filename),
+    ZipLineReader(const string& archive_filename, const vector<string>& patterns) :
+    _zr(archive_filename),
     _curr_file_index(0),
-    _curr_file_reader(nullptr),
-    _filenames(_zr.get_filenames()) {
-        if (!_filenames.empty()) _curr_file_reader = _zr.get_file_reader(_filenames[0]);
+    _curr_file_reader(nullptr) {
+        vector<string> archive_filenames = _zr.get_filenames();
+        
+        for (const string& archive_filename : archive_filenames) {
+            for (const string& pattern : patterns) {
+                if (archive_filename.find(pattern) != string::npos) {
+                    _filenames.push_back(archive_filename);
+                    break;
+                }
+            }
+        }
+        if (_filenames.empty()) return;
+        _curr_file_reader = _zr.get_file_reader(_filenames[0]);
     }
     
     bool call(std::string& line) override {
@@ -97,18 +122,28 @@ public:
     vector<string> _filenames;
 };
 
+ZipFileReader::ZipFileReader(const map<string, vector<string>>& archive_to_filenames) :
+_archive_to_filenames(archive_to_filenames) {}
 
 shared_ptr<LineReader> ZipFileReader::call(const string& input_filename, const string& compression) {
-    return shared_ptr<LineReader>(new ZipLineReader(input_filename));
+    auto p = _archive_to_filenames.find(input_filename);
+    if (p == _archive_to_filenames.end()) error(input_filename << " not found in zip");
+    return shared_ptr<LineReader>(new ZipLineReader(input_filename, p->second));
+    
 }
 
-void test_file_reader() {
-    ZipLineReader zlreader("/tmp/tmp2/20181228.zip");
+void test_zip_file_reader() {
+    string archive_name = "/Users/sal/tmp/algoseek/emini_options_1min_bars/2015/20150102.zip";
+    auto filenames = vector<string>{"EW2F5/EW2F5.P1600.csv", "EW2F5/EW2F5.C2230.csv"};
+    map<string, vector<string>> archive_to_filenames;
+    archive_to_filenames.insert(make_pair(archive_name, filenames));
+    ZipFileReader zip_file_reader(archive_to_filenames);
+    std::shared_ptr<LineReader> line_reader = zip_file_reader.call(archive_name, "zip");
     int i = 0;
     string line;
     for (;;) {
-        if (!zlreader.call(line)) break;
-        //cout << i << ":" << line << endl;
+        if (!line_reader->call(line)) break;
+        cout << i << ":" << line << endl;
         if (i % 100000 == 0) cout << i << endl;
         i++;
     }

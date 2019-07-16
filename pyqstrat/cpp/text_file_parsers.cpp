@@ -357,7 +357,26 @@ int64_t FixedWidthTimeParser::call(const std::string& timestamp) {
     return static_cast<int64_t>(round((date_micros + time_micros) / 1000.0));
 }
 
+void test_fixed_width_time_parser() {
+    FixedWidthTimeParser parser(false, 0, 4, 5, 2, 8, 2, 11, 2, 14, 2, 17, 2, 20, 3);
+    auto millisecs = parser.call("2018-01-01 00:00:01.238");
+    assert(millisecs == 1514764801238);
+    if (millisecs == 1) cout << "hello"; // Keep unused warnings away
 
+    
+    auto millisecs_cached = parser.call("2018-01-01 00:00:02.238");
+    assert(millisecs_cached == 1514764802238);
+    if (millisecs_cached == 1) cout << "hello"; // Keep unused warnings away
+    
+    FixedWidthTimeParser time_parser(false, -1, -1, -1, -1, -1, -1, 0, 2, 3, 2, 6, 2, 9, 3);
+    auto millisecs_2 = time_parser.call("08:33:22.123");
+    assert(millisecs_2 == 30802123);
+    if (millisecs_2 == 1) cout << "hello"; // Keep unused warnings away
 
+    
+    FixedWidthTimeParser time_parser3(false, -1, -1, -1, -1, -1, -1, 0, 2, 3, 2);
+    auto millisecs_3 = time_parser3.call("18:00");
+    assert(millisecs_3 == 18 * 60 * 60 * 1000);
+    if (millisecs_3 == 1) cout << "hello"; // Keep unused warnings away
 
-
+}

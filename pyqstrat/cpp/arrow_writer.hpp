@@ -67,7 +67,7 @@ private:
 };
 
 struct ArrowWriterCreator : public WriterCreator {
-    std::shared_ptr<Writer> call(const std::string& output_file_prefix, const Schema& schema) override;
+    std::shared_ptr<Writer> call(const std::string& output_file_prefix, const std::string& id, const Schema& schema) override;
 };
 
 #endif /* arrow_writer_hpp */

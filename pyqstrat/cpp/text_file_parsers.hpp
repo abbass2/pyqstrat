@@ -228,5 +228,7 @@ private:
     std::vector<std::string> _fields;
 };
 
+void test_fixed_width_time_parser();
+
 #endif /* text_file_parsers_hpp */
 

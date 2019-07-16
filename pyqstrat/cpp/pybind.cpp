@@ -105,7 +105,7 @@ py::class_<type>(m, #type) \
     
 
     // Create Trampoline classes
-    using PyWriterCreator = PyFunction<std::shared_ptr<Writer>(const std::string&, const Schema&)>;
+    using PyWriterCreator = PyFunction<std::shared_ptr<Writer>(const std::string&, const std::string&, const Schema&)>;
     using PyCheckFields = PyFunction<bool(const std::vector<std::string>&)>;
     using PyTimestampParser = PyFunction<int64_t(const std::string&)>;
     using PyRecordFieldParser = PyFunction<std::shared_ptr<Record>(const std::vector<std::string>&)>;
@@ -297,9 +297,17 @@ py::class_<type>(m, #type) \
     .def(py::init<>())
     .def("__call__", &ArrowWriterCreator::call);
     
-    py::class_<HDF5WriterCreator, WriterCreator>(m, "HDFWriterCreator")
-    .def(py::init<>())
-    .def("__call__", &HDF5WriterCreator::call);
+    py::class_<HDF5WriterCreator, WriterCreator>(m, "HDF5WriterCreator")
+    .def(py::init<const std::string&>(),
+         "group_name_delimiter_",
+         R"pqdoc(
+         Args:
+            group_name_delimiter: A one character string.  We use this to delimit group names and create parent groups.
+         
+         implementing the :obj:`Writer` interface
+         )pqdoc")
+    .def("__call__", &HDF5WriterCreator::call)
+    .def("close", &HDF5WriterCreator::close);
     
     py::class_<TradeBarAggregator, Aggregator>(m, "TradeBarAggregator",
     R"pqdoc(
@@ -410,18 +418,15 @@ py::class_<type>(m, #type) \
                                                R"pqdoc(
                                                Writes out every quote pair we find
                                                )pqdoc")
-    .def(py::init<WriterCreator*, const std::string&, bool, Schema::Type>(),
+    .def(py::init<WriterCreator*, const std::string&, Schema::Type>(),
          "writer_creator"_a,
          "output_file_prefix"_a,
-         "consecutive_ids"_a,
          "timestamp_unit"_a = Schema::TIMESTAMP_MILLI,
          R"pqdoc(
              Args:
                  writer_creator: A function that takes an output_file_prefix, schema and returns an object
                     implementing the :obj:`Writer` interface
                  output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind of data and format the file creates.  E.g. "/tmp/output_file_1"
-                consecutive_ids (bool): Whether we expect to see interleaved quote ids or not.  If set, we expect to see quotes for the same instrument
-                    together, and write out a batch after each instrument is done.
                  timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch. Defaults to Schema.TIMESTAMP_MILLI
          )pqdoc")
     
@@ -996,16 +1001,22 @@ py::class_<type>(m, #type) \
                                                       R"pqdoc(
                                                       A helper function that takes the name of a zip file and returns a function that we can use to iterate over lines in that file
                                                       )pqdoc")
-    .def(py::init<>())
+    .def(py::init<const std::map<std::string, std::vector<std::string>>&>(),
+         "archive_to_filenames"_a,
+         R"pqdoc(
+         Args:
+            archive_to_filenames (dict of list(str)): zip archive file name to list of files to read within that archive
+         )pqdoc")
+
     .def("__call__", &ZipFileReader::call,
          "filename"_a, "compression"_a,
          R"pqdoc(
          Args:
-         filename (str):  The file to read
-         compression (str): Ignored
+            filename (str):  The file to read
+            compression (str): Ignored
          
          Returns:
-         A function that takes an empty string as input, and fills in that string.  The function should return False EOF has been reached, True otherwise
+            A function that takes an empty string as input, and fills in that string.  The function should return False EOF has been reached, True otherwise
          )pqdoc");
           
     py::class_<TextFileProcessor, FileProcessor>(m, "TextFileProcessor",
