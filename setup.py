@@ -157,7 +157,7 @@ class BuildExt(build_ext):
     def build_extensions(self):
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
-        opts.append("-Wno-return-std-move") # Annoying warnings from pybind11/numpy.h
+        if ct != 'msvc': opts.append("-Wno-return-std-move") # Annoying warnings from pybind11/numpy.h
         if ct == 'unix':
             opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
             #opts.append('-D_GLIBCXX_USE_CXX11_ABI=0') # ABI for std::string changed in C++11.  See https://stackoverflow.com/questions/34571583/understanding-gcc-5s-glibcxx-use-cxx11-abi-or-the-new-abi
