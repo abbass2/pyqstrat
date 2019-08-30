@@ -820,7 +820,7 @@ def test_strategy():
     metrics = strategy.evaluate_returns(plot = False, display_summary = False, return_metrics = True)
     assert(round(metrics['gmean'], 6)   ==  -0.062878)
     assert(round(metrics['sharpe'], 4)  == -9.7079) # -7.2709)
-    assert(round(metrics['mdd_pct'], 6) == -0.002574) #-0.002841)
+    assert(round(metrics['mdd_pct'], 6) == 0.002574) #-0.002841)
     return strategy
     
 if __name__ == "__main__":
