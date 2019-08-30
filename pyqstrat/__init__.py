@@ -1,3 +1,4 @@
+# type: ignore
 from pyqstrat.pq_utils import *
 from pyqstrat.pq_types import *
 from pyqstrat.holiday_calendars import *

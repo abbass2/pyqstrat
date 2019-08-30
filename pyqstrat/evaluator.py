@@ -1,19 +1,11 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import warnings
 import pandas as pd
 import numpy as np
 from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
 
-
-# In[2]:
-
-
+#cell 1
 _VERBOSE = False
 
 def compute_amean(returns, periods_per_year):
@@ -151,26 +143,26 @@ def compute_rolling_dd(timestamps, equity):
     if not len(timestamps): return np.array([], dtype = 'M8[ns]'), np.array([], dtype = np.float)
     s = pd.Series(equity, index = timestamps)
     rolling_max = s.expanding(min_periods = 1).max()
-    dd = np.where(s >= rolling_max, 0.0, (s - rolling_max) / rolling_max)
+    dd = np.where(s >= rolling_max, 0.0, -(s - rolling_max) / rolling_max)
     return timestamps, dd
 
 def compute_maxdd_pct(rolling_dd):
     '''Compute max drawdown percentage given a numpy array of rolling drawdowns, ignoring NaNs'''
     if not len(rolling_dd): return np.nan
-    return np.nanmin(rolling_dd)
+    return np.nanmax(rolling_dd)
 
 def compute_maxdd_date(rolling_dd_dates, rolling_dd):
     ''' Compute date of max drawdown given numpy array of timestamps, and corresponding rolling dd percentages'''
     if not len(rolling_dd_dates): return pd.NaT
     assert(len(rolling_dd_dates) == len(rolling_dd))
-    return rolling_dd_dates[np.argmin(rolling_dd)]
+    return rolling_dd_dates[np.argmax(rolling_dd)]
 
 def compute_maxdd_start(rolling_dd_dates, rolling_dd, mdd_date):
     '''Compute date when max drawdown starts, given numpy array of timestamps corresponding rolling dd 
         percentages and date that max dd starts'''
     if not len(rolling_dd_dates) or pd.isnull(mdd_date): return pd.NaT
     assert(len(rolling_dd_dates) == len(rolling_dd))
-    return rolling_dd_dates[(rolling_dd >= 0) & (rolling_dd_dates < mdd_date)][-1]
+    return rolling_dd_dates[(rolling_dd <= 0) & (rolling_dd_dates < mdd_date)][-1]
 
 def compute_mar(returns, periods_per_year, mdd_pct):
     '''Compute MAR ratio, which is annualized return divided by biggest drawdown since inception.'''

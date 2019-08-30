@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import numpy as np
 import pandas as pd
 import collections

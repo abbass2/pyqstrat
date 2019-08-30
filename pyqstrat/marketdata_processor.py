@@ -10,7 +10,6 @@ import concurrent
 import pyarrow as pa
 import pathlib
 from timeit import default_timer as timer
-
 from pyqstrat import *
 
 #cell 1

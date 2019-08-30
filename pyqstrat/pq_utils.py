@@ -1,8 +1,10 @@
 #cell 0
 import os
 import tempfile
-import numpy as np
+import asyncio
 import datetime
+import numpy as np
+
 import pandas as pd
 import matplotlib as mpl
 try:
@@ -15,7 +17,7 @@ SEC_PER_DAY = 3600 * 24
 
 _HAS_DISPLAY = None
 EPOCH = datetime.datetime.utcfromtimestamp(0)
-
+()
 class ReasonCode:
     '''A class containing constants for predefined order reason codes. Prefer these predefined reason codes if they suit
     the reason you are creating your order.  Otherwise, use your own string.
@@ -321,8 +323,7 @@ def infer_frequency(timestamps):
     numeric_dates = date_2_num(timestamps)
     diff_dates = np.round(np.diff(numeric_dates), 8)
     (values,counts) = np.unique(diff_dates, return_counts=True)
-    ind = np.argmax(counts)
-    return diff_dates[ind]
+    return values[np.argmax(counts)]
 
 def series_to_array(series):
     '''Convert a pandas series to a numpy array.  If the object is not a pandas Series return it back unchanged'''
@@ -457,6 +458,46 @@ def linear_interpolate(a1, a2, x1, x2, x):
     3.450
     '''
     return np.where(x2 == x1, np.nan, a1 + (a2 - a1) * (x - x1) / (x2 - x1))
+
+import logging
+DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+LOG_FORMAT = '[%(asctime)s.%(msecs)03d %(funcName)s] %(message)s'
+
+def _add_stream_handler(logger, log_level = logging.INFO, formatter = None):
+    if formatter is None: formatter = logging.Formatter(fmt = LOG_FORMAT, datefmt = DATE_FORMAT)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    stream_handler.setLevel(log_level)
+    logger.addHandler(stream_handler)
+
+def get_main_logger():
+    main_logger = logging.getLogger('pq')
+    if len(main_logger.handlers): return main_logger
+    _add_stream_handler(main_logger)
+    main_logger.setLevel(logging.INFO)
+    main_logger.propagate = False
+    return main_logger
+
+def get_child_logger(child_name):
+    main_logger = get_main_logger() # Init handlers if needed
+    full_name = 'pq.' + child_name if child_name else 'pq'
+    logger = logging.getLogger(full_name)
+    return logger
+
+def in_ipython():
+    '''
+    Whether we are running in an ipython (or Jupyter) environment
+    '''
+    import builtins
+    return '__IPYTHON__' in vars(builtins)
+
+def async_yield():
+    '''
+    yield so any other async tasks that are ready can run 
+    '''
+    loop = asyncio.get_event_loop()
+    task = asyncio.create_task(asyncio.sleep(0))
+    result = loop.run_until_complete(task)
 
 if __name__ == "__main__":
     import doctest

@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 from collections import defaultdict
 from functools import reduce
 import pandas as pd
@@ -599,6 +594,7 @@ class Subplot:
         if self.log_y: 
             ax.set_yscale('log')
             ax.yaxis.set_major_locator(mtick.AutoLocator())
+            ax.yaxis.set_minor_locator(mtick.NullLocator())
         if self.y_tick_format:
             ax.yaxis.set_major_formatter(mtick.StrMethodFormatter(self.y_tick_format))
             
@@ -822,9 +818,6 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
 
-
-# In[ ]:
-
-
+#cell 1
 
 
