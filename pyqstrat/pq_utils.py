@@ -411,40 +411,6 @@ def get_empty_np_value(np_dtype):
     if kind == 'O' or kind == 'S' or kind == 'U': return '' # object or string or unicode
     raise Exception(f'unknown dtype: {dtype}')
     
-FUTURE_CODES_INT = {'F' : 1, 'G' : 2, 'H' : 3, 'J' : 4, 'K' : 5, 'M' : 6, 'N' : 7, 'Q' : 8, 'U' : 9, 'V' : 10, 'X' : 11, 'Z' : 12}
-FUTURES_CODES_INVERTED = dict([[v,k] for k,v in FUTURE_CODES_INT.items()])
-
-FUTURE_CODES_STR = {'F' : 'jan', 'G' : 'feb', 'H' : 'mar', 'J' : 'apr', 'K' : 'may', 'M' : 'jun', 'N' : 'jul', 'Q' : 'aug', 'U' : 'sep', 'V' : 'oct', 'X' : 'nov', 'Z' : 'dec'}
-
-def decode_future_code(future_code, as_str = True):
-    '''
-    Given a future code such as "X", return either the month number (from 1 - 12) or the month abbreviation, such as "nov"
-    
-    Args:
-        future_code (str): the one letter future code
-        as_str (bool, optional): If set, we return the abbreviation, if not, we return the month number
-        
-    >>> decode_future_code('X', as_str = False)
-    11
-    >>> decode_future_code('X')
-    'nov'
-    '''
-    
-    if len(future_code) != 1: raise Exception("Future code must be a single character")
-    if as_str:
-        if future_code not in FUTURE_CODES_STR: raise Exception(f'unknown future code: {future_code}')
-        return FUTURE_CODES_STR[future_code]
-    
-    if future_code not in FUTURE_CODES_INT: raise Exception(f'unknown future code: {future_code}')
-    return FUTURE_CODES_INT[future_code]
-
-def get_fut_code(month):
-    '''
-    Given a month number such as 3 for March, return the future code for it, e.g. H
-    >>> get_fut_code(3)
-    'H'
-    '''
-    return FUTURES_CODES_INVERTED[month]
 
 def get_temp_dir():
     if os.access('/tmp', os.W_OK):
@@ -498,6 +464,19 @@ def async_yield():
     loop = asyncio.get_event_loop()
     task = asyncio.create_task(asyncio.sleep(0))
     result = loop.run_until_complete(task)
+    
+def async_waitfor(predicate_func, timeout_secs = 5):
+    '''
+    Keep yielding until either predicate is true or timeout elapses
+    Returns when predicate is True.  If timeout elapses we raise an exception
+    '''
+    start_time = datetime.datetime.now()
+    while True:
+        async_yield()
+        if predicate_func():
+            break
+        if (datetime.datetime.now() - start_time).total_seconds() > timeout_secs:
+            raise Exception(f'timed out after: {timeout_secs} seconds')
 
 if __name__ == "__main__":
     import doctest
