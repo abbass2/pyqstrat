@@ -3,7 +3,6 @@ import numpy as np
 import datetime
 import calendar as cal
 from pyqstrat.holiday_calendars import Calendar
-from pyqstrat.pq_utils import decode_future_code
 
 def third_friday_of_month(calendar, month, year, roll = 'backward'):
     '''
