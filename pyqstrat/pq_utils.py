@@ -117,6 +117,34 @@ def strtup2date(tup):
     if tup and type(tup) is tuple and isinstance(tup[0], str): return (str2date(tup[0]), str2date(tup[1]))
     return tup
 
+def remove_dups(l, key_func = None):
+    '''
+    Remove duplicates from a list 
+    Args:
+        l (List): list to remove duplicates from
+        key_func: A function that takes a list element and converts it to a key for detecting dups
+        
+    Returns (List): A list with duplicates removed.  This is stable in the sense that original list elements will retain their order
+    
+    >>> print(remove_dups(['a', 'd', 'a', 'c']))
+    ['a', 'd', 'c']
+    >>> print(remove_dups(['a', 'd', 'A']))
+    ['a', 'd', 'c']
+    >>> print(remove_dups(['a', 'd', 'A'], key_func = lambda e : e.upper()))
+    ['a', 'd']
+    '''
+    new_list = []
+    seen = set() 
+    for element in l:
+        if key_func:
+            key = key_func(element)
+        else:
+            key = element
+        if key not in seen:
+            new_list.append(element)
+            seen.add(key)
+    return new_list
+
 def np_get_index(array, value):
     '''Get index of a value in a numpy array.  Returns -1 if the value does not exist.'''
     x = np.where(array == value)
@@ -352,6 +380,12 @@ def millis_since_epoch(dt):
     """
     return (dt - EPOCH).total_seconds() * 1000.0
 
+def day_symbol(day_int):
+    day_str = np.select([day_int == 0, day_int == 1, day_int == 2, day_int == 3, day_int == 4, day_int == 5, day_int == 6], 
+                    ['M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'], default = '')
+    if day_str.shape == (): day_str = np.asscalar(day_str)
+    return day_str
+
 def infer_compression(input_filename):
     """
     Infers compression for a file from its suffix.  For example, given "/tmp/hello.gz", this will return "gzip"
@@ -481,4 +515,12 @@ def async_waitfor(predicate_func, timeout_secs = 5):
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 1
+
+
+
+
+#cell 2
+
 
