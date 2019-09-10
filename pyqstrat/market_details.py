@@ -60,7 +60,7 @@ def get_future_code(month):
 
 def get_future_expiry(underlying: str, fut_symbol: str) -> np.datetime64:
     '''
-    >>> assert(get_future_expiry(calendar, 'ESH8') == numpy.datetime64('2018-03-16T08:30'))
+    >>> assert(get_future_expiry('ES', 'ESH8') == np.datetime64('2018-03-16T08:30'))
     '''
     assert underlying == 'ES', f'underlying: {underlying} not supported'
     calendar = Calendar.get_calendar(Calendar.NYSE)
@@ -182,7 +182,4 @@ def get_next_future_symbol(underlying: str, curr_future_symbol: str) -> str:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
-    
-
-
 
