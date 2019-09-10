@@ -58,13 +58,12 @@ def get_future_code(month):
     '''
     return FUTURES_CODES_INVERTED[month]
 
-def get_future_expiry(calendar, fut_symbol):
+def get_future_expiry(underlying: str, fut_symbol: str) -> np.datetime64:
     '''
-    >>> calendar = Calendar.get_calendar(Calendar.NYSE)
-    >>> get_future_expiry(calendar, 'ESH8')
-    numpy.datetime64('2018-03-16T08:30')
+    >>> assert(get_future_expiry(calendar, 'ESH8') == numpy.datetime64('2018-03-16T08:30'))
     '''
-    assert fut_symbol.startswith('ES'), f'unknown future type: {fut_symbol}'
+    assert underlying == 'ES', f'underlying: {underlying} not supported'
+    calendar = Calendar.get_calendar(Calendar.NYSE)
     month_str = fut_symbol[-2:-1]
     year_str = fut_symbol[-1:]
     month = decode_future_code(month_str, as_str = False)
@@ -134,10 +133,56 @@ def get_option_expiry(underlying, symbol, calendar):
     expiry += np.where(expiry < np.datetime64('2015-09-20'), np.timedelta64(15 * 60 + 15, 'm'), np.timedelta64(15, 'h')) 
     return expiry
 
+def get_current_fut_symbol(underlying : str, curr_date: datetime.date) -> str:
+    '''
+    >>> assert(get_current_fut_symbol('ES', datetime.date(2019, 3, 14)) == 'ESH9')
+    >>> assert(get_current_fut_symbol('ES', datetime.date(2019, 3, 15)) == 'ESM9')
+    '''
+    assert underlying == 'ES', f'underlying: {underlying} not supported'
+    calendar = Calendar.get_calendar(Calendar.NYSE)
+    year = curr_date.year
+    month = curr_date.month
+    day = curr_date.day
+    third_friday = third_friday_of_month(calendar, month, year).astype(datetime.date)
+    if month < 3 or (month == 3 and day < third_friday.day): month_str = 'H'
+    elif month < 6 or (month == 6 and day < third_friday.day): month_str = 'M'
+    elif month < 9 or (month == 9 and day < third_friday.day): month_str = 'U'
+    elif month < 12 or (month == 12 and day < third_friday.day): month_str = 'Z'
+    else:
+        month_str = 'H'
+        year += 1
+    fut_symbol = 'ES' + month_str + str(year - 2010)
+    return fut_symbol
+
+def get_previous_future_symbol(underlying: str, curr_future_symbol: str) -> str:
+    '''
+    >>> assert(get_previous_future_symbol('ES', 'ESH9') == 'ESZ8')
+    '''
+    assert underlying == 'ES', f'underlying: {underlying} not supported'
+    month = curr_future_symbol[2]
+    year = int(curr_future_symbol[3])
+    prev_month = {'H': 'Z', 'M': 'H', 'U': 'M', 'Z': 'U'}[month]
+    prev_year = year if prev_month != 'Z' else year - 1
+    if prev_year == -1: prev_year == 9
+    return f'ES{prev_month}{prev_year}'
+
+
+def get_next_future_symbol(underlying: str, curr_future_symbol: str) -> str:
+    '''
+    >>> assert(get_next_future_symbol('ES', 'ESZ8') == 'ESH9')
+    '''
+    assert underlying == 'ES', f'underlying: {underlying} not supported'
+    month = curr_future_symbol[2]
+    year = int(curr_future_symbol[3])
+    next_month = {'Z': 'H', 'H': 'M', 'M': 'U', 'U': 'Z'}[month]
+    next_year = year if next_month != 'H' else year + 1
+    if next_year == 10: next_year == 0
+    return f'ES{next_month}{next_year}'
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+    
 
-#cell 1
 
 

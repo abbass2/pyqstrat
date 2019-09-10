@@ -129,7 +129,7 @@ def remove_dups(l, key_func = None):
     >>> print(remove_dups(['a', 'd', 'a', 'c']))
     ['a', 'd', 'c']
     >>> print(remove_dups(['a', 'd', 'A']))
-    ['a', 'd', 'c']
+    ['a', 'd', 'A']
     >>> print(remove_dups(['a', 'd', 'A'], key_func = lambda e : e.upper()))
     ['a', 'd']
     '''
