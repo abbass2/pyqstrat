@@ -515,20 +515,3 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
 
-#cell 1
-async def hello():
-    print('hello')
-async def hello2():
-    print('hello2')
-    
-loop = asyncio.get_event_loop()
-loop.create_task(hello())
-loop.create_task(hello2())
-async_yield()
-
-#cell 2
-await asyncio.sleep(0)
-
-#cell 3
-
-
