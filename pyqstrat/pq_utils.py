@@ -496,8 +496,7 @@ def async_yield():
     yield so any other async tasks that are ready can run 
     '''
     loop = asyncio.get_event_loop()
-    task = asyncio.create_task(asyncio.sleep(0))
-    result = loop.run_until_complete(task)
+    loop.run_until_complete(asyncio.sleep(0))
     
 def async_waitfor(predicate_func, timeout_secs = 5):
     '''
@@ -517,10 +516,19 @@ if __name__ == "__main__":
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
 
 #cell 1
-
-
-
+async def hello():
+    print('hello')
+async def hello2():
+    print('hello2')
+    
+loop = asyncio.get_event_loop()
+loop.create_task(hello())
+loop.create_task(hello2())
+async_yield()
 
 #cell 2
+await asyncio.sleep(0)
+
+#cell 3
 
 
