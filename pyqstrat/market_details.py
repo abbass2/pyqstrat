@@ -133,10 +133,10 @@ def get_option_expiry(underlying, symbol, calendar):
     expiry += np.where(expiry < np.datetime64('2015-09-20'), np.timedelta64(15 * 60 + 15, 'm'), np.timedelta64(15, 'h')) 
     return expiry
 
-def get_current_fut_symbol(underlying : str, curr_date: datetime.date) -> str:
+def get_current_future_symbol(underlying : str, curr_date: datetime.date) -> str:
     '''
-    >>> assert(get_current_fut_symbol('ES', datetime.date(2019, 3, 14)) == 'ESH9')
-    >>> assert(get_current_fut_symbol('ES', datetime.date(2019, 3, 15)) == 'ESM9')
+    >>> assert(get_current_future_symbol('ES', datetime.date(2019, 3, 14)) == 'ESH9')
+    >>> assert(get_current_future_symbol('ES', datetime.date(2019, 3, 15)) == 'ESM9')
     '''
     assert underlying == 'ES', f'underlying: {underlying} not supported'
     calendar = Calendar.get_calendar(Calendar.NYSE)

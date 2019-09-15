@@ -491,12 +491,6 @@ def in_ipython():
     import builtins
     return '__IPYTHON__' in vars(builtins)
 
-def async_yield():
-    '''
-    yield so any other async tasks that are ready can run 
-    '''
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.sleep(0))
     
 def async_waitfor(predicate_func, timeout_secs = 5):
     '''
@@ -510,6 +504,16 @@ def async_waitfor(predicate_func, timeout_secs = 5):
             break
         if (datetime.datetime.now() - start_time).total_seconds() > timeout_secs:
             raise Exception(f'timed out after: {timeout_secs} seconds')
+            
+def async_sleep(secs : float):
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(asyncio.sleep(secs))
+    
+def async_yield():
+    '''
+    yield so any other async tasks that are ready can run 
+    '''
+    async_sleep(0)
 
 if __name__ == "__main__":
     import doctest
