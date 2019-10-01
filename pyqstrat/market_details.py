@@ -6,6 +6,8 @@ import dateutil.relativedelta as rd
 import numpy as np
 from pyqstrat.holiday_calendars import Calendar
 
+_cme_calendar = Calendar.get_calendar(Calendar.NYSE)
+
 def third_friday_of_month(calendar, month, year, roll = 'backward'):
     '''
     >>> calendar = Calendar.get_calendar(Calendar.NYSE)
@@ -62,13 +64,13 @@ def get_future_expiry(underlying: str, fut_symbol: str) -> np.datetime64:
     '''
     >>> assert(get_future_expiry('ES', 'ESH8') == np.datetime64('2018-03-16T08:30'))
     '''
+    global _cme_calendar
     assert underlying == 'ES', f'underlying: {underlying} not supported'
-    calendar = Calendar.get_calendar(Calendar.NYSE)
     month_str = fut_symbol[-2:-1]
     year_str = fut_symbol[-1:]
     month = decode_future_code(month_str, as_str = False)
     year = 2010 + int(year_str)
-    expiry_date = third_friday_of_month(calendar, month, year).astype(datetime.date)
+    expiry_date = third_friday_of_month(_cme_calendar, month, year).astype(datetime.date)
     return np.datetime64(expiry_date) + np.timedelta64(8 * 60 + 30, 'm')
 
 def decode_option_symbol(name):
@@ -110,7 +112,7 @@ def get_date_from_weekday(weekday, year, month, week):
     first_day_of_month = datetime.date(year, month, 1)
     return first_day_of_month + rd.relativedelta(weeks = week - 1, weekday = weekday)
 
-def get_option_expiry(underlying, symbol, calendar):
+def get_option_expiry(underlying, symbol):
     '''
     >>> calendar = Calendar.get_calendar(Calendar.NYSE)
     >>> get_option_expiry('ES', 'EW2Z5', calendar)
@@ -120,14 +122,15 @@ def get_option_expiry(underlying, symbol, calendar):
     >>> get_option_expiry('ES', 'EWF0', calendar)
     numpy.datetime64('2020-01-31T15:00')
     '''
+    global _cme_calendar
     assert underlying == 'ES', 'unknown underlying: {underlying}'
     assert ':' not in symbol, f'{symbol} contains : pass in option root instead'
     weekday, year, month, week = decode_option_symbol(symbol)
     expiry = get_date_from_weekday(weekday, year, month, week)
     if weekday in [rd.WE, rd.FR]:
-        expiry = calendar.add_trading_days(expiry, num_days = 0, roll = 'backward')
+        expiry = _cme_calendar.add_trading_days(expiry, num_days = 0, roll = 'backward')
     else:
-        expiry = calendar.add_trading_days(expiry, num_days = 0, roll = 'forward')
+        expiry = _cme_calendar.add_trading_days(expiry, num_days = 0, roll = 'forward')
     # Option expirations changed on 9/20/2015 from 3:15 to 3 pm - 
     # See https://www.cmegroup.com/market-regulation/files/15-384.pdf
     expiry += np.where(expiry < np.datetime64('2015-09-20'), np.timedelta64(15 * 60 + 15, 'm'), np.timedelta64(15, 'h')) 

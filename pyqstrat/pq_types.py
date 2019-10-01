@@ -1,16 +1,12 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+#cell 0
 import pandas as pd
 import numpy as np
 import types
 import datetime
 
+#cell 1
 
-# In[2]:
+    
 
 
 class ContractGroup:
