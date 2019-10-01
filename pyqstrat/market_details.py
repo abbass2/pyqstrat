@@ -114,12 +114,11 @@ def get_date_from_weekday(weekday, year, month, week):
 
 def get_option_expiry(underlying, symbol):
     '''
-    >>> calendar = Calendar.get_calendar(Calendar.NYSE)
-    >>> get_option_expiry('ES', 'EW2Z5', calendar)
+    >>> get_option_expiry('ES', 'EW2Z5')
     numpy.datetime64('2015-12-11T15:00')
-    >>> get_option_expiry('ES', 'E3AF7', calendar)
+    >>> get_option_expiry('ES', 'E3AF7')
     numpy.datetime64('2017-01-17T15:00')
-    >>> get_option_expiry('ES', 'EWF0', calendar)
+    >>> get_option_expiry('ES', 'EWF0')
     numpy.datetime64('2020-01-31T15:00')
     '''
     global _cme_calendar
