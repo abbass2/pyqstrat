@@ -6,6 +6,7 @@
 **/*.pyc
 **/.pytest_cache/**
 **/__pycache__/**
+**/.mypy_cache/**
 **/*.so
 **/var/**
 .DS_Store
