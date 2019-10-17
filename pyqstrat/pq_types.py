@@ -2,20 +2,22 @@
 import pandas as pd
 import numpy as np
 import types
+import math
 import datetime
-
-#cell 1
-
-    
+from types import SimpleNamespace
+from typing import MutableSet, Mapping, Optional, Union, Any
 
 
 class ContractGroup:
     '''A way to group contracts for figuring out which indicators, rules and signals to apply to a contract and for PNL reporting'''
 
-    _group_names = set()
+    _group_names: MutableSet = set()
+    name: str
+    contracts: MutableSet['Contract']
+    contracts_by_symbol: Mapping[str, 'Contract']
     
     @staticmethod
-    def clear():
+    def clear() -> None:
         '''
         When running Python interactively you may create a ContractGroup with a given name multiple times because you don't restart Python 
         therefore global variables are not cleared.  This function clears global ContractGroups
@@ -23,7 +25,7 @@ class ContractGroup:
         ContractGroup._group_names = set()
         
     @staticmethod
-    def create(name):
+    def create(name) -> 'ContractGroup':
         '''
          Args:
             name (str): Name of the group
@@ -47,26 +49,34 @@ class ContractGroup:
     def __repr__(self):
         return self.name
 
-class Contract:
-    _symbol_names = set()
 
+class Contract:
+    _symbol_names: MutableSet[str] = set()
+    symbol: str
+    expiry: np.datetime64
+    multiplier: float
+    properties: SimpleNamespace
+    contract_group: ContractGroup
+        
+    contracts_by_symbol: Mapping[str, 'Contract']
 
     '''A contract such as a stock, option or a future that can be traded'''
     @staticmethod
-    def create(symbol, contract_group, expiry = None, multiplier = 1., properties = None):
+    def create(symbol: str, contract_group: ContractGroup, expiry: Optional[Union[np.datetime64, datetime.datetime]] = None, multiplier: float = 1., 
+               properties: Optional[SimpleNamespace] = None) -> 'Contract':
         '''
         Args:
-            symbol (str): A unique string reprenting this contract. e.g IBM or ESH9
-            contract_group (:obj:`ContractGroup`): We sometimes need to group contracts for calculating PNL, for example, you may have a strategy
+            symbol: A unique string reprenting this contract. e.g IBM or ESH9
+            contract_group: We sometimes need to group contracts for calculating PNL, for example, you may have a strategy
                 which has 3 legs, a long option, a short option and a future or equity used to hedge delta.  In this case, you will be trading
                 different symbols over time as options and futures expire, but you may want to track PNL for each leg using a contract group for each leg.
                 So you could create contract groups 'Long Option', 'Short Option' and 'Hedge' and assign contracts to these.
-            expiry (obj:`np.datetime64` or :obj:`datetime.datetime`, optional): In the case of a future or option, the date and time when the 
+            expiry: In the case of a future or option, the date and time when the 
                 contract expires.  For equities and other non expiring contracts, set this to None.  Default None.
-            multiplier (float, optional): If the market price convention is per unit, and the unit is not the same as contract size, 
+            multiplier: If the market price convention is per unit, and the unit is not the same as contract size, 
                 set the multiplier here. For example, for E-mini contracts, each contract is 50 units and the price is per unit, 
                 so multiplier would be 50.  Default 1
-            properties (obj:`types.SimpleNamespace`, optional): Any data you want to store with this contract.
+            properties: Any data you want to store with this contract.
                 For example, you may want to store option strike.  Default None
         '''
         assert(isinstance(symbol, str) and len(symbol) > 0)
@@ -76,7 +86,6 @@ class Contract:
 
         #assert(isinstance(contract_group, ContractGroup))
         assert(multiplier > 0)
-
 
         contract = Contract()
         contract.symbol = symbol
@@ -98,34 +107,251 @@ class Contract:
         return contract
     
     @staticmethod
-    def clear():
+    def clear() -> None:
         '''
         When running Python interactively you may create a Contract with a given symbol multiple times because you don't restart Python 
         therefore global variables are not cleared.  This function clears global Contracts
         '''
         Contract._symbol_names = set()
    
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'{self.symbol}' + (f' {self.multiplier}' if self.multiplier != 1 else '') + (
             f' expiry: {self.expiry.astype(datetime.datetime):%Y-%m-%d %H:%M:%S}' if self.expiry is not None else '') + (
             f' group: {self.contract_group.name}' if self.contract_group else '') + (
             f' {self.properties.__dict__}' if self.properties.__dict__ else '')
 
-class Trade:
-    def __init__(self, contract, timestamp, qty, price, fee = 0., commission = 0., order = None, properties = None):
+
+class OrderStatus:
+    '''
+    Enum for order status
+    '''
+    OPEN = 'open'
+    FILLED = 'filled'
+    
+
+class ReasonCode:
+    '''A class containing constants for predefined order reason codes. Prefer these predefined reason codes if they suit
+    the reason you are creating your order.  Otherwise, use your own string.
+    '''
+    ENTER_LONG = 'enter long'
+    ENTER_SHORT = 'enter short'
+    EXIT_LONG = 'exit long'
+    EXIT_SHORT = 'exit short'
+    BACKTEST_END = 'backtest end'
+    ROLL_FUTURE = 'roll future'
+    NONE = 'none'
+    
+    # Used for plotting trades
+    MARKER_PROPERTIES = {
+        ENTER_LONG: {'symbol': 'P', 'color': 'blue', 'size': 50},
+        ENTER_SHORT: {'symbol': 'P', 'color': 'red', 'size': 50},
+        EXIT_LONG: {'symbol': 'X', 'color': 'blue', 'size': 50},
+        EXIT_SHORT: {'symbol': 'X', 'color': 'red', 'size': 50},
+        ROLL_FUTURE: {'symbol': '>', 'color': 'green', 'size': 50},
+        BACKTEST_END: {'symbol': '*', 'color': 'green', 'size': 50},
+        NONE: {'symbol': 'o', 'color': 'green', 'size': 50}
+    }
+    
+
+class Order:
+    def __init__(self):
+        self.contract: Contract = None
+        self.timestamp: np.datetime64 = None
+        self.qty: float = math.nan
+        self.reason_code: str = None
+        self.properties: SimpleNamespace = None
+        self.status: str = None
+
+
+class MarketOrder(Order):
+    def __init__(self, contract: Contract, 
+                 timestamp: np.datetime64, 
+                 qty: float, 
+                 reason_code: str = ReasonCode.NONE, 
+                 properties: SimpleNamespace = None, 
+                 status: str = 'open') -> None:
         '''
         Args:
-            contract (:obj:`Contract`):
-            timestamp (:obj:`np.datetime64`): Trade execution datetime
-            qty (float): Number of contracts or shares filled
-            price (float): Trade price
-            fee (float, optional): Fees paid to brokers or others. Default 0
-            commision (float, optional): Commission paid to brokers or others. Default 0
-            order (:obj:`pq.Order`, optional): A reference to the order that created this trade. Default None
-            properties (obj:`types.SimpleNamespace`, optional): Any data you want to store with this contract.
+            contract: The contract this order is for
+            timestamp: Time the order was placed
+            qty:  Number of contracts or shares.  Use a negative quantity for sell orders
+            reason_code: The reason this order was created.
+                Prefer a predefined constant from the ReasonCode class if it matches your reason for creating this order.
+                Default None
+            properties: Any order specific data we want to store.  Default None
+            status: Status of the order, "open", "filled", etc. Default "open"
+        '''
+        self.contract = contract
+        self.timestamp = timestamp
+        if not np.isfinite(qty) or math.isclose(qty, 0): raise Exception(f'order qty must be finite and nonzero: {qty}')
+        self.qty = qty
+        self.reason_code = reason_code
+        self.status = status
+        if properties is None: properties = types.SimpleNamespace()
+        self.properties = properties
+        
+    def __repr__(self):
+        timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
+        return f'{self.contract.symbol} {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty}' + (
+            '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + (
+            '' if not self.properties.__dict__ else f' {self.properties}') + (
+            f' {self.status}')
+            
+
+class LimitOrder(Order):
+    def __init__(self, 
+                 contract: Contract,
+                 timestamp: np.datetime64,
+                 qty: float,
+                 limit_price: float,
+                 reason_code: str = ReasonCode.NONE,
+                 properties: SimpleNamespace = None,
+                 status: str = 'open') -> None:
+        '''
+        Args:
+            contract: The contract this order is for
+            timestamp: Time the order was placed
+            qty:  Number of contracts or shares.  Use a negative quantity for sell orders
+            limit_price: Limit price (float)
+            reason_code: The reason this order was created.
+                Prefer a predefined constant from the ReasonCode class if it matches your reason for creating this order.
+                Default None
+            properties: Any order specific data we want to store.  Default None
+            status: Status of the order, "open", "filled", etc. (default "open")
+        '''
+        self.contract = contract
+        self.timestamp = timestamp
+        if not np.isfinite(qty) or math.isclose(qty, 0): raise Exception(f'order qty must be finite and nonzero: {qty}')
+        self.qty = qty
+        self.reason_code = reason_code
+        self.limit_price = limit_price
+        if properties is None: properties = types.SimpleNamespace()
+        self.properties = properties
+        self.properties.limit_price = self.limit_price
+        self.status = status
+        
+    def __repr__(self) -> str:
+        timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
+        return f'{self.contract.symbol} {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} lmt_prc: {self.limit_price}' + (
+            '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + (
+            '' if not self.properties.__dict__ else f' {self.properties}') + (
+            f' {self.status}')
+    
+
+class RollOrder(Order):
+    '''A roll order is used to roll a future from one series to the next.  It represents a sell of one future and the buying of another future.'''
+    def __init__(self, 
+                 contract: Contract, 
+                 timestamp: np.datetime64,
+                 close_qty: float,
+                 reopen_qty: float,
+                 reason_code: str = ReasonCode.ROLL_FUTURE,
+                 properties: SimpleNamespace = None, 
+                 status: str = 'open') -> None:
+        '''
+        Args:
+            contract: The contract this order is for
+            timestamp: Time the order was placed
+            close_qty: Quantity of the future you are rolling
+            reopen_qty: Quantity of the future you are rolling to
+            reason_code: The reason this order was created.
+                Prefer a predefined constant from the ReasonCode class if it matches your reason for creating this order.
+                Default None
+            properties: Any order specific data we want to store.  Default None
+            status: Status of the order, "open", "filled", etc. (default "open")
+        '''
+        self.contract = contract
+        self.timestamp = timestamp
+        if not np.isfinite(close_qty) or math.isclose(close_qty, 0) or not np.isfinite(reopen_qty) or math.isclose(reopen_qty, 0):
+            raise Exception(f'order quantities must be non-zero and finite: {close_qty} {reopen_qty}')
+        self.close_qty = close_qty
+        self.reopen_qty = reopen_qty
+        self.reason_code = reason_code
+        self.qty = close_qty  # For display purposes when we print varying order types
+        if properties is None: properties = types.SimpleNamespace()
+        self.properties = properties
+        self.properties.close_qty = self.close_qty
+        self.properties.reopen_qty = self.reopen_qty
+        self.status = status
+        
+    def __repr__(self) -> str:
+        timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
+        return f'{self.contract.symbol} {timestamp:%Y-%m-%d %H:%M:%S} close_qty: {self.close_qty} reopen_qty: {self.reopen_qty}' + (
+            '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + '' if not self.properties.__dict__ else f' {self.properties}' + (
+            f' {self.status}')
+
+  
+class StopLimitOrder(Order):
+    '''Used for stop loss or stop limit orders.  The order is triggered when price goes above or below trigger price, depending on whether this is a short
+      or long order.  Becomes either a market or limit order at that point, depending on whether you set the limit price or not.
+    '''
+    def __init__(self, 
+                 contract: Contract,
+                 timestamp: np.datetime64,
+                 qty: float,
+                 trigger_price: float,
+                 limit_price: float = np.nan,
+                 reason_code: str = ReasonCode.NONE, 
+                 properties: SimpleNamespace = None,
+                 status: str = 'open') -> None:
+        '''
+        Args:
+            contract: The contract this order is for
+            timestamp: Time the order was placed
+            qty:  Number of contracts or shares.  Use a negative quantity for sell orders
+            trigger_price: Order becomes a market or limit order if price crosses trigger_price.
+            limit_price: If not set (default), order becomes a market order when price crosses trigger price.  
+                Otherwise it becomes a limit order.  Default np.nan
+            reason_code: The reason this order was created.
+                Prefer a predefined constant from the ReasonCode class if it matches your reason for creating this order.
+                Default None
+            properties: Any order specific data we want to store.  Default None
+            status: Status of the order, "open", "filled", etc. (default "open")
+        '''      
+        self.contract = contract
+        self.timestamp = timestamp
+        if not np.isfinite(qty) or math.isclose(qty, 0): raise Exception(f'order qty must be finite and nonzero: {qty}')
+        self.qty = qty
+        self.trigger_price = trigger_price
+        self.limit_price = limit_price
+        self.reason_code = reason_code
+        self.triggered = False
+        if properties is None: properties = types.SimpleNamespace()
+        self.properties = properties
+        self.properties.trigger_price = trigger_price
+        self.properties.limit_price = limit_price
+        self.status = status
+        
+    def __repr__(self) -> str:
+        timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
+        return f'{self.contract.symbol} {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} trigger_prc: {self.trigger_price} limit_prc: {self.limit_price}' + (
+            '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + ('' if not self.properties.__dict__ else f' {self.properties}') + (
+            f' {self.status}')
+    
+
+class Trade:
+    def __init__(self, contract: Contract,
+                 order: Order,
+                 timestamp: np.datetime64, 
+                 qty: float, 
+                 price: float, 
+                 fee: float = 0., 
+                 commission: float = 0., 
+                 properties: Optional[SimpleNamespace] = None) -> None:
+        '''
+        Args:
+            contract: The contract we traded
+            order: A reference to the order that created this trade. Default None
+            timestamp: Trade execution datetime
+            qty: Number of contracts or shares filled
+            price: Trade price
+            fee: Fees paid to brokers or others. Default 0
+            commision: Commission paid to brokers or others. Default 0
+            properties: Any data you want to store with this contract.
                 For example, you may want to store bid / ask prices at time of trade.  Default None
         '''
         assert(isinstance(contract, Contract))
+        assert(isinstance(order, Order))
         assert(np.isfinite(qty))
         assert(np.isfinite(price))
         assert(np.isfinite(fee))
@@ -133,18 +359,18 @@ class Trade:
         assert(isinstance(timestamp, np.datetime64))
         
         self.contract = contract
+        self.order = order
         self.timestamp = timestamp
         self.qty = qty
         self.price = price
         self.fee = fee
         self.commission = commission
-        self.order = order
         
         if properties is None:
             properties = types.SimpleNamespace()
         self.properties = properties
         
-    def __repr__(self):
+    def __repr__(self) -> str:
         '''
         >>> Contract.clear()
         >>> ContractGroup.clear()
@@ -159,14 +385,11 @@ class Trade:
             f' {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} prc: {self.price:.6g}{fee}{commission} order: {self.order}') + (
             f' {self.properties.__dict__}' if self.properties.__dict__ else '')
     
-class OrderStatus:
-    '''
-    Enum for order status
-    '''
-    OPEN = 'open'
-    FILLED = 'filled'
     
 if __name__ == "__main__":
     import doctest
-    doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+    doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+
+#cell 1
+
 

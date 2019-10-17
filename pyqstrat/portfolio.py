@@ -1,21 +1,15 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
+#cell 0
 
 
+#cell 1
 import pandas as pd
 import numpy as np
 from functools import reduce
 import datetime
 
-from pyqstrat.pq_utils import *
+#from pyqstrat.pq_utils import *
 from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, plot_return_metrics
 from pyqstrat.strategy import Strategy
-
-
-# In[2]:
-
 
 class Portfolio:
     '''A portfolio contains one or more strategies that run concurrently so you can test running strategies that are uncorrelated together.'''
@@ -191,4 +185,7 @@ class Portfolio:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 2
+
 

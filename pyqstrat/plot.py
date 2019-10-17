@@ -17,7 +17,8 @@ from scipy.interpolate import griddata
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from IPython.display import display
-from pyqstrat.pq_utils import set_defaults, ReasonCode, series_to_array, strtup2date, has_display, resample_ts, resample_trade_bars
+from pyqstrat.pq_utils import set_defaults,  series_to_array, strtup2date, has_display, resample_ts, resample_trade_bars
+from pyqstrat.pq_types import ReasonCode
 
 set_defaults()
 

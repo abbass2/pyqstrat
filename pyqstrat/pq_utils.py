@@ -4,44 +4,26 @@ import tempfile
 import asyncio
 import datetime
 import numpy as np
-
+import logging
 import pandas as pd
 import matplotlib as mpl
+from typing import Any, Sequence, Mapping, Optional, Tuple, Callable, MutableSequence, MutableSet, Union
+
 try:
     import tkinter
-except:
+except ImportError:
     mpl.use('Agg')  # Support running in headless mode
 import matplotlib.pyplot as plt
 
-SEC_PER_DAY = 3600 * 24
 
+SEC_PER_DAY = 3600 * 24
 _HAS_DISPLAY = None
 EPOCH = datetime.datetime.utcfromtimestamp(0)
-()
-class ReasonCode:
-    '''A class containing constants for predefined order reason codes. Prefer these predefined reason codes if they suit
-    the reason you are creating your order.  Otherwise, use your own string.
-    '''
-    ENTER_LONG = 'enter long'
-    ENTER_SHORT = 'enter short'
-    EXIT_LONG = 'exit long'
-    EXIT_SHORT = 'exit short'
-    BACKTEST_END = 'backtest end'
-    ROLL_FUTURE = 'roll future'
-    NONE = 'none'
-    
-    # Used for plotting trades
-    MARKER_PROPERTIES = {
-        ENTER_LONG : {'symbol' : 'P', 'color' : 'blue', 'size' : 50},
-        ENTER_SHORT : {'symbol' : 'P', 'color' : 'red', 'size' : 50},
-        EXIT_LONG : {'symbol' : 'X', 'color' : 'blue', 'size' : 50},
-        EXIT_SHORT : {'symbol' : 'X', 'color' : 'red', 'size' : 50},
-        ROLL_FUTURE : {'symbol' : '>', 'color' : 'green', 'size' : 50},
-        BACKTEST_END : {'symbol' : '*', 'color' : 'green', 'size' : 50},
-        NONE : {'symbol' : 'o', 'color' : 'green', 'size' : 50}
-    }
- 
-def has_display():
+DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+LOG_FORMAT = '[%(asctime)s.%(msecs)03d %(funcName)s] %(message)s'
+
+
+def has_display() -> bool:
     '''
     If we are running in unit test mode or on a server, then don't try to draw graphs, etc.
     '''
@@ -51,12 +33,12 @@ def has_display():
     _HAS_DISPLAY = True
     try:
         plt.figure()
-    except:
+    except tkinter.TclError:
         _HAS_DISPLAY = False
     return _HAS_DISPLAY
 
 
-def shift_np(array, n, fill_value = None):
+def shift_np(array: np.ndarray, n: int, fill_value: Any = None) -> np.ndarray:
     '''
     Similar to pandas.Series.shift but works on numpy arrays.
     
@@ -81,7 +63,13 @@ def shift_np(array, n, fill_value = None):
         e[:n] = array[-n:]
     return e
 
-def set_defaults(df_float_sf = 8, df_display_max_rows = 200, df_display_max_columns = 99, np_seterr = 'raise', plot_style = 'ggplot', mpl_figsize = (8, 6)):
+
+def set_defaults(df_float_sf: int = 8, 
+                 df_display_max_rows: int = 200, 
+                 df_display_max_columns: int = 99,
+                 np_seterr: str = 'raise',
+                 plot_style: str = 'ggplot',
+                 mpl_figsize: Tuple[int, int] = (8, 6)) -> None:
     '''
     Set some display defaults to make it easier to view dataframes and graphs.
     
@@ -99,29 +87,32 @@ def set_defaults(df_float_sf = 8, df_display_max_rows = 200, df_display_max_colu
     if plot_style is not None: plt.style.use(plot_style)
     if mpl_figsize is not None: mpl.rcParams['figure.figsize'] = mpl_figsize
     if np_seterr is not None: np.seterr(np_seterr)
-    pd.options.mode.chained_assignment = None # Turn off bogus 'view' warnings from pandas when modifying dataframes
-    try: # This will run if we are in Jupyter
-        get_ipython().run_line_magic('matplotlib', 'inline')
-    except:
+    pd.options.mode.chained_assignment = None  # Turn off bogus 'view' warnings from pandas when modifying dataframes
+    try:  # This will run if we are in Jupyter
+        get_ipython().run_line_magic('matplotlib', 'inline')  # type: ignore  # get_ipython() is only present when running from jupyter or ipython
+    except NameError:
         pass
-    plt.rcParams.update({'figure.max_open_warning': 100}) # For unit tests, avoid warning when opening more than 20 figures
+    plt.rcParams.update({'figure.max_open_warning': 100})  # For unit tests, avoid warning when opening more than 20 figures
     
-def str2date(s):
+
+def str2date(s: str) -> np.datetime64:
     '''Converts a string like "2008-01-15 15:00:00" to a numpy datetime64.  If s is not a string, return s back'''
     if isinstance(s, str): return np.datetime64(s)
     return s
 
-def strtup2date(tup):
+
+def strtup2date(tup: Tuple[str, str]) -> Tuple[np.datetime64, np.datetime64]:
     '''Converts a string tuple like ("2008-01-15", "2009-01-16") to a numpy datetime64 tuple.  
       If the tuple does not contain strings, return it back unchanged'''
     if tup and type(tup) is tuple and isinstance(tup[0], str): return (str2date(tup[0]), str2date(tup[1]))
     return tup
 
-def remove_dups(l, key_func = None):
+
+def remove_dups(l: Sequence[Any], key_func: Callable[[Any], Any] = None) -> MutableSequence[Any]:
     '''
     Remove duplicates from a list 
     Args:
-        l (List): list to remove duplicates from
+        l: list to remove duplicates from
         key_func: A function that takes a list element and converts it to a key for detecting dups
         
     Returns (List): A list with duplicates removed.  This is stable in the sense that original list elements will retain their order
@@ -130,11 +121,11 @@ def remove_dups(l, key_func = None):
     ['a', 'd', 'c']
     >>> print(remove_dups(['a', 'd', 'A']))
     ['a', 'd', 'A']
-    >>> print(remove_dups(['a', 'd', 'A'], key_func = lambda e : e.upper()))
+    >>> print(remove_dups(['a', 'd', 'A'], key_func = lambda e: e.upper()))
     ['a', 'd']
     '''
     new_list = []
-    seen = set() 
+    seen: MutableSet[Any] = set() 
     for element in l:
         if key_func:
             key = key_func(element)
@@ -145,13 +136,15 @@ def remove_dups(l, key_func = None):
             seen.add(key)
     return new_list
 
-def np_get_index(array, value):
+
+def np_get_index(array: np.ndarray, value: Any) -> int:
     '''Get index of a value in a numpy array.  Returns -1 if the value does not exist.'''
     x = np.where(array == value)
     if len(x[0]): return x[0][0]
     return -1
 
-def np_find_closest(a, v):
+
+def np_find_closest(a: np.ndarray, v: Any) -> int:
     '''
     From https://stackoverflow.com/questions/8914491/finding-the-nearest-value-and-return-the-index-of-array-in-python
     Find index of closest value to array v in array a.  Returns an array of the same size as v
@@ -160,13 +153,14 @@ def np_find_closest(a, v):
     '''
     #a must be sorted
     idx = a.searchsorted(v)
-    idx = np.clip(idx, 1, len(a)-1)
-    left = a[idx-1]
+    idx = np.clip(idx, 1, len(a) - 1)
+    left = a[idx - 1]
     right = a[idx]
     idx -= v - left < right - v
     return idx
 
-def np_rolling_window(a, window):
+
+def np_rolling_window(a: np.ndarray, window: int) -> np.ndarray:
     '''
     For applying rolling window functions to a numpy array
     See: https://stackoverflow.com/questions/6811183/rolling-window-for-1d-arrays-in-numpy
@@ -177,37 +171,42 @@ def np_rolling_window(a, window):
     strides = a.strides + (a.strides[-1],)
     return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
 
-def np_round(a, clip):
+
+def np_round(a: np.ndarray, clip: float):
     '''
-    Round an array to the nearest clip
+    Round all elements in an array to the nearest clip
     
     Args:
-        a (numpy numeric array):
-        clip (float): rounding value
+        a: array with elements to round
+        clip: rounding value
     >>> np_round(15.8, 0.25)
     15.75
     '''
         
-    return np.round(np.array(a, dtype = np.float) / clip) * clip
+    return np.round(np.array(a, dtype=np.float) / clip) * clip
 
-def day_of_week_num(a):
+
+def day_of_week_num(a: Union[np.datetime64, np.ndarray]) -> Union[int, np.ndarray]:
     '''
     From https://stackoverflow.com/questions/52398383/finding-day-of-the-week-for-a-datetime64
     Get day of week for a numpy array of datetimes 
     Monday is 0, Sunday is 6
     
     Args:
-        a (numpy datetime64 or array of datetime64):
+        a: numpy datetime64 or array of datetime64
         
     Return:
-        numpy int or numpy ndarray of int: Monday is 0, Sunday is 6
+        int or numpy ndarray of int: Monday is 0, Sunday is 6
 
     >>> day_of_week_num(np.datetime64('2015-01-04'))
     6
     '''
-    return (a.astype('datetime64[D]').view('int64') - 4) % 7
+    ret = (a.astype('datetime64[D]').view('int64') - 4) % 7
+    if np.isscalar(ret): ret = ret.item()
+    return ret
 
-def percentile_of_score(a):
+
+def percentile_of_score(a: np.ndarray) -> np.ndarray:
     '''
     For each element in a, find the percentile of a its in.  From stackoverflow.com/a/29989971/5351549
     Like scipy.stats.percentileofscore but runs in O(n log(n)) time.
@@ -219,7 +218,8 @@ def percentile_of_score(a):
     if not len(a): return None
     return np.argsort(np.argsort(a)) * 100. / (len(a) - 1)
 
-def date_2_num(d):
+
+def date_2_num(d: Union[np.datetime64, np.ndarray]) -> Union[int, np.ndarray]:
     '''
     Adopted from matplotlib.mdates.date2num so we don't have to add a dependency on matplotlib here
     '''
@@ -239,7 +239,8 @@ def date_2_num(d):
             dt = np.nan
     return dt
 
-def resample_vwap(df, sampling_frequency):
+
+def resample_vwap(df: pd.DataFrame, sampling_frequency: str) -> np.ndarray:
     '''
     Compute weighted average of vwap given higher frequency vwap and volume
     '''
@@ -250,30 +251,31 @@ def resample_vwap(df, sampling_frequency):
     vwap = sum_2 / volume_sum
     return vwap
 
-def resample_trade_bars(df, sampling_frequency, resample_funcs = None):
+
+def resample_trade_bars(df, sampling_frequency, resample_funcs=None):
     '''Downsample trade bars using sampling frequency
     
     Args:
         df (pd.DataFrame): Must contain an index of numpy datetime64 type which is monotonically increasing
         sampling_frequency (str): See pandas frequency strings
-        resample_funcs (dict of str : int) : a dictionary of column name -> resampling function for any columns that are custom defined.  Default None.
+        resample_funcs (dict of str: int): a dictionary of column name -> resampling function for any columns that are custom defined.  Default None.
             If there is no entry for a custom column, defaults to 'last' for that column
     Returns:
         pd.DataFrame: Resampled dataframe
         
     >>> import math
-    >>> df = pd.DataFrame({'date' : np.array(['2018-01-08 15:00:00', '2018-01-09 13:30:00', '2018-01-09 15:00:00', '2018-01-11 15:00:00'], dtype = 'M8[ns]'),
-    ...          'o' : np.array([8.9, 9.1, 9.3, 8.6]), 
-    ...          'h' : np.array([9.0, 9.3, 9.4, 8.7]), 
-    ...          'l' : np.array([8.8, 9.0, 9.2, 8.4]), 
-    ...          'c' : np.array([8.95, 9.2, 9.35, 8.5]),
-    ...          'v' : np.array([200, 100, 150, 300]),
-    ...          'x' : np.array([300, 200, 100, 400])
+    >>> df = pd.DataFrame({'date': np.array(['2018-01-08 15:00:00', '2018-01-09 13:30:00', '2018-01-09 15:00:00', '2018-01-11 15:00:00'], dtype = 'M8[ns]'),
+    ...          'o': np.array([8.9, 9.1, 9.3, 8.6]), 
+    ...          'h': np.array([9.0, 9.3, 9.4, 8.7]), 
+    ...          'l': np.array([8.8, 9.0, 9.2, 8.4]), 
+    ...          'c': np.array([8.95, 9.2, 9.35, 8.5]),
+    ...          'v': np.array([200, 100, 150, 300]),
+    ...          'x': np.array([300, 200, 100, 400])
     ...         })
     >>> df['vwap'] =  0.5 * (df.l + df.h)
     >>> df.set_index('date', inplace = True)
-    >>> df = resample_trade_bars(df, sampling_frequency = 'D', resample_funcs={'x' : lambda df, 
-    ...   sampling_frequency : df.x.resample(sampling_frequency).agg(np.mean)})
+    >>> df = resample_trade_bars(df, sampling_frequency = 'D', resample_funcs={'x': lambda df, 
+    ...   sampling_frequency: df.x.resample(sampling_frequency).agg(np.mean)})
     >>> assert(len(df) == 4)
     >>> assert(math.isclose(df.vwap.iloc[1], 9.24))
     >>> assert(np.isnan(df.vwap.iloc[2]))
@@ -282,9 +284,9 @@ def resample_trade_bars(df, sampling_frequency, resample_funcs = None):
     if sampling_frequency is None: return df
     
     if resample_funcs is None: resample_funcs = {}
-    if 'vwap' in df.columns: resample_funcs.update({'vwap' : resample_vwap})
+    if 'vwap' in df.columns: resample_funcs.update({'vwap': resample_vwap})
     
-    funcs = {'o': 'first', 'h': 'max', 'l': 'min', 'c': 'last', 'v' : 'sum'}
+    funcs = {'o': 'first', 'h': 'max', 'l': 'min', 'c': 'last', 'v': 'sum'}
     
     agg_dict = {}
     
@@ -295,38 +297,46 @@ def resample_trade_bars(df, sampling_frequency, resample_funcs = None):
         if col not in resample_funcs:
             agg_dict[col] = 'last'
     
-    resampled = df.resample(sampling_frequency).agg(agg_dict).dropna(how = 'all')
+    resampled = df.resample(sampling_frequency).agg(agg_dict).dropna(how='all')
     
     for k, v in resample_funcs.items():
         res = v(df, sampling_frequency)
         if res is not None: resampled[k] = res
             
-    resampled.reset_index(inplace = True)
+    resampled.reset_index(inplace=True)
     return resampled
 
-def resample_ts(dates, values, sampling_frequency):
-    '''Downsample a pair of dates and values using sampling frequency, using the last value if it does not exist at bin edge.  See pandas.Series.resample
+
+def resample_ts(dates: np.ndarray, values: np.ndarray, sampling_frequency: str) -> Tuple[np.ndarray, np.ndarray]:
+    '''Downsample a tuple of datetimes and value arrays using sampling frequency, using the last value if it does not exist at the bin edge.
+    See pandas.Series.resample
     
     Args:
         dates: a numpy datetime64 array
         values: a numpy array
         sampling_frequency: See pandas frequency strings
+        
+    Returns:
+        Resampled tuple of datetime and value arrays
     '''
     if sampling_frequency is None: return dates, values
-    s = pd.Series(values, index = dates).resample(sampling_frequency).last()
+    s = pd.Series(values, index=dates).resample(sampling_frequency).last()
     return s.index.values, s.values
 
-def zero_to_nan(array):
+
+def zero_to_nan(array: np.ndarray) -> np.ndarray:
     '''Converts any zeros in a numpy array to nans'''
     if array is None: return None
     return np.where(array == 0, np.nan, array)
 
-def nan_to_zero(array):
+
+def nan_to_zero(array: np.ndarray) -> np.ndarray:
     '''Converts any nans in a numpy float array to 0'''
     if array is None: return None
     return np.where(np.isnan(array), 0, array)
 
-def monotonically_increasing(array):
+
+def monotonically_increasing(array: np.ndarray) -> bool:
     '''
     Returns True if the array is monotonically_increasing, False otherwise
     
@@ -338,7 +348,8 @@ def monotonically_increasing(array):
     if not len(array): return False
     return np.all(np.diff(array).astype(np.float) > 0)
 
-def infer_frequency(timestamps):
+
+def infer_frequency(timestamps: np.ndarray) -> float:
     '''Returns most common frequency of date differences as a fraction of days
     Args:
         timestamps: A numpy array of monotonically increasing datetime64
@@ -350,15 +361,17 @@ def infer_frequency(timestamps):
     assert(monotonically_increasing(timestamps))
     numeric_dates = date_2_num(timestamps)
     diff_dates = np.round(np.diff(numeric_dates), 8)
-    (values,counts) = np.unique(diff_dates, return_counts=True)
+    (values, counts) = np.unique(diff_dates, return_counts=True)
     return values[np.argmax(counts)]
 
-def series_to_array(series):
+
+def series_to_array(series: pd.Series) -> np.ndarray:
     '''Convert a pandas series to a numpy array.  If the object is not a pandas Series return it back unchanged'''
     if type(series) == pd.Series: return series.values
     return series
 
-def to_csv(df, file_name, index = False, compress = False, *args, **kwargs):
+
+def to_csv(df, file_name: str, index: bool = False, compress: bool = False, *args, **kwargs) -> None:
     """
     Creates a temporary file then renames to the permanent file so we don't have half written files.
     Also optionally compresses using the xz algorithm
@@ -368,10 +381,11 @@ def to_csv(df, file_name, index = False, compress = False, *args, **kwargs):
     if compress:
         compression = 'xz'
         suffix = '.xz'
-    df.to_csv(file_name + '.tmp', index = index, compression = compression, *args, **kwargs)
+    df.to_csv(file_name + '.tmp', index=index, compression=compression, *args, **kwargs)
     os.rename(file_name + '.tmp', file_name + suffix)
     
-def millis_since_epoch(dt):
+
+def millis_since_epoch(dt: datetime.datetime) -> float:
     """
     Given a python datetime, return number of milliseconds between the unix epoch and the datetime.
     Returns a float since it can contain fractions of milliseconds as well
@@ -380,13 +394,15 @@ def millis_since_epoch(dt):
     """
     return (dt - EPOCH).total_seconds() * 1000.0
 
-def day_symbol(day_int):
-    day_str = np.select([day_int == 0, day_int == 1, day_int == 2, day_int == 3, day_int == 4, day_int == 5, day_int == 6], 
-                    ['M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'], default = '')
+
+def day_symbol(day_int: Union[int, np.ndarray]) -> Union[str, np.ndarray]:
+    day_str = np.select([day_int == 0, day_int == 1, day_int == 2, day_int == 3, day_int == 4, day_int == 5, day_int == 6],
+                        ['M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'], default='')
     if day_str.shape == (): day_str = np.asscalar(day_str)
     return day_str
 
-def infer_compression(input_filename):
+
+def infer_compression(input_filename: str) -> Optional[str]:
     """
     Infers compression for a file from its suffix.  For example, given "/tmp/hello.gz", this will return "gzip"
     >>> infer_compression("/tmp/hello.gz")
@@ -399,19 +415,20 @@ def infer_compression(input_filename):
     suffix = parts[-1]
     if suffix == 'gz': return 'gzip'
     if suffix == 'bz2': return 'bz2'
-    if suffix =='zip': return 'zip'
+    if suffix == 'zip': return 'zip'
     if suffix == 'xz': return 'xz'
     return None
 
 
-def touch(fname, mode=0o666, dir_fd=None, **kwargs):
+def touch(fname: str, mode: int = 0o666, dir_fd: Optional[int] = None, **kwargs) -> None:
     '''replicate unix touch command, i.e create file if it doesn't exist, otherwise update timestamp'''
     flags = os.O_CREAT | os.O_APPEND
     with os.fdopen(os.open(fname, flags=flags, mode=mode, dir_fd=dir_fd)) as f:
         os.utime(f.fileno() if os.utime in os.supports_fd else fname,
-            dir_fd=None if os.supports_fd else dir_fd, **kwargs)
+                 dir_fd=None if os.supports_fd else dir_fd, **kwargs)
         
-def is_newer(filename, ref_filename):
+
+def is_newer(filename: str, ref_filename: str) -> bool:
     '''whether filename ctime (modfication time) is newer than ref_filename or either file does not exist
     >>> import time
     >>> import tempfile
@@ -430,7 +447,8 @@ def is_newer(filename, ref_filename):
     if not os.path.isfile(filename) or not os.path.isfile(ref_filename): return True
     return os.path.getmtime(filename) > os.path.getmtime(ref_filename)
 
-def get_empty_np_value(np_dtype):
+
+def get_empty_np_value(np_dtype: np.dtype) -> Any:
     '''
     Get empty value for a given numpy datatype
     >>> a = np.array(['2018-01-01', '2018-01-03'], dtype = 'M8[D]')
@@ -438,39 +456,38 @@ def get_empty_np_value(np_dtype):
     numpy.datetime64('NaT')
     '''
     kind = np_dtype.kind
-    if kind == 'f': return np.nan # float
-    if kind == 'b': return False # bool
-    if kind ==  'i' or kind == 'u': return 0 # signed or unsigned int
-    if kind == 'M': return np.datetime64('NaT') # datetime
-    if kind == 'O' or kind == 'S' or kind == 'U': return '' # object or string or unicode
-    raise Exception(f'unknown dtype: {dtype}')
+    if kind == 'f': return np.nan  # float
+    if kind == 'b': return False  # bool
+    if kind == 'i' or kind == 'u': return 0  # signed or unsigned int
+    if kind == 'M': return np.datetime64('NaT')  # datetime
+    if kind == 'O' or kind == 'S' or kind == 'U': return ''  # object or string or unicode
+    raise Exception(f'unknown dtype: {np_dtype}')
     
 
-def get_temp_dir():
+def get_temp_dir() -> str:
     if os.access('/tmp', os.W_OK):
         return '/tmp'
     else:
         return tempfile.gettempdir()
     
-def linear_interpolate(a1, a2, x1, x2, x):
+
+def linear_interpolate(a1: float, a2: float, x1: float, x2: float, x: float) -> float:
     '''
     >>> print(f'{linear_interpolate(3, 4, 8, 10, 8.9):.3f}')
     3.450
     '''
     return np.where(x2 == x1, np.nan, a1 + (a2 - a1) * (x - x1) / (x2 - x1))
 
-import logging
-DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
-LOG_FORMAT = '[%(asctime)s.%(msecs)03d %(funcName)s] %(message)s'
 
-def _add_stream_handler(logger, log_level = logging.INFO, formatter = None):
-    if formatter is None: formatter = logging.Formatter(fmt = LOG_FORMAT, datefmt = DATE_FORMAT)
+def _add_stream_handler(logger: logging.Logger, log_level: int = logging.INFO, formatter: logging.Formatter = None) -> None:
+    if formatter is None: formatter = logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT)
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(formatter)
     stream_handler.setLevel(log_level)
     logger.addHandler(stream_handler)
 
-def get_main_logger():
+
+def get_main_logger() -> logging.Logger:
     main_logger = logging.getLogger('pq')
     if len(main_logger.handlers): return main_logger
     _add_stream_handler(main_logger)
@@ -478,13 +495,15 @@ def get_main_logger():
     main_logger.propagate = False
     return main_logger
 
-def get_child_logger(child_name):
-    main_logger = get_main_logger() # Init handlers if needed
+
+def get_child_logger(child_name: str) -> logging.Logger:
+    _ = get_main_logger()  # Init handlers if needed
     full_name = 'pq.' + child_name if child_name else 'pq'
     logger = logging.getLogger(full_name)
     return logger
 
-def in_ipython():
+
+def in_ipython() -> bool:
     '''
     Whether we are running in an ipython (or Jupyter) environment
     '''
@@ -492,7 +511,7 @@ def in_ipython():
     return '__IPYTHON__' in vars(builtins)
 
     
-def async_waitfor(predicate_func, timeout_secs = 5):
+def async_waitfor(predicate_func: Callable, timeout_secs=5) -> None:
     '''
     Keep yielding until either predicate is true or timeout elapses
     Returns when predicate is True.  If timeout elapses we raise an exception
@@ -505,17 +524,20 @@ def async_waitfor(predicate_func, timeout_secs = 5):
         if (datetime.datetime.now() - start_time).total_seconds() > timeout_secs:
             raise Exception(f'timed out after: {timeout_secs} seconds')
             
-def async_sleep(secs : float):
+
+def async_sleep(secs: float) -> None:
     loop = asyncio.get_event_loop()
     loop.run_until_complete(asyncio.sleep(secs))
     
-def async_yield():
+
+def async_yield() -> None:
     '''
     yield so any other async tasks that are ready can run 
     '''
     async_sleep(0)
 
+
 if __name__ == "__main__":
     import doctest
-    doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+    doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
 

@@ -2,8 +2,13 @@
 import warnings
 import pandas as pd
 import numpy as np
+import statsmodels as sm
+import statsmodels.api as smapi
+import math
+from typing import Optional
 from pyqstrat.pq_utils import *
 from pyqstrat.plot import *
+
 
 #cell 1
 _VERBOSE = False
@@ -126,6 +131,45 @@ def compute_sharpe(returns, amean, periods_per_year):
     s = np.std(returns)
     sharpe = np.nan if s == 0 else amean / (s * np.sqrt(periods_per_year))
     return sharpe
+
+def compute_k_ratio(equity: np.ndarray, periods_per_year : int, halflife_years: Optional[float] = None) -> float:
+    '''
+    Compute k-ratio.  See https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2230949
+    
+    Args:
+        equity: a numpy array of the equity in your account
+        periods_per_year: 252 for daily values
+        hallife_years: If set, we use weighted linear regression to give less weight to older returns.
+            In this case, we compute the original k-ratio which does not use periods per year or number of observations
+            If not set, we compute the 2013 version of the k-ratio which weights k-ratio by sqrt(periods_per_year) / nobs
+        
+    Returns:
+        weighted or unweighted k-ratio
+        
+    >>> np.random.seed(0)
+    >>> t = np.arange(1000)
+    >>> ret = np.random.normal(loc = 0.0025, scale = 0.01, size = len(t))
+    >>> equity = (1 + ret).cumprod()
+    >>> assert(math.isclose(compute_k_ratio(equity, 252, None), 3.888, abs_tol=0.001))
+    >>> assert(math.isclose(compute_k_ratio(equity, 252, 0.5), 602.140, abs_tol=0.001))
+    '''
+    equity = equity[np.isfinite(equity)]
+    equity = np.log(equity)
+    t = np.arange(len(equity))
+    if halflife_years:
+        halflife = halflife_years * periods_per_year
+        k = math.log(0.5) / halflife
+        w = np.empty(len(equity), dtype = np.float)
+        w = np.exp(k * t)
+        w = w ** 2 # Statsmodels requires square of weights
+        w = w[::-1]
+        fit = sm.regression.linear_model.WLS(endog = equity, exog = t, weights = w, hasconst=False).fit()
+        k_ratio = fit.params[0] / fit.bse[0]
+    else:
+        fit = smapi.OLS(endog = equity, exog = np.arange(len(equity)), hasconst=False).fit()
+        k_ratio = fit.params[0] * math.sqrt(periods_per_year) / (fit.bse[0] * len(equity))
+
+    return k_ratio
 
 def compute_equity(timestamps, starting_equity, returns):
     ''' Given starting equity, timestamps and returns, create a numpy array of equity at each date'''
@@ -399,7 +443,10 @@ def compute_return_metrics(timestamps, rets, starting_equity, leading_non_finite
     ev.add_metric('sharpe', compute_sharpe, dependencies = ['returns', 'periods_per_year', 'amean'])
     ev.add_metric('sortino', compute_sortino, dependencies = ['returns', 'periods_per_year', 'amean'])
     ev.add_metric('equity', compute_equity, dependencies = ['timestamps', 'starting_equity', 'returns'])
-    
+    ev.add_metric('k_ratio', compute_k_ratio, dependencies = ['equity', 'periods_per_year'])
+    ev.add_metric('k_ratio_weighted', lambda equity, periods_per_year : compute_k_ratio(equity, periods_per_year, 3),
+                 dependencies=['equity', 'periods_per_year'])
+
     # Drawdowns
     ev.add_metric('rolling_dd', compute_rolling_dd, dependencies = ['timestamps', 'equity'])
     ev.add_metric('mdd_pct', lambda rolling_dd : compute_maxdd_pct(rolling_dd[1]), dependencies = ['rolling_dd'])
@@ -439,10 +486,10 @@ def display_return_metrics(metrics, float_precision = 3):
     from IPython.core.display import display
     
     _metrics = {}
-    cols = ['gmean', 'amean', 'std', 'shrp', 'srt', 'calmar', 'mar', 'mdd_pct', 'mdd_start', 'mdd_date', 'dd_3y_pct', 'up_periods', 'down_periods', 'up_pct',
-           'mdd_start_3yr', 'mdd_date_3yr']
+    cols = ['gmean', 'amean', 'std', 'shrp', 'srt', 'k', 'calmar', 'mar', 'mdd_pct', 'mdd_start', 'mdd_date', 'dd_3y_pct', 
+            'up_periods', 'down_periods', 'up_pct', 'mdd_start_3yr', 'mdd_date_3yr']
     
-    translate = {'shrp' : 'sharpe', 'srt' : 'sortino', 'dd_3y_pct' : 'mdd_pct_3yr'}
+    translate = {'shrp' : 'sharpe', 'srt' : 'sortino', 'dd_3y_pct' : 'mdd_pct_3yr', 'k' : 'k_ratio'}
     for col in cols:
         key = col
         if col in translate: key = translate[col]
@@ -463,7 +510,7 @@ def display_return_metrics(metrics, float_precision = 3):
         if isinstance(v, np.float) or isinstance(v, float):
             _metrics[k] = format_str.format(v)
        
-    cols = ['gmean', 'amean', 'std', 'shrp', 'srt', 'calmar', 'mar', 'mdd_pct', 'mdd_dates', 'dd_3y_pct', 'dd_3y_timestamps', 'up_dwn'
+    cols = ['gmean', 'amean', 'std', 'shrp', 'srt', 'k', 'calmar', 'mar', 'mdd_pct', 'mdd_dates', 'dd_3y_pct', 'dd_3y_timestamps', 'up_dwn'
            ] + [str(year) for year in sorted(years)]
     
     df = pd.DataFrame(index = [''])
@@ -529,4 +576,7 @@ if __name__ == "__main__":
     test_evaluator()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+
+#cell 2
+
 
