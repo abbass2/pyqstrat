@@ -3,6 +3,7 @@ from collections import defaultdict
 from functools import reduce
 import pandas as pd
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mtick
@@ -14,25 +15,25 @@ from mpl_toolkits import mplot3d
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.cm as cm
 from scipy.interpolate import griddata
-
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from IPython.display import display
 from pyqstrat.pq_utils import set_defaults,  series_to_array, strtup2date, has_display, resample_ts, resample_trade_bars
-from pyqstrat.pq_types import ReasonCode
+from pyqstrat.pq_types import ReasonCode, Trade
+from typing import Sequence, Tuple, Mapping, Union, MutableMapping, MutableSequence, List, Any, Optional
 
 set_defaults()
 
-_VERBOSE = False
+_VERBOSE: bool = False
 
 class DateFormatter(mtick.Formatter):
     '''
     Formats timestamps on plot axes.  See matplotlib Formatter
     '''
-    def __init__(self, timestamps, fmt):
+    def __init__(self, timestamps: np.ndarray, fmt: str) -> None:
         self.timestamps = timestamps
         self.fmt = fmt
 
-    def __call__(self, x, pos = 0):
+    def __call__(self, x, pos: int = 0):
         'Return the label for time x at position pos'
         ind = int(np.round(x))
         if ind >= len(self.timestamps) or ind < 0: return ''
@@ -40,7 +41,7 @@ class DateFormatter(mtick.Formatter):
     
 class HorizontalLine:
     '''Draws a horizontal line on a subplot'''
-    def __init__(self, y, name = None, line_type = 'dashed', color = None):
+    def __init__(self, y: float, name: str = None, line_type: str = 'dashed', color: str = None) -> None:
         self.y = y
         self.name = name
         self.line_type = line_type
@@ -48,7 +49,7 @@ class HorizontalLine:
     
 class VerticalLine:
     '''Draws a vertical line on a subplot where x axis is not a date-time axis'''
-    def __init__(self, x, name = None, line_type = 'dashed', color = None):
+    def __init__(self, x: float, name: str = None, line_type: str = 'dashed', color: str = None) -> None:
         self.x = x
         self.name = name
         self.line_type = line_type
@@ -56,7 +57,7 @@ class VerticalLine:
     
 class DateLine:
     '''Draw a vertical line on a plot with a datetime x-axis'''
-    def __init__(self, date, name = None, line_type = 'dashed', color = None):
+    def __init__(self, date: np.datetime64, name = None, line_type = 'dashed', color = None) -> None:
         self.date = date
         self.name = name
         self.line_type = line_type
@@ -64,14 +65,25 @@ class DateLine:
         
         
 class BucketedValues:
-    '''Data in a subplot where x axis is a categorical we summarize properties of a numpy array.  For example, drawing a boxplot with percentiles.'''
-    def __init__(self, name, bucket_names, bucket_values, proportional_widths = True, show_means = True, show_all = True, show_outliers = False, notched = False):
+    '''
+    Data in a subplot where we summarize properties of a numpy array.  
+        For example, drawing a boxplot with percentiles.  x axis is a categorical
+    '''
+    def __init__(self, name: str, 
+                 bucket_names: Sequence[str],
+                 bucket_values: Sequence[np.ndarray], 
+                 proportional_widths: bool = True,
+                 show_means: bool = True,
+                 show_all: bool = True,
+                 show_outliers: bool = False,
+                 notched: bool = False) -> None:
         '''
         Args:
             name: name used for this data in a plot legend
             bucket_names: list of strings used on x axis labels
             bucket_values: list of numpy arrays that are summarized in this plot
-            proportional_widths: if set to True, the width each box in the boxplot will be proportional to the number of items in its corresponding array
+            proportional_widths: if set to True, the width each box in the boxplot will be proportional 
+                to the number of items in its corresponding array
             show_means: Whether to display a marker where the mean is for each array
             show_outliers: Whether to show markers for outliers that are outside the whiskers.  
               Box is at Q1 = 25%, Q3 = 75% quantiles, whiskers are at Q1 - 1.5 * (Q3 - Q1), Q3 + 1.5 * (Q3 - Q1)
@@ -90,17 +102,18 @@ class BucketedValues:
         self.time_plot = False
         
 class XYData:
-    '''
-    Data in a subplot that has x and y values that are both arrays of floats
-    
-    '''
-    def __init__(self, name, x, y, plot_type = 'line', line_type = 'solid', line_width = None, color = None, marker = None, marker_size = 50,
-                 marker_color = 'red'):
-        '''
-        Args:
-            x: pandas series or numpy array of floats
-            y: pandas series or numpy arry of floats
-        '''
+    '''Data in a subplot that has x and y values that are both arrays of floats'''
+    def __init__(self, 
+                 name: str,
+                 x: Union[np.ndarray, pd.Series],
+                 y: Union[np.ndarray, pd.Series],
+                 plot_type: str = 'line',
+                 line_type: str = 'solid',
+                 line_width: int = None,
+                 color: str = None,
+                 marker: str = None,
+                 marker_size: int = 50,
+                 marker_color: str = 'red') -> None:
         self.name = name
         self.x = series_to_array(x)
         self.y = series_to_array(y)
@@ -116,15 +129,24 @@ class XYData:
         
 class XYZData:
     '''Data in a subplot that has x, y and z values that are all floats'''
-    def __init__(self, name, x, y, z, plot_type = 'surface', marker = 'X', marker_size = 50, marker_color = 'red', interpolation = 'linear',  cmap = 'viridis'):
+    def __init__(self, 
+                 name: str, 
+                 x: Union[np.ndarray, pd.Series],
+                 y: Union[np.ndarray, pd.Series],
+                 z: Union[np.ndarray, pd.Series],
+                 plot_type: str = 'surface',
+                 marker: str = 'X',
+                 marker_size: int = 50,
+                 marker_color: str = 'red',
+                 interpolation: str = 'linear',
+                 cmap: str = 'viridis') -> None:
         '''
         Args:
-            x: pandas series or numpy array of floats
-            y: pandas series or numpy array of floats
-            z: pandas series or numpy array of floats
             plot_type: surface or contour (default surface)
-            marker: Adds a marker to each point in x, y, z to show the actual data used for interpolation.  You can set this to None to turn markers off.
-            interpolation: Can be ‘linear’, ‘nearest’ or ‘cubic’ for plotting z points between the ones passed in.  See scipy.interpolate.griddata for details
+            marker: Adds a marker to each point in x, y, z to show the actual data used for interpolation.  
+                You can set this to None to turn markers off.
+            interpolation: Can be ‘linear’, ‘nearest’ or ‘cubic’ for plotting z points between the ones passed in.  
+                See scipy.interpolate.griddata for details
             cmap: Colormap to use (default viridis).  See matplotlib colormap for details
         '''
         self.name = name
@@ -141,12 +163,20 @@ class XYZData:
     
 class TimeSeries:
     '''Data in a subplot where x is an array of numpy datetimes and y is a numpy array of floats'''
-    def __init__(self, name, timestamps, values, plot_type = 'line', line_type = 'solid', line_width = None, color = None, marker = None, marker_size = 50,
-                 marker_color = 'red'):
-        '''Args:
+    def __init__(self, 
+                 name: str, 
+                 timestamps: Union[pd.Series, np.ndarray],
+                 values: Union[pd.Series, np.ndarray],
+                 plot_type: str = 'line',
+                 line_type: str = 'solid',
+                 line_width: int = None,
+                 color: str = None, 
+                 marker: str = None, 
+                 marker_size: int = 50,
+                 marker_color: str = 'red') -> None:
+        '''
+        Args:
             name: Name to show in plot legend
-            timestamps: pandas Series or numpy array of datetime64
-            values: pandas Series or numpy array of floats
             plot_type: 'line' or 'scatter'
             marker: If set, show a marker at each value in values.  See matplotlib marker types
         '''
@@ -163,7 +193,7 @@ class TimeSeries:
         self.marker_color = marker_color
         self.time_plot = True
         
-    def reindex(self, timestamps, fill):
+    def reindex(self, timestamps: np.ndarray, fill: bool) -> None:
         '''Reindex this series given a new array of timestamps, forward filling holes if fill is set to True'''
         s = pd.Series(self.values, index = self.timestamps)
         s = s.reindex(timestamps, method = 'ffill' if fill else None)
@@ -174,7 +204,17 @@ class TradeBarSeries:
     '''
     Data in a subplot that contains open, high, low, close, volume bars.  volume is optional.
     '''
-    def __init__(self, name, timestamps, o, h, l, c, v = None, vwap = None, colorup='darkgreen', colordown='#F2583E'):
+    def __init__(self, 
+                 name: str,
+                 timestamps: np.ndarray,
+                 o: np.ndarray,
+                 h: np.ndarray,
+                 l: np.ndarray,
+                 c: np.ndarray,
+                 v: np.ndarray = None,
+                 vwap: np.ndarray = None,
+                 colorup: str = 'darkgreen',
+                 colordown: str = '#F2583E') -> None:
         '''
         Args:
             name: Name to show in a legend
@@ -194,11 +234,11 @@ class TradeBarSeries:
         self.colordown = colordown
         self.time_plot = True
         
-    def df(self):
+    def df(self) -> pd.DataFrame:
         return pd.DataFrame({'o' : self.o, 'h' : self.h, 'l' : self.l, 'c' : self.c, 'v' : self.v, 'vwap' : self.vwap}, 
                             index = self.timestamps)[['o', 'h', 'l', 'c', 'v', 'vwap']]
         
-    def reindex(self, all_timestamps):
+    def reindex(self, all_timestamps: np.ndarray) -> None:
         df = self.df()
         df = df.reindex(all_timestamps)
         self.timestamps = all_timestamps
@@ -207,7 +247,12 @@ class TradeBarSeries:
                 
 class TradeSet:
     '''Data for subplot that contains a set of trades along with marker properties for these trades'''
-    def __init__(self, name, trades, marker = 'P', marker_color = None, marker_size = 50):
+    def __init__(self, 
+                 name: str,
+                 trades: Sequence[Trade],
+                 marker: str = 'P', 
+                 marker_color: str = None,
+                 marker_size: int = 50) -> None:
         '''
         Args:
             name: String to display in a subplot legend
@@ -223,19 +268,26 @@ class TradeSet:
         self.values = np.array([trade.price for trade in trades], dtype = np.float)
         self.time_plot = True
         
-    def reindex(self, all_timestamps, fill):
+    def reindex(self, all_timestamps: np.ndarray, fill: bool) -> None:
         s = pd.Series(self.values, index = self.timestamps)
         s = s.reindex(all_timestamps, method = 'ffill' if fill else None)
         self.timestamps = s.index.values
         self.values = s.values
         
-    def __repr__(self):
+    def __repr__(self) -> str:
         s = ''
         for trade in self.trades:
             s += f'{trade.timestamp} {trade.qty} {trade.price}\n'
         return s
     
-def draw_poly(ax, left, bottom, top, right, facecolor, edgecolor, zorder):
+def draw_poly(ax: mpl.axes.Axes, 
+              left: float, 
+              bottom: float, 
+              top: float, 
+              right: float, 
+              facecolor: str, 
+              edgecolor: str, 
+              zorder: int) -> None:
     '''Draw a set of polygrams given parrallel numpy arrays of left, bottom, top, right points'''
     XY = np.array([[left, left, right, right], [bottom, top, top, bottom]]).T
 
@@ -255,9 +307,18 @@ def draw_poly(ax, left, bottom, top, right, facecolor, edgecolor, zorder):
     ax.add_patch(patch)
 
 
-def draw_candlestick(ax, index, o, h, l, c, v, vwap, colorup='darkgreen', colordown='#F2583E'):
+def draw_candlestick(ax: mpl.axes.Axes,
+                     index: np.ndarray, 
+                     o: np.ndarray, 
+                     h: np.ndarray, 
+                     l: np.ndarray, 
+                     c: np.ndarray, 
+                     v: np.ndarray, 
+                     vwap: np.ndarray, 
+                     colorup: str = 'darkgreen', 
+                     colordown: str = '#F2583E') -> None:
     '''Draw candlesticks given parrallel numpy arrays of o, h, l, c, v values.  v is optional.  
-    See TradeBarSeries class __init__ for argument descriptions.'''
+        See TradeBarSeries class __init__ for argument descriptions.'''
     width = 0.5
     
     # Have to do volume first because of a mpl bug with axes fonts if we use make_axes_locatable after plotting on top axis
@@ -287,7 +348,14 @@ def draw_candlestick(ax, index, o, h, l, c, v, vwap, colorup='darkgreen', colord
     if vwap is not None:
         ax.scatter(index, vwap, marker = 'o', color = 'orange', zorder = 110)
         
-def draw_boxplot(ax, names, values, proportional_widths = True, notched = False, show_outliers = True, show_means = True, show_all = True):
+def draw_boxplot(ax: mpl.axes.Axes, 
+                 names: str, 
+                 values: Sequence[np.ndarray], 
+                 proportional_widths: bool = True, 
+                 notched: bool = False, 
+                 show_outliers: bool = True, 
+                 show_means: bool = True, 
+                 show_all: bool = True) -> None:
     '''Draw a boxplot.  See BucketedValues class for explanation of arguments'''
     outliers = None if show_outliers else ''
     meanpointprops = dict(marker='D')
@@ -305,12 +373,20 @@ def draw_boxplot(ax, names, values, proportional_widths = True, notched = False,
         cases = len(counts)
         widths = [c/total for c in counts]  
     
-    ax.boxplot(values, notch = notched, sym = outliers, showmeans = show_means, meanprops=meanpointprops, widths = widths) #, widths = proportional_widths);
+    ax.boxplot(values, notch=notched, sym=outliers, showmeans=show_means, meanprops=meanpointprops, widths=widths)
     ax.set_xticklabels(names);
     
     
-def draw_3d_plot(ax, x, y, z, plot_type, marker = 'X', marker_size = 50, marker_color = 'red',
-                interpolation = 'linear', cmap = 'viridis'):
+def draw_3d_plot(ax: mpl.axes.Axes,
+                 x: np.ndarray,
+                 y: np.ndarray,
+                 z: np.ndarray,
+                 plot_type: str,
+                 marker: str = 'X',
+                 marker_size: int = 50, 
+                 marker_color: str = 'red',
+                 interpolation: str = 'linear', 
+                 cmap: str = 'viridis') -> None:
 
     '''Draw a 3d plot.  See XYZData class for explanation of arguments
     
@@ -345,7 +421,7 @@ def draw_3d_plot(ax, x, y, z, plot_type, marker = 'X', marker_size = 50, marker_
     m.set_array(Z)
     plt.colorbar(m, ax = ax)
     
-def _adjust_axis_limit(lim, values):
+def _adjust_axis_limit(lim: Tuple[float, float], values: Union[List, np.ndarray]) -> Tuple[float, float]:
     '''If values + 10% buffer are outside current xlim or ylim, return expanded xlim or ylim for subplot'''
     if isinstance(values, list):
         values = np.array(values)
@@ -357,7 +433,7 @@ def _adjust_axis_limit(lim, values):
     lim_max = np.nanmax(values) - .1 * val_range
     return (min(lim[0], lim_min), max(lim[1], lim_max))
 
-def _plot_data(ax, data):
+def _plot_data(ax: mpl.axes.Axes, data: Any) -> Optional[List[mpl.lines.Line2D]]:
     
     x, y = None, None
     
@@ -378,14 +454,13 @@ def _plot_data(ax, data):
     elif data.plot_type == 'scatter':
         line = ax.scatter(x, y, marker = data.marker, c = data.marker_color, s = data.marker_size, zorder=100)
     elif data.plot_type == 'bar':
-        line = ax.bar(index, y, color = data.color)
+        line = ax.bar(x, y, color = data.color)
     elif data.plot_type == 'filled_line':
         x, y, values = np.nan_to_num(x), np.nan_to_num(y), np.nan_to_num(data.values)
         pos_values = np.where(y > 0, y, 0)
         neg_values = np.where(y < 0, y, 0)
         ax.fill_between(x, pos_values, color='blue', step = 'post', linewidth = 0.0)
         ax.fill_between(x, neg_values, color='red', step = 'post', linewidth = 0.0)
-        #ax.set_ylim(max(ylim[0], np.max(y) * 1.1), min(ylim[1], np.min(y) * 1.1))
     elif data.plot_type == 'candlestick':
         draw_candlestick(ax, x, data.o, data.h, data.l, data.c, data.v, data.vwap, colorup = data.colorup, colordown = data.colordown)
     elif data.plot_type == 'boxplot':
@@ -408,7 +483,7 @@ def _plot_data(ax, data):
 
     return line
 
-def _draw_date_gap_lines(ax, plot_timestamps):
+def _draw_date_gap_lines(ax: mpl.axes.Axes, plot_timestamps: np.ndarray) -> None:
     timestamps = mdates.date2num(plot_timestamps)
     freq = np.nanmin(np.diff(timestamps))
     if freq <= 0: raise Exception('could not infer date frequency')
@@ -427,25 +502,29 @@ def _draw_date_gap_lines(ax, plot_timestamps):
     for x in xs:
         ax.axvline(x, linestyle = 'dashed', color = '0.5')
             
-def draw_date_line(ax, plot_timestamps, date, linestyle, color):
+def draw_date_line(ax: mpl.axes.Axes, 
+                   plot_timestamps: np.ndarray, 
+                   date: np.datetime64, 
+                   linestyle: str, 
+                   color: Optional[str]) -> mpl.lines.Line2D:
     '''Draw vertical line on a subplot with datetime x axis'''
     date_index = np.arange(len(plot_timestamps))
     closest_index = (np.abs(plot_timestamps - date)).argmin()
     return ax.axvline(x = closest_index, linestyle = linestyle, color = color)
 
-def draw_horizontal_line(ax, y, linestyle, color):
+def draw_horizontal_line(ax: mpl.axes.Axes, y: np.ndarray, linestyle: str, color: Optional[str]) -> mpl.lines.Line2D:
     '''Draw horizontal line on a subplot'''
     return ax.axhline(y = y, linestyle = linestyle, color = color)
 
-def draw_vertical_line(ax, x, linestyle, color):
+def draw_vertical_line(ax: mpl.axes.Axes, x: np.ndarray, linestyle: str, color: Optional[str]) -> mpl.lines.Line2D:
     '''Draw vertical line on a subplot'''
     return ax.axvline(x = x, linestyle = linestyle, color = color)
            
-def get_date_formatter(plot_timestamps, date_format):
+def get_date_formatter(plot_timestamps: np.datetime64, date_format: Optional[str]) -> DateFormatter:
     '''Create an appropriate DateFormatter for x axis labels.  
     If date_format is set to None, figures out an appropriate date format based on the range of timestamps passed in'''
     num_timestamps = mdates.date2num(plot_timestamps)
-    if date_format is not None: return DateFormatter(num_timestamps, format = date_format)
+    if date_format is not None: return DateFormatter(num_timestamps, fmt = date_format)
     date_range = num_timestamps[-1] - num_timestamps[0]
     if date_range > 252:
         date_format = '%d-%b-%Y'
@@ -461,29 +540,44 @@ def get_date_formatter(plot_timestamps, date_format):
     
 class Subplot:
     '''A top level plot contains a list of subplots, each of which contain a list of data objects to draw'''
-    def __init__(self, data_list, secondary_y = None, title = None, xlabel = None, ylabel = None, zlabel = None,
-                 date_lines = None, horizontal_lines = None, vertical_lines = None, xlim = None, ylim = None, 
-                 height_ratio = 1.0, display_legend = True, legend_loc = 'best', log_y = False, y_tick_format = None):
+    def __init__(self, 
+                 data_list: Any,
+                 secondary_y: List[str] = None,
+                 title: str = None,
+                 xlabel: str = None,
+                 ylabel: str = None, 
+                 zlabel: str = None,
+                 date_lines: Sequence[DateLine] = None,
+                 horizontal_lines: Sequence[HorizontalLine] = None,
+                 vertical_lines: Sequence[VerticalLine] = None,
+                 xlim: Union[Tuple[float, float], Tuple[np.datetime64, np.datetime64]] = None, 
+                 ylim: Union[Tuple[float, float], Tuple[np.datetime64, np.datetime64]] = None, 
+                 height_ratio: float = 1.0,
+                 display_legend: bool = True, 
+                 legend_loc: str = 'best', 
+                 log_y: bool = False, 
+                 y_tick_format: str = None) -> None:
         '''
         Args:
-            data_list: A list of objects to draw.  Each element can contain XYData, XYZData, TimeSeries, TradeBarSeries, BucketedValues or TradeSet
-            secondary_y (list of str, optional): A list of objects to draw on the secondary y axis
-            title (str, optional): Title to show for this subplot. Default None
-            zlabel (str, optional): Only applicable to 3d subplots.  Default None
-            date_lines (list of :obj:`DateLine`, optional): A list of DateLine objects to draw as vertical lines.  
+            data_list: A list of objects to draw.  Each element can contain XYData, XYZData, TimeSeries, TradeBarSeries, 
+                BucketedValues or TradeSet
+            secondary_y: A list of objects to draw on the secondary y axis
+            title: Title to show for this subplot. Default None
+            zlabel: Only applicable to 3d subplots.  Default None
+            date_lines: A list of DateLine objects to draw as vertical lines.  
                 Only applicable when x axis is datetime.  Default None
-            horizontal_lines (list of :obj:`HorizontalLine`, optional): A list of HorizontalLine objects to draw on the plot.  Default None
-            vertical_lines (list of :obj:`VerticalLine`, optional): A list of VerticalLine objects to draw on the plot
-            xlim (tuple of datetime or float, optional): x limits for the plot as a tuple of numpy datetime objects when x-axis is datetime, 
+            horizontal_lines: A list of HorizontalLine objects to draw on the plot.  Default None
+            vertical_lines: A list of VerticalLine objects to draw on the plot
+            xlim: x limits for the plot as a tuple of numpy datetime objects when x-axis is datetime, 
                 or tuple of floats. Default None
-            ylim (tuple of float, optional): y limits for the plot.  Tuple of floats.  Default None
-            height_ratio (float, optional): If you have more than one subplot on a plot, use height ratio to determine how high each subplot should be.
+            ylim : y limits for the plot.  Tuple of floats.  Default None
+            height_ratio: If you have more than one subplot on a plot, use height ratio to determine how high each subplot should be.
                 For example, if you set height_ratio = 0.75 for the first subplot and 0.25 for the second, 
                 the first will be 3 times taller than the second one. Default 1.0
-            display_legend (bool, optional): Whether to show a legend on the plot.  Default True
-            legend_loc (str, optional): Location for the legend. Default 'best'
-            log_y (bool, optional): whether the y axis should be logarithmic.  Default False
-            y_tick_format (str, optional): Format string to use for y axis labels.  For example, you can decide to 
+            display_legend: Whether to show a legend on the plot.  Default True
+            legend_loc: Location for the legend. Default 'best'
+            log_y: Whether the y axis should be logarithmic.  Default False
+            y_tick_format: Format string to use for y axis labels.  For example, you can decide to 
               use fixed notation instead of scientific notation or change number of decimal places shown.  Default None
         '''
         if not isinstance(data_list, list): data_list = [data_list]
@@ -498,7 +592,7 @@ class Subplot:
             raise Exception('cannot add a 2d plot on a subplot which has a 3d plot')
 
         self.data_list = data_list
-        self.secondary_y = secondary_y
+        self.secondary_y = [] if secondary_y is None else secondary_y
         self.date_lines = [] if date_lines is None else date_lines
         self.horizontal_lines = [] if horizontal_lines is None else horizontal_lines
         self.vertical_lines = [] if vertical_lines is None else vertical_lines
@@ -513,7 +607,8 @@ class Subplot:
         self.log_y = log_y
         self.y_tick_format = y_tick_format
         
-    def _resample(self, sampling_frequency):
+    def _resample(self, sampling_frequency: Optional[str]) -> None:
+        if sampling_frequency is None: return None
         timestamps, values = None, None
         for data in self.data_list:
             values = None
@@ -535,13 +630,13 @@ class Subplot:
             else:
                 raise Exception(f'unknown type: {data}')
         
-    def get_all_timestamps(self, date_range):
+    def get_all_timestamps(self, date_range: Tuple[np.datetime64, np.datetime64]) -> np.ndarray:
         timestamps_list = [data.timestamps for data in self.data_list]
         all_timestamps = np.array(reduce(np.union1d, timestamps_list))
         if date_range: all_timestamps = all_timestamps[(all_timestamps >= date_range[0]) & (all_timestamps <= date_range[1])]
         return all_timestamps
     
-    def _reindex(self, all_timestamps):
+    def _reindex(self, all_timestamps: np.ndarray) -> None:
         for data in self.data_list:
             if isinstance(data, TradeBarSeries):
                 data.reindex(all_timestamps)
@@ -549,11 +644,11 @@ class Subplot:
                 fill = not isinstance(data, TradeSet) and not data.plot_type in ['bar', 'scatter']
                 data.reindex(all_timestamps, fill = fill)
             
-    def _draw(self, ax, plot_timestamps, date_formatter):
+    def _draw(self, ax: mpl.axes.Axes, plot_timestamps: np.ndarray, date_formatter: Optional[DateFormatter]) -> None:
         
         if self.time_plot:
             self._reindex(plot_timestamps)
-            ax.xaxis.set_major_formatter(date_formatter)
+            if date_formatter is not None: ax.xaxis.set_major_formatter(date_formatter)
             date_index = np.arange(len(plot_timestamps))
         
         lines = []
@@ -611,8 +706,16 @@ class Plot:
     
     '''Top level plot containing a list of subplots to draw'''
     
-    def __init__(self, subplot_list,  title = None, figsize = (15, 8), date_range = None, date_format = None, 
-                 sampling_frequency = None, show_grid = True, show_date_gaps = True, hspace = 0.15):
+    def __init__(self, 
+                 subplot_list: Sequence[Subplot],  
+                 title: str = None, 
+                 figsize: Tuple[float, float] = (15, 8), 
+                 date_range: Union[Tuple[str, str], Tuple[np.datetime64, np.datetime64]] = None,
+                 date_format: str = None, 
+                 sampling_frequency: str = None, 
+                 show_grid: bool = True, 
+                 show_date_gaps: bool = True, 
+                 hspace: float = 0.15) -> None:
         '''
         Args:
             subplot_list: List of Subplot objects to draw
@@ -641,7 +744,7 @@ class Plot:
         self.show_grid = show_grid
         self.hspace = hspace
         
-    def _get_plot_timestamps(self):
+    def _get_plot_timestamps(self) -> np.ndarray:
         timestamps_list = []
         for subplot in self.subplot_list:
             if not subplot.time_plot: continue
@@ -651,7 +754,7 @@ class Plot:
         plot_timestamps = np.array(reduce(np.union1d, timestamps_list))
         return plot_timestamps
 
-    def draw(self, check_data_size = True):
+    def draw(self, check_data_size: bool = True) -> Optional[Tuple[mpl.figure.Figure, mpl.axes.Axes]]:
         '''Draw the subplots.
         
         Args:
@@ -660,7 +763,7 @@ class Plot:
         '''
         if not has_display():
             print('no display found, cannot plot')
-            return
+            return None
         
         plot_timestamps = self._get_plot_timestamps()
         if check_data_size and plot_timestamps is not None and len(plot_timestamps) > 100000:
@@ -708,22 +811,24 @@ class Plot:
             
         return fig, ax_list
                 
-def _group_trades_by_reason_code(trades):
-    trade_groups = defaultdict(list)
+def _group_trades_by_reason_code(trades: Sequence[Trade]) -> Mapping[str, List[Trade]]:
+    trade_groups: MutableMapping[str, List[Trade]] = defaultdict(list)
     for trade in trades:
         trade_groups[trade.order.reason_code].append(trade)
     return trade_groups
 
-def trade_sets_by_reason_code(trades, marker_props = ReasonCode.MARKER_PROPERTIES, remove_missing_properties = True):
+def trade_sets_by_reason_code(trades: List[Trade], 
+                              marker_props: Mapping[str, Mapping] = ReasonCode.MARKER_PROPERTIES, 
+                              remove_missing_properties: bool = True) -> List[TradeSet]:
     '''
     Returns a list of TradeSet objects.  Each TradeSet contains trades with a different reason code.  The markers for each TradeSet
     are set by looking up marker properties for each reason code using the marker_props argument:
     
     Args:
-        trades (list of :obj:`Trade`): We look up reason codes using the reason code on the corresponding orders
-        marker_props (dict of str : dict, optional): Dictionary from reason code string -> dictionary of marker properties.  
+        trades: We look up reason codes using the reason code on the corresponding orders
+        marker_props: Dictionary from reason code string -> dictionary of marker properties.  
             See ReasonCode.MARKER_PROPERTIES for example.  Default ReasonCode.MARKER_PROPERTIES
-        remove_missing_properties (bool, optional): If set, we remove any reason codes that dont' have marker properties set.
+        remove_missing_properties: If set, we remove any reason codes that dont' have marker properties set.
             Default True
      '''
     trade_groups = _group_trades_by_reason_code(trades)
@@ -739,21 +844,21 @@ def trade_sets_by_reason_code(trades, marker_props = ReasonCode.MARKER_PROPERTIE
         tradesets.append(tradeset)
     return tradesets 
 
-def test_plot():
+def test_plot() -> None:
     
     class MockOrder:
-        def __init__(self, reason_code):
+        def __init__(self, reason_code: str) -> None:
             self.reason_code = reason_code
     
     class MockTrade:
-        def __init__(self, timestamp, qty, price, reason_code):
+        def __init__(self, timestamp: np.datetime64, qty: float, price: float, reason_code: str) -> None:
             self.timestamp = timestamp
             self.qty = qty
             self.price = price
             self.order = MockOrder(reason_code) 
             
-        def __repr__(self):
-            return f'{self.date} {self.qty} {self.price}'
+        def __repr__(self) -> str:
+            return f'{self.timestamp} {self.qty} {self.price}'
         
     set_defaults()
             
@@ -780,26 +885,32 @@ def test_plot():
                                 c = np.array([8.95, 9.2, 9.35, 8.5]),
                                 v = np.array([200, 100, 150, 300]),
                                 vwap = np.array([8.9, 9.15, 9.3, 8.55]))
-                          ] + trade_sets_by_reason_code(trades), 
+                          ] + trade_sets_by_reason_code(trades),  # type: ignore  # mypy complains about adding heterogeneous lists 
                           secondary_y = ['secondary_y_test'], 
-                          ylabel = "Price", height_ratio = 0.3)
+                          ylabel = "Price", height_ratio = 0.3) 
     
     sig_subplot = Subplot(TimeSeries('trend', timestamps = timestamps, values = np.array([1, 1, -1, -1])), height_ratio=0.1, ylabel = 'Trend')
     
-    equity_subplot = Subplot(TimeSeries('equity', timestamps= pnl_timestamps, values = [1.0e6, 1.1e6, 1.2e6, 1.3e6]), height_ratio = 0.1, ylabel = 'Equity', date_lines = 
+    equity_subplot = Subplot(
+        TimeSeries('equity', timestamps= pnl_timestamps, values = [1.0e6, 1.1e6, 1.2e6, 1.3e6]), 
+        height_ratio = 0.1, ylabel = 'Equity', date_lines = 
                             [DateLine(date = np.datetime64('2018-01-09 14:00:00'), name = 'drawdown', color = 'red'),
                              DateLine(date = np.datetime64('2018-01-10 15:00:00'), color = 'red')], 
                              horizontal_lines = [HorizontalLine(y = 0, name = 'zero', color = 'green')])
     
-    pos_subplot = Subplot(TimeSeries('position', timestamps = positions[0], values = positions[1], plot_type = 'filled_line'), height_ratio = 0.1, ylabel = 'Position')
+    pos_subplot = Subplot(
+        TimeSeries('position', timestamps = positions[0], values = positions[1], plot_type = 'filled_line'), 
+        height_ratio = 0.1, ylabel = 'Position')
     
-    annual_returns_subplot = Subplot(BucketedValues('annual returns', ['2017', '2018'], 
-                                                    bucket_values = [np.random.normal(0, 1, size=(250,)), np.random.normal(0, 1, size=(500,))]),
-                                                   height_ratio = 0.1, ylabel = 'Annual Returns')
+    annual_returns_subplot = Subplot(
+        BucketedValues('annual returns', ['2017', '2018'], 
+                       bucket_values = [np.random.normal(0, 1, size=(250,)), np.random.normal(0, 1, size=(500,))]),
+        height_ratio = 0.1, ylabel = 'Annual Returns')
     
     x = np.random.rand(10)
     y = np.random.rand(10)
-    xy_subplot = Subplot(XYData('2d test', x, y, plot_type = 'scatter', marker = 'X'), xlabel = 'x', ylabel = 'y', height_ratio = 0.2, title = 'XY Plot')
+    xy_subplot = Subplot(XYData('2d test', x, y, plot_type = 'scatter', marker = 'X'), 
+                         xlabel = 'x', ylabel = 'y', height_ratio = 0.2, title = 'XY Plot')
     
     z = x ** 2 + y ** 2
     xyz_subplot = Subplot(XYZData('3d test', x, y, z, ), xlabel = 'x', ylabel = 'y', zlabel = 'z', height_ratio = 0.3)

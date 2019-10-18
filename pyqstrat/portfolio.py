@@ -1,62 +1,63 @@
 #cell 0
-
-
-#cell 1
 import pandas as pd
 import numpy as np
+import matplotlib as mpl
 from functools import reduce
-import datetime
-
-#from pyqstrat.pq_utils import *
 from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, plot_return_metrics
 from pyqstrat.strategy import Strategy
+from pyqstrat.pq_utils import str2date
+
+from typing import Sequence, MutableMapping, Mapping, Tuple
+
 
 class Portfolio:
     '''A portfolio contains one or more strategies that run concurrently so you can test running strategies that are uncorrelated together.'''
-    def __init__(self, name = 'main'):
+    def __init__(self, name: str = 'main') -> None:
         '''Args:
             name: String used for displaying this portfolio
         '''
         self.name = name
-        self.strategies = {}
+        self.strategies: MutableMapping[str, Strategy] = {}
         
-    def add_strategy(self, name, strategy):
+    def add_strategy(self, name: str, strategy: Strategy) -> None:
         '''
         Args:
             name: Name of the strategy
-            strategy: Strategy object
+            strategy: Strategy instance
         '''
         self.strategies[name] = strategy
-        strategy.portfolio = self
         strategy.name = name
         
-    def run_indicators(self, strategy_names = None):
+    def run_indicators(self, strategy_names: Sequence[str] = None) -> None:
         '''Compute indicators for the strategies specified
         
         Args:
-            strategy_names: A list of strategy names.  By default this is set to None and we use all strategies.
+            strategy_names: By default this is set to None and we use all strategies.
         '''
         if strategy_names is None: strategy_names = list(self.strategies.keys())
         if len(strategy_names) == 0: raise Exception('a portfolio must have at least one strategy')
         for name in strategy_names: self.strategies[name].run_indicators()
                 
-    def run_signals(self, strategy_names = None):
+    def run_signals(self, strategy_names: Sequence[str] = None) -> None:
         '''Compute signals for the strategies specified.  Must be called after run_indicators
         
         Args:
-            strategy_names: A list of strategy names.  By default this is set to None and we use all strategies.
+            strategy_names: By default this is set to None and we use all strategies.
         '''
         if strategy_names is None: strategy_names = list(self.strategies.keys())
         if len(strategy_names) == 0: raise Exception('a portfolio must have at least one strategy')
         for name in strategy_names: self.strategies[name].run_signals()
             
-    def _generate_order_iterations(self, strategies, start_date, end_date):
+    def _generate_order_iterations(self, 
+                                   strategies: Sequence[Strategy], 
+                                   start_date: np.datetime64, 
+                                   end_date: np.datetime64) -> Tuple[np.ndarray, Sequence[Tuple[Strategy, np.ndarray]]]:
         '''
         >>> class Strategy:
         ...    def __init__(self, num): 
         ...        self.timestamps = [
-        ...            np.array(['2018-01-01', '2018-01-02', '2018-01-03'], dtype = 'M8[D]'),
-        ...            np.array(['2018-01-02', '2018-01-03', '2018-01-04'], dtype = 'M8[D]')][num]
+        ...            np.array(['2018-01-01', '2018-01-02', '2018-01-03'], dtype='M8[D]'),
+        ...            np.array(['2018-01-02', '2018-01-03', '2018-01-04'], dtype='M8[D]')][num]
         ...        self.num = num
         ...    def _generate_order_iterations(self, start_date, end_date):
         ...        pass
@@ -83,11 +84,11 @@ class Portfolio:
         for strategy in strategies:
             indices = np.searchsorted(strategy.timestamps, all_timestamps)
             iterations.append((strategy, indices))
-            strategy._generate_order_iterations(start_date = start_date, end_date = end_date)
+            strategy._generate_order_iterations(start_date=start_date, end_date=end_date)
             
         return all_timestamps, iterations
                 
-    def run_rules(self, strategy_names = None, start_date = None, end_date = None):
+    def run_rules(self, strategy_names: Sequence[str] = None, start_date: np.datetime64 = None, end_date: np.datetime64 = None) -> None:
         '''Run rules for the strategies specified.  Must be called after run_indicators and run_signals.  
           See run function for argument descriptions
         '''
@@ -115,7 +116,7 @@ class Portfolio:
         for strategy in strategies:
             strategy.account.calc(strategy.timestamps[-1])
                 
-    def run(self, strategy_names = None, start_date = None, end_date = None):
+    def run(self, strategy_names: Sequence[str] = None, start_date: np.datetime64 = None, end_date: np.datetime64 = None) -> None:
         '''
         Run indicators, signals and rules.
         
@@ -129,45 +130,51 @@ class Portfolio:
         start_date, end_date = str2date(start_date), str2date(end_date)
         self.run_indicators()
         self.run_signals()
-        return self.run_rules(strategy_names, start_date, end_date)
+        self.run_rules(strategy_names, start_date, end_date)
         
-    def df_returns(self, sampling_frequency = 'D', strategy_names = None):
+    def df_returns(self, sampling_frequency: str = 'D', strategy_names: Sequence[str] = None) -> pd.DataFrame:
         '''
         Return dataframe containing equity and returns with a date index.  Equity and returns are combined from all strategies passed in.
         
         Args:
             sampling_frequency: Date frequency for rows.  Default 'D' for daily so we will have one row per day
-            strategy_names: A list of strategy names.  By default this is set to None and we use all strategies.
+            strategy_names: By default this is set to None and we use all strategies.
         '''
         if strategy_names is None: strategy_names = list(self.strategies.keys())
         if len(strategy_names) == 0: raise Exception('portfolio must have at least one strategy')
         equity_list = []
         for name in strategy_names:
-            equity = self.strategies[name].df_returns(sampling_frequency = sampling_frequency)[['timestamp', 'equity']]
+            equity = self.strategies[name].df_returns(sampling_frequency=sampling_frequency)[['timestamp', 'equity']]
             equity.columns = ['timestamp', name]
             equity = equity.set_index('timestamp')
             equity_list.append(equity)
-        df = pd.concat(equity_list, axis = 1)
-        df['equity'] = df.sum(axis = 1)
+        df = pd.concat(equity_list, axis=1)
+        df['equity'] = df.sum(axis=1)
         df['ret'] = df.equity.pct_change()
         return df.reset_index()
         
-    def evaluate_returns(self, sampling_frequency = 'D', strategy_names = None, plot = True, float_precision = 4):
+    def evaluate_returns(self, 
+                         sampling_frequency: str = 'D', 
+                         strategy_names: Sequence[str] = None, 
+                         plot: bool = True, 
+                         float_precision: int = 4) -> Mapping:
         '''Returns a dictionary of common return metrics.
         
         Args:
             sampling_frequency: Date frequency.  Default 'D' for daily so we downsample to daily returns before computing metrics
-            strategy_names: A list of strategy names.  By default this is set to None and we use all strategies.
+            strategy_names: By default this is set to None and we use all strategies.
             plot: If set to True, display plots of equity, drawdowns and returns.  Default False
             float_precision: Number of significant figures to show in returns.  Default 4
         '''
-        returns = self.df_returns(sampling_freq, strategy_names)
+        returns = self.df_returns(sampling_frequency, strategy_names)
         ev = compute_return_metrics(returns.timestamp.values, returns.ret.values, returns.equity.values[0])
-        display_return_metrics(ev.metrics(), float_precision = float_precision)
+        display_return_metrics(ev.metrics(), float_precision=float_precision)
         if plot: plot_return_metrics(ev.metrics())
         return ev.metrics()
     
-    def plot(self, sampling_frequency = 'D', strategy_names = None):
+    def plot(self, 
+             sampling_frequency: str = 'D', 
+             strategy_names: Sequence[str] = None) -> None:
         '''Display plots of equity, drawdowns and returns
         
         Args:
@@ -179,13 +186,14 @@ class Portfolio:
         ev = compute_return_metrics(timestamps, returns.ret.values, returns.equity.values[0])
         plot_return_metrics(ev.metrics())
         
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'{self.name} {self.strategies.keys()}'
     
+
 if __name__ == "__main__":
     import doctest
-    doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+    doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
 
-#cell 2
+#cell 1
 
 

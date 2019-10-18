@@ -95,13 +95,13 @@ def set_defaults(df_float_sf: int = 8,
     plt.rcParams.update({'figure.max_open_warning': 100})  # For unit tests, avoid warning when opening more than 20 figures
     
 
-def str2date(s: str) -> np.datetime64:
+def str2date(s: Optional[Union[np.datetime64, str]]) -> np.datetime64:
     '''Converts a string like "2008-01-15 15:00:00" to a numpy datetime64.  If s is not a string, return s back'''
     if isinstance(s, str): return np.datetime64(s)
     return s
 
 
-def strtup2date(tup: Tuple[str, str]) -> Tuple[np.datetime64, np.datetime64]:
+def strtup2date(tup: Any) -> Tuple[np.datetime64, np.datetime64]:
     '''Converts a string tuple like ("2008-01-15", "2009-01-16") to a numpy datetime64 tuple.  
       If the tuple does not contain strings, return it back unchanged'''
     if tup and type(tup) is tuple and isinstance(tup[0], str): return (str2date(tup[0]), str2date(tup[1]))
@@ -540,4 +540,7 @@ def async_yield() -> None:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+
+#cell 1
+
 
