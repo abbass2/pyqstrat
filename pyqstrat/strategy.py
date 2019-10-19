@@ -6,15 +6,15 @@ import sys
 from collections import defaultdict
 from pprint import pformat
 import math
-
 from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, plot_return_metrics
 from pyqstrat.account import Account
 from pyqstrat.pq_utils import *
 from pyqstrat.pq_types import ContractGroup
 from pyqstrat.plot import TimeSeries, trade_sets_by_reason_code, Subplot, Plot
+from typing import Sequence
 
 #cell 1
-def _get_time_series_list(timestamps, names, values, properties):
+def _get_time_series_list(timestamps: np.datetime64, names: Sequence[str], values, properties):
     ts_list = []
     for name in names:
         line_type, color = None, None

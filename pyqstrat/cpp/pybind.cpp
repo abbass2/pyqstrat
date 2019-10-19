@@ -1054,7 +1054,9 @@ py::class_<type>(m, #type) \
             skip_rows (int, optional): Number of rows to skip in the file before starting to read it.  Defaults to 1 to ignore a header line
             )pqdoc")
          
-    .def("__call__", &TextFileProcessor::call, "input_filename"_a, "compression"_a,
+    .def("__call__", &TextFileProcessor::call,
+         "input_filename"_a,
+         "compression"_a,
          py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
          R"pqdoc(
          Args:

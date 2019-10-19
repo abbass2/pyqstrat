@@ -1,33 +1,31 @@
 #cell 0
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from mpl_toolkits import mplot3d
-import matplotlib.cm as cm
-from scipy.interpolate import griddata
 import os
 import sys
 import concurrent
-
 from pyqstrat.pq_utils import set_defaults, has_display
-from pyqstrat.plot import *
+from pyqstrat.plot import Plot, Subplot, XYData, XYZData
+from typing import Mapping, Any, Callable, Generator, Tuple, Sequence, List, Optional
 
 set_defaults()
 
+
 class Experiment:
-    '''An Experiment stores a suggestion and its result
-    
-    Attributes:
-        suggestion: A dictionary of variable name -> value
-        cost: A float representing output of the function we are testing with this suggestion as input.
-        other_costs: A dictionary of other results we want to store and look at later.
-    '''
-    def __init__(self, suggestion, cost, other_costs):
+    '''An Experiment stores a suggestion and its result'''
+    def __init__(self, suggestion: Mapping[str, Any], cost: float, other_costs: Mapping[str, float]) -> None:
+        '''
+        Args:
+            suggestion: A dictionary of variable name -> value
+            cost: A float representing output of the function we are testing with this suggestion as input.
+            other_costs: A dictionary of other results we want to store and look at later.
+
+        '''
         self.suggestion = suggestion
         self.cost = cost
         self.other_costs = other_costs
         
-    def valid(self):
+    def valid(self) -> bool:
         '''
         Returns True if all suggestions and costs are finite, i.e not NaN or +/- Infinity
         '''
@@ -36,16 +34,20 @@ class Experiment:
         if not all(np.isfinite(list(self.other_costs.values()))): return False
         return True
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'suggestion: {self.suggestion} cost: {self.cost} other costs: {self.other_costs}'
+
 
 class Optimizer:
     '''Optimizer is used to optimize parameters for a strategy.'''
-    def __init__(self, name, generator, cost_func, max_processes = None):
+    def __init__(self, name: str, 
+                 generator: Generator[Mapping[str, Any], Tuple[float, Mapping[str, float]], None], 
+                 cost_func: Callable[[Mapping[str, Any]], Tuple[float, Mapping[str, float]]], 
+                 max_processes: int = None) -> None:
         '''
         Args:
-            name: string used to display title in plotting, etc.
-            generator: A generator (see Python Generators) that takes no inputs and yields a list of dictionaries with parameter name -> parameter value.
+            name: Display title for plotting, etc.
+            generator: A generator (see Python Generators) that takes no inputs and yields a dictionary with parameter name -> parameter value.
             cost_func: A function that takes a dictionary of parameter name -> parameter value as input and outputs cost for that set of parameters.
             max_processes: If not set, the Optimizer will look at the number of CPU cores on your machine to figure out how many processes to run.
         '''
@@ -58,22 +60,21 @@ class Optimizer:
                 raise Exception("max_processes must be 1 on Microsoft Windows")
             max_processes = 1
         self.max_processes = max_processes
-        self.experiments = []
+        self.experiments: List[Experiment] = []
         
-        
-    def _run_single_process(self):
+    def _run_single_process(self) -> None:
         try:
             for suggestion in self.generator:
                 if suggestion is None: continue
                 cost, other_costs = self.cost_func(suggestion)
-                self.generator.send(cost)
+                self.generator.send((cost, other_costs))
                 self.experiments.append(Experiment(suggestion, cost, other_costs))
         except StopIteration:
             # Exhausted generator
             return
     
-    #TODO: Needs to be rewritten to send costs back to generator when we do parallel gradient descent, etc.
-    def _run_multi_process(self, raise_on_error):
+    # TODO: Needs to be rewritten to send costs back to generator when we do parallel gradient descent, etc.
+    def _run_multi_process(self, raise_on_error: bool) -> None:
         fut_map = {}
         with concurrent.futures.ProcessPoolExecutor(self.max_processes) as executor:
             for suggestion in self.generator:
@@ -92,7 +93,7 @@ class Optimizer:
                 suggestion = fut_map[future]
                 self.experiments.append(Experiment(suggestion, cost, other_costs))
     
-    def run(self, raise_on_error = False):
+    def run(self, raise_on_error: bool = False) -> None:
         '''Run the optimizer.
         
         Args:
@@ -102,7 +103,7 @@ class Optimizer:
         if self.max_processes == 1: self._run_single_process()
         else: self._run_multi_process(raise_on_error)
         
-    def experiment_list(self, sort_order = 'lowest_cost'):
+    def experiment_list(self, sort_order: str = 'lowest_cost') -> Sequence[Experiment]:
         '''Returns the list of experiments we have run
         
         Args:
@@ -110,16 +111,16 @@ class Optimizer:
               If set to sequence, experiments are returned in the sequence in which they were run
         '''
         if sort_order == 'lowest_cost':
-            experiments = sorted(self.experiments, key = lambda x : x.cost, reverse = True)
+            experiments = sorted(self.experiments, key=lambda x: x.cost, reverse=True)
         elif sort_order == 'highest_cost':
-            experiments = sorted(self.experiments, key = lambda x : x.cost, reverse = False)
-        elif sort_order == 'sequence': # in order in which experiment was run
+            experiments = sorted(self.experiments, key=lambda x: x.cost, reverse=False)
+        elif sort_order == 'sequence':  # in order in which experiment was run
             experiments = self.experiments
         else:
-            raise Exception(f'invalid sort order: {sort}')
+            raise Exception(f'invalid sort order: {sort_order}')
         return experiments
     
-    def df_experiments(self, sort_column = 'cost', ascending = True):
+    def df_experiments(self, sort_column: str = 'cost', ascending: bool = True) -> pd.DataFrame:
         '''
         Returns a dataframe containing experiment data, sorted by sort_column (default "cost")
         '''
@@ -127,12 +128,24 @@ class Optimizer:
         pc_keys = list(self.experiments[0].other_costs.keys())
         sugg_keys = list(self.experiments[0].suggestion.keys())
         records = [[exp.suggestion[k] for k in sugg_keys] + [exp.cost] + [exp.other_costs[k] for k in pc_keys] for exp in self.experiments if exp.valid()]
-        df = pd.DataFrame.from_records(records, columns = sugg_keys + ['cost'] + pc_keys)
-        df.sort_values(by = [sort_column], ascending = ascending, inplace = True)
+        df = pd.DataFrame.from_records(records, columns=sugg_keys + ['cost'] + pc_keys)
+        df = df.sort_values(by=[sort_column], ascending=ascending)
         return df
     
-    def plot_3d(self, x, y, z = 'all', plot_type = 'surface', figsize = (15,15), interpolation = 'linear', 
-             cmap = 'viridis', marker = 'X', marker_size = 50, marker_color = 'r', xlim = None, ylim = None, hspace = None):
+    def plot_3d(self, 
+                x: str, 
+                y: str, 
+                z: str = 'all', 
+                plot_type: str = 'surface', 
+                figsize: Tuple[float, float] = (15, 15), 
+                interpolation: str = 'linear', 
+                cmap: str = 'viridis',
+                marker: str = 'X', 
+                marker_size: int = 50,
+                marker_color: str = 'r',
+                xlim: Tuple[float, float] = None,
+                ylim: Tuple[float, float] = None, 
+                hspace: float = None) -> None:
         
         """Creates a 3D plot of the optimization output for plotting 2 parameters and costs.
         
@@ -180,7 +193,9 @@ class Optimizer:
         elif z == 'cost':
             zvalues.append(('cost', np.array([experiment.cost for experiment in experiments])))
         else:
-            zvalues.append((z, np.array([experiment.other_costs[zname] for experiment in experiments])))
+            zvalues.append((z, np.array([experiment.other_costs[z] for experiment in experiments])))
+            
+        title: Optional[str]
             
         subplots = []
         for tup in zvalues:
@@ -193,14 +208,25 @@ class Optimizer:
                 zlabel = name
                 title = None
                 
-            subplots.append(Subplot(data_list = [
-                XYZData(name, xvalues, yvalues, zarray, plot_type = plot_type, 
-                        marker = marker, marker_size = marker_size, marker_color = marker_color, interpolation = interpolation, cmap = cmap
-                    )], title = title, xlabel = x, ylabel = y, zlabel = zlabel, xlim = xlim, ylim = ylim))
-        plot = Plot(subplots, figsize = figsize, title = 'Optimizer 2D Test', hspace = hspace)
+            subplots.append(Subplot(
+                data_list=[
+                    XYZData(name, xvalues, yvalues, zarray, plot_type=plot_type, 
+                            marker=marker, marker_size=marker_size, marker_color=marker_color,
+                            interpolation=interpolation, cmap=cmap)],
+                title=title, xlabel=x, ylabel=y, zlabel=zlabel, xlim=xlim, ylim=ylim))
+        plot = Plot(subplots, figsize=figsize, title='Optimizer 2D Test', hspace=hspace)
         plot.draw()
         
-    def plot_2d(self, x, y = 'all', plot_type = 'line', figsize = (15,8), marker = 'X', marker_size = 50, marker_color = 'r', xlim = None, hspace = None):
+    def plot_2d(self, 
+                x: str, 
+                y: str = 'all',
+                plot_type: str = 'line', 
+                figsize: Tuple[float, float] = (15, 8),
+                marker: str = 'X', 
+                marker_size: int = 50, 
+                marker_color: str = 'r', 
+                xlim: Tuple[float, float] = None, 
+                hspace: float = None) -> None:
         """Creates a 2D plot of the optimization output for plotting 1 parameter and costs.
         
         Args:
@@ -233,7 +259,7 @@ class Optimizer:
         elif y == 'cost':
             yvalues.append(('cost', np.array([experiment.cost for experiment in experiments])))
         else:
-            yvalues.append((y, np.array([experiment.other_costs[zname] for experiment in experiments])))
+            yvalues.append((y, np.array([experiment.other_costs[y] for experiment in experiments])))
             
         xvalues = np.array(xvalues)
         x_sort_indices = np.argsort(xvalues)
@@ -242,55 +268,62 @@ class Optimizer:
         for tup in yvalues:
             name = tup[0]
             yarray = tup[1]
-            idx = np.argsort(xvalues)
             yarray = yarray[x_sort_indices]
-            subplots.append(Subplot(data_list = [
-                XYData(name, xvalues, yarray, plot_type = plot_type, 
-                        marker = marker, marker_size = marker_size, marker_color = marker_color
-                    )], xlabel = x, ylabel = name, xlim = xlim))
-        plot = Plot(subplots, figsize = figsize, title = 'Optimizer 1D Test')
+            
+            subplots.append(
+                Subplot(data_list=[
+                    XYData(name, xvalues, yarray, plot_type=plot_type, marker=marker, marker_size=marker_size, marker_color=marker_color)
+                ], xlabel=x, ylabel=name, xlim=xlim))
+            
+        plot = Plot(subplots, figsize=figsize, title='Optimizer 1D Test')
         plot.draw()
-        
-        
         
 # Functions used in unit testing
 
-def _generator_1d():
-    for x in np.arange(0, np.pi * 2, 0.1):
-        costs = (yield {'x' : x})
 
-def _cost_func_1d(suggestion):
+def _generator_1d() -> Generator[Mapping[str, Any], Tuple[float, Mapping[str, float]], None]:
+    for x in np.arange(0, np.pi * 2, 0.1):
+        _ = (yield {'x': x})
+
+
+def _cost_func_1d(suggestion: Mapping[str, Any]) -> Tuple[float, Mapping[str, float]]:
     x = suggestion['x']
     cost = np.sin(x)
-    ret = cost, {'std' : -0.1 * cost}
+    ret = cost, {'std': -0.1 * cost}
     return ret
 
-def _generator_2d():
+
+def _generator_2d() -> Generator[Mapping[str, Any], Tuple[float, Mapping[str, float]], None]:
     for x in np.arange(0, np.pi * 2, 0.5):
         for y in np.arange(0, np.pi * 2, 0.5):
-            costs = (yield {'x' : x, 'y' : y})
+            _ = (yield {'x': x, 'y': y})
 
-def _cost_func_2d(suggestion):
+
+def _cost_func_2d(suggestion: Mapping[str, Any]) -> Tuple[float, Mapping[str, float]]:
     x = suggestion['x']
     y = suggestion['y']
     cost = np.sin(np.sqrt(x**2 + y ** 2))
-    return cost, {'sharpe' : cost, 'std' : -0.1 * cost}
+    return cost, {'sharpe': cost, 'std': -0.1 * cost}
 
             
 def test_optimize():
     max_processes = 1 if os.name == 'nt' else 4
 
-    optimizer_1d = Optimizer('test', _generator_1d(), _cost_func_1d, max_processes = max_processes)
-    optimizer_1d.run(raise_on_error = True)
-    optimizer_1d.plot_2d(x = 'x', plot_type = 'line', marker = 'o', marker_color = 'blue')
+    optimizer_1d = Optimizer('test', _generator_1d(), _cost_func_1d, max_processes=max_processes)
+    optimizer_1d.run(raise_on_error=True)
+    optimizer_1d.plot_2d(x='x', plot_type='line', marker='o', marker_color='blue')
     
-    optimizer_2d = Optimizer('test', _generator_2d(), _cost_func_2d, max_processes = max_processes)
+    optimizer_2d = Optimizer('test', _generator_2d(), _cost_func_2d, max_processes=max_processes)
     optimizer_2d.run()
-    optimizer_2d.plot_3d(x = 'x', y = 'y')
+    optimizer_2d.plot_3d(x='x', y='y')
             
+
 if __name__ == "__main__":
     test_optimize()
     import doctest
-    doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
+    doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+
+
+#cell 1
 
 

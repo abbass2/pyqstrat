@@ -724,7 +724,7 @@ class Plot:
                  sampling_frequency: str = None, 
                  show_grid: bool = True, 
                  show_date_gaps: bool = True, 
-                 hspace: float = 0.15) -> None:
+                 hspace: Optional[float] = 0.15) -> None:
         '''
         Args:
             subplot_list: List of Subplot objects to draw
@@ -935,11 +935,8 @@ def test_plot() -> None:
     plot.draw()
 
     
-if __name__ == "__mainx__":
+if __name__ == "__main__":
     test_plot()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-
-#cell 1
-
 
