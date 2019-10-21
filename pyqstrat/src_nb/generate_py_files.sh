@@ -1,6 +1,7 @@
 #!/bin/bash
 
 jupyter nbconvert --to python *.ipynb
-mv *.py ../
-
-
+for filename in *.py
+do
+    grep -v 'get_ipython()' $filename > $filename
+done

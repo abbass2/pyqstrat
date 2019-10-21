@@ -1,4 +1,9 @@
-#cell 0
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[2]:
+
+
 import pandas as pd
 import numpy as np
 import matplotlib as mpl
@@ -193,7 +198,4 @@ class Portfolio:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-
-#cell 1
-
 

@@ -88,10 +88,10 @@ def set_defaults(df_float_sf: int = 8,
     if mpl_figsize is not None: mpl.rcParams['figure.figsize'] = mpl_figsize
     if np_seterr is not None: np.seterr(np_seterr)
     pd.options.mode.chained_assignment = None  # Turn off bogus 'view' warnings from pandas when modifying dataframes
-    try:  # This will run if we are in Jupyter
-        get_ipython().run_line_magic('matplotlib', 'inline')  # type: ignore  # get_ipython() is only present when running from jupyter or ipython
-    except NameError:
-        pass
+    #try:  # This will run if we are in Jupyter
+    #    get_ipython().run_line_magic('matplotlib', 'inline')  # type: ignore  # get_ipython() is only present when running from jupyter or ipython
+    #except NameError:
+    #    pass
     plt.rcParams.update({'figure.max_open_warning': 100})  # For unit tests, avoid warning when opening more than 20 figures
     
 

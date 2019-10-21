@@ -1,4 +1,9 @@
-#cell 0
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 from collections import defaultdict
 from sortedcontainers import SortedDict
 import math
@@ -232,8 +237,7 @@ class ContractPNL:
             unrealized = 0
         else:
             price = self._price_function(self.contract, self._account_timestamps, i, self.strategy_context)
-            assert np.isreal(price), \
-                f'Unexpected price type: {price} {type(price)} for contract: {self.contract} timestamp: {self._account_timestamps[i]}'
+            assert np.isreal(price),                 f'Unexpected price type: {price} {type(price)} for contract: {self.contract} timestamp: {self._account_timestamps[i]}'
 
             if math.isnan(price):
                 index = find_index_before(self._net_pnl, timestamp)  # Last index we computed net pnl for
@@ -576,6 +580,9 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
 
-#cell 1
+
+# In[ ]:
+
+
 
 

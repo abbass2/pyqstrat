@@ -1,4 +1,9 @@
-#cell 0
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[49]:
+
+
 import numpy as np
 import pandas as pd
 import os
@@ -324,6 +329,8 @@ if __name__ == "__main__":
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
 
 
-#cell 1
+# In[ ]:
+
+
 
 
