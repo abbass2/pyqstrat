@@ -171,7 +171,7 @@ class TimeSeries:
                  timestamps: Union[pd.Series, np.ndarray],
                  values: Union[pd.Series, np.ndarray],
                  plot_type: str = 'line',
-                 line_type: str = 'solid',
+                 line_type: Optional[str] = 'solid',
                  line_width: int = None,
                  color: str = None, 
                  marker: str = None, 

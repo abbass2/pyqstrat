@@ -6,18 +6,60 @@ import sys
 from collections import defaultdict
 from pprint import pformat
 import math
+
 from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, plot_return_metrics
 from pyqstrat.account import Account
-from pyqstrat.pq_utils import *
-from pyqstrat.pq_types import ContractGroup
+from pyqstrat.pq_types import ContractGroup, Contract, Order, Trade
 from pyqstrat.plot import TimeSeries, trade_sets_by_reason_code, Subplot, Plot
-from typing import Sequence
+from pyqstrat.pq_utils import series_to_array, str2date
+from types import SimpleNamespace
+import matplotlib as mpl
+from typing import Sequence, Callable, Any, Mapping, Union, Tuple, Optional, Dict, List
 
-#cell 1
-def _get_time_series_list(timestamps: np.datetime64, names: Sequence[str], values, properties):
+StrategyContextType = SimpleNamespace
+
+PriceFunctionType = Callable[[Contract, np.ndarray, int, StrategyContextType], float]
+
+IndicatorType = Union[np.ndarray, pd.Series, 
+                      Callable[[ContractGroup, np.ndarray, Sequence[str], StrategyContextType], np.ndarray]]
+
+IndicatorValuesType = Mapping[str, Mapping[str, np.ndarray]]
+
+SignalValuesType = IndicatorValuesType
+
+SignalType = Callable[[ContractGroup, np.ndarray, IndicatorValuesType, Mapping[str, np.ndarray], StrategyContextType], np.ndarray]
+
+RuleType = Callable[
+    [ContractGroup, 
+     int, 
+     np.ndarray, 
+     Sequence[str], 
+     str, 
+     Account, 
+     StrategyContextType],
+    Sequence[Order]]
+
+MarketSimulatorType = Callable[
+    [Sequence[Order], 
+     int, 
+     np.ndarray, 
+     IndicatorValuesType, 
+     SignalValuesType, 
+     StrategyContextType],
+    Sequence[Trade]]
+
+
+DateRangeType = Union[Tuple[str, str], Tuple[np.datetime64, np.datetime64]]
+
+
+def _get_time_series_list(timestamps: np.datetime64, 
+                          names: Sequence[str], 
+                          values, 
+                          properties: Mapping[str, Mapping[str, Any]]) -> Sequence[TimeSeries]:
     ts_list = []
     for name in names:
-        line_type, color = None, None
+        line_type: Optional[str] = None
+        color: Optional[str] = None
         if properties is not None and name in properties:
             if 'line_type' in properties[name]: line_type = properties[name]['line_type']
             if 'color' in properties[name]: color = properties[name]['color']
@@ -29,24 +71,30 @@ def _get_time_series_list(timestamps: np.datetime64, names: Sequence[str], value
     return ts_list
 
 class Strategy:
-    def __init__(self, timestamps, contract_groups, price_function, starting_equity = 1.0e6, pnl_calc_time = 15 * 60 + 1, trade_lag = 0,
-                 run_final_calc = True, strategy_context = None):
+    def __init__(self, 
+                 timestamps: np.ndarray,
+                 contract_groups: Sequence[ContractGroup],
+                 price_function: PriceFunctionType,
+                 starting_equity: float = 1.0e6, 
+                 pnl_calc_time: int = 15 * 60 + 1,
+                 trade_lag: int = 0,
+                 run_final_calc: bool = True, 
+                 strategy_context: StrategyContextType = None) -> None:
         '''
         Args:
             timestamps (np.array of np.datetime64): The "heartbeat" of the strategy.  We will evaluate trading rules and 
                 simulate the market at these times.
+            contract_groups: The contract groups we will potentially trade.
             price_function: A function that returns the price of a contract at a given timestamp
-            contract_groups (list of :obj:`ContractGroup`): The contract groups we will potentially trade.
-            starting_equity (float, optional): Starting equity in Strategy currency.  Default 1.e6
-            pnl_calc_time (int, optional): Time of day used to calculate PNL.  Default 15 * 60 (3 pm)
-            trade_lag (int, optional): Number of bars you want between the order and the trade.  For example, if you think it will take
+            starting_equity: Starting equity in Strategy currency.  Default 1.e6
+            pnl_calc_time: Time of day used to calculate PNL.  Default 15 * 60 (3 pm)
+            trade_lag: Number of bars you want between the order and the trade.  For example, if you think it will take
                 5 seconds to place your order in the market, and your bar size is 1 second, set this to 5.  Set this to 0 if you
                 want to execute your trade at the same time as you place the order, for example, if you have daily bars.  Default 0.
-            run_final_calc (bool, optional): If set, calculates unrealized pnl and net pnl as well as realized pnl when strategy is done.
+            run_final_calc: If set, calculates unrealized pnl and net pnl as well as realized pnl when strategy is done.
                 If you don't need unrealized pnl, turn this off for faster run time. Default True
-            strategy_context (:obj:`types.SimpleNamespace`, optional): A storage class where you can store key / value pairs 
-                relevant to this strategy.  For example, you may have a pre-computed table of correlations that you use in the 
-                indicator or trade rule functions.  
+            strategy_context: A storage class where you can store key / value pairs relevant to this strategy.
+                For example, you may have a pre-computed table of correlations that you use in the indicator or trade rule functions.  
                 If not set, the __init__ function will create an empty member strategy_context object that you can access.
         '''
         self.name = None
@@ -59,47 +107,54 @@ class Strategy:
         assert trade_lag >= 0, f'trade_lag cannot be negative: {trade_lag}'
         self.trade_lag = trade_lag
         self.run_final_calc = run_final_calc
-        self.indicators = {}
-        self.signals = {}
-        self.signal_values = defaultdict(types.SimpleNamespace)
-        self.rule_names = []
-        self.rules = {}
-        self.position_filters = {}
-        self.rule_signals = {}
-        self.market_sims = []
-        self._trades = []
-        self._orders = []
-        self._open_orders = defaultdict(list)
-        self.indicator_deps = {}
-        self.indicator_cgroups = {}
-        self.indicator_values = defaultdict(types.SimpleNamespace)
-        self.signal_indicator_deps = {}
-        self.signal_deps = {}
-        self.signal_cgroups = {}
-        self.trades_iter =  [[] for x in range(len(timestamps))] # For debugging, we don't really need this as a member variable
+        self.indicators: Dict[str, IndicatorType] = {}
+        self.signals: Dict[str, SignalType] = {}
+        self.signal_values: Dict[str, SimpleNamespace] = defaultdict(types.SimpleNamespace)
+        self.rule_names: List[str] = []
+        self.rules: Dict[str, RuleType] = {}
+        self.position_filters: Dict[str, Optional[str]] = {}
+        self.rule_signals: Dict[str, Tuple[str, Sequence]] = {}
+        self.market_sims: List[MarketSimulatorType] = []
+        self._trades: List[Trade] = []
+        self._orders: List[Order] = []
+        self._open_orders: Dict[str, List[Order]] = defaultdict(list)
+        self.indicator_deps: Dict[str, List[str]] = {}
+        self.indicator_cgroups: Dict[str, List[ContractGroup]] = {}
+        self.indicator_values: Dict[ContractGroup, SimpleNamespace] = defaultdict(types.SimpleNamespace)
+        self.signal_indicator_deps: Dict[str, List[str]] = {}
+        self.signal_deps: Dict[str, List[str]] = {}
+        self.signal_cgroups: Dict[str, List[ContractGroup]] = {}
+        self.trades_iter: List[List] = [[] for x in range(len(timestamps))]  # For debugging, we don't really need this as a member variable
         
-    def add_indicator(self, name, indicator, contract_groups = None, depends_on = None):
+    def add_indicator(self, 
+                      name: str, 
+                      indicator: IndicatorType, 
+                      contract_groups: Sequence[ContractGroup] = None, 
+                      depends_on: Sequence[str] = None) -> None:
         '''
         Args:
             name: Name of the indicator
             indicator:  A function that takes strategy timestamps and other indicators and returns a numpy array
               containing indicator values.  The return array must have the same length as the timestamps object.
               Can also be a numpy array or a pandas Series in which case we just store the values.
-            contract_groups (list of :obj:`ContractGroup`, optional): Contract groups that this indicator applies to.  
-                If not set, it applies to all contract groups.  Default None.
-            depends_on (list of str, optional): Names of other indicators that we need to compute this indicator.
-                Default None.
+            contract_groups: Contract groups that this indicator applies to.  If not set, it applies to all contract groups. Default None.
+            depends_on: Names of other indicators that we need to compute this indicator. Default None.
         '''
         self.indicators[name] = indicator
-        self.indicator_deps[name] = [] if depends_on is None else depends_on
+        self.indicator_deps[name] = [] if depends_on is None else list(depends_on)
         if contract_groups is None: contract_groups = self.contract_groups
         if isinstance(indicator, np.ndarray) or isinstance(indicator, pd.Series):
             indicator_values = series_to_array(indicator)
             for contract_group in contract_groups:
                 setattr(self.indicator_values[contract_group], name, indicator_values)
-        self.indicator_cgroups[name] = contract_groups
+        self.indicator_cgroups[name] = list(contract_groups)
         
-    def add_signal(self, name, signal_function, contract_groups = None, depends_on_indicators = None, depends_on_signals = None):
+    def add_signal(self,
+                   name: str,
+                   signal_function: SignalType,
+                   contract_groups: Sequence[ContractGroup] = None,
+                   depends_on_indicators: Sequence[str] = None,
+                   depends_on_signals: Sequence[str] = None) -> None:
         '''
         Args:
             name (str): Name of the signal
@@ -112,30 +167,32 @@ class Strategy:
             depends_on_signals (list of str, optional): Names of other signals that we need to compute this signal. Default None.
         '''
         self.signals[name] = signal_function
-        self.signal_indicator_deps[name] = [] if depends_on_indicators is None else depends_on_indicators
-        self.signal_deps[name] = [] if depends_on_signals is None else depends_on_signals
+        self.signal_indicator_deps[name] = [] if depends_on_indicators is None else list(depends_on_indicators)
+        self.signal_deps[name] = [] if depends_on_signals is None else list(depends_on_signals)
         if contract_groups is None: contract_groups = self.contract_groups
-        self.signal_cgroups[name] = contract_groups
+        self.signal_cgroups[name] = list(contract_groups)
         
-    def add_rule(self, name, rule_function, signal_name, sig_true_values = None, position_filter = None):
+    def add_rule(self, 
+                 name: str, 
+                 rule_function: RuleType, 
+                 signal_name: str, 
+                 sig_true_values: Sequence = None, 
+                 position_filter: str = None) -> None:
         '''Add a trading rule.  Trading rules are guaranteed to run in the order in which you add them.  For example, if you set trade_lag to 0,
                and want to exit positions and re-enter new ones in the same bar, make sure you add the exit rule before you add the entry rule to the 
                strategy.
         
         Args:
-            name (str): Name of the trading rule
-            rule_function (function): A trading rule function that returns a list of Orders
-            signal_name (str): The strategy will call the trading rule function when the signal with this name matches sig_true_values
-            sig_true_values (numpy array, optional): If the signal value at a bar is equal to one of these values, 
+            name: Name of the trading rule
+            rule_function: A trading rule function that returns a list of Orders
+            signal_name: The strategy will call the trading rule function when the signal with this name matches sig_true_values
+            sig_true_values: If the signal value at a bar is equal to one of these values, 
                 the Strategy will call the trading rule function.  Default [TRUE]
-            position_filter (str, optional): Can be "zero", "nonzero" or None.  Zero rules are only triggered when 
-                the corresponding contract positions are 0
+            position_filter: Can be "zero", "nonzero" or None.  Zero rules are only triggered when the corresponding contract positions are 0
                 Nonzero rules are only triggered when the corresponding contract positions are non-zero.  
-                If not set, we don't look at position before triggering the rule.
-                Default None
+                If not set, we don't look at position before triggering the rule. Default None
         '''
-
-            
+        
         if sig_true_values is None: sig_true_values = [True]
             
         if name in self.rule_names:
@@ -148,25 +205,23 @@ class Strategy:
             assert(position_filter in ['zero', 'nonzero'])
         self.position_filters[name] = position_filter
         
-    def add_market_sim(self, market_sim_function):
-        '''Add a market simulator.  A market simulator takes a list of Orders as input and returns a list of Trade objects.
-        
-        Args:
-            market_sim_function (function): A function that takes a list of Orders and Indicators as input 
-                and returns a list of Trade objects
-        '''
+    def add_market_sim(self, market_sim_function: MarketSimulatorType) -> None:
+        '''Add a market simulator.  A market simulator is a function that takes orders as input and returns trades.'''
         self.market_sims.append(market_sim_function)
         
-    def run_indicators(self, indicator_names = None, contract_groups = None, clear_all = False):
+    def run_indicators(self, 
+                       indicator_names: Sequence[str] = None, 
+                       contract_groups: Sequence[ContractGroup] = None, 
+                       clear_all: bool = False) -> None:
         '''Calculate values of the indicators specified and store them.
         
         Args:
-            indicator_names (list of str, optional): List of indicator names.  If None (default) run all indicators
-            contract_groups (list of :obj:`ContractGroup`, optional): Contract group to run this indicator for.  
-                If None (default), we run it for all contract groups.
-            clear_all (bool, optional): If set, clears all indicator values before running.  Default False.
+            indicator_names: List of indicator names.  If None (default) run all indicators
+            contract_groups: Contract group to run this indicator for.  If None (default), we run it for all contract groups.
+            clear_all: If set, clears all indicator values before running.  Default False.
         '''
-        if indicator_names is None: indicator_names = self.indicators.keys()
+        
+        if indicator_names is None: indicator_names = list(self.indicators.keys())
         if contract_groups is None: contract_groups = self.contract_groups
             
         if clear_all:  self.indicator_values = defaultdict(types.SimpleNamespace)
@@ -203,14 +258,16 @@ class Strategy:
 
                 setattr(cgroup_ind_namespace, indicator_name, series_to_array(indicator_values))
                 
-    def run_signals(self, signal_names = None, contract_groups = None, clear_all = False):
+    def run_signals(self, 
+                    signal_names: Sequence[str] = None, 
+                    contract_groups: Sequence[ContractGroup] = None, 
+                    clear_all: bool = False) -> None:
         '''Calculate values of the signals specified and store them.
         
         Args:
-            signal_names (list of str, optional): List of signal names.  If None (default) run all signals
-            contract_groups (list of :obj:`ContractGroup`, optional): Contract groups to run this signal for.  
-                If None (default), we run it for all contract groups.
-            clear_all (bool, optional): If set, clears all signal values before running.  Default False.
+            signal_names: List of signal names.  If None (default) run all signals
+            contract_groups: Contract groups to run this signal for. If None (default), we run it for all contract groups.
+            clear_all: If set, clears all signal values before running.  Default False.
         '''
         if signal_names is None: signal_names = self.signals.keys()
         if contract_groups is None: contract_groups = self.contract_groups
@@ -250,7 +307,11 @@ class Strategy:
                     signal_function(cgroup, self.timestamps, indicator_values, parent_values, self.strategy_context)))
 
         
-    def _generate_order_iterations(self, rule_names = None, contract_groups = None, start_date = None, end_date = None):
+    def _generate_order_iterations(self, 
+                                   rule_names: Sequence[str] = None, 
+                                   contract_groups: Sequence[ContractGroup] = None, 
+                                   start_date: np.datetime64 = None, 
+                                   end_date: np.datetime64 = None) -> None:
         '''
         >>> class MockStrat:
         ...    def __init__(self):
@@ -321,13 +382,17 @@ class Strategy:
 
         self.orders_iter = orders_iter
     
-    def run_rules(self, rule_names = None, contract_groups = None, start_date = None, end_date = None):
-        '''Run trading rules.
+    def run_rules(self, 
+                  rule_names: Sequence[str] = None, 
+                  contract_groups: Sequence[ContractGroup] = None, 
+                  start_date: np.datetime64 = None,
+                  end_date: np.datetime64 = None) -> None:
+        '''
+        Run trading rules.
         
         Args:
             rule_names: List of rule names.  If None (default) run all rules
-            contract_groups (list of :obj:`ContractGroup`, optional): Contract groups to run this rule for.  
-                If None (default), we run it for all contract groups.
+            contract_groups: Contract groups to run this rule for.  If None (default), we run it for all contract groups.
             start_date: Run rules starting from this date. Default None 
             end_date: Don't run rules after this date.  Default None
         '''
@@ -342,7 +407,7 @@ class Strategy:
         if self.run_final_calc:
             self.account.calc(self.timestamps[-1])
         
-    def _run_iteration(self, i):
+    def _run_iteration(self, i: int) -> None:
         
         self._sim_market(i)
         # Treat all orders as IOC, i.e. if the order was not executed, then its cancelled.
@@ -364,12 +429,12 @@ class Strategy:
         if open_orders is not None and len(open_orders):
             self._open_orders[i + 1] += open_orders
             
-    def run(self):
+    def run(self) -> None:
         self.run_indicators()
         self.run_signals()
         self.run_rules()
         
-    def _get_orders(self, idx, rule_function, contract_group, params):
+    def _get_orders(self, idx: int, rule_function: RuleType, contract_group: ContractGroup, params: SimpleNamespace) -> Sequence[Order]:
         try:
             indicator_values, signal_values, rule_name = (params['indicator_values'], params['signal_values'], params['rule_name'])
             position_filter = self.position_filters[rule_name]
@@ -384,7 +449,7 @@ class Strategy:
                          ).with_traceback(sys.exc_info()[2])
         return orders
         
-    def _sim_market(self, i):
+    def _sim_market(self, i: int) -> None:
         '''
         Go through all open orders and run market simulators to generate a list of trades and return any orders that were not filled.
         '''
@@ -406,7 +471,11 @@ class Strategy:
             
         self._open_orders[i] = [order for order in open_orders if order.status != 'filled']
             
-    def df_data(self, contract_groups = None, add_pnl = True, start_date = None, end_date = None):
+    def df_data(self, 
+                contract_groups: Sequence[ContractGroup] = None, 
+                add_pnl: bool = True, 
+                start_date: Union[str, np.datetime64] = None, 
+                end_date: Union[str, np.datetime64] = None) -> pd.DataFrame:
         '''
         Add indicators and signals to end of market data and return as a pandas dataframe.
         
@@ -454,21 +523,30 @@ class Strategy:
             
         return pd.concat(dfs)
     
-    def trades(self, contract_group = None, start_date = None, end_date = None):
+    def trades(self, 
+               contract_group: ContractGroup = None, 
+               start_date: np.datetime64 = None, 
+               end_date: np.datetime64 = None) -> Sequence[Trade]:
         '''Returns a list of trades with the given contract group and with trade date between (and including) start date 
             and end date if they are specified.
             If contract_group is None trades for all contract_groups are returned'''
         start_date, end_date = str2date(start_date), str2date(end_date)
         return self.account.trades(contract_group, start_date, end_date)
     
-    def df_trades(self, contract_group = None, start_date = None, end_date = None):
+    def df_trades(self, 
+                  contract_group: ContractGroup = None, 
+                  start_date: np.datetime64 = None, 
+                  end_date: np.datetime64 = None) -> pd.DataFrame:
         '''Returns a dataframe with data from trades with the given contract group and with trade date between (and including)
             start date and end date
             if they are specified. If contract_group is None trades for all contract_groups are returned'''
         start_date, end_date = str2date(start_date), str2date(end_date)
         return self.account.df_trades(contract_group, start_date, end_date)
     
-    def orders(self, contract_group = None, start_date = None, end_date = None):
+    def orders(self, 
+               contract_group: ContractGroup = None, 
+               start_date: Union[np.datetime64, str] = None, 
+               end_date: Union[np.datetime64, str] = None) -> Sequence[Order]:
         '''Returns a list of orders with the given contract group and with order date between (and including) start date and 
             end date if they are specified.
             If contract_group is None orders for all contract_groups are returned'''
@@ -483,7 +561,7 @@ class Strategy:
                     start_date is None or order.date >= start_date) and (end_date is None or order.date <= end_date)]
         return orders
     
-    def df_orders(self, contract_group = None, start_date = None, end_date = None):
+    def df_orders(self, contract_group = None, start_date = None, end_date = None) -> pd.DataFrame:
         '''Returns a dataframe with data from orders with the given contract group and with order date between (and including) 
             start date and end date
             if they are specified. If contract_group is None orders for all contract_groups are returned'''
@@ -497,15 +575,17 @@ class Strategy:
                                               columns = ['symbol', 'type', 'timestamp', 'qty', 'reason_code', 'order_props', 'contract_props'])
         return df_orders
    
-    def df_pnl(self, contract_group = None):
+    def df_pnl(self, contract_group = None) -> pd.DataFrame:
         '''Returns a dataframe with P&L columns.  If contract group is set to None (default), sums up P&L across all contract groups'''
         return self.account.df_account_pnl(contract_group)
     
-    def df_returns(self, contract_group = None, sampling_frequency = 'D'):
+    def df_returns(self, 
+                   contract_group: ContractGroup = None,
+                   sampling_frequency: str = 'D') -> pd.DataFrame:
         '''Return a dataframe of returns and equity indexed by date.
         
         Args:
-            contract_group (:obj:`ContractGroup`, optional) : The contract group to get returns for.  
+            contract_group: The contract group to get returns for.  
                 If set to None (default), we return the sum of PNL for all contract groups
             sampling_frequency: Downsampling frequency.  Default is None.  See pandas frequency strings for possible values
         '''
@@ -518,49 +598,49 @@ class Strategy:
         return pnl
     
     def plot(self, 
-             contract_groups = None, 
-             primary_indicators = None,
-             primary_indicators_dual_axis = None,
-             secondary_indicators = None,
-             secondary_indicators_dual_axis = None,
-             indicator_properties = None,
-             signals = None,
-             signal_properties = None, 
-             pnl_columns = None, 
-             title = None, 
-             figsize = (20, 15), 
-             date_range = None, 
-             date_format = None, 
-             sampling_frequency = None, 
-             trade_marker_properties = None, 
-             hspace = 0.15):
+             contract_groups: Sequence[ContractGroup] = None, 
+             primary_indicators: Sequence[str] = None,
+             primary_indicators_dual_axis: Sequence[str] = None,
+             secondary_indicators: Sequence[str] = None,
+             secondary_indicators_dual_axis: Sequence[str] = None,
+             indicator_properties: Mapping[str, Mapping[str, Any]] = None,
+             signals: Sequence[str] = None,
+             signal_properties: Mapping[str, Mapping[str, Any]] = None, 
+             pnl_columns: Sequence[str] = None, 
+             title: str = None, 
+             figsize: Tuple[int, int] = (20, 15), 
+             date_range: DateRangeType = None, 
+             date_format: str = None, 
+             sampling_frequency: str = None, 
+             trade_marker_properties: Mapping[str, Tuple[str, float, str]] = None, 
+             hspace: float = 0.15) -> None:
         
         '''Plot indicators, signals, trades, position, pnl
         
         Args:
-            contract_groups (list of :obj:`ContractGroup`, optional): Contract groups to plot or None (default) for all 
+            contract_groups: Contract groups to plot or None (default) for all 
                 contract groups. 
-            primary indicators (list of str, optional): List of indicators to plot in the main indicator section. 
+            primary indicators: List of indicators to plot in the main indicator section. 
                 Default None (plot everything)
-            primary indicators (list of str, optional): List of indicators to plot in the secondary indicator section. 
+            primary indicators: List of indicators to plot in the secondary indicator section. 
                 Default None (don't plot anything)
-            indicator_properties (dict of str : dict, optional): If set, we use the line color, line type indicated 
+            indicator_properties: If set, we use the line color, line type indicated 
                 for the given indicators
-            signals (list of str, optional): Signals to plot.  Default None (plot everything).
-            plot_equity (bool, optional): If set, we plot the equity curve.  Default is True
-            title (list of str, optional): Title of plot. Default None
-            figsize (tuple of int): Figure size.  Default (20, 15)
-            date_range (tuple of str or np.datetime64, optional): Used to restrict the date range of the graph.
+            signals: Signals to plot.  Default None (plot everything).
+            plot_equity: If set, we plot the equity curve.  Default is True
+            title: Title of plot. Default None
+            figsize: Figure size.  Default (20, 15)
+            date_range: Used to restrict the date range of the graph.
                 Default None
-            date_format (str, optional): Date format for tick labels on x axis.  If set to None (default), 
+            date_format: Date format for tick labels on x axis.  If set to None (default), 
                 will be selected based on date range. See matplotlib date format strings
-            sampling_frequency (str, optional): Downsampling frequency.  The graph may get too busy if you have too many bars
+            sampling_frequency: Downsampling frequency.  The graph may get too busy if you have too many bars
                 of data, in which case you may want to downsample before plotting.  See pandas frequency strings for 
                 possible values. Default None.
-            trade_marker_properties (dict of str : tuple, optional): A dictionary of 
+            trade_marker_properties: A dictionary of 
                 order reason code -> marker shape, marker size, marker color for plotting trades with different reason codes.
                 Default is None in which case the dictionary from the ReasonCode class is used
-            hspace (float, optional): Height (vertical) space between subplots.  Default is 0.15
+            hspace: Height (vertical) space between subplots.  Default is 0.15
         '''
         date_range = strtup2date(date_range)
         if contract_groups is None: contract_groups = self.contract_groups
@@ -627,7 +707,12 @@ class Strategy:
                         title = title_full, hspace = hspace)
             plot.draw()
             
-    def evaluate_returns(self, contract_group = None, plot = True, display_summary = True, float_precision = 4, return_metrics = False):
+    def evaluate_returns(self, 
+                         contract_group: ContractGroup = None, 
+                         plot: bool = True, 
+                         display_summary: bool = True, 
+                         float_precision: int = 4, 
+                         return_metrics: bool = False) -> Optional[Mapping]:
         '''Returns a dictionary of common return metrics.
         
         Args:
@@ -643,8 +728,9 @@ class Strategy:
         if plot: plot_return_metrics(ev.metrics())
         if return_metrics:
             return ev.metrics()
+        return None
     
-    def plot_returns(self, contract_group = None):
+    def plot_returns(self, contract_group: ContractGroup = None) -> Tuple[mpl.figure.Figure, mpl.axes.Axes]:
         '''Display plots of equity, drawdowns and returns for the given contract group or for all contract groups if contract_group 
             is None (default)'''
         if contract_group is None:
@@ -672,7 +758,6 @@ def test_strategy():
     from types import SimpleNamespace
     from pyqstrat.pq_types import Contract, ContractGroup, Trade
     from pyqstrat.portfolio import Portfolio
-    from pyqstrat.orders import MarketOrder
 
     try:
         # If we are running from unit tests
@@ -823,11 +908,11 @@ def test_strategy():
     assert(round(metrics['mdd_pct'], 6) == 0.002574) #-0.002841)
     return strategy
     
-if __name__ == "__main__":
+if __name__ == "__mainx__":
     strategy = test_strategy()
     import doctest
     doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE)
 
-#cell 2
+#cell 1
 
 

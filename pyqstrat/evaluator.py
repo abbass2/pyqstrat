@@ -133,12 +133,13 @@ def compute_sharpe(returns: np.ndarray, amean: float, periods_per_year: float) -
 
 def compute_k_ratio(equity: np.ndarray, periods_per_year: int, halflife_years: float = None) -> float:
     '''
-    Compute k-ratio.  See https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2230949
+    Compute k-ratio (2013 or original versions by Lars Kestner). See https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2230949
+    We also implement a modification that allows higher weighting for more recent returns.
     
     Args:
         equity: a numpy array of the equity in your account
         periods_per_year: 252 for daily values
-        hallife_years: If set, we use weighted linear regression to give less weight to older returns.
+        halflife_years: If set, we use weighted linear regression to give less weight to older returns.
             In this case, we compute the original k-ratio which does not use periods per year or number of observations
             If not set, we compute the 2013 version of the k-ratio which weights k-ratio by sqrt(periods_per_year) / nobs
         
