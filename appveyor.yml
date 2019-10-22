@@ -58,6 +58,8 @@ test_script:
   - pip install scipy
   - python setup.py build_ext --inplace
   - python -m pytest pyqstrat
+  - cd
+  - dir
   - mypy --ignore-missing-imports pyqstrat/*.py
   - flake8 pyqstrat/*.py
 
