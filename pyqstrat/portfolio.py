@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import matplotlib as mpl
 from functools import reduce
 from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, plot_return_metrics
 from pyqstrat.strategy import Strategy
@@ -192,4 +191,3 @@ class Portfolio:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-

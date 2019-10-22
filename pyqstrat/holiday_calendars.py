@@ -1,4 +1,3 @@
-#cell 0
 import numpy as np
 import pandas as pd
 import collections
@@ -361,4 +360,3 @@ def get_date_from_weekday(weekday: int, year: int, month: int, week: int) -> np.
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-

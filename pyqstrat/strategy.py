@@ -934,6 +934,3 @@ if __name__ == "__main__":
     strategy = test_strategy()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-
-
-

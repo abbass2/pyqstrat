@@ -379,6 +379,3 @@ def process_marketdata(
                     else: 
                         print(str(new_exc))
                         continue
-
-
-

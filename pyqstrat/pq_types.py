@@ -1,11 +1,10 @@
-#cell 0
 import pandas as pd
 import numpy as np
 import types
 import math
 import datetime
 from types import SimpleNamespace
-from typing import MutableSet, Mapping, Optional, Union, Any
+from typing import MutableSet, Mapping, Optional, Union
 
 
 class ContractGroup:
@@ -84,7 +83,6 @@ class Contract:
             raise Exception(f'Contract with symbol: {symbol} already exists')
         Contract._symbol_names.add(symbol)
 
-        #assert(isinstance(contract_group, ContractGroup))
         assert(multiplier > 0)
 
         contract = Contract()
@@ -391,4 +389,3 @@ class Trade:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-

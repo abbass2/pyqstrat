@@ -1,4 +1,3 @@
-#cell 0
 from dataclasses import dataclass
 import collections
 from abc import abstractmethod
@@ -90,7 +89,7 @@ class BoxPlotAttributes(DisplayAttributes):
 
 @dataclass
 class LinePlotAttributes(DisplayAttributes):
-    line_type: Optional[str ]= 'solid'
+    line_type: Optional[str] = 'solid'
     line_width: Optional[int] = None
     color: Optional[str] = None
     marker: Optional[str] = None
@@ -980,7 +979,3 @@ if __name__ == "__main__":
     test_plot()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-
-#cell 1
-
-

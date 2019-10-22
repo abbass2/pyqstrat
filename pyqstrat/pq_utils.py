@@ -1,3 +1,4 @@
+import matplotlib as mpl
 try:
     import tkinter
 except ImportError:
@@ -10,8 +11,7 @@ import datetime
 import numpy as np
 import logging
 import pandas as pd
-import matplotlib as mpl
-from typing import Any, Sequence, Mapping, Optional, Tuple, Callable, MutableSequence, MutableSet, Union
+from typing import Any, Sequence, Optional, Tuple, Callable, MutableSequence, MutableSet, Union
 
 SEC_PER_DAY = 3600 * 24
 _HAS_DISPLAY = None
@@ -85,9 +85,6 @@ def set_defaults(df_float_sf: int = 8,
     if mpl_figsize is not None: mpl.rcParams['figure.figsize'] = mpl_figsize
     if np_seterr is not None: np.seterr(np_seterr)
     pd.options.mode.chained_assignment = None  # Turn off bogus 'view' warnings from pandas when modifying dataframes
-    #try:  # This will run if we are in Jupyter
-    #except NameError:
-    #    pass
     plt.rcParams.update({'figure.max_open_warning': 100})  # For unit tests, avoid warning when opening more than 20 figures
     
 
@@ -147,7 +144,6 @@ def np_find_closest(a: np.ndarray, v: Any) -> int:
     a must be sorted
     >>> assert(all(np_find_closest(np.array([3, 4, 6]), np.array([4, 2])) == np.array([1, 0])))
     '''
-    #a must be sorted
     idx = a.searchsorted(v)
     idx = np.clip(idx, 1, len(a) - 1)
     left = a[idx - 1]
@@ -536,6 +532,3 @@ def async_yield() -> None:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-
-
-

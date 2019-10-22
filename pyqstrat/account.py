@@ -1,4 +1,3 @@
-#cell 0
 from collections import defaultdict
 from sortedcontainers import SortedDict
 import math
@@ -575,4 +574,3 @@ if __name__ == "__main__":
     test_account()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-
