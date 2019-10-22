@@ -1,9 +1,13 @@
+#cell 0
 import numpy as np
 import pandas as pd
 import collections
 import datetime
 import os
 import inspect
+import calendar as cal
+import dateutil.relativedelta as rd
+
 from typing import Optional, Tuple, Union, MutableMapping
 from types import FrameType
 
@@ -104,9 +108,6 @@ def _normalize(start: Union[str, datetime.datetime, np.datetime64],
     s = _as_np_date(start)
     e = _as_np_date(end)
     
-    #if s is None: s = start.copy()
-    #if e is None: e = end.copy()
-
     if not include_first:
         s += np.timedelta64(1, 'D')
 
@@ -248,6 +249,22 @@ class Calendar:
         dates = dates[np.is_busday(dates, busdaycal=self.bus_day_cal)]
         return dates
     
+    def third_friday_of_month(self, month: int, year: int, roll: str = 'backward') -> np.datetime64:
+        '''
+        >>> nyse = Calendar.get_calendar(Calendar.NYSE)
+        >>> nyse.third_friday_of_month(3, 2017)
+        numpy.datetime64('2017-03-17')
+        '''
+        # From https://stackoverflow.com/questions/18424467/python-third-friday-of-a-month
+        FRIDAY = 4
+        first_day_of_month = datetime.datetime(year, month, 1)
+        first_friday = first_day_of_month + datetime.timedelta(days=((FRIDAY - cal.monthrange(year, month)[0]) + 7) % 7)
+        # 4 is friday of week
+        third_friday_date = first_friday + datetime.timedelta(days=14)
+        third_friday = third_friday_date.date()
+        third_friday = self.add_trading_days(third_friday, 0, roll)
+        return third_friday
+    
     def add_trading_days(self,
                          start: Union[np.datetime64, pd.Series, np.ndarray, str, datetime.datetime, datetime.date],
                          num_days: int, 
@@ -325,6 +342,20 @@ class Calendar:
             holidays = read_holidays(exchange_name)
             Calendar.add_calendar(exchange_name, holidays)
         return Calendar._calendars[exchange_name]
+    
+
+def get_date_from_weekday(weekday: int, year: int, month: int, week: int) -> np.datetime64:
+    '''
+    Return the date that falls on a given weekday (Monday = 0) on a week, year and month
+    >>> get_date_from_weekday(1, 2019, 10, 4)
+    numpy.datetime64('2019-10-22')
+    '''
+    if week == -1:  # Last day of month
+        _, last_day = cal.monthrange(year, month)
+        return datetime.date(year, month, last_day)
+    first_day_of_month = datetime.date(year, month, 1)
+    date = first_day_of_month + rd.relativedelta(weeks=week - 1, weekday=weekday)
+    return np.datetime64(date)
     
 
 if __name__ == "__main__":

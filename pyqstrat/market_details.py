@@ -1,3 +1,4 @@
+#cell 0
 import re
 import datetime
 import calendar as cal
@@ -7,9 +8,8 @@ from pyqstrat.holiday_calendars import Calendar
 
 _cme_calendar = Calendar.get_calendar(Calendar.NYSE)
 
-def third_friday_of_month(calendar, month, year, roll = 'backward'):
+def third_friday_of_month(month, year, roll = 'backward'):
     '''
-    >>> calendar = Calendar.get_calendar(Calendar.NYSE)
     >>> third_friday_of_month(calendar, 3, 2017)
     numpy.datetime64('2017-03-17')
     '''
@@ -20,7 +20,7 @@ def third_friday_of_month(calendar, month, year, roll = 'backward'):
     # 4 is friday of week
     third_friday = first_friday + datetime.timedelta(days=14)
     third_friday = third_friday.date()
-    third_friday = calendar.add_trading_days(third_friday, 0, roll)
+    third_friday = _cme_calendar.add_trading_days(third_friday, 0, roll)
     return third_friday
 
 
