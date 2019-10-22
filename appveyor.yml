@@ -17,13 +17,13 @@ environment:
     PYTHON_ARCH: "64" 
 
   matrix:
-    - PYTHON_VERSION: "3.6"
+    - PYTHON_VERSION: "3.7"
 
 platform:
   -x64
 
 install:
-  - if "%PYTHON_VERSION%" == "3.6" set "BASE_PYTHON_VERSION=3"
+  - if "%PYTHON_VERSION%" == "3.7" set "BASE_PYTHON_VERSION=3"
   - if "%PYTHON_ARCH%" == "64" set "ARCH_LABEL=-x64"
   # These are already installed on appveyor.  Update them.
   - set "CONDA_ROOT=C:\Miniconda%BASE_PYTHON_VERSION%%ARCH_LABEL%"
