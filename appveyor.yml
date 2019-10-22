@@ -39,7 +39,7 @@ install:
   - "%CONDA_ROOT%\\Scripts\\activate root"
   - echo CONDA_PREFIX %CONDA_PREFIX%
   - conda info -a
-  - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% arrow-cpp pybind11 pandas numpy matplotlib pyarrow pytest ipython sortedcontainers libzip hdf5 h5py statsmodels
+  - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% arrow-cpp pybind11 pandas numpy matplotlib pyarrow pytest ipython sortedcontainers libzip hdf5 h5py statsmodels mypy flake8
 
 # Not a .NET project, we build in the install step instead
 build: false
@@ -58,6 +58,8 @@ test_script:
   - pip install scipy
   - python setup.py build_ext --inplace
   - python -m pytest pyqstrat
+  - mypy --ignore-missing-imports pyqstrat/*.py
+  - flake8 pyqstrat/*.py
 
 
 
