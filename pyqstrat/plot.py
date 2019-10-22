@@ -1,3 +1,4 @@
+#cell 0
 from dataclasses import dataclass
 import collections
 from abc import abstractmethod
@@ -503,13 +504,13 @@ def _plot_data(ax: mpl.axes.Axes, data: PlotData) -> Optional[List[mpl.lines.Lin
         else:
             raise Exception(f'unknown plot combination: {type(data)} {type(disp)}')
             
-#         # For scatter and filled line, xlim and ylim does not seem to get set automatically
-#         if isinstance(disp, ScatterPlotAttributes) or isinstance(disp, FilledLinePlotAttributes):
-#             xmin, xmax = _adjust_axis_limit(ax.get_xlim(), x)
-#             if not np.isnan(xmin) and not np.isnan(xmax): ax.set_xlim((xmin, xmax))
+        # For scatter and filled line, xlim and ylim does not seem to get set automatically
+        if isinstance(disp, ScatterPlotAttributes) or isinstance(disp, FilledLinePlotAttributes):
+            xmin, xmax = _adjust_axis_limit(ax.get_xlim(), x)
+            if not np.isnan(xmin) and not np.isnan(xmax): ax.set_xlim((xmin, xmax))
 
-#             ymin, ymax = _adjust_axis_limit(ax.get_ylim(), y)
-#             if not np.isnan(ymin) and not np.isnan(ymax): ax.set_ylim((ymin, ymax))
+            ymin, ymax = _adjust_axis_limit(ax.get_ylim(), y)
+            if not np.isnan(ymin) and not np.isnan(ymax): ax.set_ylim((ymin, ymax))
                 
     elif isinstance(data, TradeSet) and isinstance(disp, ScatterPlotAttributes):
         lines = ax.scatter(np.arange(len(data.timestamps)), data.values, marker=disp.marker, c=disp.marker_color, s=disp.marker_size, zorder=100)
@@ -980,5 +981,6 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
 
+#cell 1
 
 

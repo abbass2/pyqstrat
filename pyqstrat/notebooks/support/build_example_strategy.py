@@ -83,7 +83,7 @@ def market_simulator(orders, i, timestamps, indicators, signals, strategy_contex
             
         if np.isnan(trade_price): continue
             
-        trade = pq.Trade(order.contract, timestamp, order.qty, trade_price, order = order, commission = order.qty * 5, fee = 0)
+        trade = pq.Trade(order.contract, order, timestamp, order.qty, trade_price, commission = order.qty * 5, fee = 0)
         order.status = 'filled'
                            
         trades.append(trade)
