@@ -61,7 +61,7 @@ test_script:
   - cd
   - dir
   - mypy --ignore-missing-imports pyqstrat\*.py
-  - flake8 pyqstrat\*.py
+  - flake8 --ignore W291,W293,E701 --max-line-length=160 pyqstrat\*.py
 
 
 
