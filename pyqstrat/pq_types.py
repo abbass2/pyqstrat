@@ -373,8 +373,10 @@ class Trade:
         '''
         >>> Contract.clear()
         >>> ContractGroup.clear()
-        >>> print(Trade(Contract.create('IBM', contract_group = ContractGroup.create('IBM')), np.datetime64('2019-01-01 15:00'), 100, 10.2130000, 0.01))
-        IBM 2019-01-01 15:00:00 qty: 100 prc: 10.213 fee: 0.01 order: None
+        >>> contract = Contract.create('IBM', contract_group = ContractGroup.create('IBM'))
+        >>> order = MarketOrder(contract, np.datetime64('2019-01-01T14:59'), 100)
+        >>> print(Trade(contract, order, np.datetime64('2019-01-01 15:00'), 100, 10.2130000, 0.01))
+        IBM 2019-01-01 15:00:00 qty: 100 prc: 10.213 fee: 0.01 order: IBM 2019-01-01 14:59:00 qty: 100 open
         '''
         timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
         fee = f' fee: {self.fee:.6g}' if self.fee else ''
@@ -388,6 +390,4 @@ class Trade:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-
-
 
