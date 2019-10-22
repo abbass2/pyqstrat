@@ -25,7 +25,7 @@ install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  - conda create --channel conda-forge -vv -q -n test-environment python=$TRAVIS_PYTHON_VERSION arrow-cpp pybind11 pytest pandas numpy matplotlib scipy ipython pyarrow sortedcontainers libzip hdf5 h5py statsmodels
+  - conda create --channel conda-forge -vv -q -n test-environment python=$TRAVIS_PYTHON_VERSION arrow-cpp pybind11 pytest pandas numpy matplotlib scipy ipython pyarrow sortedcontainers libzip hdf5 h5py statsmodels mypy flake8
   - source activate test-environment
   - CXX=g++-5 CC=g++-5 python setup.py build_ext --inplace
 
@@ -34,6 +34,9 @@ script:
   - python -c 'print("hello")'
   - python -c 'import pyqstrat'
   - python -m pytest pyqstrat
+  - mypy --ignore-missing-imports pyqstrat/*.py
+  - flake8 pyqstrat/*.py
+  
 
   
    
