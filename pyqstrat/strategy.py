@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[58]:
-
-
 import numpy as np
 import pandas as pd
 import types
@@ -940,10 +934,6 @@ if __name__ == "__main__":
     strategy = test_strategy()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-
-
-# In[ ]:
-
 
 
 

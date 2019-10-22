@@ -1,7 +1,13 @@
 #!/bin/bash
 
-jupyter nbconvert --to python *.ipynb
-for filename in *.py
+for file in *.ipynb
 do
-    grep -v 'get_ipython()' $filename > $filename
+    newname="${file%.ipynb}.py"
+    tmpname="$newname.tmp"
+    echo processing "$file" to "$newname"
+    jq -j ' .cells | map( select(.cell_type == "code") | .source + ["\n\n"] ) | .[][]' "$file" > "$tmpname"
+    grep -v -e '^%' "$tmpname" | grep -v "get_ipython()" > "$newname"
+    rm $tmpname
 done
+mv *.py ../
+

@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[49]:
-
 
 import numpy as np
 import pandas as pd
@@ -10,7 +5,7 @@ import os
 import sys
 import concurrent
 from pyqstrat.pq_utils import set_defaults, has_display
-from pyqstrat.plot import Plot, Subplot, XYData, XYZData
+from pyqstrat.plot import Plot, Subplot, XYData, XYZData, SurfacePlotAttributes, LinePlotAttributes
 from typing import Mapping, Any, Callable, Generator, Tuple, Sequence, List, Optional
 
 set_defaults()
@@ -213,11 +208,11 @@ class Optimizer:
                 zlabel = name
                 title = None
                 
+            disp = SurfacePlotAttributes(marker=marker, marker_size=marker_size, marker_color=marker_color, interpolation=interpolation)
+            
             subplots.append(Subplot(
                 data_list=[
-                    XYZData(name, xvalues, yvalues, zarray, plot_type=plot_type, 
-                            marker=marker, marker_size=marker_size, marker_color=marker_color,
-                            interpolation=interpolation, cmap=cmap)],
+                    XYZData(name, xvalues, yvalues, zarray, display_attributes=disp)],
                 title=title, xlabel=x, ylabel=y, zlabel=zlabel, xlim=xlim, ylim=ylim))
         plot = Plot(subplots, figsize=figsize, title='Optimizer 2D Test', hspace=hspace)
         plot.draw()
@@ -275,10 +270,10 @@ class Optimizer:
             yarray = tup[1]
             yarray = yarray[x_sort_indices]
             
+            disp = LinePlotAttributes(marker=marker, marker_size=marker_size, marker_color=marker_color)
+           
             subplots.append(
-                Subplot(data_list=[
-                    XYData(name, xvalues, yarray, plot_type=plot_type, marker=marker, marker_size=marker_size, marker_color=marker_color)
-                ], xlabel=x, ylabel=name, xlim=xlim))
+                Subplot(data_list=[XYData(name, xvalues, yarray, display_attributes=disp)], xlabel=x, ylabel=name, xlim=xlim))
             
         plot = Plot(subplots, figsize=figsize, title='Optimizer 1D Test')
         plot.draw()
@@ -325,11 +320,8 @@ def test_optimize():
 
 if __name__ == "__main__":
     test_optimize()
-    import doctest
-    doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-
-
-# In[ ]:
+    #import doctest
+    #doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
 
 
 

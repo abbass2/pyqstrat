@@ -1,4 +1,8 @@
-#cell 0
+try:
+    import tkinter
+except ImportError:
+    mpl.use('Agg')  # Support running in headless mode
+import matplotlib.pyplot as plt
 import os
 import tempfile
 import asyncio
@@ -8,13 +12,6 @@ import logging
 import pandas as pd
 import matplotlib as mpl
 from typing import Any, Sequence, Mapping, Optional, Tuple, Callable, MutableSequence, MutableSet, Union
-
-try:
-    import tkinter
-except ImportError:
-    mpl.use('Agg')  # Support running in headless mode
-import matplotlib.pyplot as plt
-
 
 SEC_PER_DAY = 3600 * 24
 _HAS_DISPLAY = None
@@ -89,7 +86,6 @@ def set_defaults(df_float_sf: int = 8,
     if np_seterr is not None: np.seterr(np_seterr)
     pd.options.mode.chained_assignment = None  # Turn off bogus 'view' warnings from pandas when modifying dataframes
     #try:  # This will run if we are in Jupyter
-    #    get_ipython().run_line_magic('matplotlib', 'inline')  # type: ignore  # get_ipython() is only present when running from jupyter or ipython
     #except NameError:
     #    pass
     plt.rcParams.update({'figure.max_open_warning': 100})  # For unit tests, avoid warning when opening more than 20 figures
@@ -541,6 +537,5 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
 
-#cell 1
 
 

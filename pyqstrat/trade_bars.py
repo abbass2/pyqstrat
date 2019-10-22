@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[46]:
-
-
 import pandas as pd
 import numpy as np
 import IPython.display as dsp

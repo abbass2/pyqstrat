@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[11]:
-
-
 import pandas as pd
 import numpy as np
 import types
@@ -394,10 +388,6 @@ class Trade:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-
-
-# In[ ]:
-
 
 
 

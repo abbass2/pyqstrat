@@ -1,14 +1,384 @@
-#!/usr/bin/env python
-# coding: utf-8
+import glob
+import os
+import sys
+import re
+from dateutil import parser as dateutil_parser
+import numpy as np
+import concurrent
+from timeit import default_timer as timer
+import multiprocessing
+from pyqstrat.pq_utils import infer_compression, millis_since_epoch, touch
+from pyqstrat.pyqstrat_cpp import TextFileDecompressor, TextFileProcessor, PrintBadLineHandler, PriceQtyMissingDataHandler
+from pyqstrat.pyqstrat_cpp import ArrowWriterCreator, Aggregator, Schema, Record, Writer
 
-# In[39]:
+from typing import Sequence, Optional, Callable, Iterable, Union
+VERBOSE = False
+
+RecordGeneratorType = Union[Iterable[str], Iterable[bytes]]
+RecordGeneratorCreatorType = Callable[[str, str], RecordGeneratorType]
+RecordParserType = Callable[[Sequence[str]], Record]
+RecordParserCreatorType = Callable[[int, Sequence[str]], RecordParserType]
+HeaderParserType = Callable[[str, str], Sequence[str]]
+HeaderParserCreatorType = Callable[[RecordGeneratorCreatorType], HeaderParserType]
+LineFilterType = Callable[[str], bool]
+RecordFilterType = Callable[[Record], bool]
+BadLineHandlerType = Callable[[str, Exception], Record]
+MissingDataHandlerType = Callable[[Record], None]
+FileProcessorType = Callable[[str, Optional[str]], int]
+InputFileNameProviderType = Callable[[], Sequence[str]]
+WriterCreatorType = Callable[[str, Schema, bool, int], Writer]
+OutputFilePrefixMapperType = Callable[[str], str]
+BaseDateMapperType = Callable[[str], int]
+AggregatorCreatorType = Callable[[WriterCreatorType, str], Sequence[Aggregator]]
+FileProcessorCreatorType = Callable[[
+    RecordGeneratorType, 
+    Optional[LineFilterType], 
+    RecordParserType, 
+    BadLineHandlerType, 
+    Optional[RecordFilterType], 
+    MissingDataHandlerType, 
+    Sequence[Aggregator]],
+    FileProcessorType]
 
 
-get_ipython().run_cell_magic('flake8', '', 'import glob\nimport os\nimport sys\nimport re\nfrom dateutil import parser as dateutil_parser\nimport numpy as np\nimport concurrent\nfrom timeit import default_timer as timer\nimport multiprocessing\nfrom pyqstrat.pq_utils import infer_compression, millis_since_epoch, touch\nfrom pyqstrat.pyqstrat_cpp import TextFileDecompressor, TextFileProcessor, PrintBadLineHandler, PriceQtyMissingDataHandler\nfrom pyqstrat.pyqstrat_cpp import ArrowWriterCreator, Aggregator, Schema, Record, Writer\n\nfrom typing import Sequence, Optional, Callable, Iterable, Union\nVERBOSE = False\n\nRecordGeneratorType = Union[Iterable[str], Iterable[bytes]]\nRecordGeneratorCreatorType = Callable[[str, str], RecordGeneratorType]\nRecordParserType = Callable[[Sequence[str]], Record]\nRecordParserCreatorType = Callable[[int, Sequence[str]], RecordParserType]\nHeaderParserType = Callable[[str, str], Sequence[str]]\nHeaderParserCreatorType = Callable[[RecordGeneratorCreatorType], HeaderParserType]\nLineFilterType = Callable[[str], bool]\nRecordFilterType = Callable[[Record], bool]\nBadLineHandlerType = Callable[[str, Exception], Record]\nMissingDataHandlerType = Callable[[Record], None]\nFileProcessorType = Callable[[str, Optional[str]], int]\nInputFileNameProviderType = Callable[[], Sequence[str]]\nWriterCreatorType = Callable[[str, Schema, bool, int], Writer]\nOutputFilePrefixMapperType = Callable[[str], str]\nBaseDateMapperType = Callable[[str], int]\nAggregatorCreatorType = Callable[[WriterCreatorType, str], Sequence[Aggregator]]\nFileProcessorCreatorType = Callable[[\n    RecordGeneratorType, \n    Optional[LineFilterType], \n    RecordParserType, \n    BadLineHandlerType, \n    Optional[RecordFilterType], \n    MissingDataHandlerType, \n    Sequence[Aggregator]],\n    FileProcessorType]\n\n\nclass PathFileNameProvider:\n    \'\'\'A helper class that, given a pattern such as such as "/tmp/abc*.gz" and an optional include and exclude pattern, \n    returns names of all files that match\n    \'\'\'\n    def __init__(self, path: str, include_pattern: str = None, exclude_pattern: str = None) -> None:\n        \'\'\'\n        Args:\n            path: A pattern such as "/tmp/abc*.gz"\n            include_pattern: Given a pattern such as "xzy", will return only filenames that contain xyz\n            exclude_pattern: Given a pattern such as "_tmp", will exclude all filenames containing _tmp\n        \'\'\'\n        self.path = path\n        self.include_pattern = include_pattern\n        self.exclude_pattern = exclude_pattern\n        \n    def __call__(self) -> Sequence[str]:\n        \'\'\'\n        Returns:\n            All matching filenames\n        \'\'\'\n        files = glob.glob(self.path)\n        if not len(files):\n            raise Exception(f\'no matching files found with pattern: {self.path}\')\n        if self.include_pattern:\n            files = [file for file in files if self.include_pattern in file]\n        if self.exclude_pattern:\n            files = [file for file in files if self.exclude_pattern not in file]\n        if not len(files):\n            raise Exception(f\'no matching files for: {self.path} including: {self.include_pattern} excluding: {self.exclude_pattern}\')\n        return files\n    \n\nclass SingleDirectoryFileNameMapper:\n    \'\'\'A helper class that provides a mapping from input filenames to their corresponding output filenames in an output directory.\'\'\'\n    def __init__(self, output_dir: str) -> None:\n        \'\'\'\n        Args:\n            output_dir: The directory where we want to write output files\n        \'\'\'\n        if not os.path.isdir(output_dir): raise Exception(f\'{output_dir} does not exist\')\n        self.output_dir = output_dir\n\n    def __call__(self, input_filepath: str) -> str:\n        \'\'\'\n        Args:\n            input_filepath: The input file that we are creating an output file for, e.g. "/home/xzy.gz"\n        Returns:\n            Output file path for that input.  We take the filename from the input filepath, strip out any extension \n                and prepend the output directory name\n        \'\'\'\n        \n        if self.output_dir is None:\n            dirname = os.path.dirname(input_filepath)\n            dirname = os.path.join(dirname, \'output\')\n        else:\n            dirname = self.output_dir\n            \n        if not os.path.isdir(dirname): raise Exception(f\'{dirname} does not exist\')\n     \n        input_filename = os.path.basename(input_filepath)\n        exts = r\'\\.txt$|\\.gz$|\\.bzip2$|\\.bz$|\\.tar$|\\.zip$|\\.csv$\'\n        while (re.search(exts, input_filename)):\n            input_filename = \'.\'.join(input_filename.split(\'.\')[:-1])\n            if VERBOSE: print(f\'got input file: {input_filename}\')\n        output_prefix = os.path.join(dirname, input_filename)\n        return output_prefix\n\n\nclass TextHeaderParser:\n    \'\'\'\n    Parses column headers from a text file containing market data\n    \'\'\'\n    def __init__(self, \n                 record_generator_creator: RecordGeneratorCreatorType, \n                 skip_rows: int = 0, \n                 separator: str = \',\', \n                 make_lowercase: bool = True) -> None:\n        \'\'\'\n        Args:\n        \n            record_generator: A function that takes a filename and its compression type and returns an object\n                that we can use to iterate through lines in that file\n            skip_rows: Number of rows to skip before starting to read the file.  Default is 0\n            separator: Separator for headers.  Defaults to ,\n            make_lowercase: Whether to convert headers to lowercase before returning them\n        \'\'\'\n        self.record_generator_creator = record_generator_creator\n        self.skip_rows = 0\n        self.separator = separator\n        self.make_lowercase = make_lowercase\n        \n    def __call__(self, input_filename: str, compression: str) -> Sequence[str]:\n        \'\'\'\n        Args:\n        \n        input_filename The file to read\n        compression: Compression type, e.g. "gzip", or None if the file is not compressed\n        \n        Returns:\n            Column headers\n        \'\'\'\n        decode_needed = (compression is not None and compression != "")\n        \n        f = self.record_generator_creator(input_filename, compression)\n        headers = None\n        for line_num, line in enumerate(f):\n            if decode_needed: line = line.decode()  # type: ignore # str does not have decode\n            if line_num < self.skip_rows: continue\n            headers = line.split(self.separator)  # type: ignore  # byte does not have split\n            headers = [re.sub(\'[^A-Za-z0-9 ]+\', \'\', header) for header in headers]\n            if len(headers) == 1:\n                raise Exception(f\'Could not parse headers: {line} with separator: {self.separator}\')\n            break\n\n        if headers is None: raise Exception(\'no headers found\')\n        if self.make_lowercase: headers = [header.lower() for header in headers]\n        if VERBOSE: print(f\'Found headers: {headers}\')\n        return headers            \n            \n\ndef text_file_record_generator_creator(filename: str, compression: str = None) -> RecordGeneratorType:\n    \'\'\'\n    A helper function that returns a generator that we can use to iterate through lines in the input file\n    Args:\n        filename: The input filename\n        compression: The compression type of the input file or None if its not compressed    \n    \'\'\'\n    if compression is None: compression = infer_compression(filename)\n    if compression is None or compression == \'\':\n        return open(filename, \'r\')\n    if compression == \'gzip\':\n        import gzip\n        return gzip.open(filename, \'r\')\n    if compression == \'bz2\':\n        import bz2\n        return bz2.BZ2File(filename, \'r\')\n    if compression == \'zip\':\n        import zipfile\n        zf = zipfile.ZipFile(filename, mode=\'r\', compression=zipfile.ZIP_DEFLATED)\n        zip_infos = zf.infolist()\n        zip_names = [zi.filename for zi in zip_infos if not zi.is_dir()]\n        if len(zip_names) == 0: raise ValueError(f\'zero files found in ZIP file {filename}\')\n        return zf.open(zip_names.pop())\n    if compression == \'xz\':\n        import lzma\n        return lzma.LZMAFile(filename, \'r\')\n    raise ValueError(f\'unrecognized compression: {compression} for file: {filename}\')\n\n\ndef base_date_filename_mapper(input_file_path: str) -> int:\n    \'\'\'\n    A helper function that parses out the date from a filename.  For example, given a file such as "/tmp/spx_2018-08-09", this parses out the \n    date part of the filename and returns milliseconds (no fractions) since the epoch to that date.\n    \n    Args:\n        input_filepath (str): Full path to the input file\n    \n    Returns:\n       int: Milliseconds since unix epoch to the date implied by that file\n    \n    >>> base_date_filename_mapper("/tmp/spy_1970-1-2_quotes.gz")\n    86400000\n    \'\'\'\n    filename = os.path.basename(input_file_path)\n    base_date = dateutil_parser.parse(filename, fuzzy=True)\n    return round(millis_since_epoch(base_date))\n\n\ndef create_text_file_processor(\n        record_generator: RecordGeneratorType, \n        line_filter: Optional[LineFilterType], \n        record_parser: RecordParserType,\n        bad_line_handler: BadLineHandlerType, \n        record_filter: Optional[RecordFilterType],\n        missing_data_handler: MissingDataHandlerType,\n        aggregators: Sequence[Aggregator],\n        skip_rows: int = 1) -> FileProcessorType:\n    \n    return TextFileProcessor(record_generator,\n                             line_filter,\n                             record_parser,\n                             bad_line_handler,\n                             record_filter,\n                             missing_data_handler,\n                             aggregators,\n                             skip_rows)\n\n\ndef get_field_indices(field_names: Sequence[str], headers: Sequence[str]) -> Sequence[int]:\n    \'\'\'\n    Helper function to get indices of field names in a list of headers\n    \n    Args:\n        field_names (list of str): The fields we want indices of\n        headers (list of str): All headers\n        \n    Returns:\n        list of int: indices of each field name in the headers list\n    \'\'\'\n    field_ids = np.ones(len(field_names), dtype=np.int) * -1\n    for i, field_name in enumerate(field_names):\n        if field_name not in headers: raise Exception(f\'{field_name} not in {headers}\')\n        field_ids[i] = headers.index(field_name)\n    return field_ids\n\n\ndef process_marketdata_file(\n        input_filename: str,\n        output_file_prefix_mapper: OutputFilePrefixMapperType,\n        record_parser_creator: RecordParserCreatorType,\n        aggregator_creator: AggregatorCreatorType,\n        line_filter: LineFilterType = None, \n        compression: str = None,\n        base_date_mapper: BaseDateMapperType = None,\n        file_processor_creator: FileProcessorCreatorType = create_text_file_processor,\n        header_parser_creator: HeaderParserCreatorType = lambda record_generator_creator: TextHeaderParser(record_generator_creator),\n        header_record_generator: RecordGeneratorCreatorType = text_file_record_generator_creator,\n        record_generator: RecordGeneratorType = TextFileDecompressor(),\n        bad_line_handler: BadLineHandlerType = PrintBadLineHandler(),\n        record_filter: RecordFilterType = None,\n        missing_data_handler: MissingDataHandlerType = PriceQtyMissingDataHandler(), \n        writer_creator: WriterCreatorType = ArrowWriterCreator()) -> None:\n    \'\'\'\n    Processes a single market data file\n    \n    Args:\n        input_filename: file to process\n        output_file_prefix_mapper: A function that takes an input filename and returns the corresponding output filename we want\n        record_parser_creator:  A function that takes a date and a list of column names and returns a \n            function that can take a list of fields and return a subclass of Record\n        aggregator_creator: A function that takes a writer creator and a output file prefix and returns a list of Aggregators\n        line_filter: A function that takes a line and decides whether we want to keep it or discard it.  Defaults to None\n        compression: Compression type for the input file.  Defaults to None\n        base_date_mapper: A function that takes an input filename and returns the date implied by the filename, \n            represented as millis since epoch.  Defaults to helper :obj:`function base_date_filename_mapper`\n        file_processor_creator: A function that returns an object that we can use to iterate through lines in a file.  Defaults to\n            helper function :obj:`create_text_file_processor`\n        header_record_generator: A function that takes a filename and compression and returns a generator that we can use to get column headers\n        record_generator: A function that takes a filename and compression and returns a generator that we \n            can use to iterate through lines in the file\n        bad_line_handler (optional): A function that takes a line that we could not parse, and either parses it or does something else\n            like recording debugging info, or stopping the processing by raising an exception.  Defaults to helper function \n            :obj:`PrintBadLineHandler`\n        record_filter (optional): A function that takes a parsed TradeRecord, QuoteRecord, OpenInterestRecord or OtherRecord and decides whether we\n            want to keep it or discard it.  Defaults to None\n        missing_data_handler (optional):  A function that takes a parsed TradeRecord, QuoteRecord, OpenInterestRecord or OtherRecord, and decides\n            deals with any data that is missing in those records.  For example, 0 for bid could be replaced by NAN.  Defaults to helper function:\n            :obj:`price_qty_missing_data_handler`\n        writer_creator (optional): A function that takes an output_file_prefix, schema, whether to create a batch id file, and batch_size\n            and returns a subclass of :obj:`Writer`.  Defaults to helper function: :obj:`arrow_writer_creator`\n    \'\'\'\n    \n    output_file_prefix = output_file_prefix_mapper(input_filename)\n    \n    base_date = 0\n    \n    if base_date_mapper is not None: base_date = base_date_mapper(input_filename)\n    \n    header_parser = header_parser_creator(header_record_generator)\n    print(f\'starting file: {input_filename}\')\n    if compression is None or compression == "": compression = infer_compression(input_filename)\n    if compression is None: compression = ""  # In C++ don\'t want virtual function with default argument, so don\'t allow it here\n    headers = header_parser(input_filename, compression)  # type: ignore # cannot be None at this point.  \n    \n    record_parser = record_parser_creator(base_date, headers)\n    \n    aggregators = aggregator_creator(writer_creator, output_file_prefix)\n\n    file_processor = file_processor_creator(\n        record_generator, \n        line_filter, \n        record_parser, \n        bad_line_handler, \n        record_filter, \n        missing_data_handler,\n        aggregators\n    )\n\n    start = timer()\n    if compression is None: compression = ""\n    lines_processed = file_processor(input_filename, compression)\n    end = timer()\n    duration = round((end - start) * 1000)\n    touch(output_file_prefix + \'.done\')\n    print(f"processed: {input_filename} {lines_processed} lines in {duration} milliseconds")\n                    \n\ndef process_marketdata(\n        input_filename_provider: InputFileNameProviderType,\n        file_processor: FileProcessorType,\n        num_processes: int = None,\n        raise_on_error: bool = True) -> None:\n    \'\'\'\n    Top level function to process a set of market data files\n    \n    Args:\n        input_filename_provider: A function that returns a list of filenames (incl path) we need to process.\n        file_processor: A function that takes an input filename and processes it, returning number of lines processed. \n        num_processes (int, optional): The number of processes to run to parse these files.  If set to None, we use the number of cores\n            present on your machine.  Defaults to None\n        raise_on_error (bool, optional): If set, we raise an exception when there is a problem with parsing a file, so we can see a stack\n            trace and diagnose the problem.  If not set, we print the error and continue.  Defaults to True\n    \'\'\'\n    \n    input_filenames = input_filename_provider()\n    if sys.platform in ["win32", "cygwin"] and num_processes is not None and num_processes > 1:\n        raise Exception("num_processes > 1 not supported on windows")\n     \n    if num_processes is None: num_processes = multiprocessing.cpu_count()\n        \n    if num_processes == 1 or sys.platform in ["win32", "cygwin"]:\n        for input_filename in input_filenames:\n            try:\n                file_processor(input_filename, "")\n            except Exception as e:\n                new_exc = type(e)(f\'Exception: {str(e)}\').with_traceback(sys.exc_info()[2])\n                if raise_on_error: \n                    raise new_exc\n                else: \n                    print(str(new_exc))\n                    continue\n    else:\n        with concurrent.futures.ProcessPoolExecutor(num_processes) as executor:\n            fut_filename_map = {}\n            for input_filename in input_filenames:\n                fut = executor.submit(file_processor, input_filename)\n                fut_filename_map[fut] = input_filename\n            for fut in concurrent.futures.as_completed(fut_filename_map):\n                try:\n                    fut.result()\n                    if VERBOSE: print(f\'done filename: {fut_filename_map[fut]}\')\n                except Exception as e:\n                    new_exc = type(e)(f\'Exception: {str(e)}\').with_traceback(sys.exc_info()[2])\n                    if raise_on_error: \n                        raise new_exc\n                    else: \n                        print(str(new_exc))\n                        continue')
+class PathFileNameProvider:
+    '''A helper class that, given a pattern such as such as "/tmp/abc*.gz" and an optional include and exclude pattern, 
+    returns names of all files that match
+    '''
+    def __init__(self, path: str, include_pattern: str = None, exclude_pattern: str = None) -> None:
+        '''
+        Args:
+            path: A pattern such as "/tmp/abc*.gz"
+            include_pattern: Given a pattern such as "xzy", will return only filenames that contain xyz
+            exclude_pattern: Given a pattern such as "_tmp", will exclude all filenames containing _tmp
+        '''
+        self.path = path
+        self.include_pattern = include_pattern
+        self.exclude_pattern = exclude_pattern
+        
+    def __call__(self) -> Sequence[str]:
+        '''
+        Returns:
+            All matching filenames
+        '''
+        files = glob.glob(self.path)
+        if not len(files):
+            raise Exception(f'no matching files found with pattern: {self.path}')
+        if self.include_pattern:
+            files = [file for file in files if self.include_pattern in file]
+        if self.exclude_pattern:
+            files = [file for file in files if self.exclude_pattern not in file]
+        if not len(files):
+            raise Exception(f'no matching files for: {self.path} including: {self.include_pattern} excluding: {self.exclude_pattern}')
+        return files
+    
+
+class SingleDirectoryFileNameMapper:
+    '''A helper class that provides a mapping from input filenames to their corresponding output filenames in an output directory.'''
+    def __init__(self, output_dir: str) -> None:
+        '''
+        Args:
+            output_dir: The directory where we want to write output files
+        '''
+        if not os.path.isdir(output_dir): raise Exception(f'{output_dir} does not exist')
+        self.output_dir = output_dir
+
+    def __call__(self, input_filepath: str) -> str:
+        '''
+        Args:
+            input_filepath: The input file that we are creating an output file for, e.g. "/home/xzy.gz"
+        Returns:
+            Output file path for that input.  We take the filename from the input filepath, strip out any extension 
+                and prepend the output directory name
+        '''
+        
+        if self.output_dir is None:
+            dirname = os.path.dirname(input_filepath)
+            dirname = os.path.join(dirname, 'output')
+        else:
+            dirname = self.output_dir
+            
+        if not os.path.isdir(dirname): raise Exception(f'{dirname} does not exist')
+     
+        input_filename = os.path.basename(input_filepath)
+        exts = r'\.txt$|\.gz$|\.bzip2$|\.bz$|\.tar$|\.zip$|\.csv$'
+        while (re.search(exts, input_filename)):
+            input_filename = '.'.join(input_filename.split('.')[:-1])
+            if VERBOSE: print(f'got input file: {input_filename}')
+        output_prefix = os.path.join(dirname, input_filename)
+        return output_prefix
 
 
-# In[ ]:
+class TextHeaderParser:
+    '''
+    Parses column headers from a text file containing market data
+    '''
+    def __init__(self, 
+                 record_generator_creator: RecordGeneratorCreatorType, 
+                 skip_rows: int = 0, 
+                 separator: str = ',', 
+                 make_lowercase: bool = True) -> None:
+        '''
+        Args:
+        
+            record_generator: A function that takes a filename and its compression type and returns an object
+                that we can use to iterate through lines in that file
+            skip_rows: Number of rows to skip before starting to read the file.  Default is 0
+            separator: Separator for headers.  Defaults to ,
+            make_lowercase: Whether to convert headers to lowercase before returning them
+        '''
+        self.record_generator_creator = record_generator_creator
+        self.skip_rows = 0
+        self.separator = separator
+        self.make_lowercase = make_lowercase
+        
+    def __call__(self, input_filename: str, compression: str) -> Sequence[str]:
+        '''
+        Args:
+        
+        input_filename The file to read
+        compression: Compression type, e.g. "gzip", or None if the file is not compressed
+        
+        Returns:
+            Column headers
+        '''
+        decode_needed = (compression is not None and compression != "")
+        
+        f = self.record_generator_creator(input_filename, compression)
+        headers = None
+        for line_num, line in enumerate(f):
+            if decode_needed: line = line.decode()  # type: ignore # str does not have decode
+            if line_num < self.skip_rows: continue
+            headers = line.split(self.separator)  # type: ignore  # byte does not have split
+            headers = [re.sub('[^A-Za-z0-9 ]+', '', header) for header in headers]
+            if len(headers) == 1:
+                raise Exception(f'Could not parse headers: {line} with separator: {self.separator}')
+            break
 
+        if headers is None: raise Exception('no headers found')
+        if self.make_lowercase: headers = [header.lower() for header in headers]
+        if VERBOSE: print(f'Found headers: {headers}')
+        return headers            
+            
+
+def text_file_record_generator_creator(filename: str, compression: str = None) -> RecordGeneratorType:
+    '''
+    A helper function that returns a generator that we can use to iterate through lines in the input file
+    Args:
+        filename: The input filename
+        compression: The compression type of the input file or None if its not compressed    
+    '''
+    if compression is None: compression = infer_compression(filename)
+    if compression is None or compression == '':
+        return open(filename, 'r')
+    if compression == 'gzip':
+        import gzip
+        return gzip.open(filename, 'r')
+    if compression == 'bz2':
+        import bz2
+        return bz2.BZ2File(filename, 'r')
+    if compression == 'zip':
+        import zipfile
+        zf = zipfile.ZipFile(filename, mode='r', compression=zipfile.ZIP_DEFLATED)
+        zip_infos = zf.infolist()
+        zip_names = [zi.filename for zi in zip_infos if not zi.is_dir()]
+        if len(zip_names) == 0: raise ValueError(f'zero files found in ZIP file {filename}')
+        return zf.open(zip_names.pop())
+    if compression == 'xz':
+        import lzma
+        return lzma.LZMAFile(filename, 'r')
+    raise ValueError(f'unrecognized compression: {compression} for file: {filename}')
+
+
+def base_date_filename_mapper(input_file_path: str) -> int:
+    '''
+    A helper function that parses out the date from a filename.  For example, given a file such as "/tmp/spx_2018-08-09", this parses out the 
+    date part of the filename and returns milliseconds (no fractions) since the epoch to that date.
+    
+    Args:
+        input_filepath (str): Full path to the input file
+    
+    Returns:
+       int: Milliseconds since unix epoch to the date implied by that file
+    
+    >>> base_date_filename_mapper("/tmp/spy_1970-1-2_quotes.gz")
+    86400000
+    '''
+    filename = os.path.basename(input_file_path)
+    base_date = dateutil_parser.parse(filename, fuzzy=True)
+    return round(millis_since_epoch(base_date))
+
+
+def create_text_file_processor(
+        record_generator: RecordGeneratorType, 
+        line_filter: Optional[LineFilterType], 
+        record_parser: RecordParserType,
+        bad_line_handler: BadLineHandlerType, 
+        record_filter: Optional[RecordFilterType],
+        missing_data_handler: MissingDataHandlerType,
+        aggregators: Sequence[Aggregator],
+        skip_rows: int = 1) -> FileProcessorType:
+    
+    return TextFileProcessor(record_generator,
+                             line_filter,
+                             record_parser,
+                             bad_line_handler,
+                             record_filter,
+                             missing_data_handler,
+                             aggregators,
+                             skip_rows)
+
+
+def get_field_indices(field_names: Sequence[str], headers: Sequence[str]) -> Sequence[int]:
+    '''
+    Helper function to get indices of field names in a list of headers
+    
+    Args:
+        field_names (list of str): The fields we want indices of
+        headers (list of str): All headers
+        
+    Returns:
+        list of int: indices of each field name in the headers list
+    '''
+    field_ids = np.ones(len(field_names), dtype=np.int) * -1
+    for i, field_name in enumerate(field_names):
+        if field_name not in headers: raise Exception(f'{field_name} not in {headers}')
+        field_ids[i] = headers.index(field_name)
+    return field_ids
+
+
+def process_marketdata_file(
+        input_filename: str,
+        output_file_prefix_mapper: OutputFilePrefixMapperType,
+        record_parser_creator: RecordParserCreatorType,
+        aggregator_creator: AggregatorCreatorType,
+        line_filter: LineFilterType = None, 
+        compression: str = None,
+        base_date_mapper: BaseDateMapperType = None,
+        file_processor_creator: FileProcessorCreatorType = create_text_file_processor,
+        header_parser_creator: HeaderParserCreatorType = lambda record_generator_creator: TextHeaderParser(record_generator_creator),
+        header_record_generator: RecordGeneratorCreatorType = text_file_record_generator_creator,
+        record_generator: RecordGeneratorType = TextFileDecompressor(),
+        bad_line_handler: BadLineHandlerType = PrintBadLineHandler(),
+        record_filter: RecordFilterType = None,
+        missing_data_handler: MissingDataHandlerType = PriceQtyMissingDataHandler(), 
+        writer_creator: WriterCreatorType = ArrowWriterCreator()) -> None:
+    '''
+    Processes a single market data file
+    
+    Args:
+        input_filename: file to process
+        output_file_prefix_mapper: A function that takes an input filename and returns the corresponding output filename we want
+        record_parser_creator:  A function that takes a date and a list of column names and returns a 
+            function that can take a list of fields and return a subclass of Record
+        aggregator_creator: A function that takes a writer creator and a output file prefix and returns a list of Aggregators
+        line_filter: A function that takes a line and decides whether we want to keep it or discard it.  Defaults to None
+        compression: Compression type for the input file.  Defaults to None
+        base_date_mapper: A function that takes an input filename and returns the date implied by the filename, 
+            represented as millis since epoch.  Defaults to helper :obj:`function base_date_filename_mapper`
+        file_processor_creator: A function that returns an object that we can use to iterate through lines in a file.  Defaults to
+            helper function :obj:`create_text_file_processor`
+        header_record_generator: A function that takes a filename and compression and returns a generator that we can use to get column headers
+        record_generator: A function that takes a filename and compression and returns a generator that we 
+            can use to iterate through lines in the file
+        bad_line_handler (optional): A function that takes a line that we could not parse, and either parses it or does something else
+            like recording debugging info, or stopping the processing by raising an exception.  Defaults to helper function 
+            :obj:`PrintBadLineHandler`
+        record_filter (optional): A function that takes a parsed TradeRecord, QuoteRecord, OpenInterestRecord or OtherRecord and decides whether we
+            want to keep it or discard it.  Defaults to None
+        missing_data_handler (optional):  A function that takes a parsed TradeRecord, QuoteRecord, OpenInterestRecord or OtherRecord, and decides
+            deals with any data that is missing in those records.  For example, 0 for bid could be replaced by NAN.  Defaults to helper function:
+            :obj:`price_qty_missing_data_handler`
+        writer_creator (optional): A function that takes an output_file_prefix, schema, whether to create a batch id file, and batch_size
+            and returns a subclass of :obj:`Writer`.  Defaults to helper function: :obj:`arrow_writer_creator`
+    '''
+    
+    output_file_prefix = output_file_prefix_mapper(input_filename)
+    
+    base_date = 0
+    
+    if base_date_mapper is not None: base_date = base_date_mapper(input_filename)
+    
+    header_parser = header_parser_creator(header_record_generator)
+    print(f'starting file: {input_filename}')
+    if compression is None or compression == "": compression = infer_compression(input_filename)
+    if compression is None: compression = ""  # In C++ don't want virtual function with default argument, so don't allow it here
+    headers = header_parser(input_filename, compression)  # type: ignore # cannot be None at this point.  
+    
+    record_parser = record_parser_creator(base_date, headers)
+    
+    aggregators = aggregator_creator(writer_creator, output_file_prefix)
+
+    file_processor = file_processor_creator(
+        record_generator, 
+        line_filter, 
+        record_parser, 
+        bad_line_handler, 
+        record_filter, 
+        missing_data_handler,
+        aggregators
+    )
+
+    start = timer()
+    if compression is None: compression = ""
+    lines_processed = file_processor(input_filename, compression)
+    end = timer()
+    duration = round((end - start) * 1000)
+    touch(output_file_prefix + '.done')
+    print(f"processed: {input_filename} {lines_processed} lines in {duration} milliseconds")
+                    
+
+def process_marketdata(
+        input_filename_provider: InputFileNameProviderType,
+        file_processor: FileProcessorType,
+        num_processes: int = None,
+        raise_on_error: bool = True) -> None:
+    '''
+    Top level function to process a set of market data files
+    
+    Args:
+        input_filename_provider: A function that returns a list of filenames (incl path) we need to process.
+        file_processor: A function that takes an input filename and processes it, returning number of lines processed. 
+        num_processes (int, optional): The number of processes to run to parse these files.  If set to None, we use the number of cores
+            present on your machine.  Defaults to None
+        raise_on_error (bool, optional): If set, we raise an exception when there is a problem with parsing a file, so we can see a stack
+            trace and diagnose the problem.  If not set, we print the error and continue.  Defaults to True
+    '''
+    
+    input_filenames = input_filename_provider()
+    if sys.platform in ["win32", "cygwin"] and num_processes is not None and num_processes > 1:
+        raise Exception("num_processes > 1 not supported on windows")
+     
+    if num_processes is None: num_processes = multiprocessing.cpu_count()
+        
+    if num_processes == 1 or sys.platform in ["win32", "cygwin"]:
+        for input_filename in input_filenames:
+            try:
+                file_processor(input_filename, "")
+            except Exception as e:
+                new_exc = type(e)(f'Exception: {str(e)}').with_traceback(sys.exc_info()[2])
+                if raise_on_error: 
+                    raise new_exc
+                else: 
+                    print(str(new_exc))
+                    continue
+    else:
+        with concurrent.futures.ProcessPoolExecutor(num_processes) as executor:
+            fut_filename_map = {}
+            for input_filename in input_filenames:
+                fut = executor.submit(file_processor, input_filename)
+                fut_filename_map[fut] = input_filename
+            for fut in concurrent.futures.as_completed(fut_filename_map):
+                try:
+                    fut.result()
+                    if VERBOSE: print(f'done filename: {fut_filename_map[fut]}')
+                except Exception as e:
+                    new_exc = type(e)(f'Exception: {str(e)}').with_traceback(sys.exc_info()[2])
+                    if raise_on_error: 
+                        raise new_exc
+                    else: 
+                        print(str(new_exc))
+                        continue
 
 
 
