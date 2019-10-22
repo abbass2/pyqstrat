@@ -58,10 +58,10 @@ test_script:
   - pip install scipy
   - python setup.py build_ext --inplace
   - python -m pytest pyqstrat
-  - cd
+  - cd pyqstrat
   - dir
-  - mypy --ignore-missing-imports pyqstrat\*.py
-  - flake8 --ignore W291,W293,E701 --max-line-length=160 pyqstrat\*.py
+  - mypy --ignore-missing-imports *.py
+  - flake8 --ignore W291,W293,E701 --max-line-length=160 *.py
 
 
 
