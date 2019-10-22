@@ -73,12 +73,13 @@ class DisplayAttributes:
 @dataclass
 class BoxPlotAttributes(DisplayAttributes):
     '''
-    proportional_widths: if set to True, the width each box in the boxplot will be proportional 
-        to the number of items in its corresponding array
-    show_means: Whether to display a marker where the mean is for each array
-    show_outliers: Whether to show markers for outliers that are outside the whiskers.  
-        Box is at Q1 = 25%, Q3 = 75% quantiles, whiskers are at Q1 - 1.5 * (Q3 - Q1), Q3 + 1.5 * (Q3 - Q1)
-    notched: Whether to show notches indicating the confidence interval around the median
+    Attributes:
+        proportional_widths: if set to True, the width each box in the boxplot will be proportional 
+            to the number of items in its corresponding array
+        show_means: Whether to display a marker where the mean is for each array
+        show_outliers: Whether to show markers for outliers that are outside the whiskers.  
+            Box is at Q1 = 25%, Q3 = 75% quantiles, whiskers are at Q1 - 1.5 * (Q3 - Q1), Q3 + 1.5 * (Q3 - Q1)
+        notched: Whether to show notches indicating the confidence interval around the median
     '''
     proportional_widths: bool = True
     show_means: bool = True
@@ -107,11 +108,12 @@ class ScatterPlotAttributes(DisplayAttributes):
 @dataclass
 class SurfacePlotAttributes(DisplayAttributes):
     '''
-    marker: Adds a marker to each point in x, y, z to show the actual data used for interpolation.  
-        You can set this to None to turn markers off.
-    interpolation: Can be ‘linear’, ‘nearest’ or ‘cubic’ for plotting z points between the ones passed in.  
-        See scipy.interpolate.griddata for details
-    cmap: Colormap to use (default viridis).  See matplotlib colormap for details
+    Attributes:
+        marker: Adds a marker to each point in x, y, z to show the actual data used for interpolation.  
+            You can set this to None to turn markers off.
+        interpolation: Can be ‘linear’, ‘nearest’ or ‘cubic’ for plotting z points between the ones passed in.  
+            See scipy.interpolate.griddata for details
+        cmap: Colormap to use (default viridis).  See matplotlib colormap for details
     '''
     marker: str = 'X'
     marker_size: int = 50

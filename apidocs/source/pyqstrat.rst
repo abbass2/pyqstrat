@@ -37,14 +37,6 @@ pyqstrat.account module
     :undoc-members:
     :show-inheritance:
 
-pyqstrat.orders module
-----------------------
-
-.. automodule:: pyqstrat.orders
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 pyqstrat.strategy module
 -------------------------
 
@@ -115,6 +107,16 @@ pyqstrat.trade\_bars module
     :undoc-members:
     :show-inheritance:
     :special-members: __call__, __init__
+
+pyqstrat.markets module
+-------------------------------------
+
+.. automodule:: pyqstrat.markets
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :special-members: __call__, __init__
+
 
 Module contents
 ---------------

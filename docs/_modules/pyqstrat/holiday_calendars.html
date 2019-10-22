@@ -31,20 +31,20 @@
           <div class="body" role="main">
             
   <h1>Source code for pyqstrat.holiday_calendars</h1><div class="highlight"><pre>
-<span></span><span class="ch">#!/usr/bin/env python</span>
-<span class="c1"># coding: utf-8</span>
-
-<span class="c1"># In[1]:</span>
-
-
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">collections</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">calendar</span> <span class="k">as</span> <span class="nn">cal</span>
+<span class="kn">import</span> <span class="nn">dateutil.relativedelta</span> <span class="k">as</span> <span class="nn">rd</span>
 
-<span class="k">def</span> <span class="nf">_as_np_date</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">MutableMapping</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="k">import</span> <span class="n">FrameType</span>
+
+
+<span class="k">def</span> <span class="nf">_as_np_date</span><span class="p">(</span><span class="n">val</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">]:</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Convert a pandas timestamp, string, np.datetime64(&#39;M8[ns]&#39;), datetime, date to a numpy datetime64 [D] and remove time info.</span>
 <span class="sd">    Returns None if the value cannot be converted</span>
@@ -65,28 +65,25 @@
         <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;M8[D]&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
         <span class="n">np_date</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;M8[D]&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">np_date</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">),</span> <span class="nb">int</span><span class="p">):</span> <span class="c1"># User can pass in a string like 20180101 which gets parsed as a year</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">np_date</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">),</span> <span class="nb">int</span><span class="p">):</span>  <span class="c1"># User can pass in a string like 20180101 which gets parsed as a year</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;invalid date: </span><span class="si">{val}</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">np_date</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">):</span> 
-        <span class="k">return</span> <span class="n">timestamp</span><span class="o">.</span><span class="n">to_datetime64</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;M8[D]&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">to_datetime64</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;M8[D]&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;M8[D]&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">):</span> 
         <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;M8[D]&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="kc">None</span>
 
-<span class="k">def</span> <span class="nf">_normalize_datetime</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+
+<span class="k">def</span> <span class="nf">_normalize_datetime</span><span class="p">(</span><span class="n">val</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">]:</span>
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Break up a datetime into date and time.  </span>
+<span class="sd">    Break up a datetime into numpy date and numpy timedelta.  </span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
 <span class="sd">        val: The datetime to normalize.  Can be an array or a single datetime as a string, pandas timestamp, numpy datetime </span>
 <span class="sd">            or python date or datetime</span>
-<span class="sd">    Return:</span>
-<span class="sd">        tuple of numpy datetime64(&#39;D&#39;) and np.timedelta64</span>
-<span class="sd">        </span>
-<span class="sd">        File &quot;__main__&quot;, line 55, in __main__._normalize_date_time</span>
 <span class="sd">    </span>
 <span class="sd">    &gt;&gt;&gt; print(_normalize_datetime(pd.Timestamp(&#39;2016-05-01 3:55:00&#39;)))</span>
 <span class="sd">    (numpy.datetime64(&#39;2016-05-01&#39;), numpy.timedelta64(14100000000000,&#39;ns&#39;))</span>
@@ -113,18 +110,21 @@
     <span class="k">return</span> <span class="n">date</span><span class="p">,</span> <span class="n">time_delta</span>
 
 
-<span class="k">def</span> <span class="nf">_normalize</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">include_first</span><span class="p">,</span> <span class="n">include_last</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_normalize</span><span class="p">(</span><span class="n">start</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">],</span>
+               <span class="n">end</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">],</span>
+               <span class="n">include_first</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+               <span class="n">include_last</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">]:</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Given a start and end date, return a new start and end date, taking into account include_first and include_last flags</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
-<span class="sd">        start: start date, can be string or datetime or np.datetime64</span>
-<span class="sd">        end: end_date, can be string or datetime or np.datetime64</span>
-<span class="sd">        include_first (bool): whether to increment start date by 1</span>
-<span class="sd">        include_last (bool): whether to increment end date by 1</span>
+<span class="sd">        start: start date</span>
+<span class="sd">        end: end_date</span>
+<span class="sd">        include_first: whether to increment start date by 1</span>
+<span class="sd">        include_last: whether to increment end date by 1</span>
 
 <span class="sd">    Return:</span>
-<span class="sd">        np.datetime64, np.datetime64 : new start and end dates</span>
+<span class="sd">        new start and end dates</span>
 <span class="sd">        </span>
 <span class="sd">    &gt;&gt;&gt; x = np.arange(np.datetime64(&#39;2017-01-01&#39;), np.datetime64(&#39;2017-01-10&#39;))</span>
 <span class="sd">    &gt;&gt;&gt; y = x.astype(&#39;M8[ns]&#39;)</span>
@@ -140,55 +140,56 @@
     <span class="n">s</span> <span class="o">=</span> <span class="n">_as_np_date</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
     <span class="n">e</span> <span class="o">=</span> <span class="n">_as_np_date</span><span class="p">(</span><span class="n">end</span><span class="p">)</span>
     
-    <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">s</span> <span class="o">=</span> <span class="n">start</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">e</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">e</span> <span class="o">=</span> <span class="n">end</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-
     <span class="k">if</span> <span class="ow">not</span> <span class="n">include_first</span><span class="p">:</span>
         <span class="n">s</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">include_last</span><span class="p">:</span>
         <span class="n">e</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">s</span><span class="p">,</span><span class="n">e</span>
+    <span class="k">return</span> <span class="n">s</span><span class="p">,</span> <span class="n">e</span>
 
-<div class="viewcode-block" id="read_holidays"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.read_holidays">[docs]</a><span class="k">def</span> <span class="nf">read_holidays</span><span class="p">(</span><span class="n">calendar_name</span><span class="p">,</span> <span class="n">dirname</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="read_holidays"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.read_holidays">[docs]</a><span class="k">def</span> <span class="nf">read_holidays</span><span class="p">(</span><span class="n">calendar_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dirname</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Reads a csv with a holidays column containing holidays (not including weekends)</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="n">dirname</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">dirname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">currentframe</span><span class="p">())))</span>
+    
+    <span class="n">curr_frame</span><span class="p">:</span> <span class="n">FrameType</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">currentframe</span><span class="p">()</span>  <span class="c1"># type: ignore  # wants Optional[FrameType]</span>
+    <span class="k">if</span> <span class="n">dirname</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">dirname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span><span class="n">curr_frame</span><span class="p">)))</span>
     
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">dirname</span> <span class="o">+</span> <span class="s1">&#39;/refdata&#39;</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">dirname</span> <span class="o">+</span> <span class="s1">&#39;/../refdata&#39;</span><span class="p">):</span>
             <span class="n">dirname</span> <span class="o">=</span> <span class="n">dirname</span> <span class="o">+</span> <span class="s1">&#39;/../&#39;</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;path </span><span class="si">{dirname}</span><span class="s1">/refdata and </span><span class="si">{dirname}</span><span class="s1">/../refdata do not exist&#39;</span><span class="p">)</span>
-        <span class="c1">#raise Exception(f&#39;path {dirname}/refdata does not exist&#39;)</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{dirname}</span><span class="s1">/refdata/holiday_calendars/</span><span class="si">{calendar_name}</span><span class="s1">.csv&#39;</span><span class="p">)</span>
     <span class="n">holidays</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">holidays</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;M8[D]&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">holidays</span></div>
 
-<div class="viewcode-block" id="Calendar"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar">[docs]</a><span class="k">class</span> <span class="nc">Calendar</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Calendar"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar">[docs]</a><span class="k">class</span> <span class="nc">Calendar</span><span class="p">:</span>
     
     <span class="n">NYSE</span> <span class="o">=</span> <span class="s2">&quot;nyse&quot;</span>
     <span class="n">EUREX</span> <span class="o">=</span> <span class="s2">&quot;eurex&quot;</span>
-    <span class="n">_calendars</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">_calendars</span><span class="p">:</span> <span class="n">MutableMapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s1">&#39;Calendar&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     
-<div class="viewcode-block" id="Calendar.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">holidays</span><span class="p">):</span>
+<div class="viewcode-block" id="Calendar.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">holidays</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Do not use this function directly.  Use Calendar.get_calendar instead</span>
 <span class="sd">        Args:</span>
 <span class="sd">            holidays (np.array of datetime64[D]): holidays for this calendar, excluding weekends</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bus_day_cal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">busdaycalendar</span><span class="p">(</span><span class="n">holidays</span> <span class="o">=</span> <span class="n">holidays</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus_day_cal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">busdaycalendar</span><span class="p">(</span><span class="n">holidays</span><span class="o">=</span><span class="n">holidays</span><span class="p">)</span></div>
         
-<div class="viewcode-block" id="Calendar.is_trading_day"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar.is_trading_day">[docs]</a>    <span class="k">def</span> <span class="nf">is_trading_day</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dates</span><span class="p">):</span>
+<div class="viewcode-block" id="Calendar.is_trading_day"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar.is_trading_day">[docs]</a>    <span class="k">def</span> <span class="nf">is_trading_day</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dates</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+ 
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Returns whether the date is not a holiday or a weekend</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
-<span class="sd">            dates: str or datetime.datetime or np.datetime64[D] or numpy array of np.datetime64[D]</span>
+<span class="sd">            dates: date times to check</span>
 <span class="sd">        Return:</span>
-<span class="sd">            bool: Whether this date is a trading day</span>
+<span class="sd">            Whether this date is a trading day</span>
 <span class="sd">        </span>
 <span class="sd">        &gt;&gt;&gt; import datetime</span>
 <span class="sd">        &gt;&gt;&gt; eurex = Calendar.get_calendar(Calendar.EUREX)</span>
@@ -204,16 +205,18 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">):</span> 
             <span class="n">dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dates</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">),</span> <span class="nb">int</span><span class="p">):</span> <span class="c1"># User can pass in a string like 20180101 which gets parsed as a year</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dates</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">),</span> <span class="nb">int</span><span class="p">):</span>  <span class="c1"># User can pass in a string like 20180101 which gets parsed as a year</span>
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;invalid date: </span><span class="si">{dates}</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span> <span class="n">dates</span> <span class="o">=</span> <span class="n">dates</span><span class="o">.</span><span class="n">values</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">is_busday</span><span class="p">(</span><span class="n">dates</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;M8[D]&#39;</span><span class="p">),</span> <span class="n">busdaycal</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bus_day_cal</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">is_busday</span><span class="p">(</span><span class="n">dates</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;M8[D]&#39;</span><span class="p">),</span> <span class="n">busdaycal</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bus_day_cal</span><span class="p">)</span></div>
     
-<div class="viewcode-block" id="Calendar.num_trading_days"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar.num_trading_days">[docs]</a>    <span class="k">def</span> <span class="nf">num_trading_days</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">include_first</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">include_last</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="Calendar.num_trading_days"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar.num_trading_days">[docs]</a>    <span class="k">def</span> <span class="nf">num_trading_days</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                         <span class="n">start</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">],</span>
+                         <span class="n">end</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">],</span>
+                         <span class="n">include_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                         <span class="n">include_last</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Count the number of trading days between two date series including those two dates</span>
-<span class="sd">        You can pass in a string like &#39;2009-01-01&#39; or a python date or a pandas series for </span>
-<span class="sd">        start and end</span>
 <span class="sd">        </span>
 <span class="sd">        &gt;&gt;&gt; eurex = Calendar.get_calendar(Calendar.EUREX)</span>
 <span class="sd">        &gt;&gt;&gt; eurex.num_trading_days(&#39;2009-01-01&#39;, &#39;2011-12-31&#39;)</span>
@@ -238,15 +241,19 @@
         <span class="k">if</span> <span class="n">iterable</span><span class="p">:</span>
             <span class="n">ret</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s_tmp</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
             <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnat</span><span class="p">(</span><span class="n">s_tmp</span><span class="p">)</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">isnat</span><span class="p">(</span><span class="n">e_tmp</span><span class="p">))</span>
-            <span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">busday_count</span><span class="p">(</span><span class="n">s_tmp</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">e_tmp</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">busdaycal</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bus_day_cal</span><span class="p">)</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">busday_count</span><span class="p">(</span><span class="n">s_tmp</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">e_tmp</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">busdaycal</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bus_day_cal</span><span class="p">)</span>
             <span class="n">ret</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">count</span>
             <span class="k">return</span> <span class="n">ret</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnat</span><span class="p">(</span><span class="n">s_tmp</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">isnat</span><span class="p">(</span><span class="n">s_tmp</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-            <span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">busday_count</span><span class="p">(</span><span class="n">s_tmp</span><span class="p">,</span> <span class="n">e_tmp</span><span class="p">,</span> <span class="n">busdaycal</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bus_day_cal</span><span class="p">)</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">busday_count</span><span class="p">(</span><span class="n">s_tmp</span><span class="p">,</span> <span class="n">e_tmp</span><span class="p">,</span> <span class="n">busdaycal</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bus_day_cal</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">count</span></div>
         
-<div class="viewcode-block" id="Calendar.get_trading_days"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar.get_trading_days">[docs]</a>    <span class="k">def</span> <span class="nf">get_trading_days</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">include_first</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">include_last</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="Calendar.get_trading_days"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar.get_trading_days">[docs]</a>    <span class="k">def</span> <span class="nf">get_trading_days</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                         <span class="n">start</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">],</span>
+                         <span class="n">end</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">],</span>
+                         <span class="n">include_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                         <span class="n">include_last</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Get back a list of numpy dates that are trading days between the start and end</span>
 <span class="sd">        </span>
@@ -274,14 +281,33 @@
         <span class="n">dates</span> <span class="o">=</span> <span class="n">dates</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">is_busday</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">busdaycal</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bus_day_cal</span><span class="p">)]</span>
         <span class="k">return</span> <span class="n">dates</span></div>
     
-<div class="viewcode-block" id="Calendar.add_trading_days"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar.add_trading_days">[docs]</a>    <span class="k">def</span> <span class="nf">add_trading_days</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">num_days</span><span class="p">,</span> <span class="n">roll</span> <span class="o">=</span> <span class="s1">&#39;raise&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="Calendar.third_friday_of_month"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar.third_friday_of_month">[docs]</a>    <span class="k">def</span> <span class="nf">third_friday_of_month</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">month</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">roll</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;backward&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        &gt;&gt;&gt; nyse = Calendar.get_calendar(Calendar.NYSE)</span>
+<span class="sd">        &gt;&gt;&gt; nyse.third_friday_of_month(3, 2017)</span>
+<span class="sd">        numpy.datetime64(&#39;2017-03-17&#39;)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># From https://stackoverflow.com/questions/18424467/python-third-friday-of-a-month</span>
+        <span class="n">FRIDAY</span> <span class="o">=</span> <span class="mi">4</span>
+        <span class="n">first_day_of_month</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">first_friday</span> <span class="o">=</span> <span class="n">first_day_of_month</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="p">((</span><span class="n">FRIDAY</span> <span class="o">-</span> <span class="n">cal</span><span class="o">.</span><span class="n">monthrange</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="mi">7</span><span class="p">)</span> <span class="o">%</span> <span class="mi">7</span><span class="p">)</span>
+        <span class="c1"># 4 is friday of week</span>
+        <span class="n">third_friday_date</span> <span class="o">=</span> <span class="n">first_friday</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+        <span class="n">third_friday</span> <span class="o">=</span> <span class="n">third_friday_date</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+        <span class="n">third_friday</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_trading_days</span><span class="p">(</span><span class="n">third_friday</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">roll</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">third_friday</span></div>
+    
+<div class="viewcode-block" id="Calendar.add_trading_days"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar.add_trading_days">[docs]</a>    <span class="k">def</span> <span class="nf">add_trading_days</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                         <span class="n">start</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">],</span>
+                         <span class="n">num_days</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> 
+                         <span class="n">roll</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;raise&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Adds trading days to a start date</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
-<span class="sd">            start: np.datetime64 or str or datetime</span>
-<span class="sd">            num_days (int): number of trading days to add</span>
-<span class="sd">            roll (str, optional): one of &#39;raise&#39;, &#39;nat&#39;, &#39;forward&#39;, &#39;following&#39;, &#39;backward&#39;, &#39;preceding&#39;, &#39;modifiedfollowing&#39;, &#39;modifiedpreceding&#39; or &#39;allow&#39;}</span>
+<span class="sd">            start: start datetimes(s)</span>
+<span class="sd">            num_days: number of trading days to add</span>
+<span class="sd">            roll: one of &#39;raise&#39;, &#39;nat&#39;, &#39;forward&#39;, &#39;following&#39;, &#39;backward&#39;, &#39;preceding&#39;, &#39;modifiedfollowing&#39;, &#39;modifiedpreceding&#39; or &#39;allow&#39;}</span>
 <span class="sd">                &#39;allow&#39; is a special case in which case, adding 1 day to a holiday will act as if it was not a holiday, and give you the next business day&#39;</span>
 <span class="sd">                The rest of the values are the same as in the numpy busday_offset function</span>
 <span class="sd">                From numpy documentation: </span>
@@ -295,7 +321,7 @@
 <span class="sd">                &#39;modifiedpreceding&#39; means to take the first valid day earlier in time unless it is across a Month boundary, </span>
 <span class="sd">                in which case to take the first valid day later in time.</span>
 <span class="sd">        Return:</span>
-<span class="sd">            np.datetime64[D]: The date num_days trading days after start</span>
+<span class="sd">            The datetime num_days trading days after start</span>
 <span class="sd">            </span>
 <span class="sd">        &gt;&gt;&gt; calendar = Calendar.get_calendar(Calendar.NYSE)</span>
 <span class="sd">        &gt;&gt;&gt; calendar.add_trading_days(datetime.date(2015, 12, 24), 1)</span>
@@ -314,30 +340,32 @@
             <span class="c1"># If today is a holiday, roll forward but subtract 1 day so</span>
             <span class="n">num_days</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_trading_day</span><span class="p">(</span><span class="n">start</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">num_days</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">),</span> <span class="n">num_days</span><span class="p">,</span> <span class="n">num_days</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
             <span class="n">roll</span> <span class="o">=</span> <span class="s1">&#39;forward&#39;</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">busday_offset</span><span class="p">(</span><span class="n">start_date</span><span class="p">,</span> <span class="n">num_days</span><span class="p">,</span> <span class="n">roll</span> <span class="o">=</span> <span class="n">roll</span><span class="p">,</span> <span class="n">busdaycal</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bus_day_cal</span><span class="p">)</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span> <span class="o">+</span> <span class="n">time_delta</span> <span class="c1"># for some reason += does not work correctly here.</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">busday_offset</span><span class="p">(</span><span class="n">start_date</span><span class="p">,</span> <span class="n">num_days</span><span class="p">,</span> <span class="n">roll</span><span class="o">=</span><span class="n">roll</span><span class="p">,</span> <span class="n">busdaycal</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bus_day_cal</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span> <span class="o">+</span> <span class="n">time_delta</span>  <span class="c1"># for some reason += does not work correctly here.</span>
         <span class="k">return</span> <span class="n">out</span></div>
         
-<div class="viewcode-block" id="Calendar.add_calendar"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar.add_calendar">[docs]</a>    <span class="k">def</span> <span class="nf">add_calendar</span><span class="p">(</span><span class="n">exchange_name</span><span class="p">,</span> <span class="n">holidays</span><span class="p">):</span>
+<div class="viewcode-block" id="Calendar.add_calendar"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar.add_calendar">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">add_calendar</span><span class="p">(</span><span class="n">exchange_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">holidays</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Add a trading calendar to the class level calendars dict</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
-<span class="sd">            exchange_name (str): Name of the exchange.</span>
-<span class="sd">            holidays (np.array of datetime64[D]): holidays for this exchange, excluding weekends</span>
+<span class="sd">            exchange_name: Name of the exchange.</span>
+<span class="sd">            holidays: holidays for this exchange, excluding weekends</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">Calendar</span><span class="o">.</span><span class="n">_calendars</span><span class="p">[</span><span class="n">exchange_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Calendar</span><span class="p">(</span><span class="n">holidays</span><span class="p">)</span></div>
         
-<div class="viewcode-block" id="Calendar.get_calendar"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar.get_calendar">[docs]</a>    <span class="k">def</span> <span class="nf">get_calendar</span><span class="p">(</span><span class="n">exchange_name</span><span class="p">):</span>
+<div class="viewcode-block" id="Calendar.get_calendar"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.Calendar.get_calendar">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_calendar</span><span class="p">(</span><span class="n">exchange_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Calendar&#39;</span><span class="p">:</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Get a calendar object for the given exchange:</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
-<span class="sd">            exchange_name (str): The exchange for which you want a calendar.  Calendar.NYSE, Calendar.EUREX are predefined.</span>
+<span class="sd">            exchange_name: The exchange for which you want a calendar.  Calendar.NYSE, Calendar.EUREX are predefined.</span>
 <span class="sd">            If you want to add a new calendar, use the add_calendar class level function</span>
 <span class="sd">        </span>
 <span class="sd">        Return:</span>
-<span class="sd">            Calendar: The calendar object</span>
+<span class="sd">            The calendar object</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">if</span> <span class="n">exchange_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">_calendars</span><span class="p">:</span>
@@ -347,10 +375,24 @@
             <span class="n">Calendar</span><span class="o">.</span><span class="n">add_calendar</span><span class="p">(</span><span class="n">exchange_name</span><span class="p">,</span> <span class="n">holidays</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">_calendars</span><span class="p">[</span><span class="n">exchange_name</span><span class="p">]</span></div></div>
     
+
+<div class="viewcode-block" id="get_date_from_weekday"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.holiday_calendars.get_date_from_weekday">[docs]</a><span class="k">def</span> <span class="nf">get_date_from_weekday</span><span class="p">(</span><span class="n">weekday</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">month</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">week</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return the date that falls on a given weekday (Monday = 0) on a week, year and month</span>
+<span class="sd">    &gt;&gt;&gt; get_date_from_weekday(1, 2019, 10, 4)</span>
+<span class="sd">    numpy.datetime64(&#39;2019-10-22&#39;)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">week</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>  <span class="c1"># Last day of month</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">last_day</span> <span class="o">=</span> <span class="n">cal</span><span class="o">.</span><span class="n">monthrange</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">last_day</span><span class="p">)</span>
+    <span class="n">first_day_of_month</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">date</span> <span class="o">=</span> <span class="n">first_day_of_month</span> <span class="o">+</span> <span class="n">rd</span><span class="o">.</span><span class="n">relativedelta</span><span class="p">(</span><span class="n">weeks</span><span class="o">=</span><span class="n">week</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">weekday</span><span class="o">=</span><span class="n">weekday</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="n">date</span><span class="p">)</span></div>
+    
+
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">doctest</span>
-    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">optionflags</span> <span class="o">=</span> <span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
-
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">optionflags</span><span class="o">=</span><span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
 </pre></div>
 
           </div>
@@ -384,10 +426,10 @@
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -409,7 +451,7 @@
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>

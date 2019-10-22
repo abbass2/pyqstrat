@@ -37,6 +37,14 @@ pyqstrat.account module
     :undoc-members:
     :show-inheritance:
 
+pyqstrat.orders module
+----------------------
+
+.. automodule:: pyqstrat.orders
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyqstrat.strategy module
 -------------------------
 
