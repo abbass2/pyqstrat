@@ -1084,9 +1084,6 @@ If the key is less than the first key in the dict, return -1</p>
 <dd></dd></dl>
 
 </div>
-<div class="section" id="pyqstrat-orders-module">
-<h2>pyqstrat.orders module<a class="headerlink" href="#pyqstrat-orders-module" title="Permalink to this headline">¶</a></h2>
-</div>
 <div class="section" id="module-pyqstrat.strategy">
 <span id="pyqstrat-strategy-module"></span><h2>pyqstrat.strategy module<a class="headerlink" href="#module-pyqstrat.strategy" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -5072,6 +5069,124 @@ the date and roll condition functions are met.</p>
 <dt id="pyqstrat.trade_bars.test_trade_bars">
 <code class="sig-prename descclassname">pyqstrat.trade_bars.</code><code class="sig-name descname">test_trade_bars</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="_modules/pyqstrat/trade_bars.html#test_trade_bars"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.trade_bars.test_trade_bars" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+</div>
+<div class="section" id="module-pyqstrat.markets">
+<span id="pyqstrat-markets-module"></span><h2>pyqstrat.markets module<a class="headerlink" href="#module-pyqstrat.markets" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyqstrat.markets.EminiFuture">
+<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.markets.</code><code class="sig-name descname">EminiFuture</code><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.markets.EminiFuture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="pyqstrat.markets.EminiFuture.calendar">
+<code class="sig-name descname">calendar</code><em class="property"> = &lt;pyqstrat.holiday_calendars.Calendar object&gt;</em><a class="headerlink" href="#pyqstrat.markets.EminiFuture.calendar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.markets.EminiFuture.get_current_symbol">
+<em class="property">static </em><code class="sig-name descname">get_current_symbol</code><span class="sig-paren">(</span><em class="sig-param">curr_date: datetime.date</em><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture.get_current_symbol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.markets.EminiFuture.get_current_symbol" title="Permalink to this definition">¶</a></dt>
+<dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_current_symbol</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">14</span><span class="p">))</span> <span class="o">==</span> <span class="s1">&#39;ESH9&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_current_symbol</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span> <span class="o">==</span> <span class="s1">&#39;ESM9&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.markets.EminiFuture.get_expiry">
+<em class="property">static </em><code class="sig-name descname">get_expiry</code><span class="sig-paren">(</span><em class="sig-param">fut_symbol: str</em><span class="sig-paren">)</span> &#x2192; numpy.datetime64<a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture.get_expiry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.markets.EminiFuture.get_expiry" title="Permalink to this definition">¶</a></dt>
+<dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_expiry</span><span class="p">(</span><span class="s1">&#39;ESH8&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;2018-03-16T08:30&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.markets.EminiFuture.get_next_symbol">
+<em class="property">static </em><code class="sig-name descname">get_next_symbol</code><span class="sig-paren">(</span><em class="sig-param">curr_future_symbol: str</em><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture.get_next_symbol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.markets.EminiFuture.get_next_symbol" title="Permalink to this definition">¶</a></dt>
+<dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_next_symbol</span><span class="p">(</span><span class="s1">&#39;ESZ8&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;ESH9&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.markets.EminiFuture.get_previous_symbol">
+<em class="property">static </em><code class="sig-name descname">get_previous_symbol</code><span class="sig-paren">(</span><em class="sig-param">curr_future_symbol: str</em><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture.get_previous_symbol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.markets.EminiFuture.get_previous_symbol" title="Permalink to this definition">¶</a></dt>
+<dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_previous_symbol</span><span class="p">(</span><span class="s1">&#39;ESH9&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;ESZ8&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.markets.EminiOption">
+<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.markets.</code><code class="sig-name descname">EminiOption</code><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiOption"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.markets.EminiOption" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="pyqstrat.markets.EminiOption.calendar">
+<code class="sig-name descname">calendar</code><em class="property"> = &lt;pyqstrat.holiday_calendars.Calendar object&gt;</em><a class="headerlink" href="#pyqstrat.markets.EminiOption.calendar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.markets.EminiOption.decode_symbol">
+<em class="property">static </em><code class="sig-name descname">decode_symbol</code><span class="sig-paren">(</span><em class="sig-param">name: str</em><span class="sig-paren">)</span> &#x2192; Tuple[dateutil._common.weekday, int, int, int]<a class="reference internal" href="_modules/pyqstrat/markets.html#EminiOption.decode_symbol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.markets.EminiOption.decode_symbol" title="Permalink to this definition">¶</a></dt>
+<dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">EminiOption</span><span class="o">.</span><span class="n">decode_symbol</span><span class="p">(</span><span class="s1">&#39;E1AF8&#39;</span><span class="p">)</span>
+<span class="go">(MO, 2018, 1, 1)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.markets.EminiOption.get_expiry">
+<em class="property">static </em><code class="sig-name descname">get_expiry</code><span class="sig-paren">(</span><em class="sig-param">symbol: str</em><span class="sig-paren">)</span> &#x2192; numpy.datetime64<a class="reference internal" href="_modules/pyqstrat/markets.html#EminiOption.get_expiry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.markets.EminiOption.get_expiry" title="Permalink to this definition">¶</a></dt>
+<dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">EminiOption</span><span class="o">.</span><span class="n">get_expiry</span><span class="p">(</span><span class="s1">&#39;EW2Z5&#39;</span><span class="p">)</span>
+<span class="go">numpy.datetime64(&#39;2015-12-11T15:00&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">EminiOption</span><span class="o">.</span><span class="n">get_expiry</span><span class="p">(</span><span class="s1">&#39;E3AF7&#39;</span><span class="p">)</span>
+<span class="go">numpy.datetime64(&#39;2017-01-17T15:00&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">EminiOption</span><span class="o">.</span><span class="n">get_expiry</span><span class="p">(</span><span class="s1">&#39;EWF0&#39;</span><span class="p">)</span>
+<span class="go">numpy.datetime64(&#39;2020-01-31T15:00&#39;)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.markets.future_code_to_month">
+<code class="sig-prename descclassname">pyqstrat.markets.</code><code class="sig-name descname">future_code_to_month</code><span class="sig-paren">(</span><em class="sig-param">future_code: str</em><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="_modules/pyqstrat/markets.html#future_code_to_month"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.markets.future_code_to_month" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a future code such as “X”, return the month abbreviation, such as “nov”</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>future_code</strong> (<em>str</em>) – the one letter future code</p>
+</dd>
+</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">future_code_to_month</span><span class="p">(</span><span class="s1">&#39;X&#39;</span><span class="p">)</span>
+<span class="go">&#39;nov&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.markets.future_code_to_month_number">
+<code class="sig-prename descclassname">pyqstrat.markets.</code><code class="sig-name descname">future_code_to_month_number</code><span class="sig-paren">(</span><em class="sig-param">future_code: str</em><span class="sig-paren">)</span> &#x2192; int<a class="reference internal" href="_modules/pyqstrat/markets.html#future_code_to_month_number"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.markets.future_code_to_month_number" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a future code such as “X”, return the month number (from 1 - 12)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>future_code</strong> (<em>str</em>) – the one letter future code</p>
+</dd>
+</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">future_code_to_month_number</span><span class="p">(</span><span class="s1">&#39;X&#39;</span><span class="p">)</span>
+<span class="go">11</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.markets.get_future_code">
+<code class="sig-prename descclassname">pyqstrat.markets.</code><code class="sig-name descname">get_future_code</code><span class="sig-paren">(</span><em class="sig-param">month: int</em><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="_modules/pyqstrat/markets.html#get_future_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.markets.get_future_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a month number such as 3 for March, return the future code for it, e.g. H
+&gt;&gt;&gt; get_future_code(3)
+‘H’</p>
+</dd></dl>
 
 </div>
 <div class="section" id="module-pyqstrat">

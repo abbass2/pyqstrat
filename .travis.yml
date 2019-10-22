@@ -35,8 +35,5 @@ script:
   - python -c 'import pyqstrat'
   - python -m pytest pyqstrat
   - mypy --ignore-missing-imports pyqstrat/*.py
-  - flake8 pyqstrat/*.py
+  - flake8 --ignore W291,W293,E701 pyqstrat/*.py
   
-
-  
-   
