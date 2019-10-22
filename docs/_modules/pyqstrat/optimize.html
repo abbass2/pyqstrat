@@ -1,0 +1,424 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>pyqstrat.optimize &#8212; pyqstrat 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyqstrat.optimize</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">concurrent</span>
+<span class="kn">from</span> <span class="nn">pyqstrat.pq_utils</span> <span class="k">import</span> <span class="n">set_defaults</span><span class="p">,</span> <span class="n">has_display</span>
+<span class="kn">from</span> <span class="nn">pyqstrat.plot</span> <span class="k">import</span> <span class="n">Plot</span><span class="p">,</span> <span class="n">Subplot</span><span class="p">,</span> <span class="n">XYData</span><span class="p">,</span> <span class="n">XYZData</span><span class="p">,</span> <span class="n">SurfacePlotAttributes</span><span class="p">,</span> <span class="n">LinePlotAttributes</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="n">set_defaults</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="Experiment"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.optimize.Experiment">[docs]</a><span class="k">class</span> <span class="nc">Experiment</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;An Experiment stores a suggestion and its result&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="Experiment.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.optimize.Experiment.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">suggestion</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">cost</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">other_costs</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            suggestion: A dictionary of variable name -&gt; value</span>
+<span class="sd">            cost: A float representing output of the function we are testing with this suggestion as input.</span>
+<span class="sd">            other_costs: A dictionary of other results we want to store and look at later.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">suggestion</span> <span class="o">=</span> <span class="n">suggestion</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cost</span> <span class="o">=</span> <span class="n">cost</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">other_costs</span> <span class="o">=</span> <span class="n">other_costs</span></div>
+        
+<div class="viewcode-block" id="Experiment.valid"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.optimize.Experiment.valid">[docs]</a>    <span class="k">def</span> <span class="nf">valid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns True if all suggestions and costs are finite, i.e not NaN or +/- Infinity</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">suggestion</span><span class="o">.</span><span class="n">values</span><span class="p">()))):</span> <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cost</span><span class="p">):</span> <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">other_costs</span><span class="o">.</span><span class="n">values</span><span class="p">()))):</span> <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+    
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;suggestion: </span><span class="si">{self.suggestion}</span><span class="s1"> cost: </span><span class="si">{self.cost}</span><span class="s1"> other costs: </span><span class="si">{self.other_costs}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="Optimizer"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.optimize.Optimizer">[docs]</a><span class="k">class</span> <span class="nc">Optimizer</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;Optimizer is used to optimize parameters for a strategy.&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="Optimizer.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.optimize.Optimizer.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+                 <span class="n">generator</span><span class="p">:</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span> <span class="kc">None</span><span class="p">],</span> 
+                 <span class="n">cost_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]],</span> 
+                 <span class="n">max_processes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: Display title for plotting, etc.</span>
+<span class="sd">            generator: A generator (see Python Generators) that takes no inputs and yields a dictionary with parameter name -&gt; parameter value.</span>
+<span class="sd">            cost_func: A function that takes a dictionary of parameter name -&gt; parameter value as input and outputs cost for that set of parameters.</span>
+<span class="sd">            max_processes: If not set, the Optimizer will look at the number of CPU cores on your machine to figure out how many processes to run.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generator</span> <span class="o">=</span> <span class="n">generator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cost_func</span> <span class="o">=</span> <span class="n">cost_func</span>
+        <span class="kn">import</span> <span class="nn">sys</span>
+        <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;win32&#39;</span><span class="p">,</span> <span class="s1">&#39;cygwin&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">max_processes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">max_processes</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;max_processes must be 1 on Microsoft Windows&quot;</span><span class="p">)</span>
+            <span class="n">max_processes</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_processes</span> <span class="o">=</span> <span class="n">max_processes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span></div>
+        
+    <span class="k">def</span> <span class="nf">_run_single_process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">suggestion</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">suggestion</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="k">continue</span>
+                <span class="n">cost</span><span class="p">,</span> <span class="n">other_costs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cost_func</span><span class="p">(</span><span class="n">suggestion</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="n">cost</span><span class="p">,</span> <span class="n">other_costs</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Experiment</span><span class="p">(</span><span class="n">suggestion</span><span class="p">,</span> <span class="n">cost</span><span class="p">,</span> <span class="n">other_costs</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="c1"># Exhausted generator</span>
+            <span class="k">return</span>
+    
+    <span class="c1"># TODO: Needs to be rewritten to send costs back to generator when we do parallel gradient descent, etc.</span>
+    <span class="k">def</span> <span class="nf">_run_multi_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fut_map</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">with</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">ProcessPoolExecutor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_processes</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">suggestion</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">suggestion</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="k">continue</span>
+                <span class="n">future</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cost_func</span><span class="p">,</span> <span class="n">suggestion</span><span class="p">)</span>
+                <span class="n">fut_map</span><span class="p">[</span><span class="n">future</span><span class="p">]</span> <span class="o">=</span> <span class="n">suggestion</span>
+                
+            <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">as_completed</span><span class="p">(</span><span class="n">fut_map</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">cost</span><span class="p">,</span> <span class="n">other_costs</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">new_exc</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)(</span><span class="n">f</span><span class="s1">&#39;Exception: {str(e)} with suggestion: </span><span class="si">{suggestion}</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">with_traceback</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">2</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">raise_on_error</span><span class="p">:</span> <span class="k">raise</span> <span class="n">new_exc</span>
+                    <span class="k">else</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">new_exc</span><span class="p">))</span>
+                    <span class="k">continue</span>
+                <span class="n">suggestion</span> <span class="o">=</span> <span class="n">fut_map</span><span class="p">[</span><span class="n">future</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Experiment</span><span class="p">(</span><span class="n">suggestion</span><span class="p">,</span> <span class="n">cost</span><span class="p">,</span> <span class="n">other_costs</span><span class="p">))</span>
+    
+<div class="viewcode-block" id="Optimizer.run"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.optimize.Optimizer.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;Run the optimizer.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            raise_on_error: If set to True, even if we are running a multiprocess optimization, any Exceptions will bubble up and stop the Optimizer.</span>
+<span class="sd">              This can be useful for debugging to see stack traces for Exceptions.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_processes</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_single_process</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_multi_process</span><span class="p">(</span><span class="n">raise_on_error</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="Optimizer.experiment_list"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.optimize.Optimizer.experiment_list">[docs]</a>    <span class="k">def</span> <span class="nf">experiment_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sort_order</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;lowest_cost&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
+        <span class="sd">&#39;&#39;&#39;Returns the list of experiments we have run</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            sort_order: Can be set to lowest_cost, highest_cost or sequence.  </span>
+<span class="sd">              If set to sequence, experiments are returned in the sequence in which they were run</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">sort_order</span> <span class="o">==</span> <span class="s1">&#39;lowest_cost&#39;</span><span class="p">:</span>
+            <span class="n">experiments</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">cost</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">sort_order</span> <span class="o">==</span> <span class="s1">&#39;highest_cost&#39;</span><span class="p">:</span>
+            <span class="n">experiments</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">cost</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">sort_order</span> <span class="o">==</span> <span class="s1">&#39;sequence&#39;</span><span class="p">:</span>  <span class="c1"># in order in which experiment was run</span>
+            <span class="n">experiments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;invalid sort order: </span><span class="si">{sort_order}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">experiments</span></div>
+    
+<div class="viewcode-block" id="Optimizer.df_experiments"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.optimize.Optimizer.df_experiments">[docs]</a>    <span class="k">def</span> <span class="nf">df_experiments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sort_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;cost&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns a dataframe containing experiment data, sorted by sort_column (default &quot;cost&quot;)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">pc_keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">other_costs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">sugg_keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">suggestion</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">records</span> <span class="o">=</span> <span class="p">[[</span><span class="n">exp</span><span class="o">.</span><span class="n">suggestion</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sugg_keys</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">exp</span><span class="o">.</span><span class="n">cost</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">exp</span><span class="o">.</span><span class="n">other_costs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">pc_keys</span><span class="p">]</span> <span class="k">for</span> <span class="n">exp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span> <span class="k">if</span> <span class="n">exp</span><span class="o">.</span><span class="n">valid</span><span class="p">()]</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">sugg_keys</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;cost&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">pc_keys</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="n">sort_column</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="n">ascending</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+    
+<div class="viewcode-block" id="Optimizer.plot_3d"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.optimize.Optimizer.plot_3d">[docs]</a>    <span class="k">def</span> <span class="nf">plot_3d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                <span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+                <span class="n">y</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+                <span class="n">z</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> 
+                <span class="n">plot_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;surface&#39;</span><span class="p">,</span> 
+                <span class="n">figsize</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span> 
+                <span class="n">interpolation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;linear&#39;</span><span class="p">,</span> 
+                <span class="n">cmap</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;viridis&#39;</span><span class="p">,</span>
+                <span class="n">marker</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> 
+                <span class="n">marker_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+                <span class="n">marker_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span>
+                <span class="n">xlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">ylim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+                <span class="n">hspace</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        
+        <span class="sd">&quot;&quot;&quot;Creates a 3D plot of the optimization output for plotting 2 parameters and costs.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            x: Name of the parameter to plot on the x axis, corresponding to the same name in the generator.</span>
+<span class="sd">            y: Name of the parameter to plot on the y axis, corresponding to the same name in the generator.</span>
+<span class="sd">            z: Can be one of:</span>
+<span class="sd">              &quot;cost&quot; </span>
+<span class="sd">              The name of another cost variable corresponding to the output from the cost function</span>
+<span class="sd">              &quot;all&quot;, which creates a subplot for cost plus all other costs</span>
+<span class="sd">            plot_type: surface or contour (default surface)</span>
+<span class="sd">            figsize: Figure size</span>
+<span class="sd">            interpolation: Can be ‘linear’, ‘nearest’ or ‘cubic’ for plotting z points between the ones passed in.  See scipy.interpolate.griddata for details</span>
+<span class="sd">            cmap: Colormap to use (default viridis).  See matplotlib colormap for details</span>
+<span class="sd">            marker: Adds a marker to each point in x, y, z to show the actual data used for interpolation.  You can set this to None to turn markers off.</span>
+<span class="sd">            hspace: Vertical space between subplots</span>
+<span class="sd">         &quot;&quot;&quot;</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> 
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No experiments found&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">has_display</span><span class="p">():</span> <span class="k">return</span>
+
+        <span class="c1"># Get rid of nans since matplotlib does not like them</span>
+        <span class="n">experiments</span> <span class="o">=</span> <span class="p">[</span><span class="n">experiment</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span> <span class="k">if</span> <span class="n">experiment</span><span class="o">.</span><span class="n">valid</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">experiments</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No valid experiments found&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+        
+        <span class="k">if</span> <span class="n">xlim</span><span class="p">:</span>
+            <span class="n">experiments</span> <span class="o">=</span> <span class="p">[</span><span class="n">experiment</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">experiments</span> <span class="k">if</span> <span class="n">experiment</span><span class="o">.</span><span class="n">suggestion</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">experiment</span><span class="o">.</span><span class="n">suggestion</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="n">ylim</span><span class="p">:</span>
+            <span class="n">experiments</span> <span class="o">=</span> <span class="p">[</span><span class="n">experiment</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">experiments</span> <span class="k">if</span> <span class="n">experiment</span><span class="o">.</span><span class="n">suggestion</span><span class="p">[</span><span class="n">y</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">experiment</span><span class="o">.</span><span class="n">suggestion</span><span class="p">[</span><span class="n">y</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+
+        <span class="n">xvalues</span> <span class="o">=</span> <span class="p">[</span><span class="n">experiment</span><span class="o">.</span><span class="n">suggestion</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">]</span>
+        <span class="n">yvalues</span> <span class="o">=</span> <span class="p">[</span><span class="n">experiment</span><span class="o">.</span><span class="n">suggestion</span><span class="p">[</span><span class="n">y</span><span class="p">]</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">]</span>
+        <span class="n">zvalues</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">z</span> <span class="o">==</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+            <span class="n">zvalues</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;cost&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">experiment</span><span class="o">.</span><span class="n">cost</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">])))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">other_costs</span><span class="p">):</span>
+                <span class="n">other_cost_keys</span> <span class="o">=</span> <span class="n">experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">other_costs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">other_cost_keys</span><span class="p">:</span>
+                    <span class="n">zvalues</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">experiment</span><span class="o">.</span><span class="n">other_costs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">])))</span>
+        <span class="k">elif</span> <span class="n">z</span> <span class="o">==</span> <span class="s1">&#39;cost&#39;</span><span class="p">:</span>
+            <span class="n">zvalues</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;cost&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">experiment</span><span class="o">.</span><span class="n">cost</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">])))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">zvalues</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">z</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">experiment</span><span class="o">.</span><span class="n">other_costs</span><span class="p">[</span><span class="n">z</span><span class="p">]</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">])))</span>
+            
+        <span class="n">title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+            
+        <span class="n">subplots</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">tup</span> <span class="ow">in</span> <span class="n">zvalues</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">tup</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">zarray</span> <span class="o">=</span> <span class="n">tup</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;contour&#39;</span><span class="p">:</span>
+                <span class="n">zlabel</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">title</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">zlabel</span> <span class="o">=</span> <span class="n">name</span>
+                <span class="n">title</span> <span class="o">=</span> <span class="kc">None</span>
+                
+            <span class="n">disp</span> <span class="o">=</span> <span class="n">SurfacePlotAttributes</span><span class="p">(</span><span class="n">marker</span><span class="o">=</span><span class="n">marker</span><span class="p">,</span> <span class="n">marker_size</span><span class="o">=</span><span class="n">marker_size</span><span class="p">,</span> <span class="n">marker_color</span><span class="o">=</span><span class="n">marker_color</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">interpolation</span><span class="p">)</span>
+            
+            <span class="n">subplots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Subplot</span><span class="p">(</span>
+                <span class="n">data_list</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">XYZData</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">xvalues</span><span class="p">,</span> <span class="n">yvalues</span><span class="p">,</span> <span class="n">zarray</span><span class="p">,</span> <span class="n">display_attributes</span><span class="o">=</span><span class="n">disp</span><span class="p">)],</span>
+                <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">zlabel</span><span class="o">=</span><span class="n">zlabel</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="n">xlim</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="n">ylim</span><span class="p">))</span>
+        <span class="n">plot</span> <span class="o">=</span> <span class="n">Plot</span><span class="p">(</span><span class="n">subplots</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Optimizer 2D Test&#39;</span><span class="p">,</span> <span class="n">hspace</span><span class="o">=</span><span class="n">hspace</span><span class="p">)</span>
+        <span class="n">plot</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
+        
+<div class="viewcode-block" id="Optimizer.plot_2d"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.optimize.Optimizer.plot_2d">[docs]</a>    <span class="k">def</span> <span class="nf">plot_2d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                <span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+                <span class="n">y</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span>
+                <span class="n">plot_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;line&#39;</span><span class="p">,</span> 
+                <span class="n">figsize</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+                <span class="n">marker</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> 
+                <span class="n">marker_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> 
+                <span class="n">marker_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> 
+                <span class="n">xlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+                <span class="n">hspace</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Creates a 2D plot of the optimization output for plotting 1 parameter and costs.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            x: Name of the parameter to plot on the x axis, corresponding to the same name in the generator.</span>
+<span class="sd">            y: Can be one of:</span>
+<span class="sd">              &quot;cost&quot; </span>
+<span class="sd">              The name of another cost variable corresponding to the output from the cost function</span>
+<span class="sd">              &quot;all&quot;, which creates a subplot for cost plus all other costs</span>
+<span class="sd">            plot_type: line or scatter (default line)</span>
+<span class="sd">            figsize: Figure size</span>
+<span class="sd">            marker: Adds a marker to each point in x, y to show the actual data used for interpolation.  You can set this to None to turn markers off.</span>
+<span class="sd">            hspace: Vertical space between subplots</span>
+<span class="sd">         &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">has_display</span><span class="p">():</span> <span class="k">return</span>
+
+        <span class="c1"># Get rid of nans since matplotlib does not like them</span>
+        <span class="n">experiments</span> <span class="o">=</span> <span class="p">[</span><span class="n">experiment</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span> <span class="k">if</span> <span class="n">experiment</span><span class="o">.</span><span class="n">valid</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="n">xlim</span><span class="p">:</span>
+            <span class="n">experiments</span> <span class="o">=</span> <span class="p">[</span><span class="n">experiment</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">experiments</span> <span class="k">if</span> <span class="n">experiment</span><span class="o">.</span><span class="n">suggestion</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">experiment</span><span class="o">.</span><span class="n">suggestion</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+
+        <span class="n">xvalues</span> <span class="o">=</span> <span class="p">[</span><span class="n">experiment</span><span class="o">.</span><span class="n">suggestion</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">]</span>
+        <span class="n">yvalues</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">y</span> <span class="o">==</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+            <span class="n">yvalues</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;cost&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">experiment</span><span class="o">.</span><span class="n">cost</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">])))</span>
+            <span class="n">other_cost_keys</span> <span class="o">=</span> <span class="n">experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">other_costs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">other_cost_keys</span><span class="p">:</span>
+                <span class="n">yvalues</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">experiment</span><span class="o">.</span><span class="n">other_costs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">])))</span>
+        <span class="k">elif</span> <span class="n">y</span> <span class="o">==</span> <span class="s1">&#39;cost&#39;</span><span class="p">:</span>
+            <span class="n">yvalues</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;cost&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">experiment</span><span class="o">.</span><span class="n">cost</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">])))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">yvalues</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">y</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">experiment</span><span class="o">.</span><span class="n">other_costs</span><span class="p">[</span><span class="n">y</span><span class="p">]</span> <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">])))</span>
+            
+        <span class="n">xvalues</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">xvalues</span><span class="p">)</span>
+        <span class="n">x_sort_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">xvalues</span><span class="p">)</span>
+        <span class="n">xvalues</span> <span class="o">=</span> <span class="n">xvalues</span><span class="p">[</span><span class="n">x_sort_indices</span><span class="p">]</span>
+        <span class="n">subplots</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">tup</span> <span class="ow">in</span> <span class="n">yvalues</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">tup</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">yarray</span> <span class="o">=</span> <span class="n">tup</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">yarray</span> <span class="o">=</span> <span class="n">yarray</span><span class="p">[</span><span class="n">x_sort_indices</span><span class="p">]</span>
+            
+            <span class="n">disp</span> <span class="o">=</span> <span class="n">LinePlotAttributes</span><span class="p">(</span><span class="n">marker</span><span class="o">=</span><span class="n">marker</span><span class="p">,</span> <span class="n">marker_size</span><span class="o">=</span><span class="n">marker_size</span><span class="p">,</span> <span class="n">marker_color</span><span class="o">=</span><span class="n">marker_color</span><span class="p">)</span>
+           
+            <span class="n">subplots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Subplot</span><span class="p">(</span><span class="n">data_list</span><span class="o">=</span><span class="p">[</span><span class="n">XYData</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">xvalues</span><span class="p">,</span> <span class="n">yarray</span><span class="p">,</span> <span class="n">display_attributes</span><span class="o">=</span><span class="n">disp</span><span class="p">)],</span> <span class="n">xlabel</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="n">xlim</span><span class="p">))</span>
+            
+        <span class="n">plot</span> <span class="o">=</span> <span class="n">Plot</span><span class="p">(</span><span class="n">subplots</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Optimizer 1D Test&#39;</span><span class="p">)</span>
+        <span class="n">plot</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div></div>
+        
+<span class="c1"># Functions used in unit testing</span>
+
+
+<span class="k">def</span> <span class="nf">_generator_1d</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">):</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="p">(</span><span class="k">yield</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">})</span>
+
+
+<span class="k">def</span> <span class="nf">_cost_func_1d</span><span class="p">(</span><span class="n">suggestion</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">suggestion</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
+    <span class="n">cost</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">cost</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.1</span> <span class="o">*</span> <span class="n">cost</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">ret</span>
+
+
+<span class="k">def</span> <span class="nf">_generator_2d</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">):</span>
+            <span class="n">_</span> <span class="o">=</span> <span class="p">(</span><span class="k">yield</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">y</span><span class="p">})</span>
+
+
+<span class="k">def</span> <span class="nf">_cost_func_2d</span><span class="p">(</span><span class="n">suggestion</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">suggestion</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">suggestion</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span>
+    <span class="n">cost</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">cost</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;sharpe&#39;</span><span class="p">:</span> <span class="n">cost</span><span class="p">,</span> <span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.1</span> <span class="o">*</span> <span class="n">cost</span><span class="p">}</span>
+
+            
+<div class="viewcode-block" id="test_optimize"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.optimize.test_optimize">[docs]</a><span class="k">def</span> <span class="nf">test_optimize</span><span class="p">():</span>
+    <span class="n">max_processes</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;nt&#39;</span> <span class="k">else</span> <span class="mi">4</span>
+
+    <span class="n">optimizer_1d</span> <span class="o">=</span> <span class="n">Optimizer</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="n">_generator_1d</span><span class="p">(),</span> <span class="n">_cost_func_1d</span><span class="p">,</span> <span class="n">max_processes</span><span class="o">=</span><span class="n">max_processes</span><span class="p">)</span>
+    <span class="n">optimizer_1d</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">raise_on_error</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">optimizer_1d</span><span class="o">.</span><span class="n">plot_2d</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">plot_type</span><span class="o">=</span><span class="s1">&#39;line&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">marker_color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">)</span>
+    
+    <span class="n">optimizer_2d</span> <span class="o">=</span> <span class="n">Optimizer</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="n">_generator_2d</span><span class="p">(),</span> <span class="n">_cost_func_2d</span><span class="p">,</span> <span class="n">max_processes</span><span class="o">=</span><span class="n">max_processes</span><span class="p">)</span>
+    <span class="n">optimizer_2d</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+    <span class="n">optimizer_2d</span><span class="o">.</span><span class="n">plot_3d</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span></div>
+            
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">test_optimize</span><span class="p">()</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">optionflags</span><span class="o">=</span><span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyqstrat</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">pyqstrat</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Sal Abbasi.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

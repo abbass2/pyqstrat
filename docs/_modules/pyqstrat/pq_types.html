@@ -1,0 +1,492 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>pyqstrat.pq_types &#8212; pyqstrat 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyqstrat.pq_types</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">types</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="k">import</span> <span class="n">SimpleNamespace</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">MutableSet</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+
+<div class="viewcode-block" id="ContractGroup"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup">[docs]</a><span class="k">class</span> <span class="nc">ContractGroup</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;A way to group contracts for figuring out which indicators, rules and signals to apply to a contract and for PNL reporting&#39;&#39;&#39;</span>
+
+    <span class="n">_group_names</span><span class="p">:</span> <span class="n">MutableSet</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">contracts</span><span class="p">:</span> <span class="n">MutableSet</span><span class="p">[</span><span class="s1">&#39;Contract&#39;</span><span class="p">]</span>
+    <span class="n">contracts_by_symbol</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s1">&#39;Contract&#39;</span><span class="p">]</span>
+    
+<div class="viewcode-block" id="ContractGroup.clear"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup.clear">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        When running Python interactively you may create a ContractGroup with a given name multiple times because you don&#39;t restart Python </span>
+<span class="sd">        therefore global variables are not cleared.  This function clears global ContractGroups</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">ContractGroup</span><span class="o">.</span><span class="n">_group_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span></div>
+        
+<div class="viewcode-block" id="ContractGroup.create"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup.create">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;ContractGroup&#39;</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">         Args:</span>
+<span class="sd">            name (str): Name of the group</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">ContractGroup</span><span class="o">.</span><span class="n">_group_names</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Contract group: </span><span class="si">{name}</span><span class="s1"> already exists&#39;</span><span class="p">)</span>
+        <span class="n">ContractGroup</span><span class="o">.</span><span class="n">_group_names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">contract_group</span> <span class="o">=</span> <span class="n">ContractGroup</span><span class="p">()</span>
+        <span class="n">contract_group</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">contract_group</span><span class="o">.</span><span class="n">contracts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">contract_group</span><span class="o">.</span><span class="n">contracts_by_symbol</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="n">contract_group</span></div>
+        
+<div class="viewcode-block" id="ContractGroup.add_contract"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup.add_contract">[docs]</a>    <span class="k">def</span> <span class="nf">add_contract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contract</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contracts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">contract</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contracts_by_symbol</span><span class="p">[</span><span class="n">contract</span><span class="o">.</span><span class="n">symbol</span><span class="p">]</span> <span class="o">=</span> <span class="n">contract</span></div>
+        
+<div class="viewcode-block" id="ContractGroup.get_contract"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup.get_contract">[docs]</a>    <span class="k">def</span> <span class="nf">get_contract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contracts_by_symbol</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span></div>
+        
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span></div>
+
+
+<div class="viewcode-block" id="Contract"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Contract">[docs]</a><span class="k">class</span> <span class="nc">Contract</span><span class="p">:</span>
+    <span class="n">_symbol_names</span><span class="p">:</span> <span class="n">MutableSet</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">expiry</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span>
+    <span class="n">multiplier</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">properties</span><span class="p">:</span> <span class="n">SimpleNamespace</span>
+    <span class="n">contract_group</span><span class="p">:</span> <span class="n">ContractGroup</span>
+        
+    <span class="n">contracts_by_symbol</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s1">&#39;Contract&#39;</span><span class="p">]</span>
+
+    <span class="sd">&#39;&#39;&#39;A contract such as a stock, option or a future that can be traded&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="Contract.create"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Contract.create">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">contract_group</span><span class="p">:</span> <span class="n">ContractGroup</span><span class="p">,</span> <span class="n">expiry</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">multiplier</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span> 
+               <span class="n">properties</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SimpleNamespace</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Contract&#39;</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            symbol: A unique string reprenting this contract. e.g IBM or ESH9</span>
+<span class="sd">            contract_group: We sometimes need to group contracts for calculating PNL, for example, you may have a strategy</span>
+<span class="sd">                which has 3 legs, a long option, a short option and a future or equity used to hedge delta.  In this case, you will be trading</span>
+<span class="sd">                different symbols over time as options and futures expire, but you may want to track PNL for each leg using a contract group for each leg.</span>
+<span class="sd">                So you could create contract groups &#39;Long Option&#39;, &#39;Short Option&#39; and &#39;Hedge&#39; and assign contracts to these.</span>
+<span class="sd">            expiry: In the case of a future or option, the date and time when the </span>
+<span class="sd">                contract expires.  For equities and other non expiring contracts, set this to None.  Default None.</span>
+<span class="sd">            multiplier: If the market price convention is per unit, and the unit is not the same as contract size, </span>
+<span class="sd">                set the multiplier here. For example, for E-mini contracts, each contract is 50 units and the price is per unit, </span>
+<span class="sd">                so multiplier would be 50.  Default 1</span>
+<span class="sd">            properties: Any data you want to store with this contract.</span>
+<span class="sd">                For example, you may want to store option strike.  Default None</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">Contract</span><span class="o">.</span><span class="n">_symbol_names</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Contract with symbol: </span><span class="si">{symbol}</span><span class="s1"> already exists&#39;</span><span class="p">)</span>
+        <span class="n">Contract</span><span class="o">.</span><span class="n">_symbol_names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
+
+        <span class="k">assert</span><span class="p">(</span><span class="n">multiplier</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">contract</span> <span class="o">=</span> <span class="n">Contract</span><span class="p">()</span>
+        <span class="n">contract</span><span class="o">.</span><span class="n">symbol</span> <span class="o">=</span> <span class="n">symbol</span>
+        
+        <span class="k">assert</span><span class="p">(</span><span class="n">expiry</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expiry</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expiry</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">))</span>
+        
+        <span class="k">if</span> <span class="n">expiry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expiry</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+            <span class="n">expiry</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="n">expiry</span><span class="p">)</span>
+            
+        <span class="n">contract</span><span class="o">.</span><span class="n">expiry</span> <span class="o">=</span> <span class="n">expiry</span>
+        <span class="n">contract</span><span class="o">.</span><span class="n">multiplier</span> <span class="o">=</span> <span class="n">multiplier</span>
+        
+        <span class="k">if</span> <span class="n">properties</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">properties</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">SimpleNamespace</span><span class="p">()</span>
+        <span class="n">contract</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">properties</span>
+        
+        <span class="n">contract_group</span><span class="o">.</span><span class="n">add_contract</span><span class="p">(</span><span class="n">contract</span><span class="p">)</span>
+        <span class="n">contract</span><span class="o">.</span><span class="n">contract_group</span> <span class="o">=</span> <span class="n">contract_group</span>
+        <span class="k">return</span> <span class="n">contract</span></div>
+    
+<div class="viewcode-block" id="Contract.clear"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Contract.clear">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        When running Python interactively you may create a Contract with a given symbol multiple times because you don&#39;t restart Python </span>
+<span class="sd">        therefore global variables are not cleared.  This function clears global Contracts</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">Contract</span><span class="o">.</span><span class="n">_symbol_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span></div>
+   
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.symbol}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="p">(</span><span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.multiplier}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multiplier</span> <span class="o">!=</span> <span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; expiry: {self.expiry.astype(datetime.datetime):%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S}&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expiry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; group: </span><span class="si">{self.contract_group.name}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract_group</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.properties.__dict__}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="vm">__dict__</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrderStatus"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.OrderStatus">[docs]</a><span class="k">class</span> <span class="nc">OrderStatus</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Enum for order status</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">OPEN</span> <span class="o">=</span> <span class="s1">&#39;open&#39;</span>
+    <span class="n">FILLED</span> <span class="o">=</span> <span class="s1">&#39;filled&#39;</span></div>
+    
+
+<div class="viewcode-block" id="ReasonCode"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ReasonCode">[docs]</a><span class="k">class</span> <span class="nc">ReasonCode</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;A class containing constants for predefined order reason codes. Prefer these predefined reason codes if they suit</span>
+<span class="sd">    the reason you are creating your order.  Otherwise, use your own string.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">ENTER_LONG</span> <span class="o">=</span> <span class="s1">&#39;enter long&#39;</span>
+    <span class="n">ENTER_SHORT</span> <span class="o">=</span> <span class="s1">&#39;enter short&#39;</span>
+    <span class="n">EXIT_LONG</span> <span class="o">=</span> <span class="s1">&#39;exit long&#39;</span>
+    <span class="n">EXIT_SHORT</span> <span class="o">=</span> <span class="s1">&#39;exit short&#39;</span>
+    <span class="n">BACKTEST_END</span> <span class="o">=</span> <span class="s1">&#39;backtest end&#39;</span>
+    <span class="n">ROLL_FUTURE</span> <span class="o">=</span> <span class="s1">&#39;roll future&#39;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="s1">&#39;none&#39;</span>
+    
+    <span class="c1"># Used for plotting trades</span>
+    <span class="n">MARKER_PROPERTIES</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">ENTER_LONG</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;symbol&#39;</span><span class="p">:</span> <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">},</span>
+        <span class="n">ENTER_SHORT</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;symbol&#39;</span><span class="p">:</span> <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">},</span>
+        <span class="n">EXIT_LONG</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;symbol&#39;</span><span class="p">:</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">},</span>
+        <span class="n">EXIT_SHORT</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;symbol&#39;</span><span class="p">:</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">},</span>
+        <span class="n">ROLL_FUTURE</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;symbol&#39;</span><span class="p">:</span> <span class="s1">&#39;&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">},</span>
+        <span class="n">BACKTEST_END</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;symbol&#39;</span><span class="p">:</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">},</span>
+        <span class="n">NONE</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;symbol&#39;</span><span class="p">:</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">}</span>
+    <span class="p">}</span></div>
+    
+
+<div class="viewcode-block" id="Order"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Order">[docs]</a><span class="k">class</span> <span class="nc">Order</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="p">:</span> <span class="n">Contract</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qty</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">nan</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reason_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="MarketOrder"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.MarketOrder">[docs]</a><span class="k">class</span> <span class="nc">MarketOrder</span><span class="p">(</span><span class="n">Order</span><span class="p">):</span>
+<div class="viewcode-block" id="MarketOrder.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.MarketOrder.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contract</span><span class="p">:</span> <span class="n">Contract</span><span class="p">,</span> 
+                 <span class="n">timestamp</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> 
+                 <span class="n">qty</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> 
+                 <span class="n">reason_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">ReasonCode</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span> 
+                 <span class="n">properties</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+                 <span class="n">status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;open&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            contract: The contract this order is for</span>
+<span class="sd">            timestamp: Time the order was placed</span>
+<span class="sd">            qty:  Number of contracts or shares.  Use a negative quantity for sell orders</span>
+<span class="sd">            reason_code: The reason this order was created.</span>
+<span class="sd">                Prefer a predefined constant from the ReasonCode class if it matches your reason for creating this order.</span>
+<span class="sd">                Default None</span>
+<span class="sd">            properties: Any order specific data we want to store.  Default None</span>
+<span class="sd">            status: Status of the order, &quot;open&quot;, &quot;filled&quot;, etc. Default &quot;open&quot;</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contract</span> <span class="o">=</span> <span class="n">contract</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">qty</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">qty</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;order qty must be finite and nonzero: </span><span class="si">{qty}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qty</span> <span class="o">=</span> <span class="n">qty</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reason_code</span> <span class="o">=</span> <span class="n">reason_code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span>
+        <span class="k">if</span> <span class="n">properties</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">properties</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">SimpleNamespace</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">properties</span></div>
+        
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span><span class="o">.</span><span class="n">to_pydatetime</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.contract.symbol}</span><span class="s1"> {timestamp:%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S} qty: </span><span class="si">{self.qty}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reason_code</span> <span class="o">==</span> <span class="n">ReasonCode</span><span class="o">.</span><span class="n">NONE</span> <span class="k">else</span> <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.reason_code}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="vm">__dict__</span> <span class="k">else</span> <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.properties}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.status}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+            
+
+<div class="viewcode-block" id="LimitOrder"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.LimitOrder">[docs]</a><span class="k">class</span> <span class="nc">LimitOrder</span><span class="p">(</span><span class="n">Order</span><span class="p">):</span>
+<div class="viewcode-block" id="LimitOrder.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.LimitOrder.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                 <span class="n">contract</span><span class="p">:</span> <span class="n">Contract</span><span class="p">,</span>
+                 <span class="n">timestamp</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span>
+                 <span class="n">qty</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">limit_price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">reason_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">ReasonCode</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span>
+                 <span class="n">properties</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;open&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            contract: The contract this order is for</span>
+<span class="sd">            timestamp: Time the order was placed</span>
+<span class="sd">            qty:  Number of contracts or shares.  Use a negative quantity for sell orders</span>
+<span class="sd">            limit_price: Limit price (float)</span>
+<span class="sd">            reason_code: The reason this order was created.</span>
+<span class="sd">                Prefer a predefined constant from the ReasonCode class if it matches your reason for creating this order.</span>
+<span class="sd">                Default None</span>
+<span class="sd">            properties: Any order specific data we want to store.  Default None</span>
+<span class="sd">            status: Status of the order, &quot;open&quot;, &quot;filled&quot;, etc. (default &quot;open&quot;)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contract</span> <span class="o">=</span> <span class="n">contract</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">qty</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">qty</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;order qty must be finite and nonzero: </span><span class="si">{qty}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qty</span> <span class="o">=</span> <span class="n">qty</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reason_code</span> <span class="o">=</span> <span class="n">reason_code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">limit_price</span> <span class="o">=</span> <span class="n">limit_price</span>
+        <span class="k">if</span> <span class="n">properties</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">properties</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">SimpleNamespace</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">properties</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">limit_price</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">limit_price</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span></div>
+        
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span><span class="o">.</span><span class="n">to_pydatetime</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.contract.symbol}</span><span class="s1"> {timestamp:%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S} qty: </span><span class="si">{self.qty}</span><span class="s1"> lmt_prc: </span><span class="si">{self.limit_price}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reason_code</span> <span class="o">==</span> <span class="n">ReasonCode</span><span class="o">.</span><span class="n">NONE</span> <span class="k">else</span> <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.reason_code}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="vm">__dict__</span> <span class="k">else</span> <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.properties}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.status}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+    
+
+<div class="viewcode-block" id="RollOrder"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.RollOrder">[docs]</a><span class="k">class</span> <span class="nc">RollOrder</span><span class="p">(</span><span class="n">Order</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A roll order is used to roll a future from one series to the next.  It represents a sell of one future and the buying of another future.&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="RollOrder.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.RollOrder.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                 <span class="n">contract</span><span class="p">:</span> <span class="n">Contract</span><span class="p">,</span> 
+                 <span class="n">timestamp</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span>
+                 <span class="n">close_qty</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">reopen_qty</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">reason_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">ReasonCode</span><span class="o">.</span><span class="n">ROLL_FUTURE</span><span class="p">,</span>
+                 <span class="n">properties</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+                 <span class="n">status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;open&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            contract: The contract this order is for</span>
+<span class="sd">            timestamp: Time the order was placed</span>
+<span class="sd">            close_qty: Quantity of the future you are rolling</span>
+<span class="sd">            reopen_qty: Quantity of the future you are rolling to</span>
+<span class="sd">            reason_code: The reason this order was created.</span>
+<span class="sd">                Prefer a predefined constant from the ReasonCode class if it matches your reason for creating this order.</span>
+<span class="sd">                Default None</span>
+<span class="sd">            properties: Any order specific data we want to store.  Default None</span>
+<span class="sd">            status: Status of the order, &quot;open&quot;, &quot;filled&quot;, etc. (default &quot;open&quot;)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contract</span> <span class="o">=</span> <span class="n">contract</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">close_qty</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">close_qty</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">reopen_qty</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">reopen_qty</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;order quantities must be non-zero and finite: </span><span class="si">{close_qty}</span><span class="s1"> </span><span class="si">{reopen_qty}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close_qty</span> <span class="o">=</span> <span class="n">close_qty</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reopen_qty</span> <span class="o">=</span> <span class="n">reopen_qty</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reason_code</span> <span class="o">=</span> <span class="n">reason_code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qty</span> <span class="o">=</span> <span class="n">close_qty</span>  <span class="c1"># For display purposes when we print varying order types</span>
+        <span class="k">if</span> <span class="n">properties</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">properties</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">SimpleNamespace</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">properties</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">close_qty</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">close_qty</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">reopen_qty</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reopen_qty</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span></div>
+        
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span><span class="o">.</span><span class="n">to_pydatetime</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.contract.symbol}</span><span class="s1"> {timestamp:%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S} close_qty: </span><span class="si">{self.close_qty}</span><span class="s1"> reopen_qty: </span><span class="si">{self.reopen_qty}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reason_code</span> <span class="o">==</span> <span class="n">ReasonCode</span><span class="o">.</span><span class="n">NONE</span> <span class="k">else</span> <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.reason_code}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="vm">__dict__</span> <span class="k">else</span> <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.properties}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.status}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+  
+<div class="viewcode-block" id="StopLimitOrder"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.StopLimitOrder">[docs]</a><span class="k">class</span> <span class="nc">StopLimitOrder</span><span class="p">(</span><span class="n">Order</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Used for stop loss or stop limit orders.  The order is triggered when price goes above or below trigger price, depending on whether this is a short</span>
+<span class="sd">      or long order.  Becomes either a market or limit order at that point, depending on whether you set the limit price or not.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<div class="viewcode-block" id="StopLimitOrder.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.StopLimitOrder.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                 <span class="n">contract</span><span class="p">:</span> <span class="n">Contract</span><span class="p">,</span>
+                 <span class="n">timestamp</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span>
+                 <span class="n">qty</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">trigger_price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">limit_price</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                 <span class="n">reason_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">ReasonCode</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span> 
+                 <span class="n">properties</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;open&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            contract: The contract this order is for</span>
+<span class="sd">            timestamp: Time the order was placed</span>
+<span class="sd">            qty:  Number of contracts or shares.  Use a negative quantity for sell orders</span>
+<span class="sd">            trigger_price: Order becomes a market or limit order if price crosses trigger_price.</span>
+<span class="sd">            limit_price: If not set (default), order becomes a market order when price crosses trigger price.  </span>
+<span class="sd">                Otherwise it becomes a limit order.  Default np.nan</span>
+<span class="sd">            reason_code: The reason this order was created.</span>
+<span class="sd">                Prefer a predefined constant from the ReasonCode class if it matches your reason for creating this order.</span>
+<span class="sd">                Default None</span>
+<span class="sd">            properties: Any order specific data we want to store.  Default None</span>
+<span class="sd">            status: Status of the order, &quot;open&quot;, &quot;filled&quot;, etc. (default &quot;open&quot;)</span>
+<span class="sd">        &#39;&#39;&#39;</span>      
+        <span class="bp">self</span><span class="o">.</span><span class="n">contract</span> <span class="o">=</span> <span class="n">contract</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">qty</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">qty</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;order qty must be finite and nonzero: </span><span class="si">{qty}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qty</span> <span class="o">=</span> <span class="n">qty</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trigger_price</span> <span class="o">=</span> <span class="n">trigger_price</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">limit_price</span> <span class="o">=</span> <span class="n">limit_price</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reason_code</span> <span class="o">=</span> <span class="n">reason_code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">triggered</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">properties</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">properties</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">SimpleNamespace</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">properties</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">trigger_price</span> <span class="o">=</span> <span class="n">trigger_price</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">limit_price</span> <span class="o">=</span> <span class="n">limit_price</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span></div>
+        
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span><span class="o">.</span><span class="n">to_pydatetime</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.contract.symbol}</span><span class="s1"> {timestamp:%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S} qty: </span><span class="si">{self.qty}</span><span class="s1"> trigger_prc: </span><span class="si">{self.trigger_price}</span><span class="s1"> limit_prc: </span><span class="si">{self.limit_price}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reason_code</span> <span class="o">==</span> <span class="n">ReasonCode</span><span class="o">.</span><span class="n">NONE</span> <span class="k">else</span> <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.reason_code}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="vm">__dict__</span> <span class="k">else</span> <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.properties}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.status}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+    
+
+<div class="viewcode-block" id="Trade"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Trade">[docs]</a><span class="k">class</span> <span class="nc">Trade</span><span class="p">:</span>
+<div class="viewcode-block" id="Trade.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Trade.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contract</span><span class="p">:</span> <span class="n">Contract</span><span class="p">,</span>
+                 <span class="n">order</span><span class="p">:</span> <span class="n">Order</span><span class="p">,</span>
+                 <span class="n">timestamp</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> 
+                 <span class="n">qty</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> 
+                 <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> 
+                 <span class="n">fee</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> 
+                 <span class="n">commission</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> 
+                 <span class="n">properties</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SimpleNamespace</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            contract: The contract we traded</span>
+<span class="sd">            order: A reference to the order that created this trade. Default None</span>
+<span class="sd">            timestamp: Trade execution datetime</span>
+<span class="sd">            qty: Number of contracts or shares filled</span>
+<span class="sd">            price: Trade price</span>
+<span class="sd">            fee: Fees paid to brokers or others. Default 0</span>
+<span class="sd">            commision: Commission paid to brokers or others. Default 0</span>
+<span class="sd">            properties: Any data you want to store with this contract.</span>
+<span class="sd">                For example, you may want to store bid / ask prices at time of trade.  Default None</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">contract</span><span class="p">,</span> <span class="n">Contract</span><span class="p">))</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">Order</span><span class="p">))</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">qty</span><span class="p">))</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">price</span><span class="p">))</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">fee</span><span class="p">))</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">commission</span><span class="p">))</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">))</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">contract</span> <span class="o">=</span> <span class="n">contract</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qty</span> <span class="o">=</span> <span class="n">qty</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">price</span> <span class="o">=</span> <span class="n">price</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fee</span> <span class="o">=</span> <span class="n">fee</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">commission</span> <span class="o">=</span> <span class="n">commission</span>
+        
+        <span class="k">if</span> <span class="n">properties</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">properties</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">SimpleNamespace</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">properties</span></div>
+        
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        &gt;&gt;&gt; Contract.clear()</span>
+<span class="sd">        &gt;&gt;&gt; ContractGroup.clear()</span>
+<span class="sd">        &gt;&gt;&gt; contract = Contract.create(&#39;IBM&#39;, contract_group = ContractGroup.create(&#39;IBM&#39;))</span>
+<span class="sd">        &gt;&gt;&gt; order = MarketOrder(contract, np.datetime64(&#39;2019-01-01T14:59&#39;), 100)</span>
+<span class="sd">        &gt;&gt;&gt; print(Trade(contract, order, np.datetime64(&#39;2019-01-01 15:00&#39;), 100, 10.2130000, 0.01))</span>
+<span class="sd">        IBM 2019-01-01 15:00:00 qty: 100 prc: 10.213 fee: 0.01 order: IBM 2019-01-01 14:59:00 qty: 100 open</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span><span class="o">.</span><span class="n">to_pydatetime</span><span class="p">()</span>
+        <span class="n">fee</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39; fee: </span><span class="si">{self.fee:.6g}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fee</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">commission</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39; commission: </span><span class="si">{self.commission:.6g}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">commission</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.contract.symbol}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.contract.properties.__dict__}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="vm">__dict__</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; {timestamp:%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S} qty: </span><span class="si">{self.qty}</span><span class="s1"> prc: </span><span class="si">{self.price:.6g}{fee}{commission}</span><span class="s1"> order: </span><span class="si">{self.order}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">f</span><span class="s1">&#39; </span><span class="si">{self.properties.__dict__}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="vm">__dict__</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span></div>
+    
+    
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">optionflags</span><span class="o">=</span><span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyqstrat</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">pyqstrat</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Sal Abbasi.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

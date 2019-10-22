@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>pyqstrat.markets &#8212; pyqstrat 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyqstrat.markets</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">dateutil._common</span> <span class="k">import</span> <span class="n">weekday</span>
+<span class="kn">import</span> <span class="nn">dateutil.relativedelta</span> <span class="k">as</span> <span class="nn">rd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">pyqstrat.holiday_calendars</span> <span class="k">import</span> <span class="n">Calendar</span><span class="p">,</span> <span class="n">get_date_from_weekday</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Mapping</span>
+
+<span class="n">FUTURE_CODES_INT</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;F&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span> <span class="s1">&#39;Q&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span> <span class="s1">&#39;V&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">:</span> <span class="mi">12</span><span class="p">}</span>
+<span class="n">FUTURES_CODES_INVERTED</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">FUTURE_CODES_INT</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+<span class="n">FUTURE_CODES_STR</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;F&#39;</span><span class="p">:</span> <span class="s1">&#39;jan&#39;</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span><span class="p">:</span> <span class="s1">&#39;feb&#39;</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span><span class="p">:</span> <span class="s1">&#39;mar&#39;</span><span class="p">,</span> <span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="s1">&#39;apr&#39;</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span><span class="p">:</span> <span class="s1">&#39;may&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="s1">&#39;jun&#39;</span><span class="p">,</span> 
+                    <span class="s1">&#39;N&#39;</span><span class="p">:</span> <span class="s1">&#39;jul&#39;</span><span class="p">,</span> <span class="s1">&#39;Q&#39;</span><span class="p">:</span> <span class="s1">&#39;aug&#39;</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span><span class="p">:</span> <span class="s1">&#39;sep&#39;</span><span class="p">,</span> <span class="s1">&#39;V&#39;</span><span class="p">:</span> <span class="s1">&#39;oct&#39;</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span><span class="p">:</span> <span class="s1">&#39;nov&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">:</span> <span class="s1">&#39;dec&#39;</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="future_code_to_month"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.markets.future_code_to_month">[docs]</a><span class="k">def</span> <span class="nf">future_code_to_month</span><span class="p">(</span><span class="n">future_code</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given a future code such as &quot;X&quot;, return the month abbreviation, such as &quot;nov&quot;</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        future_code (str): the one letter future code</span>
+<span class="sd">        </span>
+<span class="sd">    &gt;&gt;&gt; future_code_to_month(&#39;X&#39;)</span>
+<span class="sd">    &#39;nov&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">future_code</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">f</span><span class="s1">&#39;Future code must be a single character: </span><span class="si">{future_code}</span><span class="s1">&#39;</span>
+    <span class="k">if</span> <span class="n">future_code</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">FUTURE_CODES_STR</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;unknown future code: </span><span class="si">{future_code}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">FUTURE_CODES_STR</span><span class="p">[</span><span class="n">future_code</span><span class="p">]</span>
+    
+    <span class="k">if</span> <span class="n">future_code</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">FUTURE_CODES_INT</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;unknown future code: </span><span class="si">{future_code}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">FUTURE_CODES_INT</span><span class="p">[</span><span class="n">future_code</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="future_code_to_month_number"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.markets.future_code_to_month_number">[docs]</a><span class="k">def</span> <span class="nf">future_code_to_month_number</span><span class="p">(</span><span class="n">future_code</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given a future code such as &quot;X&quot;, return the month number (from 1 - 12)</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        future_code (str): the one letter future code</span>
+<span class="sd">        </span>
+<span class="sd">    &gt;&gt;&gt; future_code_to_month_number(&#39;X&#39;)</span>
+<span class="sd">    11</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">future_code</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">f</span><span class="s1">&#39;Future code must be a single character: </span><span class="si">{future_code}</span><span class="s1">&#39;</span>
+    <span class="k">if</span> <span class="n">future_code</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">FUTURE_CODES_INT</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;unknown future code: </span><span class="si">{future_code}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">FUTURE_CODES_INT</span><span class="p">[</span><span class="n">future_code</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="get_future_code"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.markets.get_future_code">[docs]</a><span class="k">def</span> <span class="nf">get_future_code</span><span class="p">(</span><span class="n">month</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given a month number such as 3 for March, return the future code for it, e.g. H</span>
+<span class="sd">    &gt;&gt;&gt; get_future_code(3)</span>
+<span class="sd">    &#39;H&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">FUTURES_CODES_INVERTED</span><span class="p">[</span><span class="n">month</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="EminiFuture"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.markets.EminiFuture">[docs]</a><span class="k">class</span> <span class="nc">EminiFuture</span><span class="p">:</span>
+    
+    <span class="n">calendar</span> <span class="o">=</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">get_calendar</span><span class="p">(</span><span class="n">Calendar</span><span class="o">.</span><span class="n">NYSE</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EminiFuture.get_current_symbol"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.markets.EminiFuture.get_current_symbol">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_current_symbol</span><span class="p">(</span><span class="n">curr_date</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        &gt;&gt;&gt; assert(EminiFuture.get_current_symbol(datetime.date(2019, 3, 14)) == &#39;ESH9&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; assert(EminiFuture.get_current_symbol(datetime.date(2019, 3, 15)) == &#39;ESM9&#39;)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">year</span> <span class="o">=</span> <span class="n">curr_date</span><span class="o">.</span><span class="n">year</span>
+        <span class="n">month</span> <span class="o">=</span> <span class="n">curr_date</span><span class="o">.</span><span class="n">month</span>
+        <span class="n">day</span> <span class="o">=</span> <span class="n">curr_date</span><span class="o">.</span><span class="n">day</span>
+        <span class="n">third_friday</span> <span class="o">=</span> <span class="n">EminiFuture</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">third_friday_of_month</span><span class="p">(</span><span class="n">month</span><span class="p">,</span> <span class="n">year</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">month</span> <span class="o">&lt;</span> <span class="mi">3</span> <span class="ow">or</span> <span class="p">(</span><span class="n">month</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">day</span> <span class="o">&lt;</span> <span class="n">third_friday</span><span class="o">.</span><span class="n">day</span><span class="p">):</span> <span class="n">month_str</span> <span class="o">=</span> <span class="s1">&#39;H&#39;</span>
+        <span class="k">elif</span> <span class="n">month</span> <span class="o">&lt;</span> <span class="mi">6</span> <span class="ow">or</span> <span class="p">(</span><span class="n">month</span> <span class="o">==</span> <span class="mi">6</span> <span class="ow">and</span> <span class="n">day</span> <span class="o">&lt;</span> <span class="n">third_friday</span><span class="o">.</span><span class="n">day</span><span class="p">):</span> <span class="n">month_str</span> <span class="o">=</span> <span class="s1">&#39;M&#39;</span>
+        <span class="k">elif</span> <span class="n">month</span> <span class="o">&lt;</span> <span class="mi">9</span> <span class="ow">or</span> <span class="p">(</span><span class="n">month</span> <span class="o">==</span> <span class="mi">9</span> <span class="ow">and</span> <span class="n">day</span> <span class="o">&lt;</span> <span class="n">third_friday</span><span class="o">.</span><span class="n">day</span><span class="p">):</span> <span class="n">month_str</span> <span class="o">=</span> <span class="s1">&#39;U&#39;</span>
+        <span class="k">elif</span> <span class="n">month</span> <span class="o">&lt;</span> <span class="mi">12</span> <span class="ow">or</span> <span class="p">(</span><span class="n">month</span> <span class="o">==</span> <span class="mi">12</span> <span class="ow">and</span> <span class="n">day</span> <span class="o">&lt;</span> <span class="n">third_friday</span><span class="o">.</span><span class="n">day</span><span class="p">):</span> <span class="n">month_str</span> <span class="o">=</span> <span class="s1">&#39;Z&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">month_str</span> <span class="o">=</span> <span class="s1">&#39;H&#39;</span>
+            <span class="n">year</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">fut_symbol</span> <span class="o">=</span> <span class="s1">&#39;ES&#39;</span> <span class="o">+</span> <span class="n">month_str</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">year</span> <span class="o">-</span> <span class="mi">2010</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fut_symbol</span></div>
+
+<div class="viewcode-block" id="EminiFuture.get_previous_symbol"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.markets.EminiFuture.get_previous_symbol">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_previous_symbol</span><span class="p">(</span><span class="n">curr_future_symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        &gt;&gt;&gt; assert(EminiFuture.get_previous_symbol(&#39;ESH9&#39;) == &#39;ESZ8&#39;)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">month</span> <span class="o">=</span> <span class="n">curr_future_symbol</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">curr_future_symbol</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+        <span class="n">prev_month</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;H&#39;</span><span class="p">:</span> <span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span><span class="p">:</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">:</span> <span class="s1">&#39;U&#39;</span><span class="p">}[</span><span class="n">month</span><span class="p">]</span>
+        <span class="n">prev_year</span> <span class="o">=</span> <span class="n">year</span> <span class="k">if</span> <span class="n">prev_month</span> <span class="o">!=</span> <span class="s1">&#39;Z&#39;</span> <span class="k">else</span> <span class="n">year</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">prev_year</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="n">prev_year</span> <span class="o">==</span> <span class="mi">9</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;ES</span><span class="si">{prev_month}{prev_year}</span><span class="s1">&#39;</span></div>
+
+<div class="viewcode-block" id="EminiFuture.get_next_symbol"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.markets.EminiFuture.get_next_symbol">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_next_symbol</span><span class="p">(</span><span class="n">curr_future_symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        &gt;&gt;&gt; assert(EminiFuture.get_next_symbol(&#39;ESZ8&#39;) == &#39;ESH9&#39;)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">month</span> <span class="o">=</span> <span class="n">curr_future_symbol</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">curr_future_symbol</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+        <span class="n">next_month</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Z&#39;</span><span class="p">:</span> <span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span><span class="p">:</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="s1">&#39;U&#39;</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span><span class="p">:</span> <span class="s1">&#39;Z&#39;</span><span class="p">}[</span><span class="n">month</span><span class="p">]</span>
+        <span class="n">next_year</span> <span class="o">=</span> <span class="n">year</span> <span class="k">if</span> <span class="n">next_month</span> <span class="o">!=</span> <span class="s1">&#39;H&#39;</span> <span class="k">else</span> <span class="n">year</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">next_year</span> <span class="o">==</span> <span class="mi">10</span><span class="p">:</span> <span class="n">next_year</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;ES</span><span class="si">{next_month}{next_year}</span><span class="s1">&#39;</span></div>
+    
+<div class="viewcode-block" id="EminiFuture.get_expiry"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.markets.EminiFuture.get_expiry">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_expiry</span><span class="p">(</span><span class="n">fut_symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        &gt;&gt;&gt; assert(EminiFuture.get_expiry(&#39;ESH8&#39;) == np.datetime64(&#39;2018-03-16T08:30&#39;))</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">month_str</span> <span class="o">=</span> <span class="n">fut_symbol</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">year_str</span> <span class="o">=</span> <span class="n">fut_symbol</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span>
+        
+        <span class="n">month</span> <span class="o">=</span> <span class="n">future_code_to_month_number</span><span class="p">(</span><span class="n">month_str</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">month</span><span class="p">,</span> <span class="nb">int</span><span class="p">))</span>
+        <span class="n">year</span> <span class="o">=</span> <span class="mi">2010</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">year_str</span><span class="p">)</span>
+        <span class="n">expiry_date</span> <span class="o">=</span> <span class="n">EminiFuture</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">third_friday_of_month</span><span class="p">(</span><span class="n">month</span><span class="p">,</span> <span class="n">year</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="n">expiry_date</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="mi">30</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">)</span></div></div>
+    
+
+<div class="viewcode-block" id="EminiOption"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.markets.EminiOption">[docs]</a><span class="k">class</span> <span class="nc">EminiOption</span><span class="p">:</span>
+    
+    <span class="n">calendar</span> <span class="o">=</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">get_calendar</span><span class="p">(</span><span class="n">Calendar</span><span class="o">.</span><span class="n">NYSE</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EminiOption.decode_symbol"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.markets.EminiOption.decode_symbol">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">decode_symbol</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">weekday</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        &gt;&gt;&gt; EminiOption.decode_symbol(&#39;E1AF8&#39;)</span>
+<span class="sd">        (MO, 2018, 1, 1)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;EW[1-4].[0-9]&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>  <span class="c1"># Friday</span>
+            <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="s1">&#39;201&#39;</span> <span class="o">+</span> <span class="n">name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">if</span> <span class="n">year</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2011</span><span class="p">]:</span> <span class="n">year</span> <span class="o">+=</span> <span class="mi">10</span>
+            <span class="n">week</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">3</span><span class="p">])</span>
+            <span class="n">month</span> <span class="o">=</span> <span class="n">future_code_to_month_number</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">4</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">rd</span><span class="o">.</span><span class="n">FR</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">week</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;E[1-5]A.[0-9]&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>  <span class="c1"># Monday</span>
+            <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="s1">&#39;201&#39;</span> <span class="o">+</span> <span class="n">name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">if</span> <span class="n">year</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2011</span><span class="p">]:</span> <span class="n">year</span> <span class="o">+=</span> <span class="mi">10</span>
+            <span class="n">week</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">month</span> <span class="o">=</span> <span class="n">future_code_to_month_number</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">4</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">rd</span><span class="o">.</span><span class="n">MO</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">week</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;E[1-5]C.[0-9]&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>  <span class="c1"># Wednesday</span>
+            <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="s1">&#39;201&#39;</span> <span class="o">+</span> <span class="n">name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">if</span> <span class="n">year</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2011</span><span class="p">]:</span> <span class="n">year</span> <span class="o">+=</span> <span class="mi">10</span>
+            <span class="n">week</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">month</span> <span class="o">=</span> <span class="n">future_code_to_month_number</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">4</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">rd</span><span class="o">.</span><span class="n">WE</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">week</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;EW[A-Z][0-9]&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>  <span class="c1"># End of month</span>
+            <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="s1">&#39;201&#39;</span> <span class="o">+</span> <span class="n">name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">if</span> <span class="n">year</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2011</span><span class="p">]:</span> <span class="n">year</span> <span class="o">+=</span> <span class="mi">10</span>
+            <span class="n">week</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="n">month</span> <span class="o">=</span> <span class="n">future_code_to_month_number</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">3</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">rd</span><span class="o">.</span><span class="n">WE</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">week</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;could not decode: </span><span class="si">{name}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+            
+<div class="viewcode-block" id="EminiOption.get_expiry"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.markets.EminiOption.get_expiry">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_expiry</span><span class="p">(</span><span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        &gt;&gt;&gt; EminiOption.get_expiry(&#39;EW2Z5&#39;)</span>
+<span class="sd">        numpy.datetime64(&#39;2015-12-11T15:00&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; EminiOption.get_expiry(&#39;E3AF7&#39;)</span>
+<span class="sd">        numpy.datetime64(&#39;2017-01-17T15:00&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; EminiOption.get_expiry(&#39;EWF0&#39;)</span>
+<span class="sd">        numpy.datetime64(&#39;2020-01-31T15:00&#39;)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="s1">&#39;:&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{symbol}</span><span class="s1"> contains: pass in option root instead&#39;</span>
+        <span class="n">weekday</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">week</span> <span class="o">=</span> <span class="n">EminiOption</span><span class="o">.</span><span class="n">decode_symbol</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
+        <span class="n">expiry</span> <span class="o">=</span> <span class="n">get_date_from_weekday</span><span class="p">(</span><span class="n">weekday</span><span class="o">.</span><span class="n">weekday</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">week</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">weekday</span> <span class="ow">in</span> <span class="p">[</span><span class="n">rd</span><span class="o">.</span><span class="n">WE</span><span class="p">,</span> <span class="n">rd</span><span class="o">.</span><span class="n">FR</span><span class="p">]:</span>
+            <span class="n">expiry</span> <span class="o">=</span> <span class="n">EminiOption</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">add_trading_days</span><span class="p">(</span><span class="n">expiry</span><span class="p">,</span> <span class="n">num_days</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">roll</span><span class="o">=</span><span class="s1">&#39;backward&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">expiry</span> <span class="o">=</span> <span class="n">EminiOption</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">add_trading_days</span><span class="p">(</span><span class="n">expiry</span><span class="p">,</span> <span class="n">num_days</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">roll</span><span class="o">=</span><span class="s1">&#39;forward&#39;</span><span class="p">)</span>
+        <span class="c1"># Option expirations changed on 9/20/2015 from 3:15 to 3 pm - </span>
+        <span class="c1"># See https://www.cmegroup.com/market-regulation/files/15-384.pdf</span>
+        <span class="n">expiry</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">expiry</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;2015-09-20&#39;</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">15</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="mi">15</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">))</span> 
+        <span class="k">return</span> <span class="n">expiry</span></div></div>
+       
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">optionflags</span><span class="o">=</span><span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyqstrat</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">pyqstrat</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Sal Abbasi.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
