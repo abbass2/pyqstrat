@@ -3376,10 +3376,8 @@ of the last date in the datetime array</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>writer_creator</strong> – A function that takes an output_file_prefix, schema and returns an object
+<li><p><strong>writer_creator</strong> – A function that takes a schema and returns an object
 implementing the <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writer" title="pyqstrat.pyqstrat_cpp.Writer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Writer</span></code></a> interface</p></li>
-<li><p><strong>output_file_prefix</strong> (<em>str</em>) – Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind of data
-and format the file creates.  E.g. “/tmp/output_file_1”</p></li>
 <li><p><strong>timestamp_unit</strong> (<a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Schema.Type" title="pyqstrat.pyqstrat_cpp.Schema.Type"><em>Schema.Type</em></a><em>, </em><em>optional</em>) – Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
 Defaults to Schema.TIMESTAMP_MILLI</p></li>
 </ul>
@@ -3414,10 +3412,8 @@ Defaults to Schema.TIMESTAMP_MILLI</p></li>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>writer_creator</strong> – A function that takes an output_file_prefix, schema and returns an object
+<li><p><strong>writer_creator</strong> – A function that takes a schema and returns an object
 implementing the <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writer" title="pyqstrat.pyqstrat_cpp.Writer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Writer</span></code></a> interface</p></li>
-<li><p><strong>output_file_prefix</strong> (<em>str</em>) – Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind of data
-and format the file creates.  E.g. “/tmp/output_file_1”</p></li>
 <li><p><strong>timestamp_unit</strong> (<a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Schema.Type" title="pyqstrat.pyqstrat_cpp.Schema.Type"><em>Schema.Type</em></a><em>, </em><em>optional</em>) – Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
 Defaults to Schema.TIMESTAMP_MILLI</p></li>
 </ul>
@@ -3451,16 +3447,11 @@ Defaults to Schema.TIMESTAMP_MILLI</p></li>
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.AllQuoteAggregator.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>writer_creator</strong> – <dl class="simple">
-<dt>A function that takes an output_file_prefix, schema and returns an object implementing the <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writer" title="pyqstrat.pyqstrat_cpp.Writer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Writer</span></code></a> interface</dt><dd><p>output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind
-of data and format the file creates.  E.g. “/tmp/output_file_1”</p>
-</dd>
-<dt>consecutive_ids (bool): Whether we expect to see interleaved quote ids or not.  If set, we expect to see quotes for the same instrument</dt><dd><p>together, and write out a batch after each instrument is done.</p>
-</dd>
-<dt>timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch.</dt><dd><p>Defaults to Schema.TIMESTAMP_MILLI</p>
-</dd>
-</dl>
-</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>writer_creator</strong> – A function that takes a schema and returns an object implementing the <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writer" title="pyqstrat.pyqstrat_cpp.Writer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Writer</span></code></a> interface</p></li>
+<li><p><strong>timestamp_unit</strong> (<a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Schema.Type" title="pyqstrat.pyqstrat_cpp.Schema.Type"><em>Schema.Type</em></a><em>, </em><em>optional</em>) – Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
+Defaults to Schema.TIMESTAMP_MILLI</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -3489,9 +3480,8 @@ of data and format the file creates.  E.g. “/tmp/output_file_1”</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>writer_creator</strong> – A function that takes an output_file_prefix, schema and returns an object
+<li><p><strong>writer_creator</strong> – A function that takes a schema and returns an object
 implementing the <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writer" title="pyqstrat.pyqstrat_cpp.Writer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Writer</span></code></a> interface</p></li>
-<li><p><strong>output_file_prefix</strong> (<em>str</em>) – Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind of data and format the file creates.  E.g. “/tmp/output_file_1”</p></li>
 <li><p><strong>timestamp_unit</strong> (<a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Schema.Type" title="pyqstrat.pyqstrat_cpp.Schema.Type"><em>Schema.Type</em></a><em>, </em><em>optional</em>) – Whether timestamps are measured as milliseconds or microseconds since the unix epoch. Defaults to Schema.TIMESTAMP_MILLI</p></li>
 </ul>
 </dd>
@@ -3525,92 +3515,14 @@ implementing the <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writ
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>writer_creator</strong> – A function that takes an output_file_prefix, schema and returns an object
+<li><p><strong>writer_creator</strong> – A function that takes a schema and returns an object
 implementing the <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writer" title="pyqstrat.pyqstrat_cpp.Writer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Writer</span></code></a> interface</p></li>
-<li><p><strong>output_file_prefix</strong> (<em>str</em>) – Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind of data
-and format the file creates.  E.g. “/tmp/output_file_1”</p></li>
 <li><p><strong>timestamp_unit</strong> (<a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Schema.Type" title="pyqstrat.pyqstrat_cpp.Schema.Type"><em>Schema.Type</em></a><em>, </em><em>optional</em>) – Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
 Defaults to Schema.TIMESTAMP_MILLI</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pyqstrat.pyqstrat_cpp.ArrowWriter">
-<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.pyqstrat_cpp.</code><code class="sig-name descname">ArrowWriter</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.ArrowWriter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writer" title="pyqstrat.pyqstrat_cpp.Writer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.Writer</span></code></a></p>
-<p>A subclass of <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writer" title="pyqstrat.pyqstrat_cpp.Writer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Writer</span></code></a> that batches of records to a disk file in the Apache arrow format.  See Apache arrow for details</p>
-<dl class="method">
-<dt id="pyqstrat.pyqstrat_cpp.ArrowWriter.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.ArrowWriter.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>output_file_prefix</strong> (<em>str</em>) – Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind
-of data and format the file creates.  E.g. “/tmp/output_file_1”</p></li>
-<li><p><strong>schema</strong> (<a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Schema" title="pyqstrat.pyqstrat_cpp.Schema"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Schema</span></code></a>) – A schema object containing the names and datatypes of each field we want to save in a record</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.pyqstrat_cpp.ArrowWriter.add_record">
-<code class="sig-name descname">add_record</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.ArrowWriter.add_record" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a record that will be written to disk at some point.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>line_number</strong> (<em>int</em>) – The line number of the source file that this trade came from.  Used for debugging</p></li>
-<li><p><strong>tuple</strong> (<em>tuple</em>) – Must correspond to the schema defined in the constructor.  For example, if the schema has a bool and a float,
-the tuple could be (False, 0.5)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.pyqstrat_cpp.ArrowWriter.close">
-<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.ArrowWriter.close" title="Permalink to this definition">¶</a></dt>
-<dd><p>Close the writer and flush any remaining data to disk</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>success</strong> (<em>bool</em><em>, </em><em>optional</em>) – If set to False, we had some kind of exception and are cleaning up.  Tells the function to
-not indicate the file was written successfully, for example by renaming a temp file to the actual filename.  Defaults to True</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.pyqstrat_cpp.ArrowWriter.write_batch">
-<code class="sig-name descname">write_batch</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.ArrowWriter.write_batch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write a batch of records to disk.  The batch can have an optional string id so we can
-later retrieve just this batch of records without reading the whole file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>batch_id</strong> (<em>str</em><em>, </em><em>optional</em>) – An identifier which can later be used to retrieve this batch from disk. Defaults to “”</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pyqstrat.pyqstrat_cpp.ArrowWriterCreator">
-<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.pyqstrat_cpp.</code><code class="sig-name descname">ArrowWriterCreator</code><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.ArrowWriterCreator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.WriterCreator" title="pyqstrat.pyqstrat_cpp.WriterCreator"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.pyqstrat_cpp.WriterCreator</span></code></a></p>
-<dl class="method">
-<dt id="pyqstrat.pyqstrat_cpp.ArrowWriterCreator.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.ArrowWriterCreator.__call__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.pyqstrat_cpp.ArrowWriterCreator.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.ArrowWriterCreator.__init__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 </dd></dl>
 
@@ -3763,10 +3675,12 @@ Defaults to True</p></li>
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.HDF5WriterCreator.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>group_name_delimiter</strong> – A one character string.  We use this to delimit group names and create parent groups.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_file_prefix</strong> (<em>str</em>) – Path of the output file to create.  The writer will add a ‘.hdf5’ to this path</p></li>
+<li><p><strong>group_name_delimiter</strong> – A one character string.  We use this to delimit group names and create parent groups.</p></li>
+</ul>
 </dd>
 </dl>
-<p>implementing the <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writer" title="pyqstrat.pyqstrat_cpp.Writer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Writer</span></code></a> interface</p>
 </dd></dl>
 
 <dl class="method">
@@ -4171,10 +4085,7 @@ followed by a offer quote with the same timestamp or vice versa</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>writer_creator</strong> – A function that takes an output_file_prefix, schema and returns an object
-implementing the <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writer" title="pyqstrat.pyqstrat_cpp.Writer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Writer</span></code></a> interface</p></li>
-<li><p><strong>output_file_prefix</strong> (<em>str</em>) – Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind
-of data and format the file creates.  E.g. “/tmp/output_file_1”</p></li>
+<li><p><strong>writer_creator</strong> – A function that takes a schema and returns an object implementing the <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writer" title="pyqstrat.pyqstrat_cpp.Writer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Writer</span></code></a> interface</p></li>
 <li><p><strong>frequency</strong> (<em>str</em><em>, </em><em>optional</em>) – A string like “5m” indicating the bar size is 5 mins.  Units can be s,m,h or d for second, minute, hour or day.
 Defaults to “5m”.  If you set this to “”, each tick will be recorded.</p></li>
 <li><p><strong>timestamp_unit</strong> (<a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Schema.Type" title="pyqstrat.pyqstrat_cpp.Schema.Type"><em>Schema.Type</em></a><em>, </em><em>optional</em>) – Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
@@ -4849,10 +4760,8 @@ Defaults to 1.0</p></li>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>writer_creator</strong> – A function that takes an output_file_prefix, schema and returns an object
+<li><p><strong>writer_creator</strong> – A function that takes a schema and returns an object
 implementing the <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writer" title="pyqstrat.pyqstrat_cpp.Writer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Writer</span></code></a> interface</p></li>
-<li><p><strong>output_file_prefix</strong> (<em>str</em>) – Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind
-of data and format the file creates.  E.g. “/tmp/output_file_1”</p></li>
 <li><p><strong>frequency</strong> – A string like “5m” indicating the bar size is 5 mins.  Units can be s,m,h or d for second, minute, hour or day.
 Defaults to “5m”</p></li>
 </ul>
@@ -4979,18 +4888,6 @@ Defaults to “5m”</p></li>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>success</strong> (<em>bool</em><em>, </em><em>optional</em>) – If set to False, we had some kind of exception and are cleaning up.  Tells the function to
 not indicate the file was written successfully, for example by renaming a temp file to the actual filename.  Defaults to True</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyqstrat.pyqstrat_cpp.Writer.write_batch">
-<code class="sig-name descname">write_batch</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.pyqstrat_cpp.Writer.write_batch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write a batch of records to disk.  The batch can have an optional string id so we can
-later retrieve just this batch of records without reading the whole file</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>batch_id</strong> (<em>str</em><em>, </em><em>optional</em>) – An identifier which can later be used to retrieve this batch from disk. Defaults to “”</p>
 </dd>
 </dl>
 </dd></dl>
@@ -5331,7 +5228,7 @@ returns names of all files that match</p>
 <code class="sig-name descname">__call__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata_processor.html#PathFileNameProvider.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata_processor.PathFileNameProvider.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>All matching filenames</p>
@@ -5499,7 +5396,7 @@ date part of the filename and returns milliseconds (no fractions) since the epoc
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input_filename_provider</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[], <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – A function that returns a list of filenames (incl path) we need to process.</p></li>
+<li><p><strong>input_filename_provider</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[], <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – A function that returns a list of filenames (incl path) we need to process.</p></li>
 <li><p><strong>file_processor</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – A function that takes an input filename and processes it, returning number of lines processed.</p></li>
 <li><p><strong>num_processes</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of processes to run to parse these files.  If set to None, we use the number of cores
 present on your machine.  Defaults to None</p></li>
@@ -5515,20 +5412,20 @@ trace and diagnose the problem.  If not set, we print the error and continue.  D
 
 <dl class="function">
 <dt id="pyqstrat.marketdata_processor.process_marketdata_file">
-<code class="sig-prename descclassname">pyqstrat.marketdata_processor.</code><code class="sig-name descname">process_marketdata_file</code><span class="sig-paren">(</span><em class="sig-param">input_filename</em>, <em class="sig-param">output_file_prefix_mapper</em>, <em class="sig-param">record_parser_creator</em>, <em class="sig-param">aggregator_creator</em>, <em class="sig-param">line_filter=None</em>, <em class="sig-param">compression=None</em>, <em class="sig-param">base_date_mapper=None</em>, <em class="sig-param">file_processor_creator=&lt;function create_text_file_processor&gt;</em>, <em class="sig-param">header_parser_creator=&lt;function &lt;lambda&gt;&gt;</em>, <em class="sig-param">header_record_generator=&lt;function text_file_record_generator_creator&gt;</em>, <em class="sig-param">record_generator=&lt;pyqstrat.pyqstrat_cpp.TextFileDecompressor object&gt;</em>, <em class="sig-param">bad_line_handler=&lt;pyqstrat.pyqstrat_cpp.PrintBadLineHandler object&gt;</em>, <em class="sig-param">record_filter=None</em>, <em class="sig-param">missing_data_handler=&lt;pyqstrat.pyqstrat_cpp.PriceQtyMissingDataHandler object&gt;</em>, <em class="sig-param">writer_creator=&lt;pyqstrat.pyqstrat_cpp.ArrowWriterCreator object&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata_processor.html#process_marketdata_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata_processor.process_marketdata_file" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyqstrat.marketdata_processor.</code><code class="sig-name descname">process_marketdata_file</code><span class="sig-paren">(</span><em class="sig-param">input_filename</em>, <em class="sig-param">compression</em>, <em class="sig-param">output_file_prefix_mapper</em>, <em class="sig-param">record_parser_creator</em>, <em class="sig-param">aggregator_creator</em>, <em class="sig-param">line_filter=None</em>, <em class="sig-param">base_date_mapper=None</em>, <em class="sig-param">file_processor_creator=&lt;function create_text_file_processor&gt;</em>, <em class="sig-param">header_parser_creator=&lt;function &lt;lambda&gt;&gt;</em>, <em class="sig-param">header_record_generator=&lt;function text_file_record_generator_creator&gt;</em>, <em class="sig-param">record_generator=&lt;pyqstrat.pyqstrat_cpp.TextFileDecompressor object&gt;</em>, <em class="sig-param">bad_line_handler=&lt;pyqstrat.pyqstrat_cpp.PrintBadLineHandler object&gt;</em>, <em class="sig-param">record_filter=None</em>, <em class="sig-param">missing_data_handler=&lt;pyqstrat.pyqstrat_cpp.PriceQtyMissingDataHandler object&gt;</em>, <em class="sig-param">writer_creator=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/marketdata_processor.html#process_marketdata_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.marketdata_processor.process_marketdata_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Processes a single market data file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input_filename</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – file to process</p></li>
+<li><p><strong>input_filename</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – File name (including path) to process</p></li>
+<li><p><strong>compression</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Compression type for the input file.  If not set, we try to infer the compression type from the filename.</p></li>
 <li><p><strong>output_file_prefix_mapper</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – A function that takes an input filename and returns the corresponding output filename we want</p></li>
 <li><p><strong>record_parser_creator</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]], <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]], <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Record" title="pyqstrat.pyqstrat_cpp.Record"><code class="xref py py-class docutils literal notranslate"><span class="pre">Record</span></code></a>]]) – A function that takes a date and a list of column names and returns a
 function that can take a list of fields and return a subclass of Record</p></li>
-<li><p><strong>aggregator_creator</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Schema" title="pyqstrat.pyqstrat_cpp.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writer" title="pyqstrat.pyqstrat_cpp.Writer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Writer</span></code></a>], <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Aggregator" title="pyqstrat.pyqstrat_cpp.Aggregator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Aggregator</span></code></a>]]) – A function that takes a writer creator and a output file prefix and returns a list of Aggregators</p></li>
+<li><p><strong>aggregator_creator</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Schema" title="pyqstrat.pyqstrat_cpp.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Writer" title="pyqstrat.pyqstrat_cpp.Writer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Writer</span></code></a>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Aggregator" title="pyqstrat.pyqstrat_cpp.Aggregator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Aggregator</span></code></a>]]) – A function that takes a writer creator and returns a list of Aggregators</p></li>
 <li><p><strong>line_filter</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]]) – A function that takes a line and decides whether we want to keep it or discard it.  Defaults to None</p></li>
-<li><p><strong>compression</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Compression type for the input file.  Defaults to None</p></li>
 <li><p><strong>base_date_mapper</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A function that takes an input filename and returns the date implied by the filename,
-represented as millis since epoch.  Defaults to helper <code class="xref py py-obj docutils literal notranslate"><span class="pre">function</span> <span class="pre">base_date_filename_mapper</span></code></p></li>
+represented as millis since epoch.</p></li>
 <li><p><strong>file_processor_creator</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code>]], <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]], <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]], <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Record" title="pyqstrat.pyqstrat_cpp.Record"><code class="xref py py-class docutils literal notranslate"><span class="pre">Record</span></code></a>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code>], <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Record" title="pyqstrat.pyqstrat_cpp.Record"><code class="xref py py-class docutils literal notranslate"><span class="pre">Record</span></code></a>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Record" title="pyqstrat.pyqstrat_cpp.Record"><code class="xref py py-class docutils literal notranslate"><span class="pre">Record</span></code></a>], <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]], <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Record" title="pyqstrat.pyqstrat_cpp.Record"><code class="xref py py-class docutils literal notranslate"><span class="pre">Record</span></code></a>], <code class="docutils literal notranslate"><span class="pre">None</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Aggregator" title="pyqstrat.pyqstrat_cpp.Aggregator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Aggregator</span></code></a>]], <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A function that returns an object that we can use to iterate through lines in a file.  Defaults to
 helper function <a class="reference internal" href="#pyqstrat.marketdata_processor.create_text_file_processor" title="pyqstrat.marketdata_processor.create_text_file_processor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_text_file_processor</span></code></a></p></li>
 <li><p><strong>header_record_generator</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code>]]]) – A function that takes a filename and compression and returns a generator that we can use to get column headers</p></li>
@@ -5543,7 +5440,7 @@ want to keep it or discard it.  Defaults to None</p></li>
 deals with any data that is missing in those records.  For example, 0 for bid could be replaced by NAN.  Defaults to helper function:
 <code class="xref py py-obj docutils literal notranslate"><span class="pre">price_qty_missing_data_handler</span></code></p></li>
 <li><p><strong>writer_creator</strong> (<em>optional</em>) – A function that takes an output_file_prefix, schema, whether to create a batch id file, and batch_size
-and returns a subclass of <code class="xref py py-obj docutils literal notranslate"><span class="pre">Writer</span></code>.  Defaults to helper function: <code class="xref py py-obj docutils literal notranslate"><span class="pre">arrow_writer_creator</span></code></p></li>
+and returns a subclass of <code class="xref py py-obj docutils literal notranslate"><span class="pre">Writer</span></code>.  Defaults to <code class="xref py py-obj docutils literal notranslate"><span class="pre">HDF5WriterCreatorr</span></code></p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>

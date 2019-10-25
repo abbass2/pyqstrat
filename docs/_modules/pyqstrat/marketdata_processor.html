@@ -40,12 +40,11 @@
 <span class="kn">import</span> <span class="nn">concurrent</span>
 <span class="kn">from</span> <span class="nn">timeit</span> <span class="k">import</span> <span class="n">default_timer</span> <span class="k">as</span> <span class="n">timer</span>
 <span class="kn">import</span> <span class="nn">multiprocessing</span>
-<span class="kn">from</span> <span class="nn">pyqstrat.pq_utils</span> <span class="k">import</span> <span class="n">infer_compression</span><span class="p">,</span> <span class="n">millis_since_epoch</span><span class="p">,</span> <span class="n">touch</span>
+<span class="kn">from</span> <span class="nn">pyqstrat.pq_utils</span> <span class="k">import</span> <span class="n">infer_compression</span><span class="p">,</span> <span class="n">millis_since_epoch</span><span class="p">,</span> <span class="n">touch</span><span class="p">,</span> <span class="n">get_child_logger</span>
 <span class="kn">from</span> <span class="nn">pyqstrat.pyqstrat_cpp</span> <span class="k">import</span> <span class="n">TextFileDecompressor</span><span class="p">,</span> <span class="n">TextFileProcessor</span><span class="p">,</span> <span class="n">PrintBadLineHandler</span><span class="p">,</span> <span class="n">PriceQtyMissingDataHandler</span>
-<span class="kn">from</span> <span class="nn">pyqstrat.pyqstrat_cpp</span> <span class="k">import</span> <span class="n">ArrowWriterCreator</span><span class="p">,</span> <span class="n">Aggregator</span><span class="p">,</span> <span class="n">Schema</span><span class="p">,</span> <span class="n">Record</span><span class="p">,</span> <span class="n">Writer</span>
+<span class="kn">from</span> <span class="nn">pyqstrat.pyqstrat_cpp</span> <span class="k">import</span> <span class="n">HDF5WriterCreator</span><span class="p">,</span> <span class="n">Aggregator</span><span class="p">,</span> <span class="n">Schema</span><span class="p">,</span> <span class="n">Record</span><span class="p">,</span> <span class="n">Writer</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Tuple</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Union</span>
-<span class="n">VERBOSE</span> <span class="o">=</span> <span class="kc">False</span>
 
 <span class="n">RecordGeneratorType</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]]</span>
 <span class="n">RecordGeneratorCreatorType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">RecordGeneratorType</span><span class="p">]</span>
@@ -58,11 +57,11 @@
 <span class="n">BadLineHandlerType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">],</span> <span class="n">Record</span><span class="p">]</span>
 <span class="n">MissingDataHandlerType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Record</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
 <span class="n">FileProcessorType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="nb">int</span><span class="p">]</span>
-<span class="n">InputFileNameProviderType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+<span class="n">InputFileNameProviderType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span>
 <span class="n">WriterCreatorType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Schema</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">Writer</span><span class="p">]</span>
 <span class="n">OutputFilePrefixMapperType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span>
 <span class="n">BaseDateMapperType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span>
-<span class="n">AggregatorCreatorType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">WriterCreatorType</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Aggregator</span><span class="p">]]</span>
+<span class="n">AggregatorCreatorType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">WriterCreatorType</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Aggregator</span><span class="p">]]</span>
 <span class="n">FileProcessorCreatorType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span>
     <span class="n">RecordGeneratorType</span><span class="p">,</span> 
     <span class="n">Optional</span><span class="p">[</span><span class="n">LineFilterType</span><span class="p">],</span> 
@@ -72,6 +71,8 @@
     <span class="n">MissingDataHandlerType</span><span class="p">,</span> 
     <span class="n">Sequence</span><span class="p">[</span><span class="n">Aggregator</span><span class="p">]],</span>
     <span class="n">FileProcessorType</span><span class="p">]</span>
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">get_child_logger</span><span class="p">(</span><span class="s1">&#39;pyqstrat&#39;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="PathFileNameProvider"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata_processor.PathFileNameProvider">[docs]</a><span class="k">class</span> <span class="nc">PathFileNameProvider</span><span class="p">:</span>
@@ -89,7 +90,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">include_pattern</span> <span class="o">=</span> <span class="n">include_pattern</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">exclude_pattern</span> <span class="o">=</span> <span class="n">exclude_pattern</span></div>
         
-<div class="viewcode-block" id="PathFileNameProvider.__call__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata_processor.PathFileNameProvider.__call__">[docs]</a>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<div class="viewcode-block" id="PathFileNameProvider.__call__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata_processor.PathFileNameProvider.__call__">[docs]</a>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            All matching filenames</span>
@@ -103,7 +104,10 @@
             <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">file</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude_pattern</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file</span><span class="p">]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;no matching files for: </span><span class="si">{self.path}</span><span class="s1"> including: </span><span class="si">{self.include_pattern}</span><span class="s1"> excluding: </span><span class="si">{self.exclude_pattern}</span><span class="s1">&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">files</span></div></div>
+        <span class="n">compression_tmp</span> <span class="o">=</span> <span class="p">[</span><span class="n">infer_compression</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">files</span><span class="p">]</span>
+        <span class="n">compression</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x</span><span class="p">,</span> <span class="n">compression_tmp</span><span class="p">))</span>
+        
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">compression</span><span class="p">))</span></div></div>
     
 
 <div class="viewcode-block" id="SingleDirectoryFileNameMapper"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata_processor.SingleDirectoryFileNameMapper">[docs]</a><span class="k">class</span> <span class="nc">SingleDirectoryFileNameMapper</span><span class="p">:</span>
@@ -137,7 +141,7 @@
         <span class="n">exts</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;\.txt$|\.gz$|\.bzip2$|\.bz$|\.tar$|\.zip$|\.csv$&#39;</span>
         <span class="k">while</span> <span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">exts</span><span class="p">,</span> <span class="n">input_filename</span><span class="p">)):</span>
             <span class="n">input_filename</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">VERBOSE</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;got input file: </span><span class="si">{input_filename}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;got input file: </span><span class="si">{input_filename}</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="n">output_prefix</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">,</span> <span class="n">input_filename</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">output_prefix</span></div></div>
 
@@ -190,7 +194,7 @@
 
         <span class="k">if</span> <span class="n">headers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;no headers found&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_lowercase</span><span class="p">:</span> <span class="n">headers</span> <span class="o">=</span> <span class="p">[</span><span class="n">header</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">VERBOSE</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Found headers: </span><span class="si">{headers}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Found headers: </span><span class="si">{headers}</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">headers</span>            </div></div>
             
 
@@ -282,11 +286,11 @@
 
 <div class="viewcode-block" id="process_marketdata_file"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata_processor.process_marketdata_file">[docs]</a><span class="k">def</span> <span class="nf">process_marketdata_file</span><span class="p">(</span>
         <span class="n">input_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">compression</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">output_file_prefix_mapper</span><span class="p">:</span> <span class="n">OutputFilePrefixMapperType</span><span class="p">,</span>
         <span class="n">record_parser_creator</span><span class="p">:</span> <span class="n">RecordParserCreatorType</span><span class="p">,</span>
         <span class="n">aggregator_creator</span><span class="p">:</span> <span class="n">AggregatorCreatorType</span><span class="p">,</span>
         <span class="n">line_filter</span><span class="p">:</span> <span class="n">LineFilterType</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
-        <span class="n">compression</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">base_date_mapper</span><span class="p">:</span> <span class="n">BaseDateMapperType</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">file_processor_creator</span><span class="p">:</span> <span class="n">FileProcessorCreatorType</span> <span class="o">=</span> <span class="n">create_text_file_processor</span><span class="p">,</span>
         <span class="n">header_parser_creator</span><span class="p">:</span> <span class="n">HeaderParserCreatorType</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">record_generator_creator</span><span class="p">:</span> <span class="n">TextHeaderParser</span><span class="p">(</span><span class="n">record_generator_creator</span><span class="p">),</span>
@@ -295,20 +299,20 @@
         <span class="n">bad_line_handler</span><span class="p">:</span> <span class="n">BadLineHandlerType</span> <span class="o">=</span> <span class="n">PrintBadLineHandler</span><span class="p">(),</span>
         <span class="n">record_filter</span><span class="p">:</span> <span class="n">RecordFilterType</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">missing_data_handler</span><span class="p">:</span> <span class="n">MissingDataHandlerType</span> <span class="o">=</span> <span class="n">PriceQtyMissingDataHandler</span><span class="p">(),</span> 
-        <span class="n">writer_creator</span><span class="p">:</span> <span class="n">WriterCreatorType</span> <span class="o">=</span> <span class="n">ArrowWriterCreator</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">writer_creator</span><span class="p">:</span> <span class="n">WriterCreatorType</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Processes a single market data file</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
-<span class="sd">        input_filename: file to process</span>
+<span class="sd">        input_filename: File name (including path) to process</span>
+<span class="sd">        compression: Compression type for the input file.  If not set, we try to infer the compression type from the filename.</span>
 <span class="sd">        output_file_prefix_mapper: A function that takes an input filename and returns the corresponding output filename we want</span>
 <span class="sd">        record_parser_creator:  A function that takes a date and a list of column names and returns a </span>
 <span class="sd">            function that can take a list of fields and return a subclass of Record</span>
-<span class="sd">        aggregator_creator: A function that takes a writer creator and a output file prefix and returns a list of Aggregators</span>
+<span class="sd">        aggregator_creator: A function that takes a writer creator and returns a list of Aggregators</span>
 <span class="sd">        line_filter: A function that takes a line and decides whether we want to keep it or discard it.  Defaults to None</span>
-<span class="sd">        compression: Compression type for the input file.  Defaults to None</span>
 <span class="sd">        base_date_mapper: A function that takes an input filename and returns the date implied by the filename, </span>
-<span class="sd">            represented as millis since epoch.  Defaults to helper :obj:`function base_date_filename_mapper`</span>
+<span class="sd">            represented as millis since epoch.</span>
 <span class="sd">        file_processor_creator: A function that returns an object that we can use to iterate through lines in a file.  Defaults to</span>
 <span class="sd">            helper function :obj:`create_text_file_processor`</span>
 <span class="sd">        header_record_generator: A function that takes a filename and compression and returns a generator that we can use to get column headers</span>
@@ -323,8 +327,10 @@
 <span class="sd">            deals with any data that is missing in those records.  For example, 0 for bid could be replaced by NAN.  Defaults to helper function:</span>
 <span class="sd">            :obj:`price_qty_missing_data_handler`</span>
 <span class="sd">        writer_creator (optional): A function that takes an output_file_prefix, schema, whether to create a batch id file, and batch_size</span>
-<span class="sd">            and returns a subclass of :obj:`Writer`.  Defaults to helper function: :obj:`arrow_writer_creator`</span>
+<span class="sd">            and returns a subclass of :obj:`Writer`.  Defaults to :obj:`HDF5WriterCreatorr`</span>
 <span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">if</span> <span class="n">writer_creator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">writer_creator</span> <span class="o">=</span> <span class="n">HDF5WriterCreator</span><span class="p">(</span><span class="n">output_file_prefix_mapper</span><span class="p">(</span><span class="n">input_filename</span><span class="p">),</span> <span class="s1">&#39; &#39;</span><span class="p">)</span>
     
     <span class="n">output_file_prefix</span> <span class="o">=</span> <span class="n">output_file_prefix_mapper</span><span class="p">(</span><span class="n">input_filename</span><span class="p">)</span>
     
@@ -333,14 +339,16 @@
     <span class="k">if</span> <span class="n">base_date_mapper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="n">base_date</span> <span class="o">=</span> <span class="n">base_date_mapper</span><span class="p">(</span><span class="n">input_filename</span><span class="p">)</span>
     
     <span class="n">header_parser</span> <span class="o">=</span> <span class="n">header_parser_creator</span><span class="p">(</span><span class="n">header_record_generator</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;starting file: </span><span class="si">{input_filename}</span><span class="s1">&#39;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">compression</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">compression</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span> <span class="n">compression</span> <span class="o">=</span> <span class="n">infer_compression</span><span class="p">(</span><span class="n">input_filename</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">compression</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">compression</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>  <span class="c1"># In C++ don&#39;t want virtual function with default argument, so don&#39;t allow it here</span>
+    <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;starting file: </span><span class="si">{input_filename}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">compression</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span> 
+        <span class="n">compression_tmp</span> <span class="o">=</span> <span class="n">infer_compression</span><span class="p">(</span><span class="n">input_filename</span><span class="p">)</span>
+        <span class="n">compression</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="n">compression_tmp</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">compression_tmp</span>  <span class="c1"># In C++ don&#39;t want virtual function with default argument, so don&#39;t allow it here</span>
+
     <span class="n">headers</span> <span class="o">=</span> <span class="n">header_parser</span><span class="p">(</span><span class="n">input_filename</span><span class="p">,</span> <span class="n">compression</span><span class="p">)</span>  <span class="c1"># type: ignore # cannot be None at this point.  </span>
     
     <span class="n">record_parser</span> <span class="o">=</span> <span class="n">record_parser_creator</span><span class="p">(</span><span class="n">base_date</span><span class="p">,</span> <span class="n">headers</span><span class="p">)</span>
     
-    <span class="n">aggregators</span> <span class="o">=</span> <span class="n">aggregator_creator</span><span class="p">(</span><span class="n">writer_creator</span><span class="p">,</span> <span class="n">output_file_prefix</span><span class="p">)</span>
+    <span class="n">aggregators</span> <span class="o">=</span> <span class="n">aggregator_creator</span><span class="p">(</span><span class="n">writer_creator</span><span class="p">)</span>
 
     <span class="n">file_processor</span> <span class="o">=</span> <span class="n">file_processor_creator</span><span class="p">(</span>
         <span class="n">record_generator</span><span class="p">,</span> 
@@ -353,12 +361,11 @@
     <span class="p">)</span>
 
     <span class="n">start</span> <span class="o">=</span> <span class="n">timer</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">compression</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">compression</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
     <span class="n">lines_processed</span> <span class="o">=</span> <span class="n">file_processor</span><span class="p">(</span><span class="n">input_filename</span><span class="p">,</span> <span class="n">compression</span><span class="p">)</span>
     <span class="n">end</span> <span class="o">=</span> <span class="n">timer</span><span class="p">()</span>
     <span class="n">duration</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
     <span class="n">touch</span><span class="p">(</span><span class="n">output_file_prefix</span> <span class="o">+</span> <span class="s1">&#39;.done&#39;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;processed: </span><span class="si">{input_filename}</span><span class="s2"> </span><span class="si">{lines_processed}</span><span class="s2"> lines in </span><span class="si">{duration}</span><span class="s2"> milliseconds&quot;</span><span class="p">)</span></div>
+    <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;processed: </span><span class="si">{input_filename}</span><span class="s2"> </span><span class="si">{lines_processed}</span><span class="s2"> lines in </span><span class="si">{duration}</span><span class="s2"> milliseconds&quot;</span><span class="p">)</span></div>
                     
 
 <div class="viewcode-block" id="process_marketdata"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.marketdata_processor.process_marketdata">[docs]</a><span class="k">def</span> <span class="nf">process_marketdata</span><span class="p">(</span>
@@ -385,9 +392,10 @@
     <span class="k">if</span> <span class="n">num_processes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">num_processes</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
         
     <span class="k">if</span> <span class="n">num_processes</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;win32&quot;</span><span class="p">,</span> <span class="s2">&quot;cygwin&quot;</span><span class="p">]:</span>
-        <span class="k">for</span> <span class="n">input_filename</span> <span class="ow">in</span> <span class="n">input_filenames</span><span class="p">:</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">input_filename</span><span class="p">,</span> <span class="n">compression</span><span class="p">)</span> <span class="ow">in</span> <span class="n">input_filenames</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">file_processor</span><span class="p">(</span><span class="n">input_filename</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                <span class="n">file_processor</span><span class="p">(</span><span class="n">input_filename</span><span class="p">,</span> <span class="n">compression</span><span class="p">)</span>
+                <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;done: </span><span class="si">{input_filename}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">new_exc</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)(</span><span class="n">f</span><span class="s1">&#39;Exception: {str(e)}&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">with_traceback</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">2</span><span class="p">])</span>
                 <span class="k">if</span> <span class="n">raise_on_error</span><span class="p">:</span> 
@@ -398,13 +406,13 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">with</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">ProcessPoolExecutor</span><span class="p">(</span><span class="n">num_processes</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
             <span class="n">fut_filename_map</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="k">for</span> <span class="n">input_filename</span> <span class="ow">in</span> <span class="n">input_filenames</span><span class="p">:</span>
-                <span class="n">fut</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">file_processor</span><span class="p">,</span> <span class="n">input_filename</span><span class="p">)</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">input_filename</span><span class="p">,</span> <span class="n">compression</span><span class="p">)</span> <span class="ow">in</span> <span class="n">input_filenames</span><span class="p">:</span>
+                <span class="n">fut</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">file_processor</span><span class="p">,</span> <span class="n">input_filename</span><span class="p">,</span> <span class="n">compression</span><span class="p">)</span>
                 <span class="n">fut_filename_map</span><span class="p">[</span><span class="n">fut</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_filename</span>
             <span class="k">for</span> <span class="n">fut</span> <span class="ow">in</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">as_completed</span><span class="p">(</span><span class="n">fut_filename_map</span><span class="p">):</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">fut</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="n">VERBOSE</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;done filename: </span><span class="si">{fut_filename_map[fut]}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;done filename: </span><span class="si">{fut_filename_map[fut]}</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                     <span class="n">new_exc</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)(</span><span class="n">f</span><span class="s1">&#39;Exception: {str(e)}&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">with_traceback</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">2</span><span class="p">])</span>
                     <span class="k">if</span> <span class="n">raise_on_error</span><span class="p">:</span> 
