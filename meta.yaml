@@ -1,5 +1,5 @@
 {% set name = "pyqstrat" %}
-{% set version = "0.2.2" %}
+{% set version = "0.3.12" %}
 
 package:
   name: {{ name|lower }}
@@ -18,7 +18,7 @@ requirements:
 
   build:
     - {{ compiler('cxx') }}
-    - python >= 3.6
+    - python >= 3.7
 
   host:
     - python
@@ -27,7 +27,6 @@ requirements:
     - matplotlib
     - scipy
     - pybind11
-    - arrow-cpp
     - boost-cpp
     - pip
 
@@ -39,8 +38,6 @@ requirements:
     - scipy
     - ipython
     - pybind11
-    - pyarrow
-    - arrow-cpp
     - boost-cpp
 
 # - {{ pin_compatible('numpy') }}

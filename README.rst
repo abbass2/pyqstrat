@@ -32,27 +32,17 @@ Installation
 ------------
 I would strongly recommend installing anaconda and creating an anaconda environment. See installation instructions at https://docs.anaconda.com/anaconda/install/
 
-pyqstrat relies on numpy, scipy, matplotlib and pandas which in turn use Fortran and C code that needs to be compiled.  It uses apache arrow as its market data file format and boost C++ libaries
+pyqstrat relies on numpy, scipy, matplotlib and pandas which in turn use Fortran and C code that needs to be compiled.  It uses boost C++ libaries.  It uses HDF5 data format as its market data file format.
 
 ::
 
-   conda install boost-cpp arrow-cpp -c conda-forge
+   conda install boost-cpp -c conda-forge
 
    pip install pyqstrat
 
 Requirements:
 
 * Python_ version 3.7 or higher;
-
-Known Install issues:
-
-* arrow-cpp 0.11.1 should not be used, please move to 0.12.1 or later. If the above generic conda command tries to install 0.11.1, please say 'n', and then use this command:  
-
-::
-
-   conda install arrow-cpp=0.12.* -c conda-forge
-   conda install pyarrow=0.12.* -c conda-forge
-   pip install pyqstrat
 
 Documentation
 -------------
@@ -95,7 +85,7 @@ The software is provided on the conditions of the simplified BSD license.
 
 .. _Python: http://www.python.org
 
-.. |PyVersion| image:: https://img.shields.io/badge/python-3.6+-blue.svg
+.. |PyVersion| image:: https://img.shields.io/badge/python-3.7+-blue.svg
    :alt:
 
 .. |Status| image:: https://img.shields.io/badge/status-beta-green.svg

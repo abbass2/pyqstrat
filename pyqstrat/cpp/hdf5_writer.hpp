@@ -24,7 +24,6 @@ public:
     explicit HDF5Writer(H5::Group group, const Schema& schema);
     void add_record(int line_number, const Tuple& tuple) override;
     void add_pytuple(int line_number, const py::tuple& py_tuple);
-    void write_batch(const std::string& batch_id) override;
     void close(bool success = true) override;
     void flush();
     virtual ~HDF5Writer();
@@ -50,8 +49,8 @@ private:
 };
 
 struct HDF5WriterCreator : public WriterCreator {
-    explicit HDF5WriterCreator(const std::string& group_name_delimiter = "");
-    std::shared_ptr<Writer> call(const std::string& output_file_prefix, const std::string& quote_id, const Schema& schema) override;
+    explicit HDF5WriterCreator(const std::string& output_file_prefix, const std::string& group_name_delimiter = "");
+    std::shared_ptr<Writer> call(const std::string& quote_id, const Schema& schema) override;
     ~HDF5WriterCreator();
     void close();
  private:

@@ -67,7 +67,7 @@ if 'CONDA_PREFIX' in os.environ or 'CONDA_PREFIX_1' in os.environ:
         library_dirs = [conda_prefix + '/lib']
 
 else:
-    print(f'CONDA_PREFIX or CONDA_PREFIX_1 environment variables not found for including and linking to boost and arrow header files.')
+    print(f'CONDA_PREFIX or CONDA_PREFIX_1 environment variables not found for including and linking to boost header files.')
 
 
 if sys.platform in ["unix"]:
@@ -81,7 +81,6 @@ if sys.platform in ["darwin"]:
 
 libraries = [
     'z',
-    'arrow',
     'zip',
     'hdf5_cpp',
     'hdf5'
@@ -97,7 +96,6 @@ ext_modules = [
             'pyqstrat/cpp/utils.cpp',
             'pyqstrat/cpp/aggregators.cpp',
             'pyqstrat/cpp/text_file_parsers.cpp',
-            'pyqstrat/cpp/arrow_writer.cpp',
             'pyqstrat/cpp/tests.cpp',
             'pyqstrat/cpp/text_file_processor.cpp',
             'pyqstrat/cpp/pybind.cpp',
@@ -209,14 +207,13 @@ setup(
     url='http://github.com/abbass2/pyqstrat/',
     license='BSD',
     tests_require=['pytest'],
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     install_requires=['pandas>=0.22',
                       'numpy>=1.14',
                       'matplotlib>=2.2.2',
                       'scipy >= 1.0.0',
 		      'ipython>=6.5.0',
                       'pybind11>=2.2',
-                      'pyarrow>=0.1.0',
                       'sortedcontainers>=2.0.5'
                     ],
     description='fast / extensible library for backtesting quantitative strategies',
@@ -235,7 +232,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Software Development :: Libraries :: Application Frameworks',
         'Topic :: Office/Business :: Financial :: Investment',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3 :: Only',
         ],
     extras_require={

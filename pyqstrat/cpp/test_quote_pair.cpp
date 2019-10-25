@@ -1,6 +1,6 @@
 
 #include <chrono>
-#include "arrow_writer.hpp"
+#include "hdf5_writer.hpp"
 #include "text_file_parsers.hpp"
 #include "aggregators.hpp"
 #include "text_file_processor.hpp"
@@ -20,8 +20,8 @@ void test_quote_pair_processing() {
     RecordFieldParser* parser = quote_pair_parser.get();
     std::vector<RecordFieldParser*> parsers = {parser};
     auto text_record_parser = TextRecordParser(parsers, false);
-    auto arrow_writer_creator = ArrowWriterCreator();
-    auto quote_pair_aggregator = AllQuotePairAggregator(&arrow_writer_creator, "/tmp/quotes");
+    auto hdf5_writer_creator = HDF5WriterCreator("/tmp/quotes");
+    auto quote_pair_aggregator = AllQuotePairAggregator(&hdf5_writer_creator);
     std::vector<Aggregator*> aggregators = {&quote_pair_aggregator};
     auto text_file_decompressor = TextFileDecompressor();
     auto print_bad_line_handler = PrintBadLineHandler();

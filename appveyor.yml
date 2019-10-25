@@ -39,7 +39,7 @@ install:
   - "%CONDA_ROOT%\\Scripts\\activate root"
   - echo CONDA_PREFIX %CONDA_PREFIX%
   - conda info -a
-  - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% arrow-cpp pybind11 pandas numpy matplotlib pyarrow pytest ipython sortedcontainers libzip hdf5 h5py statsmodels mypy flake8
+  - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% pybind11 pandas numpy matplotlib pytest ipython sortedcontainers libzip hdf5 h5py statsmodels mypy flake8
 
 # Not a .NET project, we build in the install step instead
 build: false

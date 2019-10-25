@@ -7,12 +7,11 @@ import numpy as np
 import concurrent
 from timeit import default_timer as timer
 import multiprocessing
-from pyqstrat.pq_utils import infer_compression, millis_since_epoch, touch
+from pyqstrat.pq_utils import infer_compression, millis_since_epoch, touch, get_child_logger
 from pyqstrat.pyqstrat_cpp import TextFileDecompressor, TextFileProcessor, PrintBadLineHandler, PriceQtyMissingDataHandler
-from pyqstrat.pyqstrat_cpp import ArrowWriterCreator, Aggregator, Schema, Record, Writer
+from pyqstrat.pyqstrat_cpp import HDF5WriterCreator, Aggregator, Schema, Record, Writer
+from typing import Sequence, Optional, Callable, Iterable, Union, Tuple
 
-from typing import Sequence, Optional, Callable, Iterable, Union
-VERBOSE = False
 
 RecordGeneratorType = Union[Iterable[str], Iterable[bytes]]
 RecordGeneratorCreatorType = Callable[[str, str], RecordGeneratorType]
@@ -25,11 +24,11 @@ RecordFilterType = Callable[[Record], bool]
 BadLineHandlerType = Callable[[str, Exception], Record]
 MissingDataHandlerType = Callable[[Record], None]
 FileProcessorType = Callable[[str, Optional[str]], int]
-InputFileNameProviderType = Callable[[], Sequence[str]]
+InputFileNameProviderType = Callable[[], Sequence[Tuple[str, str]]]
 WriterCreatorType = Callable[[str, Schema, bool, int], Writer]
 OutputFilePrefixMapperType = Callable[[str], str]
 BaseDateMapperType = Callable[[str], int]
-AggregatorCreatorType = Callable[[WriterCreatorType, str], Sequence[Aggregator]]
+AggregatorCreatorType = Callable[[WriterCreatorType], Sequence[Aggregator]]
 FileProcessorCreatorType = Callable[[
     RecordGeneratorType, 
     Optional[LineFilterType], 
@@ -39,6 +38,8 @@ FileProcessorCreatorType = Callable[[
     MissingDataHandlerType, 
     Sequence[Aggregator]],
     FileProcessorType]
+
+_logger = get_child_logger('pyqstrat')
 
 
 class PathFileNameProvider:
@@ -56,7 +57,7 @@ class PathFileNameProvider:
         self.include_pattern = include_pattern
         self.exclude_pattern = exclude_pattern
         
-    def __call__(self) -> Sequence[str]:
+    def __call__(self) -> Sequence[Tuple[str, str]]:
         '''
         Returns:
             All matching filenames
@@ -70,7 +71,10 @@ class PathFileNameProvider:
             files = [file for file in files if self.exclude_pattern not in file]
         if not len(files):
             raise Exception(f'no matching files for: {self.path} including: {self.include_pattern} excluding: {self.exclude_pattern}')
-        return files
+        compression_tmp = [infer_compression(filename) for filename in files]
+        compression: Sequence[str] = list(map(lambda x: '' if x is None else x, compression_tmp))
+        
+        return list(zip(files, compression))
     
 
 class SingleDirectoryFileNameMapper:
@@ -104,7 +108,7 @@ class SingleDirectoryFileNameMapper:
         exts = r'\.txt$|\.gz$|\.bzip2$|\.bz$|\.tar$|\.zip$|\.csv$'
         while (re.search(exts, input_filename)):
             input_filename = '.'.join(input_filename.split('.')[:-1])
-            if VERBOSE: print(f'got input file: {input_filename}')
+            _logger.debug(f'got input file: {input_filename}')
         output_prefix = os.path.join(dirname, input_filename)
         return output_prefix
 
@@ -157,7 +161,7 @@ class TextHeaderParser:
 
         if headers is None: raise Exception('no headers found')
         if self.make_lowercase: headers = [header.lower() for header in headers]
-        if VERBOSE: print(f'Found headers: {headers}')
+        _logger.debug(f'Found headers: {headers}')
         return headers            
             
 
@@ -249,11 +253,11 @@ def get_field_indices(field_names: Sequence[str], headers: Sequence[str]) -> Seq
 
 def process_marketdata_file(
         input_filename: str,
+        compression: str,
         output_file_prefix_mapper: OutputFilePrefixMapperType,
         record_parser_creator: RecordParserCreatorType,
         aggregator_creator: AggregatorCreatorType,
         line_filter: LineFilterType = None, 
-        compression: str = None,
         base_date_mapper: BaseDateMapperType = None,
         file_processor_creator: FileProcessorCreatorType = create_text_file_processor,
         header_parser_creator: HeaderParserCreatorType = lambda record_generator_creator: TextHeaderParser(record_generator_creator),
@@ -262,20 +266,20 @@ def process_marketdata_file(
         bad_line_handler: BadLineHandlerType = PrintBadLineHandler(),
         record_filter: RecordFilterType = None,
         missing_data_handler: MissingDataHandlerType = PriceQtyMissingDataHandler(), 
-        writer_creator: WriterCreatorType = ArrowWriterCreator()) -> None:
+        writer_creator: WriterCreatorType = None) -> None:
     '''
     Processes a single market data file
     
     Args:
-        input_filename: file to process
+        input_filename: File name (including path) to process
+        compression: Compression type for the input file.  If not set, we try to infer the compression type from the filename.
         output_file_prefix_mapper: A function that takes an input filename and returns the corresponding output filename we want
         record_parser_creator:  A function that takes a date and a list of column names and returns a 
             function that can take a list of fields and return a subclass of Record
-        aggregator_creator: A function that takes a writer creator and a output file prefix and returns a list of Aggregators
+        aggregator_creator: A function that takes a writer creator and returns a list of Aggregators
         line_filter: A function that takes a line and decides whether we want to keep it or discard it.  Defaults to None
-        compression: Compression type for the input file.  Defaults to None
         base_date_mapper: A function that takes an input filename and returns the date implied by the filename, 
-            represented as millis since epoch.  Defaults to helper :obj:`function base_date_filename_mapper`
+            represented as millis since epoch.
         file_processor_creator: A function that returns an object that we can use to iterate through lines in a file.  Defaults to
             helper function :obj:`create_text_file_processor`
         header_record_generator: A function that takes a filename and compression and returns a generator that we can use to get column headers
@@ -290,8 +294,10 @@ def process_marketdata_file(
             deals with any data that is missing in those records.  For example, 0 for bid could be replaced by NAN.  Defaults to helper function:
             :obj:`price_qty_missing_data_handler`
         writer_creator (optional): A function that takes an output_file_prefix, schema, whether to create a batch id file, and batch_size
-            and returns a subclass of :obj:`Writer`.  Defaults to helper function: :obj:`arrow_writer_creator`
+            and returns a subclass of :obj:`Writer`.  Defaults to :obj:`HDF5WriterCreatorr`
     '''
+    
+    if writer_creator is None: writer_creator = HDF5WriterCreator(output_file_prefix_mapper(input_filename), ' ')
     
     output_file_prefix = output_file_prefix_mapper(input_filename)
     
@@ -300,14 +306,16 @@ def process_marketdata_file(
     if base_date_mapper is not None: base_date = base_date_mapper(input_filename)
     
     header_parser = header_parser_creator(header_record_generator)
-    print(f'starting file: {input_filename}')
-    if compression is None or compression == "": compression = infer_compression(input_filename)
-    if compression is None: compression = ""  # In C++ don't want virtual function with default argument, so don't allow it here
+    _logger.info(f'starting file: {input_filename}')
+    if compression == "": 
+        compression_tmp = infer_compression(input_filename)
+        compression = '' if compression_tmp is None else compression_tmp  # In C++ don't want virtual function with default argument, so don't allow it here
+
     headers = header_parser(input_filename, compression)  # type: ignore # cannot be None at this point.  
     
     record_parser = record_parser_creator(base_date, headers)
     
-    aggregators = aggregator_creator(writer_creator, output_file_prefix)
+    aggregators = aggregator_creator(writer_creator)
 
     file_processor = file_processor_creator(
         record_generator, 
@@ -320,12 +328,11 @@ def process_marketdata_file(
     )
 
     start = timer()
-    if compression is None: compression = ""
     lines_processed = file_processor(input_filename, compression)
     end = timer()
     duration = round((end - start) * 1000)
     touch(output_file_prefix + '.done')
-    print(f"processed: {input_filename} {lines_processed} lines in {duration} milliseconds")
+    _logger.info(f"processed: {input_filename} {lines_processed} lines in {duration} milliseconds")
                     
 
 def process_marketdata(
@@ -352,9 +359,10 @@ def process_marketdata(
     if num_processes is None: num_processes = multiprocessing.cpu_count()
         
     if num_processes == 1 or sys.platform in ["win32", "cygwin"]:
-        for input_filename in input_filenames:
+        for (input_filename, compression) in input_filenames:
             try:
-                file_processor(input_filename, "")
+                file_processor(input_filename, compression)
+                _logger.debug(f'done: {input_filename}')
             except Exception as e:
                 new_exc = type(e)(f'Exception: {str(e)}').with_traceback(sys.exc_info()[2])
                 if raise_on_error: 
@@ -365,13 +373,13 @@ def process_marketdata(
     else:
         with concurrent.futures.ProcessPoolExecutor(num_processes) as executor:
             fut_filename_map = {}
-            for input_filename in input_filenames:
-                fut = executor.submit(file_processor, input_filename)
+            for (input_filename, compression) in input_filenames:
+                fut = executor.submit(file_processor, input_filename, compression)
                 fut_filename_map[fut] = input_filename
             for fut in concurrent.futures.as_completed(fut_filename_map):
                 try:
                     fut.result()
-                    if VERBOSE: print(f'done filename: {fut_filename_map[fut]}')
+                    _logger.debug(f'done filename: {fut_filename_map[fut]}')
                 except Exception as e:
                     new_exc = type(e)(f'Exception: {str(e)}').with_traceback(sys.exc_info()[2])
                     if raise_on_error: 

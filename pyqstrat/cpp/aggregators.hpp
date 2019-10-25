@@ -45,8 +45,7 @@ private:
 
 class TradeBarAggregator final : public Aggregator {
 public:
-    TradeBarAggregator(WriterCreator*, const std::string& output_file_prefix, const std::string& frequency = "5m",
-                Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
+    TradeBarAggregator(WriterCreator*, const std::string& frequency = "5m", Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
     void call(const Record* trade, int line_number) override;
     void close();
     ~TradeBarAggregator();
@@ -87,8 +86,7 @@ private:
 class QuoteTOBAggregator final : public Aggregator {
 public:
     //Assumes quotes are processed in time order.  Set frequency to "" to create bid / offer every time TOB changes.
-    QuoteTOBAggregator(WriterCreator*, const std::string& output_file_prefix, const std::string& frequency = "5m",
-                       Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
+    QuoteTOBAggregator(WriterCreator*, const std::string& frequency = "5m", Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
     void call(const Record* quote, int line_number) override;
     void close();
     ~QuoteTOBAggregator();
@@ -100,37 +98,29 @@ private:
 
 class AllQuoteAggregator final : public Aggregator {
 public:
-    AllQuoteAggregator(WriterCreator*, const std::string& output_file_prefix, bool consecutive_ids,
-                       Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
+    AllQuoteAggregator(WriterCreator*, Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
     void call(const Record* quote, int line_number) override;
-    ~AllQuoteAggregator();
 private:
     std::shared_ptr<Writer> _writer;
-    bool _consecutive_ids;
     std::string _id;
-    std::string _prev_id;
     int _line_number_offset;
 };
 
 class AllQuotePairAggregator final : public Aggregator {
 public:
-    AllQuotePairAggregator(WriterCreator*, const std::string& output_file_prefix,
-                       Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
+    AllQuotePairAggregator(WriterCreator*, Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
     void call(const Record* quote, int line_number) override;
 private:
     std::string _id;
     WriterCreator* _writer_creator;
-    std::string _output_file_prefix;
     Schema _schema;
     std::map<std::string, std::shared_ptr<Writer>> _writers;
 };
 
 class AllTradeAggregator final : public Aggregator {
 public:
-    AllTradeAggregator(WriterCreator*, const std::string& output_file_prefix,
-                       Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
+    AllTradeAggregator(WriterCreator*, Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
     void call(const Record* trade, int line_number) override;
-    ~AllTradeAggregator();
 private:
     std::shared_ptr<Writer> _writer;
     std::string _id;
@@ -138,10 +128,8 @@ private:
 
 class AllOpenInterestAggregator final : public Aggregator {
 public:
-    AllOpenInterestAggregator(WriterCreator*, const std::string& output_file_prefix,
-                              Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
+    AllOpenInterestAggregator(WriterCreator*, const Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
     void call(const Record* oi, int line_number) override;
-    ~AllOpenInterestAggregator();
 private:
     std::shared_ptr<Writer> _writer;
     std::string _id;
@@ -149,9 +137,8 @@ private:
 
 class AllOtherAggregator final : public Aggregator {
 public:
-    AllOtherAggregator(WriterCreator*, const std::string& output_file_prefix, Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
+    AllOtherAggregator(WriterCreator*, Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
     void call(const Record* other, int line_number) override;
-    ~AllOtherAggregator();
 private:
     std::shared_ptr<Writer> _writer;
     std::string _id;

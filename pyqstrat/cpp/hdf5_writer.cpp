@@ -234,7 +234,8 @@ void create_datasets(const Schema& schema, H5::Group group) {
         const std::string& name = field.first;
         Schema::Type type = field.second;
         if (path_exists(group.getId(), name)) continue;
-        group.createDataSet(name, map_schema_type(type), space, get_dataset_props());
+        DataType dtype = map_schema_type(type);
+        group.createDataSet(name, dtype, space, get_dataset_props());
     }
 }
 
@@ -248,7 +249,6 @@ HDF5Writer::HDF5Writer(H5::Group group, const Schema& schema) :
     }
     create_datasets(_schema, group);
     _closed = false;
-    //cout << "created writer: " << group.getLocId() << endl;
 }
 
 
@@ -345,10 +345,6 @@ void HDF5Writer::flush() {
     }
 }
 
-void HDF5Writer::write_batch(const std::string& batch_id) {
-    error("write_batch not implemented for HDF5Writer")
-}
-
 void HDF5Writer::close(bool success) {
     if (_closed) return;
     flush();
@@ -363,12 +359,12 @@ HDF5Writer::~HDF5Writer() {
     close();
 }
 
-HDF5WriterCreator::HDF5WriterCreator(const std::string& group_name_delimiter) :
+HDF5WriterCreator::HDF5WriterCreator(const std::string& output_file_prefix, const std::string& group_name_delimiter) :
 _h5file(nullptr),
+_output_file_prefix(output_file_prefix),
 _group_name_delimiter(group_name_delimiter),
 _closed(true) {
     if (_group_name_delimiter.size() > 1) error("delimiter size was more than 1: " << group_name_delimiter  << group_name_delimiter.size());
-    cout << "created writer creator" << endl;
 }
 
 vector<string> split(const string& s, char delimiter) {
@@ -392,6 +388,7 @@ H5::Group find_or_create_group(H5::H5Location* parent, const string& group_name,
     
     istringstream iss(group_name);
     vector<string> subgroups = split(group_name, delimiter[0]);
+    if (!subgroups.size()) error("empty group_name " << group_name);
     Group group;
     for (auto subgroup : subgroups) {
         if (path_exists(parent->getId(), subgroup))
@@ -403,11 +400,14 @@ H5::Group find_or_create_group(H5::H5Location* parent, const string& group_name,
     return group;
 }
 
-std::shared_ptr<Writer> HDF5WriterCreator::call(const std::string& output_file_prefix,
-                                                const std::string& quote_id, const Schema& schema) {
-    _output_file_prefix = output_file_prefix;
+std::shared_ptr<Writer> HDF5WriterCreator::call(const std::string& quote_id, const Schema& schema) {
     if (!_h5file)  {
-        _h5file = shared_ptr<H5File>(new H5File(_output_file_prefix + ".hdf5.tmp", H5F_ACC_TRUNC));
+        string output_file_name = _output_file_prefix + ".hdf5.tmp";
+        try {
+            _h5file = shared_ptr<H5File>(new H5File(output_file_name, H5F_ACC_TRUNC));
+        } catch(const H5::FileIException& ex) {
+            error("Could not open file: " << output_file_name << " : " << ex.getDetailMsg() << endl);
+        }
         _closed = false;
     }
     H5::Group grp = find_or_create_group(_h5file.get(), quote_id, _group_name_delimiter);
@@ -430,7 +430,9 @@ void HDF5WriterCreator::close() {
         p.second->close();
     }
     _h5file->close();
-    std::rename((_output_file_prefix + ".hdf5.tmp").c_str(), (_output_file_prefix + ".hdf5").c_str());
+    auto tmp_file_name = _output_file_prefix + ".hdf5.tmp";
+    auto output_file_name = _output_file_prefix + ".hdf5";
+    std::rename(tmp_file_name.c_str(), (output_file_name).c_str());
     _closed = true;
 }
 
@@ -455,14 +457,14 @@ void test_hdf5_writer() {
         make_pair("c", Schema::STRING),
         make_pair("d", Schema::FLOAT64)
     };
-    auto writer_creator = HDF5WriterCreator(" ");
-    auto writer1 = writer_creator.call("/tmp/test_hdf5_writer", "test grp1", schema);
+    auto writer_creator = HDF5WriterCreator("/tmp/test_hdf5_writer", " ");
+    auto writer1 = writer_creator.call("test grp1", schema);
     writer1->add_record(1, create_test_tuple(false, 5, "abc", 1.234));
     writer1->add_record(2, create_test_tuple(true, 6, "def", 4.567));
-    auto writer2 = writer_creator.call("/tmp/test_hdf5_writer", "test grp2", schema);
+    auto writer2 = writer_creator.call("test grp2", schema);
     writer2->add_record(1, create_test_tuple(true, 11, "xy", 9.1));
     writer2->add_record(2, create_test_tuple(false, 16, "z", 9.2));
-    auto writer3 = writer_creator.call("/tmp/test_hdf5_writer", "test grp1", schema);
+    auto writer3 = writer_creator.call("test grp1", schema);
     writer3->add_record(3, create_test_tuple(false, 7, "ghi", 5.1));
     writer3->add_record(2, create_test_tuple(true, 8, "jkl", 6.1));
     writer_creator.close();

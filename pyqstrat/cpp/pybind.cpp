@@ -5,7 +5,6 @@
 #include <pybind11/iostream.h>
 
 #include "pq_types.hpp"
-#include "arrow_writer.hpp"
 #include "hdf5_writer.hpp"
 #include "aggregators.hpp"
 #include "text_file_parsers.hpp"
@@ -105,7 +104,7 @@ py::class_<type>(m, #type) \
     
 
     // Create Trampoline classes
-    using PyWriterCreator = PyFunction<std::shared_ptr<Writer>(const std::string&, const std::string&, const Schema&)>;
+    using PyWriterCreator = PyFunction<std::shared_ptr<Writer>(const std::string&, const Schema&)>;
     using PyCheckFields = PyFunction<bool(const std::vector<std::string>&)>;
     using PyTimestampParser = PyFunction<int64_t(const std::string&)>;
     using PyRecordFieldParser = PyFunction<std::shared_ptr<Record>(const std::vector<std::string>&)>;
@@ -232,15 +231,6 @@ py::class_<type>(m, #type) \
         An abstract class that you subclass to provide an object that can write to disk
         )pqdoc")
     
-    .def("write_batch", &Writer::write_batch, "batch_id"_a = "",
-        R"pqdoc(
-        Write a batch of records to disk.  The batch can have an optional string id so we can
-        later retrieve just this batch of records without reading the whole file
-         
-        Args:
-            batch_id (str, optional): An identifier which can later be used to retrieve this batch from disk. Defaults to ""
-        )pqdoc")
-    
     .def("close", &Writer::close, "success"_a = true,
          R"pqdoc(
          Close the writer and flush any remaining data to disk
@@ -250,61 +240,14 @@ py::class_<type>(m, #type) \
                 not indicate the file was written successfully, for example by renaming a temp file to the actual filename.  Defaults to True
          )pqdoc");
 
-    py::class_<ArrowWriter, Writer, std::shared_ptr<ArrowWriter>>(m, "ArrowWriter",
-    R"pqdoc(
-        A subclass of :obj:`Writer` that batches of records to a disk file in the Apache arrow format.  See Apache arrow for details
-    )pqdoc")
-    
-    .def(py::init<const std::string&, const Schema&>(),
-         "output_file_prefix"_a,
-         "schema"_a,
-         R"pqdoc(
-         Args:
-            output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind
-                of data and format the file creates.  E.g. "/tmp/output_file_1"
-            schema (:obj:`Schema`): A schema object containing the names and datatypes of each field we want to save in a record
-         )pqdoc")
-    
-    .def("add_record", &ArrowWriter::add_tuple, "line_number"_a, "tuple"_a,
-        R"pqdoc(
-        Add a record that will be written to disk at some point.
-         
-        Args:
-            line_number (int): The line number of the source file that this trade came from.  Used for debugging
-            tuple (tuple): Must correspond to the schema defined in the constructor.  For example, if the schema has a bool and a float,
-                the tuple could be (False, 0.5)
-        )pqdoc")
-    
-    .def("write_batch", &ArrowWriter::write_batch, "batch_id"_a = "",
-        R"pqdoc(
-            Write a batch of records to disk.  The batch can have an optional string id so we can
-            later retrieve just this batch of records without reading the whole file.
-         
-            Args:
-                batch_id (str, optional): An identifier which can later be used to retrieve this batch from disk. Defaults to ""
-        )pqdoc")
-    
-    .def("close", &ArrowWriter::close, "success"_a = true,
-         R"pqdoc(
-         Close the writer and flush any remaining data to disk
-         
-         Args:
-            success (bool, optional): If set to False, we had some kind of exception and are cleaning up.  Tells the function to
-                not indicate the file was written successfully, for example by renaming a temp file to the actual filename.  Defaults to True
-        )pqdoc");
-    
-    py::class_<ArrowWriterCreator, WriterCreator>(m, "ArrowWriterCreator")
-    .def(py::init<>())
-    .def("__call__", &ArrowWriterCreator::call);
-    
     py::class_<HDF5WriterCreator, WriterCreator>(m, "HDF5WriterCreator")
-    .def(py::init<const std::string&>(),
-         "group_name_delimiter_",
+    .def(py::init<const std::string&, const std::string&>(),
+         "output_file_prefix"_a,
+         "group_name_delimiter_"_a,
          R"pqdoc(
          Args:
+            output_file_prefix (str): Path of the output file to create.  The writer will add a '.hdf5' to this path
             group_name_delimiter: A one character string.  We use this to delimit group names and create parent groups.
-         
-         implementing the :obj:`Writer` interface
          )pqdoc")
     .def("__call__", &HDF5WriterCreator::call)
     .def("close", &HDF5WriterCreator::close);
@@ -315,17 +258,14 @@ py::class_<type>(m, #type) \
           which is timestamp of the last trade that we processed before the bar ended.
     )pqdoc")
     
-    .def(py::init<WriterCreator*, const std::string&, const std::string&, Schema::Type>(),
+    .def(py::init<WriterCreator*, const std::string&, Schema::Type>(),
          "writer_creator"_a,
-         "output_file_prefix"_a,
          "frequency"_a = "5m",
          "timestamp_unit"_a = Schema::TIMESTAMP_MILLI,
          R"pqdoc(
              Args:
-                writer_creator: A function that takes an output_file_prefix, schema and returns an object
+                writer_creator: A function that takes a schema and returns an object
                     implementing the :obj:`Writer` interface
-                output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind
-                    of data and format the file creates.  E.g. "/tmp/output_file_1"
                 frequency (str, optional): A string like "5m" indicating the bar size is 5 mins.  Units can be s,m,h or d for second, minute, hour or day.
                     Defaults to "5m"
                timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
@@ -354,17 +294,14 @@ py::class_<type>(m, #type) \
         every time a quote comes in.  We assume that the quotes are all top of book quotes and are written in pairs so we have a bid quote
         followed by a offer quote with the same timestamp or vice versa
         )pqdoc")
-    .def(py::init<WriterCreator*, const std::string&, const std::string&, Schema::Type>(),
+    
+    .def(py::init<WriterCreator*, const std::string&, Schema::Type>(),
          "writer_creator"_a,
-         "output_file_prefix"_a,
          "frequency"_a = "5m",
          "timestamp_unit"_a = Schema::TIMESTAMP_MILLI,
          R"pqdoc(
          Args:
-            writer_creator: A function that takes an output_file_prefix, schema and returns an object
-                implementing the :obj:`Writer` interface
-            output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind
-                of data and format the file creates.  E.g. "/tmp/output_file_1"
+            writer_creator: A function that takes a schema and returns an object implementing the :obj:`Writer` interface
             frequency (str, optional): A string like "5m" indicating the bar size is 5 mins.  Units can be s,m,h or d for second, minute, hour or day.
                 Defaults to "5m".  If you set this to "", each tick will be recorded.
             timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
@@ -389,19 +326,13 @@ py::class_<type>(m, #type) \
     R"pqdoc(
     Writes out every quote we see
     )pqdoc")
-    .def(py::init<WriterCreator*, const std::string&, bool, Schema::Type>(),
+    .def(py::init<WriterCreator*, Schema::Type>(),
          "writer_creator"_a,
-         "output_file_prefix"_a,
-         "consecutive_ids"_a,
          "timestamp_unit"_a = Schema::TIMESTAMP_MILLI,
          R"pqdoc(
             Args:
-                writer_creator: A function that takes an output_file_prefix, schema and returns an object implementing the :obj:`Writer` interface
-                    output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind
-                    of data and format the file creates.  E.g. "/tmp/output_file_1"
-                 consecutive_ids (bool): Whether we expect to see interleaved quote ids or not.  If set, we expect to see quotes for the same instrument
-                    together, and write out a batch after each instrument is done.
-                 timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
+                writer_creator: A function that takes a schema and returns an object implementing the :obj:`Writer` interface
+                timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
                     Defaults to Schema.TIMESTAMP_MILLI
          )pqdoc")
 
@@ -418,15 +349,13 @@ py::class_<type>(m, #type) \
                                                R"pqdoc(
                                                Writes out every quote pair we find
                                                )pqdoc")
-    .def(py::init<WriterCreator*, const std::string&, Schema::Type>(),
+    .def(py::init<WriterCreator*, Schema::Type>(),
          "writer_creator"_a,
-         "output_file_prefix"_a,
          "timestamp_unit"_a = Schema::TIMESTAMP_MILLI,
          R"pqdoc(
              Args:
-                 writer_creator: A function that takes an output_file_prefix, schema and returns an object
+                 writer_creator: A function that takes a schema and returns an object
                     implementing the :obj:`Writer` interface
-                 output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind of data and format the file creates.  E.g. "/tmp/output_file_1"
                  timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch. Defaults to Schema.TIMESTAMP_MILLI
          )pqdoc")
     
@@ -444,16 +373,13 @@ py::class_<type>(m, #type) \
     R"pqdoc(
     Writes out every trade we see
     )pqdoc")
-    .def(py::init<WriterCreator*, const std::string&, Schema::Type>(),
+    .def(py::init<WriterCreator*, Schema::Type>(),
          "writer_creator"_a,
-         "output_file_prefix"_a,
          "timestamp_unit"_a = Schema::TIMESTAMP_MILLI,
     R"pqdoc(
     Args:
-        writer_creator: A function that takes an output_file_prefix, schema and returns an object
+        writer_creator: A function that takes a schema and returns an object
              implementing the :obj:`Writer` interface
-        output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind of data
-             and format the file creates.  E.g. "/tmp/output_file_1"
         timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
             Defaults to Schema.TIMESTAMP_MILLI
     )pqdoc")
@@ -471,16 +397,13 @@ py::class_<type>(m, #type) \
         R"pqdoc(
         Writes out all open interest records
         )pqdoc")
-        .def(py::init<WriterCreator*, const std::string&, Schema::Type>(),
+        .def(py::init<WriterCreator*, Schema::Type>(),
              "writer_creator"_a,
-             "output_file_prefix"_a,
               "timestamp_unit"_a = Schema::TIMESTAMP_MILLI,
          R"pqdoc(
      Args:
-         writer_creator: A function that takes an output_file_prefix, schema and returns an object
+         writer_creator: A function that takes a schema and returns an object
             implementing the :obj:`Writer` interface
-         output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind of data
-             and format the file creates.  E.g. "/tmp/output_file_1"
          timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
             Defaults to Schema.TIMESTAMP_MILLI
      )pqdoc")
@@ -498,16 +421,13 @@ py::class_<type>(m, #type) \
     R"pqdoc(
     Writes out any records that are not trades, quotes or open interest
     )pqdoc")
-    .def(py::init<WriterCreator*, const std::string&, Schema::Type>(),
+    .def(py::init<WriterCreator*, Schema::Type>(),
          "writer_creator"_a,
-         "output_file_prefix"_a,
          "timestamp_unit"_a = Schema::TIMESTAMP_MILLI,
          R"pqdoc(
          Args:
-             writer_creator: A function that takes an output_file_prefix, schema and returns an object
+             writer_creator: A function that takes a schema and returns an object
                 implementing the :obj:`Writer` interface
-             output_file_prefix (str): Path of the output file to create.  The writer and aggregator may add suffixes to this to indicate the kind of data
-                and format the file creates.  E.g. "/tmp/output_file_1"
              timestamp_unit (Schema.Type, optional): Whether timestamps are measured as milliseconds or microseconds since the unix epoch.
                 Defaults to Schema.TIMESTAMP_MILLI
          )pqdoc")

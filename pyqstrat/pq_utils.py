@@ -1,7 +1,7 @@
 import matplotlib as mpl
 try:
     import tkinter
-except ImportError:
+except (ImportError, ValueError):
     mpl.use('Agg')  # Support running in headless mode
 import matplotlib.pyplot as plt
 import os

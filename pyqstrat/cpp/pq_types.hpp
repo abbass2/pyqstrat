@@ -146,7 +146,6 @@ private:
 
 struct Writer {
     virtual void add_record(int line_number, const Tuple&) = 0;
-    virtual void write_batch(const std::string& batch_id) = 0;
     virtual void close(bool success = true) = 0;
     virtual ~Writer() {};
 };
@@ -171,7 +170,7 @@ public:
     virtual ~RecordParser() {};
 };
 
-using WriterCreator = Function<std::shared_ptr<Writer>(const std::string&, const std::string&, const Schema&)>;
+using WriterCreator = Function<std::shared_ptr<Writer>(const std::string&, const Schema&)>;
 using CheckFields = Function<bool(const std::vector<std::string>&)>;
 using TimestampParser = Function<int64_t(const std::string&)>;
 using QuoteParser = Function<std::shared_ptr<Record> (const std::vector<std::string>&)>;

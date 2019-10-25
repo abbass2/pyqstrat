@@ -133,7 +133,6 @@ int TextFileProcessor::call(const std::string& input_filename, const std::string
                 record = _bad_line_handler->call(line_number, line, ex);
                 if (!record) continue;
             }
-            //if (line_number % 10000 == 0) cout << "got record from line: " << line_number << ":" << line << endl;
             if (_record_filter && !_record_filter->call(*record)) continue;
             if (_missing_data_handler) _missing_data_handler->call(record);
             for (auto aggregator : _aggregators) {
@@ -141,7 +140,5 @@ int TextFileProcessor::call(const std::string& input_filename, const std::string
             }
         }
     }
-    cout << "finished file: " << input_filename << endl;
-
     return line_number;
 }

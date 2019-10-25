@@ -1,9 +1,11 @@
 #include <chrono>
-#include "arrow_writer.hpp"
+#include "hdf5_writer.hpp"
 #include "text_file_parsers.hpp"
 #include "aggregators.hpp"
 #include "text_file_processor.hpp"
+#include "file_reader.hpp"
 #include "py_import_call_execute.hpp"
+
 
 using namespace std::chrono;
 using namespace std;
@@ -54,16 +56,14 @@ void test_file_processor() {
     auto oi_parser = make_shared<TextOpenInterestParser>(&is_open_interest, 0, vector<int>{0}, 8, vector<int>{5, 6, 7}, vector<int>{10, 4}, vector<TimestampParser*>{&timestamp_parser});
     auto other_parser = make_shared<TextOtherParser>(&is_other, 0, vector<int>{0}, vector<int>{5, 6, 7}, vector<int>{10, 4}, vector<TimestampParser*>{&timestamp_parser});
     auto text_record_parser = TextRecordParser(std::vector<RecordFieldParser*>{quote_parser.get(), trade_parser.get(), oi_parser.get(), other_parser.get()});
-    auto arrow_writer_creator = ArrowWriterCreator();
-    //auto quote_aggregator = AllQuoteAggregator(writer_creator, "/tmp/quotes_all", batch_size);
-    auto quote_aggregator = QuoteTOBAggregator(&arrow_writer_creator, "/tmp/quotes", "1m");
-    //auto trade_aggregator = AllTradeAggregator(writer_creator, "/tmp/trades", batch_size);
-    auto trade_aggregator = TradeBarAggregator(&arrow_writer_creator, "/tmp/trades", "1m");
-    auto open_interest_aggregator = AllOpenInterestAggregator(&arrow_writer_creator, "/tmp/open_interest");
-    auto other_aggregator = AllOtherAggregator(&arrow_writer_creator, "/tmp/other");
+    auto hdf5_writer_creator = HDF5WriterCreator("/tmp/quotes");
+    auto quote_aggregator = QuoteTOBAggregator(&hdf5_writer_creator, "1m");
+    auto trade_aggregator = TradeBarAggregator(&hdf5_writer_creator, "1m");
+    auto open_interest_aggregator = AllOpenInterestAggregator(&hdf5_writer_creator);
+    auto other_aggregator = AllOtherAggregator(&hdf5_writer_creator);
     std::vector<Aggregator*> aggregators = {&quote_aggregator, &trade_aggregator, &open_interest_aggregator, &other_aggregator};
     
-    /* auto text_file_decompressor = TextFileDecompressor();
+    auto text_file_decompressor = TextFileDecompressor();
     auto substring_line_filter = SubStringLineFilter({",T,", ",F,", ",N,", ",O,", ",X,"});
     auto print_bad_line_handler = PrintBadLineHandler();
     auto price_qty_missing_data_handler = PriceQtyMissingDataHandler();
@@ -82,6 +82,6 @@ void test_file_processor() {
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
     
-    cout << "start: " << start.time_since_epoch().count() << " processed " << lines << " lines in " << duration.count() / 1000.0 << " milliseconds" << endl; */
+    cout << "start: " << start.time_since_epoch().count() << " processed " << lines << " lines in " << duration.count() / 1000.0 << " milliseconds" << endl;
 }
 
