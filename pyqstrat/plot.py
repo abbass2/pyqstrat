@@ -1,3 +1,4 @@
+#cell 0
 from dataclasses import dataclass
 import collections
 from abc import abstractmethod
@@ -532,6 +533,10 @@ def _plot_data(ax: mpl.axes.Axes, data: PlotData) -> Optional[List[mpl.lines.Lin
 
 
 def _draw_date_gap_lines(ax: mpl.axes.Axes, plot_timestamps: np.ndarray) -> None:
+    '''
+    Draw vertical lines wherever there are gaps between two timestamps.
+        i.e., the gap between two adjacent timestamps is more than the minimum gap in the series.
+    '''
     timestamps = mdates.date2num(plot_timestamps)
     freq = np.nanmin(np.diff(timestamps))
     if freq <= 0: raise Exception('could not infer date frequency')
@@ -981,3 +986,4 @@ if __name__ == "__main__":
     test_plot()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+
