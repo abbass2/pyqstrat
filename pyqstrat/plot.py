@@ -1,4 +1,3 @@
-#cell 0
 from dataclasses import dataclass
 import collections
 from abc import abstractmethod
@@ -986,4 +985,3 @@ if __name__ == "__main__":
     test_plot()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-
