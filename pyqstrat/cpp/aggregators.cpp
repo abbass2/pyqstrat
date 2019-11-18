@@ -337,17 +337,15 @@ void AllQuotePairAggregator::call(const Record* record, int line_number) {
     writer->add_record(line_number, tuple);
 }
 
-AllTradeAggregator::AllTradeAggregator(WriterCreator* writer_creator, Schema::Type timestamp_unit) {
-    if (!writer_creator) error("writer creator must be specified");
-    Schema schema;
-    schema.types = {
+AllTradeAggregator::AllTradeAggregator(WriterCreator* writer_creator, Schema::Type timestamp_unit):
+_writer_creator(writer_creator) {
+    _schema.types = {
         std::make_pair("id", Schema::STRING),
         std::make_pair("timestamp", timestamp_unit),
         std::make_pair("qty", Schema::FLOAT32),
         std::make_pair("price", Schema::FLOAT32),
         std::make_pair("meta", Schema::STRING),
     };
-    _writer = writer_creator->call("trades", schema);
 }
 
 void AllTradeAggregator::call(const Record* record, int line_number) {
@@ -356,13 +354,22 @@ void AllTradeAggregator::call(const Record* record, int line_number) {
     if (ptrade == nullptr) return;
     auto trade = *ptrade;
     
+    auto pair = _writers.find(trade.id);
+    std::shared_ptr<Writer> writer;
+    if (pair == _writers.end()) {
+        writer = _writer_creator->call(trade.id, _schema);
+        _writers.insert(make_pair(trade.id, writer));
+    } else {
+        writer = pair->second;
+    }
+    
     Tuple tuple;
     tuple.add(trade.id);
     tuple.add(trade.timestamp);
     tuple.add(trade.qty);
     tuple.add(trade.price);
     tuple.add(trade.metadata);
-    _writer->add_record(line_number, tuple);
+    writer->add_record(line_number, tuple);
 }
 
 AllOpenInterestAggregator::AllOpenInterestAggregator(WriterCreator* writer_creator, Schema::Type timestamp_unit) {

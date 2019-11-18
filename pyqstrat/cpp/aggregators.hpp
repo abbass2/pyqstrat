@@ -111,7 +111,7 @@ public:
     AllQuotePairAggregator(WriterCreator*, Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
     void call(const Record* quote, int line_number) override;
 private:
-    std::string _id;
+    //std::string _id;
     WriterCreator* _writer_creator;
     Schema _schema;
     std::map<std::string, std::shared_ptr<Writer>> _writers;
@@ -122,8 +122,10 @@ public:
     AllTradeAggregator(WriterCreator*, Schema::Type timestamp_unit = Schema::TIMESTAMP_MILLI);
     void call(const Record* trade, int line_number) override;
 private:
-    std::shared_ptr<Writer> _writer;
-    std::string _id;
+    //std::string _id;
+    WriterCreator* _writer_creator;
+    Schema _schema;
+    std::map<std::string, std::shared_ptr<Writer>> _writers;
 };
 
 class AllOpenInterestAggregator final : public Aggregator {

@@ -109,7 +109,7 @@ py::class_<type>(m, #type) \
     using PyTimestampParser = PyFunction<int64_t(const std::string&)>;
     using PyRecordFieldParser = PyFunction<std::shared_ptr<Record>(const std::vector<std::string>&)>;
     using PyAggregator = PyFunction<void(const Record*, int)>;
-    using PyMissingDataHandler = PyFunction<void(std::shared_ptr<Record>)>;
+    using PyMissingDataHandler = PyFunction<bool(std::shared_ptr<Record>)>;
     using PyBadLineHandler = PyFunction<std::shared_ptr<Record>(int, const std::string&, const std::exception&)>;
     using PyLineFilter = PyFunction<bool(const std::string&)>;
     using PyCheckFields = PyFunction<bool(const std::vector<std::string>&)>;
@@ -817,6 +817,9 @@ py::class_<type>(m, #type) \
           R"pqdoc(
           Args:
             record:  Any subclass of :obj:`Record`
+          
+          Returns:
+             bool: true if we want to include this record, false if not
           )pqdoc");
     
     py::class_<FixedWidthTimeParser, TimestampParser>(m, "FixedWidthTimeParser",

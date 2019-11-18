@@ -1,4 +1,3 @@
-# type: ignore
 # flake8: noqa
 from pyqstrat.pq_utils import *
 from pyqstrat.pq_types import *

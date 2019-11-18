@@ -17,33 +17,41 @@
 
 using namespace std;
 
-void PriceQtyMissingDataHandler::call(shared_ptr<Record> record) {
+bool PriceQtyMissingDataHandler::call(shared_ptr<Record> record) {
     shared_ptr<QuotePairRecord> quote_pair = dynamic_pointer_cast<QuotePairRecord>(record);
     if (quote_pair) {
         if (quote_pair->bid_qty == 0) quote_pair->bid_qty = NAN;
         if (quote_pair->bid_price == 0) quote_pair->bid_price = NAN;
         if (quote_pair->ask_qty == 0) quote_pair->ask_qty = NAN;
         if (quote_pair->ask_price == 0) quote_pair->ask_price = NAN;
-        return;
+        return true;
     }
     
     shared_ptr<QuoteRecord> quote = dynamic_pointer_cast<QuoteRecord>(record);
     if (quote) {
         if (quote->qty == 0) quote->qty = NAN;
         if (quote->price == 0) quote->price = NAN;
-        return;
+        return true;
     }
     shared_ptr<TradeRecord> trade = dynamic_pointer_cast<TradeRecord>(record);
     if (trade) {
-        if (trade->qty == 0) trade->qty = NAN;
-        if (trade->price == 0) trade->price = NAN;
-        return;
+        bool ret = true;
+        if (trade->qty == 0) {
+            trade->qty = NAN;
+            ret = false;
+        }
+        if (trade->price == 0) {
+            trade->price = NAN;
+            ret = false;
+        }
+        return ret;
     }
     shared_ptr<OpenInterestRecord> oi = dynamic_pointer_cast<OpenInterestRecord>(record);
     if (oi) {
         if (oi->qty == 0) oi->qty = NAN;
-        return;
+        return true;
     }
+    return true;
 }
 
 PrintBadLineHandler::PrintBadLineHandler(bool raise) : _raise(raise) {}
@@ -134,7 +142,7 @@ int TextFileProcessor::call(const std::string& input_filename, const std::string
                 if (!record) continue;
             }
             if (_record_filter && !_record_filter->call(*record)) continue;
-            if (_missing_data_handler) _missing_data_handler->call(record);
+            if ((_missing_data_handler) && (!_missing_data_handler->call(record))) continue;
             for (auto aggregator : _aggregators) {
                 aggregator->call(record.get(), line_number);
             }

@@ -12,7 +12,7 @@
 #include "pq_types.hpp"
 
 struct PriceQtyMissingDataHandler :  public MissingDataHandler {
-    void call(std::shared_ptr<Record> record) override;
+    bool call(std::shared_ptr<Record> record) override;
 };
 
 class PrintBadLineHandler : public BadLineHandler {
@@ -67,7 +67,7 @@ private:
     RecordParser* _record_parser;
     Function<std::shared_ptr<Record> (int, const std::string&, const std::exception&)>* _bad_line_handler;
     Function<bool (const Record&)>* _record_filter;
-    Function<void (std::shared_ptr<Record>)>* _missing_data_handler;
+    Function<bool (std::shared_ptr<Record>)>* _missing_data_handler;
     std::vector<Aggregator*> _aggregators;
     int _skip_rows;
 };
