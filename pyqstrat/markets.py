@@ -1,3 +1,4 @@
+#cell 0
 import re
 import datetime
 from dateutil._common import weekday
@@ -64,6 +65,7 @@ class EminiFuture:
         '''
         >>> assert(EminiFuture.get_current_symbol(datetime.date(2019, 3, 14)) == 'ESH9')
         >>> assert(EminiFuture.get_current_symbol(datetime.date(2019, 3, 15)) == 'ESM9')
+        >>> assert(EminiFuture.get_current_symbol(datetime.date(2020, 3, 14)) == 'ESH0')
         '''
         year = curr_date.year
         month = curr_date.month
@@ -76,7 +78,8 @@ class EminiFuture:
         else:
             month_str = 'H'
             year += 1
-        fut_symbol = 'ES' + month_str + str(year - 2010)
+        base = 2010 if year < 2020 else 2020
+        fut_symbol = 'ES' + month_str + str(year - base)
         return fut_symbol
 
     @staticmethod
@@ -113,7 +116,9 @@ class EminiFuture:
         
         month = future_code_to_month_number(month_str)
         assert(isinstance(month, int))
-        year = 2010 + int(year_str)
+        year = int(year_str)
+        year_base = 2020 if year < 5 else 2010
+        year = year_base + int(year_str)
         expiry_date = EminiFuture.calendar.third_friday_of_month(month, year).astype(datetime.date)
         return np.datetime64(expiry_date) + np.timedelta64(8 * 60 + 30, 'm')
     
@@ -181,3 +186,4 @@ class EminiOption:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+
