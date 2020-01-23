@@ -528,6 +528,7 @@ def async_yield() -> None:
     '''
     async_sleep(0)
 
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
