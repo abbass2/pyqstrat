@@ -1,3 +1,4 @@
+#cell 0
 import pandas as pd
 import numpy as np
 import statsmodels as sm
@@ -596,3 +597,4 @@ if __name__ == "__main__":
     test_evaluator()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+
