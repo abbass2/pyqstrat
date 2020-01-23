@@ -1,4 +1,3 @@
-#cell 0
 import re
 import datetime
 from dateutil._common import weekday
@@ -186,4 +185,3 @@ class EminiOption:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-
