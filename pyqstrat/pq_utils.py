@@ -556,4 +556,3 @@ def in_ipython() -> bool:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
-
