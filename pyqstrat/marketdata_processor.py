@@ -1,3 +1,4 @@
+#cell 0
 import glob
 import os
 import sys
@@ -5,6 +6,7 @@ import re
 from dateutil import parser as dateutil_parser
 import numpy as np
 import concurrent
+import concurrent.futures
 from timeit import default_timer as timer
 import multiprocessing
 from pyqstrat.pq_utils import infer_compression, millis_since_epoch, touch, get_child_logger
@@ -387,3 +389,4 @@ def process_marketdata(
                     else: 
                         print(str(new_exc))
                         continue
+

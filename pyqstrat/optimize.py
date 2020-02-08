@@ -1,8 +1,10 @@
+#cell 0
 import numpy as np
 import pandas as pd
 import os
 import sys
 import concurrent
+import concurrent.futures
 from pyqstrat.pq_utils import set_defaults, has_display
 from pyqstrat.plot import Plot, Subplot, XYData, XYZData, SurfacePlotAttributes, LinePlotAttributes
 from typing import Mapping, Any, Callable, Generator, Tuple, Sequence, List, Optional
@@ -321,3 +323,4 @@ if __name__ == "__main__":
     test_optimize()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+
