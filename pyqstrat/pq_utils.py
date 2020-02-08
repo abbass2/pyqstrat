@@ -1,3 +1,4 @@
+#cell 0
 import matplotlib as mpl
 try:
     import tkinter
@@ -5,8 +6,8 @@ except (ImportError, ValueError):
     mpl.use('Agg')  # Support running in headless mode
 import matplotlib.pyplot as plt
 import os
+import sys
 import tempfile
-import asyncio
 import datetime
 import numpy as np
 import logging
@@ -473,7 +474,7 @@ def linear_interpolate(a1: float, a2: float, x1: float, x2: float, x: float) -> 
 
 def _add_stream_handler(logger: logging.Logger, log_level: int = logging.INFO, formatter: logging.Formatter = None) -> None:
     if formatter is None: formatter = logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT)
-    stream_handler = logging.StreamHandler()
+    stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setFormatter(formatter)
     stream_handler.setLevel(log_level)
     logger.addHandler(stream_handler)
@@ -481,7 +482,7 @@ def _add_stream_handler(logger: logging.Logger, log_level: int = logging.INFO, f
 
 def get_main_logger() -> logging.Logger:
     main_logger = logging.getLogger('pq')
-    if len(main_logger.handlers): return main_logger
+    # if len(main_logger.handlers): return main_logger
     _add_stream_handler(main_logger)
     main_logger.setLevel(logging.INFO)
     main_logger.propagate = False
@@ -495,6 +496,56 @@ def get_child_logger(child_name: str) -> logging.Logger:
     return logger
 
 
+class SmartLogger:
+    '''
+    Wraps python logger's info, warning and error functions
+    so that duplicate messages are not repeated and don't clutter up the log
+    '''
+    def __init__(self, logger: logging.Logger, suppress_dups: bool) -> None:
+        self.logger = logger
+        self.suppress_dups = suppress_dups
+        self.prev_msg = ''
+        self.num_dups = 0
+        self.prev_timestamp = datetime.datetime(datetime.MAXYEAR, 12, 31)
+
+    def log(self, msg: str, log_func: Callable[[str], None]) -> None:
+        if self.suppress_dups and msg == self.prev_msg:
+            self.prev_timestamp = datetime.datetime.now()
+            self.num_dups += 1
+            return
+            
+        if self.suppress_dups and self.num_dups > 0:
+            prev_timestamp_str = self.prev_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+            prev_msg = f'[{prev_timestamp_str} {self.num_dups}] {self.prev_msg}'
+            self.num_dups = 0
+            log_func(prev_msg)
+        log_func(msg)
+        self.prev_msg = msg
+        
+    def info(self, msg: str) -> None:
+        self.log(msg, self.logger.info)
+    
+    def warning(self, msg: str) -> None:
+        self.log(msg, self.logger.warning)
+        
+    def error(self, msg: str) -> None:
+        self.log(msg, self.logger.error)
+        
+
+def get_smart_logger(name: str) -> SmartLogger:
+    '''
+    >>> import sys; sys.stderr = sys.stdout
+    >>> logger = get_smart_logger('test')
+    >>> for i in range(1, 10): logger.info('msg 1')
+    [... log] msg 1
+    >>> logger.info('msg 2')
+    [... log] [... 8] msg 1
+    [... log] msg 2
+    '''
+    logger = get_child_logger(name)
+    return SmartLogger(logger, True)
+
+
 def in_ipython() -> bool:
     '''
     Whether we are running in an ipython (or Jupyter) environment
@@ -502,33 +553,11 @@ def in_ipython() -> bool:
     import builtins
     return '__IPYTHON__' in vars(builtins)
 
-    
-def async_waitfor(predicate_func: Callable, timeout_secs=5) -> None:
-    '''
-    Keep yielding until either predicate is true or timeout elapses
-    Returns when predicate is True.  If timeout elapses we raise an exception
-    '''
-    start_time = datetime.datetime.now()
-    while True:
-        async_yield()
-        if predicate_func():
-            break
-        if (datetime.datetime.now() - start_time).total_seconds() > timeout_secs:
-            raise Exception(f'timed out after: {timeout_secs} seconds')
-            
-
-def async_sleep(secs: float) -> None:
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.sleep(secs))
-    
-
-def async_yield() -> None:
-    '''
-    yield so any other async tasks that are ready can run 
-    '''
-    async_sleep(0)
-
 
 if __name__ == "__main__":
     import doctest
-    doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+    doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
+
+#cell 1
+
+
