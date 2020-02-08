@@ -1,4 +1,3 @@
-#cell 0
 import numpy as np
 import pandas as pd
 import os
@@ -323,4 +322,3 @@ if __name__ == "__main__":
     test_optimize()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-

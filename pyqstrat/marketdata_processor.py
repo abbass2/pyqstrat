@@ -1,4 +1,3 @@
-#cell 0
 import glob
 import os
 import sys
@@ -389,4 +388,3 @@ def process_marketdata(
                     else: 
                         print(str(new_exc))
                         continue
-
