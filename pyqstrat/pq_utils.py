@@ -1,3 +1,4 @@
+#cell 0
 import matplotlib as mpl
 try:
     import tkinter
@@ -474,14 +475,16 @@ def linear_interpolate(a1: float, a2: float, x1: float, x2: float, x: float) -> 
 def _add_stream_handler(logger: logging.Logger, log_level: int = logging.INFO, formatter: logging.Formatter = None) -> None:
     if formatter is None: formatter = logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT)
     stream_handler = logging.StreamHandler(sys.stdout)
+    # stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(formatter)
     stream_handler.setLevel(log_level)
     logger.addHandler(stream_handler)
 
 
 def get_main_logger() -> logging.Logger:
+    # sys.stderr = sys.stdout
     main_logger = logging.getLogger('pq')
-    # if len(main_logger.handlers): return main_logger
+    if len(main_logger.handlers): return main_logger
     _add_stream_handler(main_logger)
     main_logger.setLevel(logging.INFO)
     main_logger.propagate = False
@@ -506,6 +509,14 @@ class SmartLogger:
         self.prev_msg = ''
         self.num_dups = 0
         self.prev_timestamp = datetime.datetime(datetime.MAXYEAR, 12, 31)
+        self.prev_log_funct = None
+        
+    def _log_prev_msg(self):
+        if not self.suppress_dups or self.num_dups == 0: return
+        prev_timestamp_str = self.prev_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        prev_msg = f'[{prev_timestamp_str} {self.num_dups}] {self.prev_msg}'
+        self.num_dups = 0
+        self.prev_log_func(prev_msg)
 
     def log(self, msg: str, log_func: Callable[[str], None]) -> None:
         if self.suppress_dups and msg == self.prev_msg:
@@ -513,13 +524,14 @@ class SmartLogger:
             self.num_dups += 1
             return
             
-        if self.suppress_dups and self.num_dups > 0:
-            prev_timestamp_str = self.prev_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-            prev_msg = f'[{prev_timestamp_str} {self.num_dups}] {self.prev_msg}'
-            self.num_dups = 0
-            log_func(prev_msg)
+        self._log_prev_msg()
         log_func(msg)
         self.prev_msg = msg
+        self.prev_log_func = log_func
+        
+    def __del__(self):
+        if len(self.prev_msg):
+            self._log_prev_msg()
         
     def info(self, msg: str) -> None:
         self.log(msg, self.logger.info)
@@ -533,12 +545,11 @@ class SmartLogger:
 
 def get_smart_logger(name: str) -> SmartLogger:
     '''
-    >>> import sys; sys.stderr = sys.stdout
     >>> logger = get_smart_logger('test')
     >>> for i in range(1, 10): logger.info('msg 1')
     [... log] msg 1
     >>> logger.info('msg 2')
-    [... log] [... 8] msg 1
+    [... _log_prev_msg] [... 8] msg 1
     [... log] msg 2
     '''
     logger = get_child_logger(name)
@@ -556,3 +567,4 @@ def in_ipython() -> bool:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
+
