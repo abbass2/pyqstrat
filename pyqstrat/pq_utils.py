@@ -1,4 +1,3 @@
-#cell 0
 import matplotlib as mpl
 try:
     import tkinter
@@ -498,62 +497,62 @@ def get_child_logger(child_name: str) -> logging.Logger:
     return logger
 
 
-class SmartLogger:
-    '''
-    Wraps python logger's info, warning and error functions
-    so that duplicate messages are not repeated and don't clutter up the log
-    '''
-    def __init__(self, logger: logging.Logger, suppress_dups: bool) -> None:
-        self.logger = logger
-        self.suppress_dups = suppress_dups
-        self.prev_msg = ''
-        self.num_dups = 0
-        self.prev_timestamp = datetime.datetime(datetime.MAXYEAR, 12, 31)
-        self.prev_log_funct = None
+# class SmartLogger:
+#     '''
+#     Wraps python logger's info, warning and error functions
+#     so that duplicate messages are not repeated and don't clutter up the log
+#     '''
+#     def __init__(self, logger: logging.Logger, suppress_dups: bool) -> None:
+#         self.logger = logger
+#         self.suppress_dups = suppress_dups
+#         self.prev_msg = ''
+#         self.num_dups = 0
+#         self.prev_timestamp = datetime.datetime(datetime.MAXYEAR, 12, 31)
+#         self.prev_log_funct = None
         
-    def _log_prev_msg(self):
-        if not self.suppress_dups or self.num_dups == 0: return
-        prev_timestamp_str = self.prev_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-        prev_msg = f'[{prev_timestamp_str} {self.num_dups}] {self.prev_msg}'
-        self.num_dups = 0
-        self.prev_log_func(prev_msg)
+#     def _log_prev_msg(self):
+#         if not self.suppress_dups or self.num_dups == 0: return
+#         prev_timestamp_str = self.prev_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+#         prev_msg = f'[{prev_timestamp_str} {self.num_dups}] {self.prev_msg}'
+#         self.num_dups = 0
+#         self.prev_log_func(prev_msg)
 
-    def log(self, msg: str, log_func: Callable[[str], None]) -> None:
-        if self.suppress_dups and msg == self.prev_msg:
-            self.prev_timestamp = datetime.datetime.now()
-            self.num_dups += 1
-            return
+#     def log(self, msg: str, log_func: Callable[[str], None]) -> None:
+#         if self.suppress_dups and msg == self.prev_msg:
+#             self.prev_timestamp = datetime.datetime.now()
+#             self.num_dups += 1
+#             return
             
-        self._log_prev_msg()
-        log_func(msg)
-        self.prev_msg = msg
-        self.prev_log_func = log_func
+#         self._log_prev_msg()
+#         log_func(msg)
+#         self.prev_msg = msg
+#         self.prev_log_func = log_func
         
-    def __del__(self):
-        if len(self.prev_msg):
-            self._log_prev_msg()
+#     def __del__(self):
+#         if len(self.prev_msg):
+#             self._log_prev_msg()
         
-    def info(self, msg: str) -> None:
-        self.log(msg, self.logger.info)
+#     def info(self, msg: str) -> None:
+#         self.log(msg, self.logger.info)
     
-    def warning(self, msg: str) -> None:
-        self.log(msg, self.logger.warning)
+#     def warning(self, msg: str) -> None:
+#         self.log(msg, self.logger.warning)
         
-    def error(self, msg: str) -> None:
-        self.log(msg, self.logger.error)
+#     def error(self, msg: str) -> None:
+#         self.log(msg, self.logger.error)
         
 
-def get_smart_logger(name: str) -> SmartLogger:
-    '''
-    >>> logger = get_smart_logger('test')
-    >>> for i in range(1, 10): logger.info('msg 1')
-    [... log] msg 1
-    >>> logger.info('msg 2')
-    [... _log_prev_msg] [... 8] msg 1
-    [... log] msg 2
-    '''
-    logger = get_child_logger(name)
-    return SmartLogger(logger, True)
+# def get_smart_logger(name: str) -> SmartLogger:
+#     '''
+#     >>> logger = get_smart_logger('test')
+#     >>> for i in range(1, 10): logger.info('msg 1')
+#     [... log] msg 1
+#     >>> logger.info('msg 2')
+#     [... _log_prev_msg] [... 8] msg 1
+#     [... log] msg 2
+#     '''
+#     logger = get_child_logger(name)
+#     return SmartLogger(logger, True)
 
 
 def in_ipython() -> bool:
@@ -567,4 +566,3 @@ def in_ipython() -> bool:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
-
