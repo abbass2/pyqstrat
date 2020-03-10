@@ -3,8 +3,9 @@ import numpy as np
 import types
 import math
 import datetime
+from dataclasses import dataclass
 from types import SimpleNamespace
-from typing import MutableSet, Mapping, Optional, Union
+from typing import MutableSet, Mapping, Optional, Union, Any
 
 
 class ContractGroup:
@@ -117,6 +118,74 @@ class Contract:
             f' expiry: {self.expiry.astype(datetime.datetime):%Y-%m-%d %H:%M:%S}' if self.expiry is not None else '') + (
             f' group: {self.contract_group.name}' if self.contract_group else '') + (
             f' {self.properties.__dict__}' if self.properties.__dict__ else '')
+    
+
+@dataclass
+class Price:
+    '''
+    >>> price = Price(datetime.datetime(2020, 1, 1), 15.25, 15.75, 189, 300)
+    >>> print(price)
+    15.25@189/15.75@300
+    >>> price.properties = SimpleNamespace(delta = -0.3)
+    >>> price.valid = False
+    >>> print(price)
+    15.25@189/15.75@300 delta: -0.3 invalid
+    >>> print(price.mid())
+    15.5
+    '''
+    timestamp: datetime.datetime
+    bid: float
+    ask: float
+    bid_size: int
+    ask_size: int
+    valid: bool = True
+    properties: Optional[SimpleNamespace] = None
+        
+    @staticmethod
+    def invalid() -> 'Price':
+        return Price(datetime.datetime(datetime.MINYEAR, 1, 1),
+                     bid=math.nan, 
+                     ask=math.nan, 
+                     bid_size=-1, 
+                     ask_size=-1, 
+                     valid=False)
+        
+    def mid(self) -> float:
+        return 0.5 * (self.bid + self.ask)
+    
+    def vw_mid(self) -> float:
+        '''
+        Volume weighted mid
+        >>> price = Price(datetime.datetime(2020, 1, 1), 15.25, 15.75, 189, 300)
+        >>> print(f'{price.vw_mid():.4f}')
+        15.4433
+        >>> price.bid_size = 0
+        >>> price.ask_size = 0
+        >>> assert math.isnan(price.vw_mid())
+        '''
+        if self.bid_size + self.ask_size == 0: return math.nan
+        return (self.bid * self.ask_size + self.ask * self.bid_size) / (self.bid_size + self.ask_size)
+    
+    def set_property(self, name: str, value: Any) -> None:
+        if self.properties is None:
+            self.properties = SimpleNamespace()
+        setattr(self.properties, name, value)
+    
+    def spread(self) -> float:
+        if self.ask < self.bid: return math.nan
+        return self.ask - self.bid
+        
+    def __repr__(self) -> str:
+        msg = f'{self.bid:.2f}@{self.bid_size}/{self.ask:.2f}@{self.ask_size}'
+        if self.properties:
+            for k, v in self.properties.__dict__.items():
+                if isinstance(v, (np.floating, float)):
+                    msg += f' {k}: {v:.5g}'
+                else:
+                    msg += f' {k}: {v}'
+        if not self.valid:
+            msg += ' invalid'
+        return msg
 
 
 class OrderStatus:
