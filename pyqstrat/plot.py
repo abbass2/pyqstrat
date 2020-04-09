@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 import collections
+import math
 from abc import abstractmethod
 from functools import reduce
 import pandas as pd
 import numpy as np
+import matplotlib
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -12,6 +14,8 @@ import matplotlib.patches as mptch
 import matplotlib.gridspec as gridspec
 import matplotlib.path as path
 import matplotlib.cm as cm
+from matplotlib.colors import BoundaryNorm
+
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401  # not directly used but need to import to plot 3d 
 from scipy.interpolate import griddata
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -113,13 +117,13 @@ class SurfacePlotAttributes(DisplayAttributes):
             You can set this to None to turn markers off.
         interpolation: Can be ‘linear’, ‘nearest’ or ‘cubic’ for plotting z points between the ones passed in.  
             See scipy.interpolate.griddata for details
-        cmap: Colormap to use (default viridis).  See matplotlib colormap for details
+        cmap: Colormap to use (default matplotlib.cm.RdBu_r).  See matplotlib colormap for details
     '''
     marker: str = 'X'
     marker_size: int = 50
     marker_color: str = 'red'
     interpolation: str = 'linear'
-    cmap: str = 'viridis'
+    cmap: matplotlib.colors.Colormap = matplotlib.cm.RdBu_r                  
         
 
 @dataclass
@@ -128,9 +132,11 @@ class ContourPlotAttributes(DisplayAttributes):
     marker_size: int = 50
     marker_color: str = 'red'
     interpolation: str = 'linear'
-    cmap: str = 'viridis'
-        
+    cmap: matplotlib.colors.Colormap = matplotlib.cm.RdBu_r
+    min_level: float = math.nan
+    max_level: float = math.nan
 
+        
 @dataclass
 class CandleStickPlotAttributes(DisplayAttributes):
     colorup: str = 'darkgreen'
@@ -367,7 +373,7 @@ def draw_candlestick(ax: mpl.axes.Axes,
     # Have to do volume first because of a mpl bug with axes fonts if we use make_axes_locatable after plotting on top axis
     if v is not None and not np.isnan(v).all(): 
         divider = make_axes_locatable(ax)
-        vol_ax = divider.append_axes('bottom', size='25%', sharex=ax)
+        vol_ax = divider.append_axes('bottom', size='25%', sharex=ax, pad=0)
         _c = np.nan_to_num(c)
         _o = np.nan_to_num(o)
         pos = _c >= _o
@@ -424,12 +430,14 @@ def draw_3d_plot(ax: mpl.axes.Axes,
                  x: np.ndarray,
                  y: np.ndarray,
                  z: np.ndarray,
-                 plot_type: str,
+                 plot_type: str = 'contour',
                  marker: str = 'X',
                  marker_size: int = 50, 
                  marker_color: str = 'red',
                  interpolation: str = 'linear', 
-                 cmap: str = 'viridis') -> None:
+                 cmap: matplotlib.colors.Colormap = matplotlib.cm.RdBu_r,                  
+                 min_level: float = math.nan,
+                 max_level: float = math.nan) -> None:
 
     '''Draw a 3d plot.  See XYZData class for explanation of arguments
     
@@ -439,7 +447,7 @@ def draw_3d_plot(ax: mpl.axes.Axes,
     >>> z = x ** 2 + y ** 2
     >>> if has_display():
     ...    fig, ax = plt.subplots()
-    ...    draw_3d_plot(ax, x = x, y = y, z = z, plot_type = 'contour', interpolation = 'linear')
+    ...    draw_3d_plot(ax, x = x, y = y, z = z, plot_type = 'contour', interpolation = 'linear');
     '''
     xi = np.linspace(min(x), max(x))
     yi = np.linspace(min(y), max(y))
@@ -451,18 +459,37 @@ def draw_3d_plot(ax: mpl.axes.Axes,
         ax.plot_surface(X, Y, Z, cmap=cmap)
         if marker is not None:
             ax.scatter(x, y, z, marker=marker, s=marker_size, c=marker_color)
+        m = cm.ScalarMappable(cmap=cmap)
+        m.set_array(Z)
+        plt.colorbar(m, ax=ax)
+        
     elif plot_type == 'contour':
-        cs = ax.contour(X, Y, Z, linewidths=0.5, colors='k')
-        ax.clabel(cs, cs.levels[::2], fmt="%.3g", inline=1)
-        ax.contourf(X, Y, Z, cmap=cmap)
+        # extract all colors from the  map
+        cmaplist = [cmap(i) for i in range(cmap.N)]
+        # create the new map
+        cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
+        Z = np.ma.masked_array(Z, mask=~np.isfinite(Z))
+        if math.isnan(min_level): min_level = np.min(Z)
+        if math.isnan(max_level): max_level = np.max(Z)
+        # define the bins and normalize and forcing 0 to be part of the colorbar!
+        bounds = np.arange(min_level, max_level, (max_level - min_level) / cmap.N)
+        idx = np.searchsorted(bounds, 0)
+        bounds = np.insert(bounds, idx, 0)
+        norm = BoundaryNorm(bounds, cmap.N)
+        cs = ax.contourf(X, Y, Z, cmap=cmap, norm=norm)
+        
         if marker is not None:
-            ax.scatter(x, y, marker=marker, s=marker_size, c=marker_color, zorder=10)
+            x = x[np.isfinite(z)]
+            y = y[np.isfinite(z)]
+            ax.scatter(x, y, marker=marker, s=marker_size, c=z[np.isfinite(z)], zorder=10, cmap=cmap)
+        LABEL_SIZE = 16
+        ax.tick_params(axis='both', which='major', labelsize=LABEL_SIZE)
+        ax.tick_params(axis='both', which='minor', labelsize=LABEL_SIZE)
+        cbar = plt.colorbar(cs, ax=ax)
+        cbar.ax.tick_params(labelsize=LABEL_SIZE) 
+
     else:
         raise Exception(f'unknown plot type: {plot_type}')
-
-    m = cm.ScalarMappable(cmap=cmap)
-    m.set_array(Z)
-    plt.colorbar(m, ax=ax)
     
 
 def _adjust_axis_limit(lim: Tuple[float, float], values: Union[List, np.ndarray]) -> Tuple[float, float]:
@@ -716,6 +743,8 @@ class Subplot:
             else:
                 line = _plot_data(ax, data)
             lines.append(line)
+            
+        return
                         
         for date_line in self.date_lines:  # vertical lines on time plot
             line = draw_date_line(ax, plot_timestamps, date_line.date, date_line.line_type, date_line.color)
@@ -751,7 +780,6 @@ class Subplot:
         if self.ylabel: ax.set_ylabel(self.ylabel)
         if self.zlabel: ax.set_zlabel(self.zlabel)
             
-        ax.relim()
         ax.autoscale_view()
             
 
@@ -857,7 +885,6 @@ class Plot:
             if self.show_date_gaps and plot_timestamps is not None: _draw_date_gap_lines(ax, plot_timestamps)
                 
         for ax in ax_list:
-            ax.relim()
             ax.autoscale_view()
             
         return fig, ax_list
@@ -976,7 +1003,8 @@ def test_plot() -> None:
     xyz_contour = Subplot(XYZData('Contour test', x, y, z, display_attributes=ContourPlotAttributes()), 
                           xlabel='x', ylabel='y', height_ratio=0.3)
     
-    subplot_list = [ind_subplot, sig_subplot, pos_subplot, equity_subplot, annual_returns_subplot, xy_subplot, xyz_subplot, xyz_contour]
+    subplot_list = [ind_subplot, sig_subplot, pos_subplot, equity_subplot, 
+                    annual_returns_subplot, xy_subplot, xyz_contour, xyz_subplot]
     plot = Plot(subplot_list, figsize=(20, 20), title='Plot Test', hspace=0.35)
     plot.draw()
     
