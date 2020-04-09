@@ -744,8 +744,6 @@ class Subplot:
                 line = _plot_data(ax, data)
             lines.append(line)
             
-        return
-                        
         for date_line in self.date_lines:  # vertical lines on time plot
             line = draw_date_line(ax, plot_timestamps, date_line.date, date_line.line_type, date_line.color)
             if date_line.name is not None: lines.append(line)
