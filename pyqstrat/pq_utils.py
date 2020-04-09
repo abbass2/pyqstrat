@@ -514,6 +514,7 @@ def in_ipython() -> bool:
     import builtins
     return '__IPYTHON__' in vars(builtins)
 
+
 class Paths:
     '''
     Conventions for where to read / write data and reports
