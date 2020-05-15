@@ -473,12 +473,27 @@ def get_temp_dir() -> str:
         return tempfile.gettempdir()
     
 
-def linear_interpolate(a1: float, a2: float, x1: float, x2: float, x: float) -> float:
+def linear_interpolate(a1: Union[np.ndarray, float], 
+                       a2: Union[np.ndarray, float], 
+                       x1: Union[np.ndarray, float], 
+                       x2: Union[np.ndarray, float],
+                       x: Union[np.ndarray, float]) -> Union[np.ndarray, float]:
     '''
-    >>> print(f'{linear_interpolate(3, 4, 8, 10, 8.9):.3f}')
-    3.450
+    >>> assert(linear_interpolate(3, 4, 8, 10, 8.9) == 3.45)
+    >>> assert(linear_interpolate(3, 3, 8, 10, 8.9) == 3)
+    >>> assert(np.isnan(linear_interpolate(3, 4, 8, 8, 8.9)))
+    >>> x = linear_interpolate(
+    ...    np.array([3., 3.]), 
+    ...    np.array([4., 3.]), 
+    ...    np.array([8., 8.]),
+    ...    np.array([10, 8.]), 
+    ...    np.array([8.9, 8.]))
+    >>> assert(np.allclose(x, np.array([3.45, 3.])))
     '''
-    return np.where(x2 == x1, np.nan, a1 + (a2 - a1) * (x - x1) / (x2 - x1))
+    diff = x2 - x1
+    diff = np.where(diff == 0, 1, diff)
+    return np.where((a2 == a1), a1, 
+                    np.where(x2 == x1, np.nan, a1 + (a2 - a1) * (x - x1) / diff))
 
 
 def _add_stream_handler(logger: logging.Logger, log_level: int = logging.INFO, formatter: logging.Formatter = None) -> None:
