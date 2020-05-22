@@ -1,3 +1,29 @@
+
+import os
+import sys
+import pathlib
+import datetime
+import pandas as pd
+import numpy as np
+import pyqstrat as pq
+ROOT_DIR = os.path.join(sys.path[0], '..')
+sys.path.insert(1, ROOT_DIR)
+# Constants and Globals
+_paths = pq.get_paths()
+_calendar = pq.Calendar.get_calendar(pq.Calendar.NYSE)
+_logger = pq.get_child_logger(__name__)
+
+import unittest
+        
+class Test_My_Code(unittest.TestCase):
+
+    def test_version(self):
+        self.assertTrue(1 == 1)
+if __name__ == '__main__':
+    unittest.main(argv=['first-arg-is-ignored'], exit=False)
+    import doctest
+    doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
+    print('done')
 import matplotlib as mpl
 try:
     import tkinter
