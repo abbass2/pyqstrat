@@ -954,23 +954,26 @@ def test_plot() -> None:
     trades = [MockTrade(trade_timestamps[i], trade_qty[i], trade_price[i], reason_codes[i]) for i, d in enumerate(trade_timestamps)]
     
     disp = LinePlotAttributes(line_type='--')
+    
+    tb_series = TradeBarSeries(
+        'price', timestamps=timestamps,           
+        o=np.array([8.9, 9.1, 9.3, 8.6]),
+        h=np.array([9.0, 9.3, 9.4, 8.7]),
+        l=np.array([8.8, 9.0, 9.2, 8.4]),  # noqa: E741 # ambiguous l
+        c=np.array([8.95, 9.2, 9.35, 8.5]),
+        v=np.array([200, 100, 150, 300]),
+        vwap=np.array([8.9, 9.15, 9.3, 8.55]))
 
-    ind_subplot = Subplot([TimeSeries('slow_support', timestamps=timestamps, values=np.array([8.9, 8.9, 9.1, 9.1]), display_attributes=disp),
-                           TimeSeries('fast_support', timestamps=timestamps, values=np.array([8.9, 9.0, 9.1, 9.2]), display_attributes=disp),
-                           TimeSeries('slow_resistance', timestamps=timestamps, values=np.array([9.2, 9.2, 9.4, 9.4]), display_attributes=disp),
-                           TimeSeries('fast_resistance', timestamps=timestamps, values=np.array([9.2, 9.3, 9.4, 9.5]), display_attributes=disp),
-                           TimeSeries('secondary_y_test', timestamps=timestamps, values=np.array([150, 160, 162, 135]), display_attributes=disp),
-                           TradeBarSeries(
-                               'price', timestamps=timestamps,           
-                                o=np.array([8.9, 9.1, 9.3, 8.6]),
-                                h=np.array([9.0, 9.3, 9.4, 8.7]),
-                                l=np.array([8.8, 9.0, 9.2, 8.4]),  # noqa: E741 # ambiguous l
-                                c=np.array([8.95, 9.2, 9.35, 8.5]),
-                                v=np.array([200, 100, 150, 300]),
-                                vwap=np.array([8.9, 9.15, 9.3, 8.55]))
-                          ] + trade_sets_by_reason_code(trades),  # type: ignore  # mypy complains about adding heterogeneous lists 
-                          secondary_y=['secondary_y_test'], 
-                          ylabel="Price", height_ratio=0.3) 
+    ind_subplot = Subplot([
+        TimeSeries('slow_support', timestamps=timestamps, values=np.array([8.9, 8.9, 9.1, 9.1]), display_attributes=disp),
+        TimeSeries('fast_support', timestamps=timestamps, values=np.array([8.9, 9.0, 9.1, 9.2]), display_attributes=disp),
+        TimeSeries('slow_resistance', timestamps=timestamps, values=np.array([9.2, 9.2, 9.4, 9.4]), display_attributes=disp),
+        TimeSeries('fast_resistance', timestamps=timestamps, values=np.array([9.2, 9.3, 9.4, 9.5]), display_attributes=disp),
+        TimeSeries('secondary_y_test', timestamps=timestamps, values=np.array([150, 160, 162, 135]), display_attributes=disp),
+        tb_series
+    ] + trade_sets_by_reason_code(trades),  # type: ignore  # mypy complains about adding heterogeneous lists 
+        secondary_y=['secondary_y_test'], 
+        ylabel="Price", height_ratio=0.3) 
     
     sig_subplot = Subplot(TimeSeries('trend', timestamps=timestamps, values=np.array([1, 1, -1, -1])), height_ratio=0.1, ylabel='Trend')
     
