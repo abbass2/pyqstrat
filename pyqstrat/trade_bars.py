@@ -38,7 +38,7 @@ class TradeBars:
                  c: np.ndarray, 
                  o: Optional[np.ndarray] = None, 
                  h: Optional[np.ndarray] = None, 
-                 l: Optional[np.ndarray] = None,
+                 l: Optional[np.ndarray] = None,  # noqa: E741: ignore # l ambiguous
                  v: Optional[np.ndarray] = None, 
                  vwap: Optional[np.ndarray] = None) -> None:
         '''Zeroes in o, h, l, c are set to nan'''

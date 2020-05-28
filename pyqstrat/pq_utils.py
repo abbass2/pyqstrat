@@ -111,11 +111,11 @@ def strtup2date(tup: Any) -> Tuple[np.datetime64, np.datetime64]:
     return tup
 
 
-def remove_dups(l: Sequence[Any], key_func: Callable[[Any], Any] = None) -> MutableSequence[Any]:
+def remove_dups(lst: Sequence[Any], key_func: Callable[[Any], Any] = None) -> MutableSequence[Any]:
     '''
     Remove duplicates from a list 
     Args:
-        l: list to remove duplicates from
+        lst: list to remove duplicates from
         key_func: A function that takes a list element and converts it to a key for detecting dups
         
     Returns (List): A list with duplicates removed.  This is stable in the sense that original list elements will retain their order
@@ -129,7 +129,7 @@ def remove_dups(l: Sequence[Any], key_func: Callable[[Any], Any] = None) -> Muta
     '''
     new_list = []
     seen: MutableSet[Any] = set() 
-    for element in l:
+    for element in lst:
         if key_func:
             key = key_func(element)
         else:

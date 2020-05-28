@@ -264,7 +264,7 @@ class TradeBarSeries(TimePlotData):
                  timestamps: np.ndarray,
                  o: np.ndarray,
                  h: np.ndarray,
-                 l: np.ndarray,
+                 l: np.ndarray,  # noqa: E741: ignore # l ambiguous
                  c: np.ndarray,
                  v: np.ndarray = None,
                  vwap: np.ndarray = None,
@@ -360,7 +360,7 @@ def draw_candlestick(ax: mpl.axes.Axes,
                      index: np.ndarray, 
                      o: np.ndarray, 
                      h: np.ndarray, 
-                     l: np.ndarray, 
+                     l: np.ndarray,  # noqa: E741: ignore # l ambiguous
                      c: np.ndarray, 
                      v: np.ndarray, 
                      vwap: np.ndarray, 
@@ -960,7 +960,8 @@ def test_plot() -> None:
                            TimeSeries('slow_resistance', timestamps=timestamps, values=np.array([9.2, 9.2, 9.4, 9.4]), display_attributes=disp),
                            TimeSeries('fast_resistance', timestamps=timestamps, values=np.array([9.2, 9.3, 9.4, 9.5]), display_attributes=disp),
                            TimeSeries('secondary_y_test', timestamps=timestamps, values=np.array([150, 160, 162, 135]), display_attributes=disp),
-                           TradeBarSeries('price', timestamps=timestamps, 
+                           TradeBarSeries(
+                               'price', timestamps=timestamps,           
                                 o=np.array([8.9, 9.1, 9.3, 8.6]),
                                 h=np.array([9.0, 9.3, 9.4, 8.7]),
                                 l=np.array([8.8, 9.0, 9.2, 8.4]),  # noqa: E741 # ambiguous l
