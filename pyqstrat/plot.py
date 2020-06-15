@@ -19,13 +19,11 @@ from matplotlib.colors import BoundaryNorm
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401  # not directly used but need to import to plot 3d 
 from scipy.interpolate import griddata
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from pyqstrat.pq_utils import set_defaults, series_to_array, strtup2date, has_display, resample_ts, resample_trade_bars
+from pyqstrat.pq_utils import series_to_array, strtup2date, has_display, resample_ts, resample_trade_bars
 from pyqstrat.pq_types import ReasonCode, Trade
 from typing import Sequence, Tuple, Mapping, Union, MutableMapping, List, Optional
 
-set_defaults()
-
-_VERBOSE: bool = False
+# set_defaults()
     
 
 class DateFormatter(mtick.Formatter):
@@ -737,7 +735,6 @@ class Subplot:
             ax2 = ax.twinx()
         
         for data in self.data_list:
-            if _VERBOSE: print(f'plotting data: {data.name}')
             if ax2 and data.name in self.secondary_y:
                 line = _plot_data(ax2, data)
             else:

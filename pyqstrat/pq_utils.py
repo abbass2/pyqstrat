@@ -12,7 +12,7 @@ import pathlib
 import numpy as np
 import logging
 import pandas as pd
-from typing import Any, Sequence, Optional, Tuple, Callable, MutableSequence, MutableSet, Union
+from typing import Any, Sequence, Optional, Tuple, Callable, MutableSequence, MutableSet, Union, List
 
 SEC_PER_DAY = 3600 * 24
 _HAS_DISPLAY = None
@@ -62,9 +62,11 @@ def shift_np(array: np.ndarray, n: int, fill_value: Any = None) -> np.ndarray:
     return e
 
 
-def set_ipython_defaults() -> None:
+def set_ipython_defaults(jupyter_multiple_display=True) -> None:
     from IPython.core.interactiveshell import InteractiveShell
-    InteractiveShell.ast_node_interactivity = 'all'
+    
+    if jupyter_multiple_display:
+        InteractiveShell.ast_node_interactivity = 'all'
     # autoreload extension
     
 
@@ -73,7 +75,8 @@ def set_defaults(df_float_sf: int = 9,
                  df_display_max_columns: int = 99,
                  np_seterr: str = 'raise',
                  plot_style: str = 'ggplot',
-                 mpl_figsize: Tuple[int, int] = (8, 6)) -> None:
+                 mpl_figsize: Tuple[int, int] = (8, 6),
+                 jupyter_multiple_display=True) -> None:
     '''
     Set some display defaults to make it easier to view dataframes and graphs.
     
@@ -84,6 +87,7 @@ def set_defaults(df_float_sf: int = 9,
         np_seterr: Error mode for numpy warnings.  See numpy seterr function for details.  Set to None to use numpy defaults
         plot_style: Style for matplotlib plots.  Set to None to use default plot style.
         mpl_figsize: Default figure size to use when displaying matplotlib plots (default 8,6).  Set to None to use defaults
+        jupyter_multiple_display: If set, and you have multiple outputs in a Jupyter cell, output will contain all of them. Default True
     '''
     if df_float_sf is not None: pd.options.display.float_format = ('{:.' + str(df_float_sf) + 'g}').format
     if df_display_max_rows is not None: pd.options.display.max_rows = df_display_max_rows
@@ -95,7 +99,7 @@ def set_defaults(df_float_sf: int = 9,
     # Display all cell outputs
     plt.rcParams.update({'figure.max_open_warning': 100})  # For unit tests, avoid warning when opening more than 20 figures
     if in_ipython():
-        set_ipython_defaults()
+        set_ipython_defaults(jupyter_multiple_display)
     
 
 def str2date(s: Optional[Union[np.datetime64, str]]) -> np.datetime64:
@@ -186,6 +190,43 @@ def np_round(a: np.ndarray, clip: float):
     '''
         
     return np.round(np.array(a, dtype=np.float) / clip) * clip
+
+
+def np_bucket(a: np.ndarray, buckets: List[Any], default_value=0, side='mid') -> np.ndarray:
+    '''
+    Given a numpy array and a sorted list of buckets, assign each element to a bucket.
+    
+    Args:
+        a (np.ndarray): The numpy array of values
+        buckets: (list) List of buckets
+        default_value: Used when we cannot assign an element to any bucket if side is 'left' or 'right'
+        side (str): If set to mid, we use the midpoint between buckets to assign elements
+            'left', assignment <= element
+            'right', assignment >= element
+            Default: 'mid'
+    Return:
+        Return: np.ndarray of same length as a
+        
+    >>> a = np.array([1, 5, 18, 3, 6, 10, 4])
+    >>> buckets = [4, 8, 12]
+    >>> assert np.alltrue(np_bucket(a, buckets, side='left') == np.array([ 0,  4, 12,  0,  4,  8,  4]))
+    >>> assert np.alltrue(np_bucket(a, buckets, default_value=25, side='right') == np.array([ 4,  8, 25,  4,  8, 12,  4])) 
+    >>> assert(np.alltrue(np_bucket(a, buckets) == np.array([ 4,  4, 12,  4,  8, 12,  4])))
+    '''
+    assert side in ['mid', 'left', 'right'], f'unknown side: {side}'
+    if side == 'mid':
+        b = [0.5 * (buckets[i + 1] + buckets[i]) for i in range(len(buckets) - 1)]
+        conditions = [(a < e) for e in b]
+        ret = np.select(conditions, buckets[:-1], default=buckets[-1])
+    else:
+        conditions = [(a < buckets[i]) for i in range(len(buckets))]
+        if side == 'left':
+            buckets = buckets[::-1]
+            conditions = [(a >= buckets[i]) for i in range(len(buckets))]
+        else:
+            conditions = [(a <= buckets[i]) for i in range(len(buckets))]
+        ret = np.select(conditions, buckets, default=default_value)
+    return ret
 
 
 def day_of_week_num(a: Union[np.datetime64, np.ndarray]) -> Union[int, np.ndarray]:
