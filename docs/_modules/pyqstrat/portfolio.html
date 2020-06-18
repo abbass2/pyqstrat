@@ -33,17 +33,17 @@
   <h1>Source code for pyqstrat.portfolio</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">reduce</span>
-<span class="kn">from</span> <span class="nn">pyqstrat.evaluator</span> <span class="k">import</span> <span class="n">compute_return_metrics</span><span class="p">,</span> <span class="n">display_return_metrics</span><span class="p">,</span> <span class="n">plot_return_metrics</span>
-<span class="kn">from</span> <span class="nn">pyqstrat.strategy</span> <span class="k">import</span> <span class="n">Strategy</span>
-<span class="kn">from</span> <span class="nn">pyqstrat.pq_utils</span> <span class="k">import</span> <span class="n">str2date</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
+<span class="kn">from</span> <span class="nn">pyqstrat.evaluator</span> <span class="kn">import</span> <span class="n">compute_return_metrics</span><span class="p">,</span> <span class="n">display_return_metrics</span><span class="p">,</span> <span class="n">plot_return_metrics</span>
+<span class="kn">from</span> <span class="nn">pyqstrat.strategy</span> <span class="kn">import</span> <span class="n">Strategy</span>
+<span class="kn">from</span> <span class="nn">pyqstrat.pq_utils</span> <span class="kn">import</span> <span class="n">str2date</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">MutableMapping</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">MutableMapping</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Tuple</span>
 
 
 <div class="viewcode-block" id="Portfolio"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio">[docs]</a><span class="k">class</span> <span class="nc">Portfolio</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;A portfolio contains one or more strategies that run concurrently so you can test running strategies that are uncorrelated together.&#39;&#39;&#39;</span>
-<div class="viewcode-block" id="Portfolio.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;main&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Portfolio.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;main&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">&#39;&#39;&#39;Args:</span>
 <span class="sd">            name: String used for displaying this portfolio</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -217,8 +217,8 @@
         <span class="n">ev</span> <span class="o">=</span> <span class="n">compute_return_metrics</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">returns</span><span class="o">.</span><span class="n">ret</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">returns</span><span class="o">.</span><span class="n">equity</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">plot_return_metrics</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">())</span></div>
         
-    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.name}</span><span class="s1"> {self.strategies.keys()}&#39;</span></div>
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">strategies</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span></div>
     
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>

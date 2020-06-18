@@ -38,9 +38,14 @@
 </div>
 <div class="section" id="module-pyqstrat.pq_utils">
 <span id="pyqstrat-pq-utils-module"></span><h2>pyqstrat.pq_utils module<a class="headerlink" href="#module-pyqstrat.pq_utils" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="pyqstrat.pq_utils.async_sleep">
-<code class="sig-prename descclassname">pyqstrat.pq_utils.</code><code class="sig-name descname">async_sleep</code><span class="sig-paren">(</span><em class="sig-param">secs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#async_sleep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.async_sleep" title="Permalink to this definition">¶</a></dt>
+<dl class="class">
+<dt id="pyqstrat.pq_utils.Paths">
+<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.pq_utils.</code><code class="sig-name descname">Paths</code><span class="sig-paren">(</span><em class="sig-param">base_path=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#Paths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.Paths" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Conventions for where to read / write data and reports</p>
+<dl class="method">
+<dt id="pyqstrat.pq_utils.Paths.create">
+<code class="sig-name descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#Paths.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.Paths.create" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
@@ -48,27 +53,6 @@
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="pyqstrat.pq_utils.async_waitfor">
-<code class="sig-prename descclassname">pyqstrat.pq_utils.</code><code class="sig-name descname">async_waitfor</code><span class="sig-paren">(</span><em class="sig-param">predicate_func</em>, <em class="sig-param">timeout_secs=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#async_waitfor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.async_waitfor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Keep yielding until either predicate is true or timeout elapses
-Returns when predicate is True.  If timeout elapses we raise an exception</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="pyqstrat.pq_utils.async_yield">
-<code class="sig-prename descclassname">pyqstrat.pq_utils.</code><code class="sig-name descname">async_yield</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#async_yield"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.async_yield" title="Permalink to this definition">¶</a></dt>
-<dd><p>yield so any other async tasks that are ready can run</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="function">
@@ -145,6 +129,16 @@ numpy.datetime64(‘NaT’)</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pq_utils.get_paths">
+<code class="sig-prename descclassname">pyqstrat.pq_utils.</code><code class="sig-name descname">get_paths</code><span class="sig-paren">(</span><em class="sig-param">base_path=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#get_paths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.get_paths" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyqstrat.pq_utils.Paths" title="pyqstrat.pq_utils.Paths"><code class="xref py py-class docutils literal notranslate"><span class="pre">Paths</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -241,13 +235,21 @@ False</p>
 <dl class="function">
 <dt id="pyqstrat.pq_utils.linear_interpolate">
 <code class="sig-prename descclassname">pyqstrat.pq_utils.</code><code class="sig-name descname">linear_interpolate</code><span class="sig-paren">(</span><em class="sig-param">a1</em>, <em class="sig-param">a2</em>, <em class="sig-param">x1</em>, <em class="sig-param">x2</em>, <em class="sig-param">x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#linear_interpolate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.linear_interpolate" title="Permalink to this definition">¶</a></dt>
-<dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;{linear_interpolate(3, 4, 8, 10, 8.9):.3f}&#39;</span><span class="p">)</span>
-<span class="go">3.450</span>
+<dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">linear_interpolate</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">8.9</span><span class="p">)</span> <span class="o">==</span> <span class="mf">3.45</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">linear_interpolate</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">8.9</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">linear_interpolate</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mf">8.9</span><span class="p">)))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">linear_interpolate</span><span class="p">(</span>
+<span class="gp">... </span>   <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">3.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">]),</span>
+<span class="gp">... </span>   <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">4.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">]),</span>
+<span class="gp">... </span>   <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.</span><span class="p">,</span> <span class="mf">8.</span><span class="p">]),</span>
+<span class="gp">... </span>   <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mf">8.</span><span class="p">]),</span>
+<span class="gp">... </span>   <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.9</span><span class="p">,</span> <span class="mf">8.</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">3.45</span><span class="p">,</span> <span class="mf">3.</span><span class="p">])))</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -292,6 +294,38 @@ Returns a float since it can contain fractions of milliseconds as well
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pq_utils.np_bucket">
+<code class="sig-prename descclassname">pyqstrat.pq_utils.</code><code class="sig-name descname">np_bucket</code><span class="sig-paren">(</span><em class="sig-param">a</em>, <em class="sig-param">buckets</em>, <em class="sig-param">default_value=0</em>, <em class="sig-param">side='mid'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#np_bucket"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.np_bucket" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a numpy array and a sorted list of buckets, assign each element to a bucket.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>np.ndarray</em>) – The numpy array of values</p></li>
+<li><p><strong>buckets</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]) – (list) List of buckets</p></li>
+<li><p><strong>default_value</strong> – Used when we cannot assign an element to any bucket if side is ‘left’ or ‘right’</p></li>
+<li><p><strong>side</strong> (<em>str</em>) – If set to mid, we use the midpoint between buckets to assign elements
+‘left’, assignment &lt;= element
+‘right’, assignment &gt;= element
+Default: ‘mid’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>np.ndarray of same length as a</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Return</p>
+</dd>
+</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">buckets</span> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">alltrue</span><span class="p">(</span><span class="n">np_bucket</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">buckets</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="mi">0</span><span class="p">,</span>  <span class="mi">4</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">4</span><span class="p">,</span>  <span class="mi">8</span><span class="p">,</span>  <span class="mi">4</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">alltrue</span><span class="p">(</span><span class="n">np_bucket</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">buckets</span><span class="p">,</span> <span class="n">default_value</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="mi">4</span><span class="p">,</span>  <span class="mi">8</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span>  <span class="mi">4</span><span class="p">,</span>  <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span>  <span class="mi">4</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">alltrue</span><span class="p">(</span><span class="n">np_bucket</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">buckets</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="mi">4</span><span class="p">,</span>  <span class="mi">4</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span>  <span class="mi">4</span><span class="p">,</span>  <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span>  <span class="mi">4</span><span class="p">])))</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -368,10 +402,10 @@ Like scipy.stats.percentileofscore but runs in O(n log(n)) time.
 
 <dl class="function">
 <dt id="pyqstrat.pq_utils.remove_dups">
-<code class="sig-prename descclassname">pyqstrat.pq_utils.</code><code class="sig-name descname">remove_dups</code><span class="sig-paren">(</span><em class="sig-param">l</em>, <em class="sig-param">key_func=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#remove_dups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.remove_dups" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyqstrat.pq_utils.</code><code class="sig-name descname">remove_dups</code><span class="sig-paren">(</span><em class="sig-param">lst</em>, <em class="sig-param">key_func=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#remove_dups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.remove_dups" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove duplicates from a list
-:type l: <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]
-:param l: list to remove duplicates from
+:type lst: <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]
+:param lst: list to remove duplicates from
 :type key_func: <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]
 :param key_func: A function that takes a list element and converts it to a key for detecting dups</p>
 <p>Returns (List): A list with duplicates removed.  This is stable in the sense that original list elements will retain their order</p>
@@ -477,7 +511,7 @@ See pandas.Series.resample</p>
 
 <dl class="function">
 <dt id="pyqstrat.pq_utils.set_defaults">
-<code class="sig-prename descclassname">pyqstrat.pq_utils.</code><code class="sig-name descname">set_defaults</code><span class="sig-paren">(</span><em class="sig-param">df_float_sf=8</em>, <em class="sig-param">df_display_max_rows=200</em>, <em class="sig-param">df_display_max_columns=99</em>, <em class="sig-param">np_seterr='raise'</em>, <em class="sig-param">plot_style='ggplot'</em>, <em class="sig-param">mpl_figsize=(8</em>, <em class="sig-param">6)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#set_defaults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.set_defaults" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyqstrat.pq_utils.</code><code class="sig-name descname">set_defaults</code><span class="sig-paren">(</span><em class="sig-param">df_float_sf=9</em>, <em class="sig-param">df_display_max_rows=200</em>, <em class="sig-param">df_display_max_columns=99</em>, <em class="sig-param">np_seterr='raise'</em>, <em class="sig-param">plot_style='ggplot'</em>, <em class="sig-param">mpl_figsize=(8</em>, <em class="sig-param">6)</em>, <em class="sig-param">jupyter_multiple_display=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#set_defaults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.set_defaults" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set some display defaults to make it easier to view dataframes and graphs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -488,10 +522,21 @@ See pandas.Series.resample</p>
 <li><p><strong>np_seterr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Error mode for numpy warnings.  See numpy seterr function for details.  Set to None to use numpy defaults</p></li>
 <li><p><strong>plot_style</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Style for matplotlib plots.  Set to None to use default plot style.</p></li>
 <li><p><strong>mpl_figsize</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Default figure size to use when displaying matplotlib plots (default 8,6).  Set to None to use defaults</p></li>
+<li><p><strong>jupyter_multiple_display</strong> – If set, and you have multiple outputs in a Jupyter cell, output will contain all of them. Default True</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyqstrat.pq_utils.set_ipython_defaults">
+<code class="sig-prename descclassname">pyqstrat.pq_utils.</code><code class="sig-name descname">set_ipython_defaults</code><span class="sig-paren">(</span><em class="sig-param">jupyter_multiple_display=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_utils.html#set_ipython_defaults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_utils.set_ipython_defaults" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -744,6 +789,90 @@ Default None</p></li>
 <dt id="pyqstrat.pq_types.OrderStatus.OPEN">
 <code class="sig-name descname">OPEN</code><em class="property"> = 'open'</em><a class="headerlink" href="#pyqstrat.pq_types.OrderStatus.OPEN" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyqstrat.pq_types.Price">
+<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.pq_types.</code><code class="sig-name descname">Price</code><span class="sig-paren">(</span><em class="sig-param">timestamp: datetime.datetime</em>, <em class="sig-param">bid: float</em>, <em class="sig-param">ask: float</em>, <em class="sig-param">bid_size: int</em>, <em class="sig-param">ask_size: int</em>, <em class="sig-param">valid: bool = True</em>, <em class="sig-param">properties: Optional[types.SimpleNamespace] = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_types.html#Price"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_types.Price" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">price</span> <span class="o">=</span> <span class="n">Price</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2020</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mf">15.25</span><span class="p">,</span> <span class="mf">15.75</span><span class="p">,</span> <span class="mi">189</span><span class="p">,</span> <span class="mi">300</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">price</span><span class="p">)</span>
+<span class="go">15.25@189/15.75@300</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">price</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">SimpleNamespace</span><span class="p">(</span><span class="n">delta</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">price</span><span class="o">.</span><span class="n">valid</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">price</span><span class="p">)</span>
+<span class="go">15.25@189/15.75@300 delta: -0.3 invalid</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">price</span><span class="o">.</span><span class="n">mid</span><span class="p">())</span>
+<span class="go">15.5</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="pyqstrat.pq_types.Price.invalid">
+<em class="property">static </em><code class="sig-name descname">invalid</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_types.html#Price.invalid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_types.Price.invalid" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyqstrat.pq_types.Price" title="pyqstrat.pq_types.Price"><code class="xref py py-class docutils literal notranslate"><span class="pre">Price</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pq_types.Price.mid">
+<code class="sig-name descname">mid</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_types.html#Price.mid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_types.Price.mid" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyqstrat.pq_types.Price.properties">
+<code class="sig-name descname">properties</code><em class="property"> = None</em><a class="headerlink" href="#pyqstrat.pq_types.Price.properties" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pq_types.Price.set_property">
+<code class="sig-name descname">set_property</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_types.html#Price.set_property"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_types.Price.set_property" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pq_types.Price.spread">
+<code class="sig-name descname">spread</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_types.html#Price.spread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_types.Price.spread" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyqstrat.pq_types.Price.valid">
+<code class="sig-name descname">valid</code><em class="property"> = True</em><a class="headerlink" href="#pyqstrat.pq_types.Price.valid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyqstrat.pq_types.Price.vw_mid">
+<code class="sig-name descname">vw_mid</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_types.html#Price.vw_mid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.pq_types.Price.vw_mid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Volume weighted mid
+&gt;&gt;&gt; price = Price(datetime.datetime(2020, 1, 1), 15.25, 15.75, 189, 300)
+&gt;&gt;&gt; print(f’{price.vw_mid():.4f}’)
+15.4433
+&gt;&gt;&gt; price.bid_size = 0
+&gt;&gt;&gt; price.ask_size = 0
+&gt;&gt;&gt; assert math.isnan(price.vw_mid())</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -1079,7 +1208,7 @@ in which case to take the first valid day later in time.</p></li>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">6</span><span class="p">][</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">nyse</span> <span class="o">=</span> <span class="n">Calendar</span><span class="o">.</span><span class="n">get_calendar</span><span class="p">(</span><span class="n">Calendar</span><span class="o">.</span><span class="n">NYSE</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">formatter</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;float&#39;</span> <span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span> <span class="p">:</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{x:.1f}</span><span class="s1">&#39;</span><span class="p">})</span>  <span class="c1"># After numpy 1.13 positive floats don&#39;t have a leading space for sign</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">formatter</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;float&#39;</span> <span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span> <span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">x</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">})</span>  <span class="c1"># After numpy 1.13 positive floats don&#39;t have a leading space for sign</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">nyse</span><span class="o">.</span><span class="n">num_trading_days</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
 <span class="go">[3.0 0.0 1.0 5.0 nan 8.0 nan 20.0]</span>
 </pre></div>
@@ -1533,8 +1662,8 @@ If not set, it applies to all contract groups.  Default None.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>contract_groups</strong> (list of:obj:<cite>ContractGroup</cite>, optional) – list of contract groups to include.  All if set to None (default)</p></li>
 <li><p><strong>add_pnl</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True (default), include P&amp;L columns in dataframe</p></li>
-<li><p><strong>start_date</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">datetime64</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="docutils literal notranslate"><span class="pre">None</span></code>]) – string or numpy datetime64. Default None</p></li>
-<li><p><strong>end_date</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">datetime64</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="docutils literal notranslate"><span class="pre">None</span></code>]) – string or numpy datetime64: Default None</p></li>
+<li><p><strong>start_date</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">datetime64</span></code>, <code class="docutils literal notranslate"><span class="pre">None</span></code>]) – string or numpy datetime64. Default None</p></li>
+<li><p><strong>end_date</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">datetime64</span></code>, <code class="docutils literal notranslate"><span class="pre">None</span></code>]) – string or numpy datetime64: Default None</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -2079,7 +2208,7 @@ This can be useful for debugging to see stack traces for Exceptions.</p>
 <span id="pyqstrat-plot-module"></span><h2>pyqstrat.plot module<a class="headerlink" href="#module-pyqstrat.plot" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyqstrat.plot.BarPlotAttributes">
-<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">BarPlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">color='red'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#BarPlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.BarPlotAttributes" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">BarPlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">color: str = 'red'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#BarPlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.BarPlotAttributes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyqstrat.plot.DisplayAttributes" title="pyqstrat.plot.DisplayAttributes"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.plot.DisplayAttributes</span></code></a></p>
 <dl class="attribute">
 <dt id="pyqstrat.plot.BarPlotAttributes.color">
@@ -2090,7 +2219,7 @@ This can be useful for debugging to see stack traces for Exceptions.</p>
 
 <dl class="class">
 <dt id="pyqstrat.plot.BoxPlotAttributes">
-<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">BoxPlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">proportional_widths=True</em>, <em class="sig-param">show_means=True</em>, <em class="sig-param">show_all=True</em>, <em class="sig-param">show_outliers=False</em>, <em class="sig-param">notched=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#BoxPlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.BoxPlotAttributes" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">BoxPlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">proportional_widths: bool = True</em>, <em class="sig-param">show_means: bool = True</em>, <em class="sig-param">show_all: bool = True</em>, <em class="sig-param">show_outliers: bool = False</em>, <em class="sig-param">notched: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#BoxPlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.BoxPlotAttributes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyqstrat.plot.DisplayAttributes" title="pyqstrat.plot.DisplayAttributes"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.plot.DisplayAttributes</span></code></a></p>
 <dl class="attribute">
 <dt id="pyqstrat.plot.BoxPlotAttributes.proportional_widths">
@@ -2174,7 +2303,7 @@ Box is at Q1 = 25%, Q3 = 75% quantiles, whiskers are at Q1 - 1.5 * (Q3 - Q1), Q3
 
 <dl class="class">
 <dt id="pyqstrat.plot.CandleStickPlotAttributes">
-<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">CandleStickPlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">colorup='darkgreen'</em>, <em class="sig-param">colordown='#F2583E'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#CandleStickPlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.CandleStickPlotAttributes" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">CandleStickPlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">colorup: str = 'darkgreen'</em>, <em class="sig-param">colordown: str = '#F2583E'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#CandleStickPlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.CandleStickPlotAttributes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyqstrat.plot.DisplayAttributes" title="pyqstrat.plot.DisplayAttributes"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.plot.DisplayAttributes</span></code></a></p>
 <dl class="attribute">
 <dt id="pyqstrat.plot.CandleStickPlotAttributes.colordown">
@@ -2190,11 +2319,11 @@ Box is at Q1 = 25%, Q3 = 75% quantiles, whiskers are at Q1 - 1.5 * (Q3 - Q1), Q3
 
 <dl class="class">
 <dt id="pyqstrat.plot.ContourPlotAttributes">
-<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">ContourPlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">marker='X'</em>, <em class="sig-param">marker_size=50</em>, <em class="sig-param">marker_color='red'</em>, <em class="sig-param">interpolation='linear'</em>, <em class="sig-param">cmap='viridis'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#ContourPlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.ContourPlotAttributes" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">ContourPlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">marker: str = 'X'</em>, <em class="sig-param">marker_size: int = 50</em>, <em class="sig-param">marker_color: str = 'red'</em>, <em class="sig-param">interpolation: str = 'linear'</em>, <em class="sig-param">cmap: matplotlib.colors.Colormap = &lt;matplotlib.colors.LinearSegmentedColormap object at 0x7fb0c1cc1050&gt;</em>, <em class="sig-param">min_level: float = nan</em>, <em class="sig-param">max_level: float = nan</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#ContourPlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.ContourPlotAttributes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyqstrat.plot.DisplayAttributes" title="pyqstrat.plot.DisplayAttributes"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.plot.DisplayAttributes</span></code></a></p>
 <dl class="attribute">
 <dt id="pyqstrat.plot.ContourPlotAttributes.cmap">
-<code class="sig-name descname">cmap</code><em class="property"> = 'viridis'</em><a class="headerlink" href="#pyqstrat.plot.ContourPlotAttributes.cmap" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">cmap</code><em class="property"> = &lt;matplotlib.colors.LinearSegmentedColormap object&gt;</em><a class="headerlink" href="#pyqstrat.plot.ContourPlotAttributes.cmap" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -2215,6 +2344,16 @@ Box is at Q1 = 25%, Q3 = 75% quantiles, whiskers are at Q1 - 1.5 * (Q3 - Q1), Q3
 <dl class="attribute">
 <dt id="pyqstrat.plot.ContourPlotAttributes.marker_size">
 <code class="sig-name descname">marker_size</code><em class="property"> = 50</em><a class="headerlink" href="#pyqstrat.plot.ContourPlotAttributes.marker_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyqstrat.plot.ContourPlotAttributes.max_level">
+<code class="sig-name descname">max_level</code><em class="property"> = nan</em><a class="headerlink" href="#pyqstrat.plot.ContourPlotAttributes.max_level" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyqstrat.plot.ContourPlotAttributes.min_level">
+<code class="sig-name descname">min_level</code><em class="property"> = nan</em><a class="headerlink" href="#pyqstrat.plot.ContourPlotAttributes.min_level" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -2241,7 +2380,7 @@ Box is at Q1 = 25%, Q3 = 75% quantiles, whiskers are at Q1 - 1.5 * (Q3 - Q1), Q3
 
 <dl class="class">
 <dt id="pyqstrat.plot.FilledLinePlotAttributes">
-<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">FilledLinePlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">positive_color='blue'</em>, <em class="sig-param">negative_color='red'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#FilledLinePlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.FilledLinePlotAttributes" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">FilledLinePlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">positive_color: str = 'blue'</em>, <em class="sig-param">negative_color: str = 'red'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#FilledLinePlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.FilledLinePlotAttributes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyqstrat.plot.DisplayAttributes" title="pyqstrat.plot.DisplayAttributes"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.plot.DisplayAttributes</span></code></a></p>
 <p>colorup: Color for bars where close &gt;= open.  Default “darkgreen”
 colordown: Color for bars where open &lt; close.  Default “#F2583E”</p>
@@ -2266,7 +2405,7 @@ colordown: Color for bars where open &lt; close.  Default “#F2583E”</p>
 
 <dl class="class">
 <dt id="pyqstrat.plot.LinePlotAttributes">
-<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">LinePlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">line_type='solid'</em>, <em class="sig-param">line_width=None</em>, <em class="sig-param">color=None</em>, <em class="sig-param">marker=None</em>, <em class="sig-param">marker_size=None</em>, <em class="sig-param">marker_color=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#LinePlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.LinePlotAttributes" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">LinePlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">line_type: Union[str</em>, <em class="sig-param">NoneType] = 'solid'</em>, <em class="sig-param">line_width: Union[int</em>, <em class="sig-param">NoneType] = None</em>, <em class="sig-param">color: Union[str</em>, <em class="sig-param">NoneType] = None</em>, <em class="sig-param">marker: Union[str</em>, <em class="sig-param">NoneType] = None</em>, <em class="sig-param">marker_size: Union[int</em>, <em class="sig-param">NoneType] = None</em>, <em class="sig-param">marker_color: Union[str</em>, <em class="sig-param">NoneType] = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#LinePlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.LinePlotAttributes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyqstrat.plot.DisplayAttributes" title="pyqstrat.plot.DisplayAttributes"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.plot.DisplayAttributes</span></code></a></p>
 <dl class="attribute">
 <dt id="pyqstrat.plot.LinePlotAttributes.color">
@@ -2357,7 +2496,7 @@ Default True</p>
 
 <dl class="class">
 <dt id="pyqstrat.plot.ScatterPlotAttributes">
-<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">ScatterPlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">marker='X'</em>, <em class="sig-param">marker_size=50</em>, <em class="sig-param">marker_color='red'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#ScatterPlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.ScatterPlotAttributes" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">ScatterPlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">marker: str = 'X'</em>, <em class="sig-param">marker_size: int = 50</em>, <em class="sig-param">marker_color: str = 'red'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#ScatterPlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.ScatterPlotAttributes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyqstrat.plot.DisplayAttributes" title="pyqstrat.plot.DisplayAttributes"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.plot.DisplayAttributes</span></code></a></p>
 <dl class="attribute">
 <dt id="pyqstrat.plot.ScatterPlotAttributes.marker">
@@ -2429,7 +2568,7 @@ use fixed notation instead of scientific notation or change number of decimal pl
 
 <dl class="class">
 <dt id="pyqstrat.plot.SurfacePlotAttributes">
-<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">SurfacePlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">marker='X'</em>, <em class="sig-param">marker_size=50</em>, <em class="sig-param">marker_color='red'</em>, <em class="sig-param">interpolation='linear'</em>, <em class="sig-param">cmap='viridis'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#SurfacePlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.SurfacePlotAttributes" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">SurfacePlotAttributes</code><span class="sig-paren">(</span><em class="sig-param">marker: str = 'X'</em>, <em class="sig-param">marker_size: int = 50</em>, <em class="sig-param">marker_color: str = 'red'</em>, <em class="sig-param">interpolation: str = 'linear'</em>, <em class="sig-param">cmap: matplotlib.colors.Colormap = &lt;matplotlib.colors.LinearSegmentedColormap object&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#SurfacePlotAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.SurfacePlotAttributes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyqstrat.plot.DisplayAttributes" title="pyqstrat.plot.DisplayAttributes"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyqstrat.plot.DisplayAttributes</span></code></a></p>
 <dl class="attribute">
 <dt id="pyqstrat.plot.SurfacePlotAttributes.marker">
@@ -2448,12 +2587,12 @@ See scipy.interpolate.griddata for details</p>
 <dl class="attribute">
 <dt id="pyqstrat.plot.SurfacePlotAttributes.cmap">
 <code class="sig-name descname">cmap</code><a class="headerlink" href="#pyqstrat.plot.SurfacePlotAttributes.cmap" title="Permalink to this definition">¶</a></dt>
-<dd><p>Colormap to use (default viridis).  See matplotlib colormap for details</p>
+<dd><p>Colormap to use (default matplotlib.cm.RdBu_r).  See matplotlib colormap for details</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
-<code class="sig-name descname">cmap</code><em class="property"> = 'viridis'</em></dt>
+<code class="sig-name descname">cmap</code><em class="property"> = &lt;matplotlib.colors.LinearSegmentedColormap object&gt;</em></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -2634,7 +2773,7 @@ See scipy.interpolate.griddata for details</p>
 
 <dl class="function">
 <dt id="pyqstrat.plot.draw_3d_plot">
-<code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">draw_3d_plot</code><span class="sig-paren">(</span><em class="sig-param">ax</em>, <em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">z</em>, <em class="sig-param">plot_type</em>, <em class="sig-param">marker='X'</em>, <em class="sig-param">marker_size=50</em>, <em class="sig-param">marker_color='red'</em>, <em class="sig-param">interpolation='linear'</em>, <em class="sig-param">cmap='viridis'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#draw_3d_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.draw_3d_plot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyqstrat.plot.</code><code class="sig-name descname">draw_3d_plot</code><span class="sig-paren">(</span><em class="sig-param">ax</em>, <em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">z</em>, <em class="sig-param">plot_type='contour'</em>, <em class="sig-param">marker='X'</em>, <em class="sig-param">marker_size=50</em>, <em class="sig-param">marker_color='red'</em>, <em class="sig-param">interpolation='linear'</em>, <em class="sig-param">cmap=&lt;matplotlib.colors.LinearSegmentedColormap object&gt;</em>, <em class="sig-param">min_level=nan</em>, <em class="sig-param">max_level=nan</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/plot.html#draw_3d_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.plot.draw_3d_plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draw a 3d plot.  See XYZData class for explanation of arguments</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
@@ -2642,7 +2781,7 @@ See scipy.interpolate.griddata for details</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">z</span> <span class="o">=</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">y</span> <span class="o">**</span> <span class="mi">2</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="n">has_display</span><span class="p">():</span>
 <span class="gp">... </span>   <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
-<span class="gp">... </span>   <span class="n">draw_3d_plot</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">z</span><span class="p">,</span> <span class="n">plot_type</span> <span class="o">=</span> <span class="s1">&#39;contour&#39;</span><span class="p">,</span> <span class="n">interpolation</span> <span class="o">=</span> <span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+<span class="gp">... </span>   <span class="n">draw_3d_plot</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">z</span><span class="p">,</span> <span class="n">plot_type</span> <span class="o">=</span> <span class="s1">&#39;contour&#39;</span><span class="p">,</span> <span class="n">interpolation</span> <span class="o">=</span> <span class="s1">&#39;linear&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -3906,6 +4045,12 @@ the prices or quantities are 0, sets them to NAN</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>record</strong> – Any subclass of <a class="reference internal" href="#pyqstrat.pyqstrat_cpp.Record" title="pyqstrat.pyqstrat_cpp.Record"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Record</span></code></a></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>true if we want to include this record, false if not</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -5543,7 +5688,7 @@ and returns a subclass of <code class="xref py py-obj docutils literal notransla
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">trade_bar</span><span class="o">.</span><span class="n">timestamps</span><span class="p">)</span>
 <span class="go">[&#39;2018-01-05T00:00:00.000000000&#39; &#39;2018-01-07T00:00:00.000000000&#39;</span>
 <span class="go"> &#39;2018-01-09T00:00:00.000000000&#39; &#39;2018-01-10T00:00:00.000000000&#39;]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">formatter</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;float&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{x:.4f}</span><span class="s1">&#39;</span><span class="p">})</span>  <span class="c1"># After numpy 1.13 positive floats don&#39;t have a leading space for sign</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">formatter</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;float&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">x</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">})</span>  <span class="c1"># After numpy 1.13 positive floats don&#39;t have a leading space for sign</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">trade_bar</span><span class="o">.</span><span class="n">o</span><span class="p">,</span> <span class="n">trade_bar</span><span class="o">.</span><span class="n">c</span><span class="p">)</span>
 <span class="go">[9.0000 nan 10.0000 11.0000] [8.1000 nan 8.2000 8.3000]</span>
 </pre></div>
@@ -5803,6 +5948,7 @@ the date and roll condition functions are met.</p>
 <em class="property">static </em><code class="sig-name descname">get_current_symbol</code><span class="sig-paren">(</span><em class="sig-param">curr_date</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture.get_current_symbol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyqstrat.markets.EminiFuture.get_current_symbol" title="Permalink to this definition">¶</a></dt>
 <dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_current_symbol</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">14</span><span class="p">))</span> <span class="o">==</span> <span class="s1">&#39;ESH9&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_current_symbol</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span> <span class="o">==</span> <span class="s1">&#39;ESM9&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_current_symbol</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2020</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">14</span><span class="p">))</span> <span class="o">==</span> <span class="s1">&#39;ESH0&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
