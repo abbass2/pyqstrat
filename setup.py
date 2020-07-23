@@ -199,6 +199,9 @@ class PyTest(TestCommand):
         errcode = pytest.main(self.test_args)
         sys.exit(errcode)
 
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
+
 setup(
     name='pyqstrat',
     version=__version__,
@@ -208,14 +211,7 @@ setup(
     license='BSD',
     tests_require=['pytest'],
     python_requires='>=3.7',
-    install_requires=['pandas>=0.22',
-                      'numpy>=1.14',
-                      'matplotlib>=2.2.2',
-                      'scipy >= 1.0.0',
-		      'ipython>=6.5.0',
-                      'pybind11>=2.2',
-                      'sortedcontainers>=2.0.5'
-                    ],
+    install_requires=requirements,
     description='fast / extensible library for backtesting quantitative strategies',
     long_description=long_description,
     ext_modules=ext_modules,
