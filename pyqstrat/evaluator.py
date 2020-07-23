@@ -53,8 +53,7 @@ def compute_num_periods(timestamps: np.ndarray, periods_per_year: float) -> floa
         timestamps (np.ndarray of np.datetime64): a numpy array of returns, can contain nans
         periods_per_year: number of periods between first and last return
          
-    >>> compute_num_periods(np.array(['2015-01-01', '2015-03-01', '2015-05-01'], dtype='M8[D]'), 6)
-    2.0
+    >>> assert(compute_num_periods(np.array(['2015-01-01', '2015-03-01', '2015-05-01'], dtype='M8[D]'), 6) == 2)
     '''
     if not len(timestamps): return np.nan
     assert(monotonically_increasing(timestamps))
