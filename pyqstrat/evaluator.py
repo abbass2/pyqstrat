@@ -209,7 +209,9 @@ def compute_maxdd_start(rolling_dd_dates: np.ndarray, rolling_dd: np.ndarray, md
         percentages and date of the max draw down'''
     if not len(rolling_dd_dates) or pd.isnull(mdd_date): return pd.NaT
     assert(len(rolling_dd_dates) == len(rolling_dd))
-    return rolling_dd_dates[(rolling_dd <= 0) & (rolling_dd_dates < mdd_date)][-1]
+    maxdd_dates = rolling_dd_dates[(rolling_dd <= 0) & (rolling_dd_dates < mdd_date)]
+    if not len(maxdd_dates): return pd.NaT
+    return maxdd_dates[-1]
 
 
 def compute_mar(returns: np.ndarray, periods_per_year: float, mdd_pct: float) -> float:
