@@ -4,7 +4,7 @@ import statsmodels as sm
 import statsmodels.api as smapi
 import math
 from pyqstrat.pq_utils import monotonically_increasing, infer_frequency
-from pyqstrat.plot import TimeSeries, DateLine, Subplot, HorizontalLine, BucketedValues, Plot
+from pyqstrat.plot import TimeSeries, DateLine, Subplot, HorizontalLine, BucketedValues, Plot, LinePlotAttributes
 import matplotlib as mpl
 import matplotlib.figure as mpl_fig
 from typing import Tuple, Sequence, Mapping, MutableMapping, Optional, Any, Callable, Dict
@@ -25,6 +25,7 @@ def compute_periods_per_year(timestamps: np.ndarray) -> float:
     """
     if not len(timestamps): return np.nan
     freq = infer_frequency(timestamps)
+    if freq == 31: return 12
     return 252. / freq if freq != 0 else np.nan
 
 
@@ -545,32 +546,43 @@ def display_return_metrics(metrics: Mapping[str, Any], float_precision: int = 3)
     return df
 
 
-def plot_return_metrics(metrics: Mapping[str, Any], title: str = None) -> Optional[Tuple[mpl_fig.Figure, mpl.axes.Axes]]:
+def plot_return_metrics(metrics: Mapping[str, Any], 
+                        title: str = None, 
+                        disp_attribs: LinePlotAttributes = None,
+                        drawdown_lines: bool = True, 
+                        zero_line: bool = True,
+                        show_date_gaps: bool = True) -> Optional[Tuple[mpl_fig.Figure, mpl.axes.Axes]]:
     '''
     Plot equity, rolling drawdowns and and a boxplot of annual returns given the output of compute_return_metrics.
     '''
     timestamps = metrics['timestamps']
     equity = metrics['equity']
-    equity = TimeSeries('equity', timestamps=timestamps, values=equity)
+    equity = TimeSeries('equity', timestamps=timestamps, values=equity, display_attributes=disp_attribs)
     mdd_date, mdd_start = metrics['mdd_start'], metrics['mdd_date']
     mdd_date_3yr, mdd_start_3yr = metrics['mdd_start_3yr'], metrics['mdd_date_3yr']
-    drawdown_lines = [DateLine(name='max dd', date=mdd_start, color='red'),
+    
+    if drawdown_lines:
+        date_lines = [DateLine(name='max dd', date=mdd_start, color='red'),
                       DateLine(date=mdd_date, color='red'),
                       DateLine(name='3y dd', date=mdd_start_3yr, color='orange'),
                       DateLine(date=mdd_date_3yr, color='orange')]
+    else:
+        date_lines = []
+        
+    horizontal_lines = [HorizontalLine(metrics['starting_equity'], color='black')] if zero_line else []
     equity_subplot = Subplot(equity, ylabel='Equity', height_ratio=0.6, log_y=True, y_tick_format='${x:,.0f}', 
-                             date_lines=drawdown_lines, horizontal_lines=[HorizontalLine(metrics['starting_equity'], color='black')])     
+                             date_lines=date_lines, horizontal_lines=horizontal_lines)     
 
-    rolling_dd = TimeSeries('drawdowns', timestamps=metrics['rolling_dd'][0], values=metrics['rolling_dd'][1])
-    zero_line = HorizontalLine(y=0, color='black')
-    dd_subplot = Subplot(rolling_dd, ylabel='Drawdowns', height_ratio=0.2, date_lines=drawdown_lines, horizontal_lines=[zero_line])
-    
+    rolling_dd = TimeSeries('drawdowns', timestamps=metrics['rolling_dd'][0], values=metrics['rolling_dd'][1],
+                            display_attributes=disp_attribs)
+    horizontal_lines = [HorizontalLine(y=0, color='black')] if zero_line else []
+    dd_subplot = Subplot(rolling_dd, ylabel='Drawdowns', height_ratio=0.2, date_lines=date_lines, horizontal_lines=horizontal_lines)
     years = metrics['bucketed_returns'][0]
     ann_rets = metrics['bucketed_returns'][1]
     ann_ret = BucketedValues('annual returns', bucket_names=years, bucket_values=ann_rets)
-    ann_ret_subplot = Subplot(ann_ret, ylabel='Annual Returns', height_ratio=0.2, horizontal_lines=[zero_line])
+    ann_ret_subplot = Subplot(ann_ret, ylabel='Annual Returns', height_ratio=0.2, horizontal_lines=horizontal_lines)
     
-    plt = Plot([equity_subplot, dd_subplot, ann_ret_subplot], title=title)
+    plt = Plot([equity_subplot, dd_subplot, ann_ret_subplot], title=title, show_date_gaps=show_date_gaps)
     return plt.draw()
  
 
@@ -583,7 +595,7 @@ def test_evaluator() -> None:
     
     ev = compute_return_metrics(timestamps, rets, starting_equity)
     display_return_metrics(ev.metrics())
-    plot_return_metrics(ev.metrics())
+    plot_return_metrics(ev.metrics(), zero_line=False)
     
     assert(round(ev.metric('sharpe'), 6) == 2.932954)
     assert(round(ev.metric('sortino'), 6) == 5.690878)
@@ -597,3 +609,4 @@ if __name__ == "__main__":
     test_evaluator()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+
