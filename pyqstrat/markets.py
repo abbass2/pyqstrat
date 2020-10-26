@@ -102,7 +102,7 @@ class EminiFuture:
         year = int(curr_future_symbol[3])
         next_month = {'Z': 'H', 'H': 'M', 'M': 'U', 'U': 'Z'}[month]
         next_year = year if next_month != 'H' else year + 1
-        if next_year == 10: next_year == 0
+        if next_year == 10: next_year = 0
         return f'ES{next_month}{next_year}'
     
     @staticmethod
