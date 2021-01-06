@@ -174,7 +174,7 @@ class SimpleDetailTable:
         with detail_widget:
             clear_output()
             if self.colnames: data = data[self.colnames]
-            display(data)
+            display(data.reset_index(drop=True))
                 
         if self.float_format: pd.options.display.float_format = orig_float_format
         if self.min_rows: pd.options.display.min_rows = orig_min_rows
@@ -407,7 +407,7 @@ class InteractivePlot:
 class TestInteractivePlot(unittest.TestCase):
     def test_1(self):
         np.random.seed(0)
-        size = 1000
+        size = 10000
         dte = np.random.randint(5, 10, size)
         put_call = np.random.choice(['put', 'call'], size)
         year = np.random.choice([2018, 2019, 2020, 2021], size)
