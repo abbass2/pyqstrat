@@ -18,7 +18,7 @@ from plotly.subplots import make_subplots
 
 from typing import List, Tuple, Callable, Any, Sequence, Dict, Optional
 import traitlets
-import pyqstrat as pq
+from pyqstrat.pq_utils import bootstrap_ci, np_bucket, get_paths, get_child_logger
 
 
 # Local Imports
@@ -26,9 +26,8 @@ ROOT_DIR = os.path.join(sys.path[0])
 sys.path.insert(1, ROOT_DIR)
 
 # Constants and Globals
-_paths = pq.get_paths('..')
-_calendar = pq.Calendar.get_calendar(pq.Calendar.NYSE)
-_logger = pq.get_child_logger(__name__)
+_paths = get_paths('..')
+_logger = get_child_logger(__name__)
 
 LineDataType = Tuple[str, 
                      pd.DataFrame, 
@@ -66,6 +65,10 @@ UpdateFormFuncType = Callable[[int], None]
 CreateSelectionWidgetsFunctype = Callable[[Dict[str, str], Dict[str, str], UpdateFormFuncType], Dict[str, Any]]
 
 
+def percentile_buckets(a: np.ndarray, n=10):
+    return np_bucket(a, np.nanpercentile(a, np.arange(0, 100, int(round(100 / n)))))
+
+
 def display_form(form_widgets: Sequence[widgets.Widget]) -> None:
     clear_output()
     box_layout = widgets.Layout(
@@ -79,12 +82,15 @@ def display_form(form_widgets: Sequence[widgets.Widget]) -> None:
     
     
 class SimpleTransform:
+    '''
+    Initial transformation of data.  For example, you might add columns that are quantiles of other columns
+    '''
     def __init__(self, transforms: List[Tuple[str, str, SeriesTransformFuncType]] = None) -> None:
         self.transforms = [] if transforms is None else transforms
         
     def __call__(self, data: pd.DataFrame) -> pd.DataFrame:
-        for (colname, label, func) in self.transforms:
-            data[label] = func(data[colname])
+        for (colname, new_colname, func) in self.transforms:
+            data[new_colname] = func(data[colname])
         return data
     
 
@@ -112,14 +118,14 @@ class MeanWithCI:
     '''
     Computes mean (or median) and optionally confidence intervals for plotting
     '''
-    def __init__(self, mean: bool = True, ci_level: int = 0) -> None:
+    def __init__(self, mean_func: Callable[[np.ndarray], np.ndarray] = np.mean, ci_level: int = 0) -> None:
         '''
         Args:
-            mean: If set, compute mean, otherwise compute median. Default True
+            mean: The function to compute ci for
             ci_level: Set to 0 for no confidence intervals, or the level you want.
                 For example, set to 95 to compute a 95% confidence interval. Default 0
         '''
-        self.mean = mean
+        self.mean_func = mean_func
         self.ci_level = ci_level
         
     def __call__(self, filtered_data: pd.DataFrame, xcol: str, ycol: str, zcol: str) -> List[LineDataType]:
@@ -132,11 +138,20 @@ class MeanWithCI:
         cols = [col for col in filtered_data.columns if col not in [xcol, ycol, zcol]]
         df = filtered_data[[xcol, ycol, zcol] + cols]
         ret = []
-        
+        columns=[xcol, ycol] if not self.ci_level else [xcol, ycol, f'd_{self.ci_level}', f'u_{self.ci_level}']
         for zvalue in zvals:
             df = filtered_data[filtered_data[zcol] == zvalue]
-            line = df[[xcol, ycol]].groupby(xcol, as_index=False)[[ycol]].mean()
-            line = line[[xcol, ycol]]
+            plt_data: List[Any] = []
+            for x, yseries in df.groupby(xcol).premium:
+                y = yseries.values
+                print(y)
+                mean = self.mean_func(y)
+                if self.ci_level:
+                    ci_up, ci_down = bootstrap_ci(y, self.ci_level / 100)
+                    plt_data.append((x, mean, ci_down, ci_up))
+                else:
+                    plt_data.append((x, mean))
+            line = pd.DataFrame.from_records(plt_data, columns=columns)
             ret.append((zvalue, line, df))
         return ret
     
@@ -275,10 +290,11 @@ class LineGraphWithDetailDisplay:
                 x=x,
                 y=y,
                 mode=marker_mode,
-                name=zvalue,
+                name=str(zvalue),
                 line=dict(color=color),
                 hovertemplate=hovertemplate              
             )
+            
             fig_widget.add_trace(trace, secondary_y=line_config.secondary_y)
             
             if line_config.show_detail:
@@ -307,7 +323,6 @@ class LineGraphWithDetailDisplay:
         '''
         if not len(points.xs): return
         trace_idx = points.trace_index
-        # trace_idx = trace_idx // 2  # we have two traces for each z
         zvalue = list(self.detail_data.keys())[trace_idx]
         _detail_data = self.detail_data[zvalue]
         mask = np.full(len(_detail_data), True)
@@ -393,6 +408,8 @@ class InteractivePlot:
         
         for name in list(self.selection_widgets.keys())[owner_idx + 1:]:
             widget = self.selection_widgets[name]
+            widget_options = self.dim_filter_func(self.data, name, dim_select_conditions)
+            _logger.info(f'setting values: {widget_options} on widget: {name}')
             widget.options = self.dim_filter_func(self.data, name, dim_select_conditions)
             
         if owner_idx == -1: return
@@ -422,7 +439,7 @@ class TestInteractivePlot(unittest.TestCase):
         ip.create_pivot('delta_rnd', 'premium', 'put_call', dimensions={'year': 2018, 'dte': None})
     
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        data['delta_rnd'] = np.abs(pq.np_bucket(data.delta, np.arange(-0.5, 0.6, 0.1)))
+        data['delta_rnd'] = np.abs(np_bucket(data.delta, np.arange(-0.5, 0.6, 0.1)))
         return data
     
       
@@ -430,3 +447,19 @@ if __name__ == '__main__':
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
     print('done')
+def foo():
+    np.random.seed(0)
+        size = 10000
+        dte = np.random.randint(5, 10, size)
+        put_call = np.random.choice(['put', 'call'], size)
+        year = np.random.choice([2018, 2019, 2020, 2021], size)
+        delta = np.random.uniform(0, 0.5, size)
+        delta = np.where(put_call == 'call', delta, -delta)
+        premium = np.abs(delta * 10) * dte + np.random.normal(size=size) * dte / 10
+        data = pd.DataFrame({'dte': dte, 'put_call': put_call, 'year': year, 'delta': delta, 'premium': premium})
+
+
+
+        for put_call, g in data.groupby('put_call').premium:
+            ci_up, ci_down = pq.bootstrap_ci(g)
+

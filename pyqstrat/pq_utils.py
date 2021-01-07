@@ -537,6 +537,38 @@ def linear_interpolate(a1: Union[np.ndarray, float],
                     np.where(x2 == x1, np.nan, a1 + (a2 - a1) * (x - x1) / diff))
 
 
+def bootstrap_ci(a: np.ndarray, 
+              n: int = 1000, 
+              func: Callable[[np.ndarray], np.ndarray] = np.mean, 
+              ci: float = 0.95) -> Tuple[float, float]:
+    '''
+    Non parametric bootstrap for confidence intervals
+    Args:
+        a: The data to bootstrap from
+        n: Number of boostrap iterations. Default 1000
+        func: The function to use, e.g np.mean or np.median. Default np.mean
+        ci: The confidence interval level, e.g. 0.95 for 95%.  Default 0.95
+        
+    Return:
+        A tuple containing the lower and upper ci
+    >>> np.random.seed(0)
+    >>> x = np.random.uniform(high=10, size=100000)
+    >>> print(np.mean(x))
+    >>> assert np.allclose(bootstrap_ci(x), (4.9773159, 5.010328))
+    '''
+    simulations = np.full(n, np.nan)
+    sample_size = len(a)
+    for c in range(n):
+        itersample = np.random.choice(a, size=sample_size, replace=True)
+        simulations[c] = func(itersample)
+    simulations.sort()
+    u_pval = (1 + ci) / 2.
+    l_pval = (1 - u_pval)
+    l_indx = int(np.floor(n * l_pval))
+    u_indx = int(np.floor(n * u_pval))
+    return(simulations[l_indx], simulations[u_indx])
+
+
 def _add_stream_handler(logger: logging.Logger, log_level: int = logging.INFO, formatter: logging.Formatter = None) -> None:
     if formatter is None: formatter = logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT)
     stream_handler = logging.StreamHandler(sys.stdout)
