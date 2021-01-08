@@ -1,0 +1,609 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pyqstrat.interactive_plot &#8212; pyqstrat 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyqstrat.interactive_plot</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Library Imports</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">colorsys</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">import</span> <span class="nn">unittest</span>
+<span class="kn">import</span> <span class="nn">doctest</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">IPython.core.display</span> <span class="kn">import</span> <span class="n">display</span>
+<span class="kn">from</span> <span class="nn">IPython.core.display</span> <span class="kn">import</span> <span class="n">clear_output</span>
+<span class="kn">from</span> <span class="nn">ipywidgets</span> <span class="kn">import</span> <span class="n">widgets</span>
+<span class="kn">import</span> <span class="nn">plotly</span>
+<span class="kn">import</span> <span class="nn">plotly.callbacks</span>
+<span class="kn">import</span> <span class="nn">plotly.graph_objects</span> <span class="k">as</span> <span class="nn">go</span>
+<span class="kn">from</span> <span class="nn">plotly.subplots</span> <span class="kn">import</span> <span class="n">make_subplots</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">import</span> <span class="nn">traitlets</span>
+<span class="kn">from</span> <span class="nn">pyqstrat.pq_utils</span> <span class="kn">import</span> <span class="n">bootstrap_ci</span><span class="p">,</span> <span class="n">np_bucket</span><span class="p">,</span> <span class="n">get_paths</span><span class="p">,</span> <span class="n">get_child_logger</span>
+
+
+<span class="c1"># Local Imports</span>
+<span class="n">ROOT_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ROOT_DIR</span><span class="p">)</span>
+
+<span class="c1"># Constants and Globals</span>
+<span class="n">_paths</span> <span class="o">=</span> <span class="n">get_paths</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span>
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">get_child_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">DEFAULT_PLOTLY_COLORS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;rgb(31, 119, 180)&#39;</span><span class="p">,</span> <span class="s1">&#39;rgb(255, 127, 14)&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;rgb(44, 160, 44)&#39;</span><span class="p">,</span> <span class="s1">&#39;rgb(214, 39, 40)&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;rgb(148, 103, 189)&#39;</span><span class="p">,</span> <span class="s1">&#39;rgb(140, 86, 75)&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;rgb(227, 119, 194)&#39;</span><span class="p">,</span> <span class="s1">&#39;rgb(127, 127, 127)&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;rgb(188, 189, 34)&#39;</span><span class="p">,</span> <span class="s1">&#39;rgb(23, 190, 207)&#39;</span><span class="p">]</span>
+
+
+<span class="n">LineDataType</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> 
+                     <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> 
+                     <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]]</span>
+    
+<span class="n">DimensionFilterType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span>
+    <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="nb">str</span><span class="p">,</span>
+    <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+
+<span class="n">DataFilterType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span>
+    <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
+    <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span>
+
+<span class="n">StatFuncType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">LineDataType</span><span class="p">]]</span>
+
+<span class="n">DetailDisplayType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span>
+    <span class="n">widgets</span><span class="o">.</span><span class="n">Widget</span><span class="p">,</span> 
+    <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span>
+    <span class="kc">None</span><span class="p">]</span>
+
+
+<span class="n">PlotFuncType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">LineDataType</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="n">widgets</span><span class="o">.</span><span class="n">Widget</span><span class="p">]]</span>
+
+<span class="n">DataFrameTransformFuncType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span>
+
+<span class="n">SeriesTransformFuncType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]</span>
+
+<span class="n">DisplayFormFuncType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">widgets</span><span class="o">.</span><span class="n">Widget</span><span class="p">]],</span> <span class="kc">None</span><span class="p">]</span>
+
+<span class="n">UpdateFormFuncType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
+
+<span class="n">CreateSelectionWidgetsFunctype</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">UpdateFormFuncType</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+
+
+<div class="viewcode-block" id="percentile_buckets"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.percentile_buckets">[docs]</a><span class="k">def</span> <span class="nf">percentile_buckets</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np_bucket</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanpercentile</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="mi">100</span> <span class="o">/</span> <span class="n">n</span><span class="p">)))))</span></div>
+
+
+<div class="viewcode-block" id="display_form"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.display_form">[docs]</a><span class="k">def</span> <span class="nf">display_form</span><span class="p">(</span><span class="n">form_widgets</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">widgets</span><span class="o">.</span><span class="n">Widget</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">clear_output</span><span class="p">()</span>
+    <span class="n">box_layout</span> <span class="o">=</span> <span class="n">widgets</span><span class="o">.</span><span class="n">Layout</span><span class="p">(</span>
+        <span class="n">display</span><span class="o">=</span><span class="s1">&#39;flex&#39;</span><span class="p">,</span>
+        <span class="n">flex_flow</span><span class="o">=</span><span class="s1">&#39;column&#39;</span><span class="p">,</span>
+        <span class="n">align_items</span><span class="o">=</span><span class="s1">&#39;stretch&#39;</span><span class="p">,</span>
+        <span class="n">border</span><span class="o">=</span><span class="s1">&#39;solid&#39;</span><span class="p">,</span>
+        <span class="n">width</span><span class="o">=</span><span class="s1">&#39;100%&#39;</span><span class="p">)</span>
+    <span class="n">box</span> <span class="o">=</span> <span class="n">widgets</span><span class="o">.</span><span class="n">Box</span><span class="p">(</span><span class="n">children</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">form_widgets</span><span class="p">),</span> <span class="n">layout</span><span class="o">=</span><span class="n">box_layout</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">box</span><span class="p">)</span></div>
+    
+    
+<div class="viewcode-block" id="SimpleTransform"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.SimpleTransform">[docs]</a><span class="k">class</span> <span class="nc">SimpleTransform</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Initial transformation of data.  For example, you might add columns that are quantiles of other columns</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<div class="viewcode-block" id="SimpleTransform.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.SimpleTransform.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transforms</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">SeriesTransformFuncType</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transforms</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">transforms</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">transforms</span></div>
+        
+<div class="viewcode-block" id="SimpleTransform.__call__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.SimpleTransform.__call__">[docs]</a>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">colname</span><span class="p">,</span> <span class="n">new_colname</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transforms</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">new_colname</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">colname</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">data</span></div></div>
+    
+
+<div class="viewcode-block" id="simple_dimension_filter"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.simple_dimension_filter">[docs]</a><span class="k">def</span> <span class="nf">simple_dimension_filter</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">dim_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">selected_values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Produces a list to put into a dropdown for selecting a dimension value</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">selected_values</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">&amp;=</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">mask</span><span class="p">][</span><span class="n">dim_name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>  <span class="c1"># will sort values before returning them</span></div>
+    
+    
+<div class="viewcode-block" id="simple_data_filter"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.simple_data_filter">[docs]</a><span class="k">def</span> <span class="nf">simple_data_filter</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">selected_values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Filters a dataframe based on the selected values</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">selected_values</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">&amp;=</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span></div>
+    
+    
+<div class="viewcode-block" id="MeanWithCI"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.MeanWithCI">[docs]</a><span class="k">class</span> <span class="nc">MeanWithCI</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Computes mean (or median) and optionally confidence intervals for plotting</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<div class="viewcode-block" id="MeanWithCI.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.MeanWithCI.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mean_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">ci_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            mean: The function to compute ci for</span>
+<span class="sd">            ci_level: Set to 0 for no confidence intervals, or the level you want.</span>
+<span class="sd">                For example, set to 95 to compute a 95% confidence interval. Default 0</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mean_func</span> <span class="o">=</span> <span class="n">mean_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ci_level</span> <span class="o">=</span> <span class="n">ci_level</span></div>
+        
+<div class="viewcode-block" id="MeanWithCI.__call__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.MeanWithCI.__call__">[docs]</a>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filtered_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">xcol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ycol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">zcol</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">LineDataType</span><span class="p">]:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        For each unique value of x and z, compute mean (and optionally ci) of y.</span>
+<span class="sd">        Return:</span>
+<span class="sd">            x, y data for plotting lines of the mean of y versus x for each z and the data used to compute the mean</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">zvals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">filtered_data</span><span class="p">[</span><span class="n">zcol</span><span class="p">])</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">filtered_data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">xcol</span><span class="p">,</span> <span class="n">ycol</span><span class="p">,</span> <span class="n">zcol</span><span class="p">]]</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">filtered_data</span><span class="p">[[</span><span class="n">xcol</span><span class="p">,</span> <span class="n">ycol</span><span class="p">,</span> <span class="n">zcol</span><span class="p">]</span> <span class="o">+</span> <span class="n">cols</span><span class="p">]</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">xcol</span><span class="p">,</span> <span class="n">ycol</span><span class="p">]</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ci_level</span> <span class="k">else</span> <span class="p">[</span><span class="n">xcol</span><span class="p">,</span> <span class="n">ycol</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;ci_d_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ci_level</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;ci_u_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ci_level</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">zvalue</span> <span class="ow">in</span> <span class="n">zvals</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">filtered_data</span><span class="p">[</span><span class="n">filtered_data</span><span class="p">[</span><span class="n">zcol</span><span class="p">]</span> <span class="o">==</span> <span class="n">zvalue</span><span class="p">]</span>
+            <span class="n">plt_data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">yseries</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">xcol</span><span class="p">)[</span><span class="n">ycol</span><span class="p">]:</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">yseries</span><span class="o">.</span><span class="n">values</span>
+                <span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_func</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ci_level</span><span class="p">:</span>
+                    <span class="n">ci_up</span><span class="p">,</span> <span class="n">ci_down</span> <span class="o">=</span> <span class="n">bootstrap_ci</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">ci_level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ci_level</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
+                    <span class="n">plt_data</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">ci_down</span><span class="p">,</span> <span class="n">ci_up</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">plt_data</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">mean</span><span class="p">))</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">plt_data</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">)</span>
+            <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">zvalue</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">df</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">ret</span></div></div>
+    
+    
+<div class="viewcode-block" id="SimpleDetailTable"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.SimpleDetailTable">[docs]</a><span class="k">class</span> <span class="nc">SimpleDetailTable</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Displays a pandas DataFrame under a plot that contains the data used to compute a statistic of y for each x, y pair</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+<div class="viewcode-block" id="SimpleDetailTable.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.SimpleDetailTable.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">colnames</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">float_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{:.4g}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">min_rows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            colnames: List of column names to display. If None we display all columns. Default None</span>
+<span class="sd">            float_format: Format for each floating point column. Default {:.4g}</span>
+<span class="sd">            min_rows: Do not truncate the display of the table before this many rows. Default 100</span>
+<span class="sd">       &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">colnames</span> <span class="o">=</span> <span class="n">colnames</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">float_format</span> <span class="o">=</span> <span class="n">float_format</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_rows</span> <span class="o">=</span> <span class="n">min_rows</span></div>
+        
+<div class="viewcode-block" id="SimpleDetailTable.__call__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.SimpleDetailTable.__call__">[docs]</a>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">detail_widget</span><span class="p">:</span> <span class="n">widgets</span><span class="o">.</span><span class="n">Widget</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            detail_widget: The widget to display the data in</span>
+<span class="sd">            data: The dataframe to display</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">float_format</span><span class="p">:</span>
+            <span class="n">orig_float_format</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">float_format</span>
+            <span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">float_format</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">float_format</span><span class="p">)</span><span class="o">.</span><span class="n">format</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_rows</span><span class="p">:</span>
+            <span class="n">orig_min_rows</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">min_rows</span>
+            <span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">min_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_rows</span>
+            
+        <span class="k">with</span> <span class="n">detail_widget</span><span class="p">:</span>
+            <span class="n">clear_output</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">colnames</span><span class="p">:</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">colnames</span><span class="p">]</span>
+            <span class="n">display</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+                
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">float_format</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">float_format</span> <span class="o">=</span> <span class="n">orig_float_format</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_rows</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">min_rows</span> <span class="o">=</span> <span class="n">orig_min_rows</span></div></div>
+            
+            
+<div class="viewcode-block" id="create_selection_dropdowns"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.create_selection_dropdowns">[docs]</a><span class="k">def</span> <span class="nf">create_selection_dropdowns</span><span class="p">(</span><span class="n">dims</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">labels</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">update_form_func</span><span class="p">:</span> <span class="n">UpdateFormFuncType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create a list of selection widgets</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">selection_widgets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">widgets</span><span class="o">.</span><span class="n">Widget</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">dims</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">labels</span> <span class="k">else</span> <span class="n">name</span>
+        <span class="n">widget</span> <span class="o">=</span> <span class="n">widgets</span><span class="o">.</span><span class="n">Dropdown</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;description_width&#39;</span><span class="p">:</span> <span class="s1">&#39;initial&#39;</span><span class="p">})</span>
+        <span class="n">selection_widgets</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">widget</span>
+        
+    <span class="k">for</span> <span class="n">widget</span> <span class="ow">in</span> <span class="n">selection_widgets</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">widget</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">on_widgets_updated</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">update_form_func</span><span class="p">,</span> <span class="n">selection_widgets</span><span class="p">),</span> <span class="n">names</span><span class="o">=</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">selection_widgets</span></div>
+
+
+<div class="viewcode-block" id="on_widgets_updated"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.on_widgets_updated">[docs]</a><span class="k">def</span> <span class="nf">on_widgets_updated</span><span class="p">(</span><span class="n">change</span><span class="p">:</span> <span class="n">traitlets</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">bunch</span><span class="o">.</span><span class="n">Bunch</span><span class="p">,</span> <span class="n">update_form_func</span><span class="p">,</span> <span class="n">selection_widgets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">widgets</span><span class="o">.</span><span class="n">Widget</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Callback called by plotly when widgets are updated by the user.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">owner</span> <span class="o">=</span> <span class="n">change</span><span class="p">[</span><span class="s1">&#39;owner&#39;</span><span class="p">]</span>
+    <span class="n">widgets</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">selection_widgets</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="n">owner_idx</span> <span class="o">=</span> <span class="n">widgets</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">owner</span><span class="p">)</span>
+    <span class="n">update_form_func</span><span class="p">(</span><span class="n">owner_idx</span><span class="p">)</span></div>
+            
+            
+<div class="viewcode-block" id="LineConfig"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.LineConfig">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">LineConfig</span><span class="p">:</span>
+    <span class="n">color</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">thickness</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">secondary_y</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">marker_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;lines+markers&#39;</span>
+    <span class="n">show_detail</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+        
+        
+<span class="k">def</span> <span class="nf">_plotly_color_to_rgb</span><span class="p">(</span><span class="n">plotly_color</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Convert plotly color which is a string into r, g, b values</span>
+<span class="sd">    &gt;&gt;&gt; assert _plotly_color_to_rgb(&#39;rgb(31, 119, 180)&#39;) == (31, 119, 180)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">plotly_color</span> <span class="o">=</span> <span class="n">plotly_color</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;rgb(&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;)&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">plotly_color</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+    <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span>
+
+        
+<span class="k">def</span> <span class="nf">_lighten_color</span><span class="p">(</span><span class="n">r</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">g</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Lighten color so we can show confidence intervals in a lighter shade than the line itself</span>
+<span class="sd">    We convert to hls and increase lightness and decrease saturation</span>
+<span class="sd">    &gt;&gt;&gt; assert _lighten_color(31, 119, 180) == (102, 168, 214)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">hls</span> <span class="o">=</span> <span class="n">colorsys</span><span class="o">.</span><span class="n">rgb_to_hls</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">light_hls</span> <span class="o">=</span> <span class="p">(</span><span class="n">hls</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">hls</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1.5</span><span class="p">,</span> <span class="n">hls</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">rgb</span> <span class="o">=</span> <span class="n">colorsys</span><span class="o">.</span><span class="n">hls_to_rgb</span><span class="p">(</span><span class="o">*</span><span class="n">light_hls</span><span class="p">)</span>
+    <span class="n">rgb</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">rgb</span><span class="p">[</span><span class="mi">0</span><span class="p">])),</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">rgb</span><span class="p">[</span><span class="mi">1</span><span class="p">])),</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">rgb</span><span class="p">[</span><span class="mi">2</span><span class="p">])))</span>
+    <span class="k">return</span> <span class="n">rgb</span>
+    
+        
+<div class="viewcode-block" id="LineGraphWithDetailDisplay"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.LineGraphWithDetailDisplay">[docs]</a><span class="k">class</span> <span class="nc">LineGraphWithDetailDisplay</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Draws line graphs and also includes a detail pane.</span>
+<span class="sd">    When you click on a point on the line graph, the detail pane shows the data used to compute that point.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+<div class="viewcode-block" id="LineGraphWithDetailDisplay.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.LineGraphWithDetailDisplay.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                 <span class="n">display_detail_func</span><span class="p">:</span> <span class="n">DetailDisplayType</span> <span class="o">=</span> <span class="n">SimpleDetailTable</span><span class="p">(),</span> 
+                 <span class="n">line_configs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">LineConfig</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span> 
+                 <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+                 <span class="n">hovertemplate</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            display_detail_func: A function that displays the data on the detail pane. Default SimpleDetailTable</span>
+<span class="sd">            line_configs: Configuration of each line. The key in this dict is the zvalue for that line.  Default {}</span>
+<span class="sd">            title: Title of the graph. Default None</span>
+<span class="sd">            hovertemplate: What to display when we hover over a point on the graph.  See plotly hovertemplate</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">display_detail_func</span> <span class="o">=</span> <span class="n">display_detail_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_configs</span> <span class="o">=</span> <span class="n">line_configs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">title</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hovertemplate</span> <span class="o">=</span> <span class="n">hovertemplate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_line_config</span> <span class="o">=</span> <span class="n">LineConfig</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detail_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xcol</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zvalues</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># trace index by zvalue</span></div>
+ 
+<div class="viewcode-block" id="LineGraphWithDetailDisplay.__call__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.LineGraphWithDetailDisplay.__call__">[docs]</a>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xaxis_title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">yaxis_title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">line_data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">LineDataType</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">widgets</span><span class="o">.</span><span class="n">Widget</span><span class="p">]:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Draw the plot and also set it up so if you click on a point, we display the data used to compute that point.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            line_data: The zvalue, plot data, and detail data for each line to draw. The plot data must have </span>
+<span class="sd">                x as the first column and y as the second column</span>
+<span class="sd">         Return:</span>
+<span class="sd">            A list of widgets to draw.  In this case, a figure widget and a output widget which contains the detail display</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">line_data</span><span class="p">):</span> <span class="k">return</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detail_data</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">secondary_y</span> <span class="o">=</span> <span class="nb">any</span><span class="p">([</span><span class="n">lc</span><span class="o">.</span><span class="n">secondary_y</span> <span class="k">for</span> <span class="n">lc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_configs</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+        
+        <span class="n">fig_widget</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">FigureWidget</span><span class="p">(</span><span class="n">make_subplots</span><span class="p">(</span><span class="n">specs</span><span class="o">=</span><span class="p">[[{</span><span class="s2">&quot;secondary_y&quot;</span><span class="p">:</span> <span class="n">secondary_y</span><span class="p">}]]))</span>
+        <span class="n">detail_widget</span> <span class="o">=</span> <span class="n">widgets</span><span class="o">.</span><span class="n">Output</span><span class="p">()</span>
+        
+        <span class="n">trace_num</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">line_num</span><span class="p">,</span> <span class="p">(</span><span class="n">zvalue</span><span class="p">,</span> <span class="n">line_df</span><span class="p">,</span> <span class="n">_detail_data</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">line_data</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">line_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">xcol</span> <span class="o">=</span> <span class="n">line_df</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">line_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detail_data</span><span class="p">[</span><span class="n">zvalue</span><span class="p">]</span> <span class="o">=</span> <span class="n">_detail_data</span>
+            <span class="n">line_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_configs</span><span class="p">[</span><span class="n">zvalue</span><span class="p">]</span> <span class="k">if</span> <span class="n">zvalue</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_configs</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_line_config</span>
+            <span class="n">marker_mode</span> <span class="o">=</span> <span class="n">line_config</span><span class="o">.</span><span class="n">marker_mode</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="n">line_config</span><span class="o">.</span><span class="n">color</span> <span class="k">if</span> <span class="n">line_config</span><span class="o">.</span><span class="n">color</span> <span class="k">else</span> <span class="n">DEFAULT_PLOTLY_COLORS</span><span class="p">[</span><span class="n">line_num</span><span class="p">]</span>
+            
+            <span class="n">hovertemplate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hovertemplate</span>
+            <span class="n">customdata</span> <span class="o">=</span> <span class="kc">None</span>
+            
+            <span class="k">if</span> <span class="n">hovertemplate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">unique</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">_detail_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">xcol</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">customdata</span> <span class="o">=</span> <span class="n">counts</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">unique</span><span class="p">,</span> <span class="n">x</span><span class="p">)]</span>
+                <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;N: %</span><span class="si">{customdata}</span><span class="s1">&#39;</span>  <span class="c1"># number of entries used to compute each x</span>
+                <span class="n">hovertemplate</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39; Series: </span><span class="si">{</span><span class="n">zvalue</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">xaxis_title</span><span class="si">}</span><span class="s1">: &#39;</span> <span class="o">+</span> <span class="s1">&#39;%</span><span class="si">{x}</span><span class="s1"> &#39;</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">yaxis_title</span><span class="si">}</span><span class="s1">: &#39;</span> <span class="o">+</span> <span class="s1">&#39;%</span><span class="si">{y:.2f}</span><span class="s1">&#39;</span>
+                
+            <span class="n">trace</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+                <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>
+                <span class="n">customdata</span><span class="o">=</span><span class="n">customdata</span><span class="p">,</span>
+                <span class="n">mode</span><span class="o">=</span><span class="n">marker_mode</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">zvalue</span><span class="p">),</span>
+                <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">),</span>
+                <span class="n">hovertemplate</span><span class="o">=</span><span class="n">hovertemplate</span>              
+            <span class="p">)</span>
+           
+            <span class="bp">self</span><span class="o">.</span><span class="n">zvalues</span><span class="p">[</span><span class="n">trace_num</span><span class="p">]</span> <span class="o">=</span> <span class="n">zvalue</span>
+ 
+            <span class="n">fig_widget</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="n">secondary_y</span><span class="o">=</span><span class="n">line_config</span><span class="o">.</span><span class="n">secondary_y</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">line_config</span><span class="o">.</span><span class="n">show_detail</span><span class="p">:</span>
+                <span class="n">fig_widget</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">trace_num</span><span class="p">]</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_graph_click</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">trace_num</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line_df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># x, y, ci up and ci down </span>
+                <span class="n">fill_color</span> <span class="o">=</span> <span class="n">_plotly_color_to_rgb</span><span class="p">(</span><span class="n">color</span><span class="p">)</span>
+                <span class="n">fill_color</span> <span class="o">=</span> <span class="n">_lighten_color</span><span class="p">(</span><span class="o">*</span><span class="n">fill_color</span><span class="p">)</span>
+                <span class="c1"># we set transparency to 0.5 so we can see lines under the ci fill</span>
+                <span class="n">fill_color_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;rgba(</span><span class="si">{</span><span class="n">fill_color</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">fill_color</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">fill_color</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s1">,0.5)&#39;</span>
+                <span class="n">ci_down</span> <span class="o">=</span> <span class="n">line_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+                <span class="n">ci_up</span> <span class="o">=</span> <span class="n">line_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+                <span class="n">ci_trace</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                    <span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]]),</span>  <span class="c1"># x, then x reversed</span>
+                    <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">ci_up</span><span class="p">,</span> <span class="n">ci_down</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]]),</span>  <span class="c1"># upper, then lower reversed</span>
+                    <span class="n">fill</span><span class="o">=</span><span class="s1">&#39;toself&#39;</span><span class="p">,</span>
+                    <span class="n">fillcolor</span><span class="o">=</span><span class="n">fill_color_str</span><span class="p">,</span>
+                    <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;rgba(255,255,255,0)&#39;</span><span class="p">),</span>
+                    <span class="n">hoverinfo</span><span class="o">=</span><span class="s2">&quot;skip&quot;</span><span class="p">,</span>
+                    <span class="n">showlegend</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            
+                <span class="n">fig_widget</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">ci_trace</span><span class="p">,</span> <span class="n">secondary_y</span><span class="o">=</span><span class="n">line_config</span><span class="o">.</span><span class="n">secondary_y</span><span class="p">)</span>
+                <span class="n">trace_num</span> <span class="o">+=</span> <span class="mi">1</span>
+            
+        <span class="n">fig_widget</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">xaxis_title</span><span class="o">=</span><span class="n">xaxis_title</span><span class="p">)</span>
+        <span class="n">fig_widget</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">yaxis_title</span><span class="o">=</span><span class="n">yaxis_title</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">secondary_y</span><span class="p">:</span>
+            <span class="n">fig_widget</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="n">yaxis_title</span><span class="p">,</span> <span class="n">secondary_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">fig_widget</span> <span class="o">=</span> <span class="n">fig_widget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detail_widget</span> <span class="o">=</span> <span class="n">detail_widget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_data</span> <span class="o">=</span> <span class="n">line_data</span>
+                        
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">fig_widget</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">detail_widget</span><span class="p">]</span></div>
+    
+    <span class="k">def</span> <span class="nf">_on_graph_click</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                        <span class="n">trace</span><span class="p">:</span> <span class="n">go</span><span class="o">.</span><span class="n">Trace</span><span class="p">,</span> 
+                        <span class="n">points</span><span class="p">:</span> <span class="n">plotly</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">Points</span><span class="p">,</span> 
+                        <span class="n">selector</span><span class="p">:</span> <span class="n">plotly</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">InputDeviceState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Callback called by plotly when you click on a point on the graph.</span>
+<span class="sd">        When you click on a point, we display the dataframe with the data we used to compute that point.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="o">.</span><span class="n">xs</span><span class="p">):</span> <span class="k">return</span>
+        <span class="n">trace_idx</span> <span class="o">=</span> <span class="n">points</span><span class="o">.</span><span class="n">trace_index</span>
+        <span class="n">zvalue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zvalues</span><span class="p">[</span><span class="n">trace_idx</span><span class="p">]</span>
+        <span class="n">_detail_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detail_data</span><span class="p">[</span><span class="n">zvalue</span><span class="p">]</span>
+        <span class="n">_detail_data</span> <span class="o">=</span> <span class="n">_detail_data</span><span class="p">[</span><span class="n">_detail_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">xcol</span><span class="p">]</span><span class="o">.</span><span class="n">values</span> <span class="o">==</span> <span class="n">points</span><span class="o">.</span><span class="n">xs</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">display_detail_func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detail_widget</span><span class="p">,</span> <span class="n">_detail_data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InteractivePlot"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.InteractivePlot">[docs]</a><span class="k">class</span> <span class="nc">InteractivePlot</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Creates a multidimensional interactive plot off a dataframe.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<div class="viewcode-block" id="InteractivePlot.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.InteractivePlot.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+                 <span class="n">labels</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">transform_func</span><span class="p">:</span> <span class="n">DataFrameTransformFuncType</span> <span class="o">=</span> <span class="n">SimpleTransform</span><span class="p">(),</span>
+                 <span class="n">create_selection_widgets_func</span><span class="p">:</span> <span class="n">CreateSelectionWidgetsFunctype</span> <span class="o">=</span> <span class="n">create_selection_dropdowns</span><span class="p">,</span>
+                 <span class="n">dim_filter_func</span><span class="p">:</span> <span class="n">DimensionFilterType</span> <span class="o">=</span> <span class="n">simple_dimension_filter</span><span class="p">,</span>
+                 <span class="n">data_filter_func</span><span class="p">:</span> <span class="n">DataFilterType</span> <span class="o">=</span> <span class="n">simple_data_filter</span><span class="p">,</span>
+                 <span class="n">stat_func</span><span class="p">:</span> <span class="n">StatFuncType</span> <span class="o">=</span> <span class="n">MeanWithCI</span><span class="p">(),</span>
+                 <span class="n">plot_func</span><span class="p">:</span> <span class="n">PlotFuncType</span> <span class="o">=</span> <span class="n">LineGraphWithDetailDisplay</span><span class="p">(),</span>
+                 <span class="n">display_form_func</span><span class="p">:</span> <span class="n">DisplayFormFuncType</span> <span class="o">=</span> <span class="n">display_form</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            data: The pandas dataframe to use for plotting</span>
+<span class="sd">            labels: A dict where column names from the dataframe are mapped to user friendly labels. For any column names</span>
+<span class="sd">                not found as keys in this dict, we use the column name as the label. Default None</span>
+<span class="sd">            dim_filter_func: A function that generates the values of a dimension based on other dimensions. For example, if </span>
+<span class="sd">                the user chooses &quot;Put Option&quot; in a put/call dropdown, the valid strikes could change in a Strike </span>
+<span class="sd">                dropdown that follows. Default simple_dimension_filter</span>
+<span class="sd">            data_filter_func: A function that filters the data to plot. For example, if the user chooses &quot;Put Option&quot; in a put/call dropdown,</span>
+<span class="sd">                we could filter the dataframe to only include put options. Default simple_data_filter</span>
+<span class="sd">            stat_func: Once we have filtered the data, we may need to plot some statistics, such as mean and confidence intervals.</span>
+<span class="sd">                In this function, we compute these statistics. Default MeanWithCI()</span>
+<span class="sd">            plot_func: A function that plots the data.  This could also display detail data used to compute the statistics associated</span>
+<span class="sd">                with each data point.</span>
+<span class="sd">            display_form_func: A function that displays the form given a list of plotly widgets (including the graph widget)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">transform_func</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_selection_widgets_func</span> <span class="o">=</span> <span class="n">create_selection_widgets_func</span>
+        <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">labels</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dim_filter_func</span> <span class="o">=</span> <span class="n">dim_filter_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_filter_func</span> <span class="o">=</span> <span class="n">data_filter_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stat_func</span> <span class="o">=</span> <span class="n">stat_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_func</span> <span class="o">=</span> <span class="n">plot_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">display_form_func</span> <span class="o">=</span> <span class="n">display_form_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selection_widgets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span></div>
+        
+<div class="viewcode-block" id="InteractivePlot.create_pivot"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.InteractivePlot.create_pivot">[docs]</a>    <span class="k">def</span> <span class="nf">create_pivot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xcol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ycol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">zcol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create the initial pivot</span>
+<span class="sd">        Args:</span>
+<span class="sd">            xcol: Column name to use as the x axis in the DataFrame</span>
+<span class="sd">            ycol: Column name to use as the y axis in the DataFrame</span>
+<span class="sd">            zcol: Column name to use for z-values. Each zvalue can be used for a different trace within this plot. For example, a column</span>
+<span class="sd">                called &quot;option_type&quot; could contain the values &quot;American&quot;, &quot;European&quot;, &quot;Bermudan&quot; and we could plot the data for each type</span>
+<span class="sd">                in a separate trace</span>
+<span class="sd">            dimensions: The column names used for filter dimensions. For example, we may want to filter by days to expiration and put/call</span>
+<span class="sd">                The key the column name and the value is the initial value for that column. For example, in a </span>
+<span class="sd">                dropdown for Put/Call we may want &quot;Put&quot; to be the initial value set in the dropdown.  Set to None if you </span>
+<span class="sd">                don&#39;t care what initial value is chosen.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xlabel</span> <span class="o">=</span> <span class="n">xcol</span> <span class="k">if</span> <span class="n">xcol</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">xcol</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ylabel</span> <span class="o">=</span> <span class="n">ycol</span> <span class="k">if</span> <span class="n">ycol</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">ycol</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zcol</span> <span class="o">=</span> <span class="n">zcol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xcol</span> <span class="o">=</span> <span class="n">xcol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ycol</span> <span class="o">=</span> <span class="n">ycol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selection_widgets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_selection_widgets_func</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
+        
+<div class="viewcode-block" id="InteractivePlot.update"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.InteractivePlot.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner_idx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Redraw the form using the values of all widgets above and including the one with index owner_idx.</span>
+<span class="sd">        If owner_idx is -1, we redraw everything.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">select_conditions</span> <span class="o">=</span> <span class="p">[(</span><span class="n">name</span><span class="p">,</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">widget</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">selection_widgets</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="n">owner_idx</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">dim_select_conditions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dim_select_conditions</span> <span class="o">=</span> <span class="n">select_conditions</span><span class="p">[:</span><span class="n">owner_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># for selecting lower widget options, use value of widgets above </span>
+        
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selection_widgets</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="n">owner_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]:</span>
+            <span class="n">widget</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selection_widgets</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">widget_options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim_filter_func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">dim_select_conditions</span><span class="p">)</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;setting values: </span><span class="si">{</span><span class="n">widget_options</span><span class="si">}</span><span class="s1"> on widget: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">widget</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim_filter_func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">dim_select_conditions</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="n">owner_idx</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="k">return</span>
+                         
+        <span class="n">filtered_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_filter_func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">select_conditions</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stat_func</span><span class="p">(</span><span class="n">filtered_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xcol</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ycol</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zcol</span><span class="p">)</span>
+        <span class="n">plot_widgets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylabel</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">display_form_func</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selection_widgets</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">+</span> <span class="n">plot_widgets</span><span class="p">)</span></div></div>
+
+        
+<span class="c1"># unit tests</span>
+<div class="viewcode-block" id="TestInteractivePlot"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.TestInteractivePlot">[docs]</a><span class="k">class</span> <span class="nc">TestInteractivePlot</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="TestInteractivePlot.test_interactive_plot"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.TestInteractivePlot.test_interactive_plot">[docs]</a>    <span class="k">def</span> <span class="nf">test_interactive_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="mi">1000</span>
+        <span class="n">dte</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+        <span class="n">put_call</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="s1">&#39;put&#39;</span><span class="p">,</span> <span class="s1">&#39;call&#39;</span><span class="p">],</span> <span class="n">size</span><span class="p">)</span>
+        <span class="n">year</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="mi">2018</span><span class="p">,</span> <span class="mi">2019</span><span class="p">,</span> <span class="mi">2020</span><span class="p">,</span> <span class="mi">2021</span><span class="p">],</span> <span class="n">size</span><span class="p">)</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">put_call</span> <span class="o">==</span> <span class="s1">&#39;call&#39;</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="o">-</span><span class="n">delta</span><span class="p">)</span>
+        <span class="n">premium</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">delta</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span> <span class="o">*</span> <span class="n">dte</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span> <span class="o">*</span> <span class="n">dte</span> <span class="o">/</span> <span class="mi">10</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;dte&#39;</span><span class="p">:</span> <span class="n">dte</span><span class="p">,</span> <span class="s1">&#39;put_call&#39;</span><span class="p">:</span> <span class="n">put_call</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">:</span> <span class="n">year</span><span class="p">,</span> <span class="s1">&#39;delta&#39;</span><span class="p">:</span> <span class="n">delta</span><span class="p">,</span> <span class="s1">&#39;premium&#39;</span><span class="p">:</span> <span class="n">premium</span><span class="p">})</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;premium&#39;</span><span class="p">:</span> <span class="s1">&#39;Premium $&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">:</span> <span class="s1">&#39;Year&#39;</span><span class="p">,</span> <span class="s1">&#39;dte&#39;</span><span class="p">:</span> <span class="s1">&#39;Days to Expiry&#39;</span><span class="p">,</span> <span class="s1">&#39;delta_rnd&#39;</span><span class="p">:</span> <span class="s1">&#39;Delta&#39;</span><span class="p">}</span>
+        <span class="n">secy_line_config</span> <span class="o">=</span> <span class="n">LineConfig</span><span class="p">(</span><span class="n">secondary_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        
+        <span class="n">ip</span> <span class="o">=</span> <span class="n">InteractivePlot</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> 
+                             <span class="n">labels</span><span class="p">,</span> 
+                             <span class="n">transform_func</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span>
+                             <span class="n">stat_func</span><span class="o">=</span><span class="n">MeanWithCI</span><span class="p">(</span><span class="n">ci_level</span><span class="o">=</span><span class="mi">95</span><span class="p">),</span>
+                             <span class="n">plot_func</span><span class="o">=</span><span class="n">LineGraphWithDetailDisplay</span><span class="p">(</span><span class="n">line_configs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;put&#39;</span><span class="p">:</span> <span class="n">secy_line_config</span><span class="p">}))</span>
+        <span class="n">ip</span><span class="o">.</span><span class="n">create_pivot</span><span class="p">(</span><span class="s1">&#39;delta_rnd&#39;</span><span class="p">,</span> <span class="s1">&#39;premium&#39;</span><span class="p">,</span> <span class="s1">&#39;put_call&#39;</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;year&#39;</span><span class="p">:</span> <span class="mi">2018</span><span class="p">,</span> <span class="s1">&#39;dte&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span></div>
+    
+<div class="viewcode-block" id="TestInteractivePlot.transform"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.interactive_plot.TestInteractivePlot.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;delta_rnd&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np_bucket</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">data</span></div></div>
+    
+      
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">unittest</span><span class="o">.</span><span class="n">main</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;first-arg-is-ignored&#39;</span><span class="p">],</span> <span class="n">exit</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">optionflags</span><span class="o">=</span><span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span> <span class="o">|</span> <span class="n">doctest</span><span class="o">.</span><span class="n">ELLIPSIS</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;done&#39;</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyqstrat</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">pyqstrat</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Sal Abbasi.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
