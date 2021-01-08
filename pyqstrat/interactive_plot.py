@@ -321,7 +321,7 @@ class LineGraphWithDetailDisplay:
                 unique, counts = np.unique(_detail_data[self.xcol].values, return_counts=True)
                 customdata = counts[np.searchsorted(unique, x)]
                 hovertemplate = 'N: %{customdata}'  # number of entries used to compute each x
-                hovertemplate += f' Series: {zvalue} {xaxis_title}: ' + '%{x} ' + f'{yaxis_title}: ' + '%{y:.2f}'
+                hovertemplate += f' Series: {zvalue} {xaxis_title}: ' + '%{x:.4g} ' + f'{yaxis_title}: ' + '%{y:.4g}'
                 
             trace = go.Scatter(
                 x=x,
@@ -479,6 +479,7 @@ class TestInteractivePlot(unittest.TestCase):
     def test_interactive_plot(self):
         np.random.seed(0)
         size = 1000
+        
         dte = np.random.randint(5, 10, size)
         put_call = np.random.choice(['put', 'call'], size)
         year = np.random.choice([2018, 2019, 2020, 2021], size)
@@ -486,6 +487,7 @@ class TestInteractivePlot(unittest.TestCase):
         delta = np.where(put_call == 'call', delta, -delta)
         premium = np.abs(delta * 10) * dte + np.random.normal(size=size) * dte / 10
         data = pd.DataFrame({'dte': dte, 'put_call': put_call, 'year': year, 'delta': delta, 'premium': premium})
+        
         labels = {'premium': 'Premium $', 'year': 'Year', 'dte': 'Days to Expiry', 'delta_rnd': 'Delta'}
         secy_line_config = LineConfig(secondary_y=True)
         
@@ -494,14 +496,15 @@ class TestInteractivePlot(unittest.TestCase):
                              transform_func=self.transform,
                              stat_func=MeanWithCI(ci_level=95),
                              plot_func=LineGraphWithDetailDisplay(line_configs={'put': secy_line_config}))
+        
         ip.create_pivot('delta_rnd', 'premium', 'put_call', dimensions={'year': 2018, 'dte': None})
     
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        data['delta_rnd'] = np.abs(np_bucket(data.delta, np.arange(-0.5, 0.6, 0.1)))
+        data['delta_rnd'] = percentile_buckets(np.abs(data.delta), 10)
         return data
     
       
 if __name__ == '__main__':
-    unittest.main(argv=['first-arg-is-ignored'], exit=False)
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
+    unittest.main(argv=['first-arg-is-ignored'], exit=False)
     print('done')
