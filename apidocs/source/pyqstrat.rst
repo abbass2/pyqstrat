@@ -108,6 +108,18 @@ pyqstrat.trade\_bars module
     :show-inheritance:
     :special-members: __call__, __init__
 
+
+		      
+pyqstrat.interactive\_plot module
+---------------------------
+
+.. automodule:: pyqstrat.interactive_plot
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :special-members: __call__, __init__
+
+		      
 pyqstrat.markets module
 -------------------------------------
 

@@ -1,17 +1,18 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>pyqstrat.markets &#8212; pyqstrat 0.1.0 documentation</title>
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -135,7 +136,7 @@
         <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">curr_future_symbol</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
         <span class="n">next_month</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Z&#39;</span><span class="p">:</span> <span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span><span class="p">:</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="s1">&#39;U&#39;</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span><span class="p">:</span> <span class="s1">&#39;Z&#39;</span><span class="p">}[</span><span class="n">month</span><span class="p">]</span>
         <span class="n">next_year</span> <span class="o">=</span> <span class="n">year</span> <span class="k">if</span> <span class="n">next_month</span> <span class="o">!=</span> <span class="s1">&#39;H&#39;</span> <span class="k">else</span> <span class="n">year</span> <span class="o">+</span> <span class="mi">1</span>
-        <span class="k">if</span> <span class="n">next_year</span> <span class="o">==</span> <span class="mi">10</span><span class="p">:</span> <span class="n">next_year</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">next_year</span> <span class="o">==</span> <span class="mi">10</span><span class="p">:</span> <span class="n">next_year</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;ES</span><span class="si">{</span><span class="n">next_month</span><span class="si">}{</span><span class="n">next_year</span><span class="si">}</span><span class="s1">&#39;</span></div>
     
 <div class="viewcode-block" id="EminiFuture.get_expiry"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.markets.EminiFuture.get_expiry">[docs]</a>    <span class="nd">@staticmethod</span>
@@ -259,7 +260,7 @@
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -276,7 +277,7 @@
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>

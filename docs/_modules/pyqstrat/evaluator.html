@@ -1,17 +1,18 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>pyqstrat.evaluator &#8212; pyqstrat 0.1.0 documentation</title>
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -37,7 +38,7 @@
 <span class="kn">import</span> <span class="nn">statsmodels.api</span> <span class="k">as</span> <span class="nn">smapi</span>
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">from</span> <span class="nn">pyqstrat.pq_utils</span> <span class="kn">import</span> <span class="n">monotonically_increasing</span><span class="p">,</span> <span class="n">infer_frequency</span>
-<span class="kn">from</span> <span class="nn">pyqstrat.plot</span> <span class="kn">import</span> <span class="n">TimeSeries</span><span class="p">,</span> <span class="n">DateLine</span><span class="p">,</span> <span class="n">Subplot</span><span class="p">,</span> <span class="n">HorizontalLine</span><span class="p">,</span> <span class="n">BucketedValues</span><span class="p">,</span> <span class="n">Plot</span>
+<span class="kn">from</span> <span class="nn">pyqstrat.plot</span> <span class="kn">import</span> <span class="n">TimeSeries</span><span class="p">,</span> <span class="n">DateLine</span><span class="p">,</span> <span class="n">Subplot</span><span class="p">,</span> <span class="n">HorizontalLine</span><span class="p">,</span> <span class="n">BucketedValues</span><span class="p">,</span> <span class="n">Plot</span><span class="p">,</span> <span class="n">LinePlotAttributes</span>
 <span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
 <span class="kn">import</span> <span class="nn">matplotlib.figure</span> <span class="k">as</span> <span class="nn">mpl_fig</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">MutableMapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span>
@@ -58,6 +59,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">timestamps</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
     <span class="n">freq</span> <span class="o">=</span> <span class="n">infer_frequency</span><span class="p">(</span><span class="n">timestamps</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">freq</span> <span class="o">==</span> <span class="mi">31</span><span class="p">:</span> <span class="k">return</span> <span class="mi">12</span>
     <span class="k">return</span> <span class="mf">252.</span> <span class="o">/</span> <span class="n">freq</span> <span class="k">if</span> <span class="n">freq</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span></div>
 
 
@@ -86,8 +88,7 @@
 <span class="sd">        timestamps (np.ndarray of np.datetime64): a numpy array of returns, can contain nans</span>
 <span class="sd">        periods_per_year: number of periods between first and last return</span>
 <span class="sd">         </span>
-<span class="sd">    &gt;&gt;&gt; compute_num_periods(np.array([&#39;2015-01-01&#39;, &#39;2015-03-01&#39;, &#39;2015-05-01&#39;], dtype=&#39;M8[D]&#39;), 6)</span>
-<span class="sd">    2.0</span>
+<span class="sd">    &gt;&gt;&gt; assert(compute_num_periods(np.array([&#39;2015-01-01&#39;, &#39;2015-03-01&#39;, &#39;2015-05-01&#39;], dtype=&#39;M8[D]&#39;), 6) == 2)</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">timestamps</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
     <span class="k">assert</span><span class="p">(</span><span class="n">monotonically_increasing</span><span class="p">(</span><span class="n">timestamps</span><span class="p">))</span>
@@ -243,7 +244,9 @@
 <span class="sd">        percentages and date of the max draw down&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">rolling_dd_dates</span><span class="p">)</span> <span class="ow">or</span> <span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">mdd_date</span><span class="p">):</span> <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">NaT</span>
     <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rolling_dd_dates</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">rolling_dd</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">rolling_dd_dates</span><span class="p">[(</span><span class="n">rolling_dd</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">rolling_dd_dates</span> <span class="o">&lt;</span> <span class="n">mdd_date</span><span class="p">)][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+    <span class="n">maxdd_dates</span> <span class="o">=</span> <span class="n">rolling_dd_dates</span><span class="p">[(</span><span class="n">rolling_dd</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">rolling_dd_dates</span> <span class="o">&lt;</span> <span class="n">mdd_date</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">maxdd_dates</span><span class="p">):</span> <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">NaT</span>
+    <span class="k">return</span> <span class="n">maxdd_dates</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="compute_mar"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_mar">[docs]</a><span class="k">def</span> <span class="nf">compute_mar</span><span class="p">(</span><span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">mdd_pct</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -577,32 +580,43 @@
     <span class="k">return</span> <span class="n">df</span></div>
 
 
-<div class="viewcode-block" id="plot_return_metrics"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.plot_return_metrics">[docs]</a><span class="k">def</span> <span class="nf">plot_return_metrics</span><span class="p">(</span><span class="n">metrics</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">mpl_fig</span><span class="o">.</span><span class="n">Figure</span><span class="p">,</span> <span class="n">mpl</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">Axes</span><span class="p">]]:</span>
+<div class="viewcode-block" id="plot_return_metrics"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.plot_return_metrics">[docs]</a><span class="k">def</span> <span class="nf">plot_return_metrics</span><span class="p">(</span><span class="n">metrics</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> 
+                        <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+                        <span class="n">disp_attribs</span><span class="p">:</span> <span class="n">LinePlotAttributes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                        <span class="n">drawdown_lines</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> 
+                        <span class="n">zero_line</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                        <span class="n">show_date_gaps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">mpl_fig</span><span class="o">.</span><span class="n">Figure</span><span class="p">,</span> <span class="n">mpl</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">Axes</span><span class="p">]]:</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Plot equity, rolling drawdowns and and a boxplot of annual returns given the output of compute_return_metrics.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">timestamps</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;timestamps&#39;</span><span class="p">]</span>
     <span class="n">equity</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;equity&#39;</span><span class="p">]</span>
-    <span class="n">equity</span> <span class="o">=</span> <span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;equity&#39;</span><span class="p">,</span> <span class="n">timestamps</span><span class="o">=</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">equity</span><span class="p">)</span>
+    <span class="n">equity</span> <span class="o">=</span> <span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;equity&#39;</span><span class="p">,</span> <span class="n">timestamps</span><span class="o">=</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">equity</span><span class="p">,</span> <span class="n">display_attributes</span><span class="o">=</span><span class="n">disp_attribs</span><span class="p">)</span>
     <span class="n">mdd_date</span><span class="p">,</span> <span class="n">mdd_start</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mdd_start&#39;</span><span class="p">],</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mdd_date&#39;</span><span class="p">]</span>
     <span class="n">mdd_date_3yr</span><span class="p">,</span> <span class="n">mdd_start_3yr</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mdd_start_3yr&#39;</span><span class="p">],</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mdd_date_3yr&#39;</span><span class="p">]</span>
-    <span class="n">drawdown_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">DateLine</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;max dd&#39;</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="n">mdd_start</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">),</span>
+    
+    <span class="k">if</span> <span class="n">drawdown_lines</span><span class="p">:</span>
+        <span class="n">date_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">DateLine</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;max dd&#39;</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="n">mdd_start</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">),</span>
                       <span class="n">DateLine</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="n">mdd_date</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">),</span>
                       <span class="n">DateLine</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;3y dd&#39;</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="n">mdd_start_3yr</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">),</span>
                       <span class="n">DateLine</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="n">mdd_date_3yr</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">date_lines</span> <span class="o">=</span> <span class="p">[]</span>
+        
+    <span class="n">horizontal_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">HorizontalLine</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;starting_equity&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)]</span> <span class="k">if</span> <span class="n">zero_line</span> <span class="k">else</span> <span class="p">[]</span>
     <span class="n">equity_subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">(</span><span class="n">equity</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Equity&#39;</span><span class="p">,</span> <span class="n">height_ratio</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">log_y</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">y_tick_format</span><span class="o">=</span><span class="s1">&#39;$</span><span class="si">{x:,.0f}</span><span class="s1">&#39;</span><span class="p">,</span> 
-                             <span class="n">date_lines</span><span class="o">=</span><span class="n">drawdown_lines</span><span class="p">,</span> <span class="n">horizontal_lines</span><span class="o">=</span><span class="p">[</span><span class="n">HorizontalLine</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;starting_equity&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)])</span>     
+                             <span class="n">date_lines</span><span class="o">=</span><span class="n">date_lines</span><span class="p">,</span> <span class="n">horizontal_lines</span><span class="o">=</span><span class="n">horizontal_lines</span><span class="p">)</span>     
 
-    <span class="n">rolling_dd</span> <span class="o">=</span> <span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;drawdowns&#39;</span><span class="p">,</span> <span class="n">timestamps</span><span class="o">=</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;rolling_dd&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;rolling_dd&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
-    <span class="n">zero_line</span> <span class="o">=</span> <span class="n">HorizontalLine</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
-    <span class="n">dd_subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">(</span><span class="n">rolling_dd</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Drawdowns&#39;</span><span class="p">,</span> <span class="n">height_ratio</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">date_lines</span><span class="o">=</span><span class="n">drawdown_lines</span><span class="p">,</span> <span class="n">horizontal_lines</span><span class="o">=</span><span class="p">[</span><span class="n">zero_line</span><span class="p">])</span>
-    
+    <span class="n">rolling_dd</span> <span class="o">=</span> <span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;drawdowns&#39;</span><span class="p">,</span> <span class="n">timestamps</span><span class="o">=</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;rolling_dd&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;rolling_dd&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span>
+                            <span class="n">display_attributes</span><span class="o">=</span><span class="n">disp_attribs</span><span class="p">)</span>
+    <span class="n">horizontal_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">HorizontalLine</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)]</span> <span class="k">if</span> <span class="n">zero_line</span> <span class="k">else</span> <span class="p">[]</span>
+    <span class="n">dd_subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">(</span><span class="n">rolling_dd</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Drawdowns&#39;</span><span class="p">,</span> <span class="n">height_ratio</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">date_lines</span><span class="o">=</span><span class="n">date_lines</span><span class="p">,</span> <span class="n">horizontal_lines</span><span class="o">=</span><span class="n">horizontal_lines</span><span class="p">)</span>
     <span class="n">years</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;bucketed_returns&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">ann_rets</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;bucketed_returns&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">ann_ret</span> <span class="o">=</span> <span class="n">BucketedValues</span><span class="p">(</span><span class="s1">&#39;annual returns&#39;</span><span class="p">,</span> <span class="n">bucket_names</span><span class="o">=</span><span class="n">years</span><span class="p">,</span> <span class="n">bucket_values</span><span class="o">=</span><span class="n">ann_rets</span><span class="p">)</span>
-    <span class="n">ann_ret_subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">(</span><span class="n">ann_ret</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Annual Returns&#39;</span><span class="p">,</span> <span class="n">height_ratio</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">horizontal_lines</span><span class="o">=</span><span class="p">[</span><span class="n">zero_line</span><span class="p">])</span>
+    <span class="n">ann_ret_subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">(</span><span class="n">ann_ret</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Annual Returns&#39;</span><span class="p">,</span> <span class="n">height_ratio</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">horizontal_lines</span><span class="o">=</span><span class="n">horizontal_lines</span><span class="p">)</span>
     
-    <span class="n">plt</span> <span class="o">=</span> <span class="n">Plot</span><span class="p">([</span><span class="n">equity_subplot</span><span class="p">,</span> <span class="n">dd_subplot</span><span class="p">,</span> <span class="n">ann_ret_subplot</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">)</span>
+    <span class="n">plt</span> <span class="o">=</span> <span class="n">Plot</span><span class="p">([</span><span class="n">equity_subplot</span><span class="p">,</span> <span class="n">dd_subplot</span><span class="p">,</span> <span class="n">ann_ret_subplot</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">show_date_gaps</span><span class="o">=</span><span class="n">show_date_gaps</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
  
 
@@ -615,7 +629,7 @@
     
     <span class="n">ev</span> <span class="o">=</span> <span class="n">compute_return_metrics</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">rets</span><span class="p">,</span> <span class="n">starting_equity</span><span class="p">)</span>
     <span class="n">display_return_metrics</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">())</span>
-    <span class="n">plot_return_metrics</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">())</span>
+    <span class="n">plot_return_metrics</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">(),</span> <span class="n">zero_line</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     
     <span class="k">assert</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metric</span><span class="p">(</span><span class="s1">&#39;sharpe&#39;</span><span class="p">),</span> <span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="mf">2.932954</span><span class="p">)</span>
     <span class="k">assert</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metric</span><span class="p">(</span><span class="s1">&#39;sortino&#39;</span><span class="p">),</span> <span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="mf">5.690878</span><span class="p">)</span>
@@ -670,7 +684,7 @@
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -687,7 +701,7 @@
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>

@@ -1,17 +1,18 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>pyqstrat.pq_utils &#8212; pyqstrat 0.1.0 documentation</title>
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -238,13 +239,13 @@
 <span class="sd">            &#39;right&#39;, assignment &gt;= element</span>
 <span class="sd">            Default: &#39;mid&#39;</span>
 <span class="sd">    Return:</span>
-<span class="sd">        Return: np.ndarray of same length as a</span>
+<span class="sd">        np.ndarray of same length as a</span>
 <span class="sd">        </span>
 <span class="sd">    &gt;&gt;&gt; a = np.array([1, 5, 18, 3, 6, 10, 4])</span>
 <span class="sd">    &gt;&gt;&gt; buckets = [4, 8, 12]</span>
-<span class="sd">    &gt;&gt;&gt; assert np.alltrue(np_bucket(a, buckets, side=&#39;left&#39;) == np.array([ 0,  4, 12,  0,  4,  8,  4]))</span>
-<span class="sd">    &gt;&gt;&gt; assert np.alltrue(np_bucket(a, buckets, default_value=25, side=&#39;right&#39;) == np.array([ 4,  8, 25,  4,  8, 12,  4])) </span>
-<span class="sd">    &gt;&gt;&gt; assert(np.alltrue(np_bucket(a, buckets) == np.array([ 4,  4, 12,  4,  8, 12,  4])))</span>
+<span class="sd">    &gt;&gt;&gt; assert np.alltrue(np_bucket(a, buckets, side=&#39;left&#39;) == np.array([0,  4, 12,  0,  4,  8,  4]))</span>
+<span class="sd">    &gt;&gt;&gt; assert np.alltrue(np_bucket(a, buckets, default_value=25, side=&#39;right&#39;) == np.array([4,  8, 25,  4,  8, 12,  4])) </span>
+<span class="sd">    &gt;&gt;&gt; assert(np.alltrue(np_bucket(a, buckets) == np.array([4,  4, 12,  4,  8, 12,  4])))</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">assert</span> <span class="n">side</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;mid&#39;</span><span class="p">,</span> <span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="s1">&#39;right&#39;</span><span class="p">],</span> <span class="sa">f</span><span class="s1">&#39;unknown side: </span><span class="si">{</span><span class="n">side</span><span class="si">}</span><span class="s1">&#39;</span>
     <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="s1">&#39;mid&#39;</span><span class="p">:</span>
@@ -570,6 +571,38 @@
                     <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x2</span> <span class="o">==</span> <span class="n">x1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">a1</span> <span class="o">+</span> <span class="p">(</span><span class="n">a2</span> <span class="o">-</span> <span class="n">a1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">x1</span><span class="p">)</span> <span class="o">/</span> <span class="n">diff</span><span class="p">))</span></div>
 
 
+<div class="viewcode-block" id="bootstrap_ci"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.bootstrap_ci">[docs]</a><span class="k">def</span> <span class="nf">bootstrap_ci</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> 
+                 <span class="n">ci_level</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.95</span><span class="p">,</span>
+                 <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> 
+                 <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Non parametric bootstrap for confidence intervals</span>
+<span class="sd">    Args:</span>
+<span class="sd">        a: The data to bootstrap from</span>
+<span class="sd">        ci_level: The confidence interval level, e.g. 0.95 for 95%.  Default 0.95</span>
+<span class="sd">        n: Number of boostrap iterations. Default 1000</span>
+<span class="sd">        func: The function to use, e.g np.mean or np.median. Default np.mean</span>
+<span class="sd"> </span>
+<span class="sd">        </span>
+<span class="sd">    Return:</span>
+<span class="sd">        A tuple containing the lower and upper ci</span>
+<span class="sd">    &gt;&gt;&gt; np.random.seed(0)</span>
+<span class="sd">    &gt;&gt;&gt; x = np.random.uniform(high=10, size=100000)</span>
+<span class="sd">    &gt;&gt;&gt; assert np.allclose(bootstrap_ci(x), (4.9773159, 5.010328))</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">simulations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">sample_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">itersample</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">sample_size</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">simulations</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">itersample</span><span class="p">)</span>
+    <span class="n">simulations</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    <span class="n">u_pval</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">ci_level</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span>
+    <span class="n">l_pval</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">u_pval</span><span class="p">)</span>
+    <span class="n">l_indx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">l_pval</span><span class="p">))</span>
+    <span class="n">u_indx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">u_pval</span><span class="p">))</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">simulations</span><span class="p">[</span><span class="n">l_indx</span><span class="p">],</span> <span class="n">simulations</span><span class="p">[</span><span class="n">u_indx</span><span class="p">])</span></div>
+
+
 <span class="k">def</span> <span class="nf">_add_stream_handler</span><span class="p">(</span><span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span> <span class="n">log_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="n">formatter</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">formatter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="n">LOG_FORMAT</span><span class="p">,</span> <span class="n">datefmt</span><span class="o">=</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
     <span class="n">stream_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
@@ -685,7 +718,7 @@
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -702,7 +735,7 @@
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
