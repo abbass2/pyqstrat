@@ -14,7 +14,6 @@ from ipywidgets import widgets
 import plotly
 import plotly.callbacks
 import plotly.graph_objects as go
-from plotly.colors import DEFAULT_PLOTLY_COLORS
 from plotly.subplots import make_subplots
 
 from typing import List, Tuple, Callable, Any, Sequence, Dict, Optional
@@ -29,6 +28,13 @@ sys.path.insert(1, ROOT_DIR)
 # Constants and Globals
 _paths = get_paths('..')
 _logger = get_child_logger(__name__)
+
+DEFAULT_PLOTLY_COLORS = ['rgb(31, 119, 180)', 'rgb(255, 127, 14)',
+                         'rgb(44, 160, 44)', 'rgb(214, 39, 40)',
+                         'rgb(148, 103, 189)', 'rgb(140, 86, 75)',
+                         'rgb(227, 119, 194)', 'rgb(127, 127, 127)',
+                         'rgb(188, 189, 34)', 'rgb(23, 190, 207)']
+
 
 LineDataType = Tuple[str, 
                      pd.DataFrame, 
