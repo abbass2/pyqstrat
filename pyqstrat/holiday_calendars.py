@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import collections
+from collections.abc import Iterable
 import datetime
 import os
 import inspect
@@ -202,7 +202,7 @@ class Calendar:
         >>> print(nyse.num_trading_days(df.x, df.y))
         [3.0 0.0 1.0 5.0 nan 8.0 nan 20.0]
         '''
-        iterable = isinstance(start, collections.abc.Iterable) and not isinstance(start, str)
+        iterable = isinstance(start, Iterable) and not isinstance(start, str)
         s_tmp, e_tmp = _normalize(start, end, include_first, include_last)
         # np.busday_count does not like nat dates
         if iterable:

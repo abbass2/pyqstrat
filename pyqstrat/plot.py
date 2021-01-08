@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import collections
+import collections.abc
 import math
 from abc import abstractmethod
 from functools import reduce
@@ -662,6 +663,7 @@ class Subplot:
               use fixed notation instead of scientific notation or change number of decimal places shown.  Default None
         '''
         if not isinstance(data_list, collections.abc.Sequence): data_list = [data_list]
+            
         self.time_plot = all([isinstance(data, TimePlotData) for data in data_list])
         if self.time_plot and any([not isinstance(data, TimePlotData) for data in data_list]):
             raise Exception('cannot add a non date subplot on a subplot which has time series plots')
