@@ -2,11 +2,12 @@
 import os
 import sys
 import math
+import colorsys
+from dataclasses import dataclass
 import unittest
 import doctest
 import pandas as pd
 import numpy as np
-from dataclasses import dataclass
 from IPython.core.display import display
 from IPython.core.display import clear_output
 from ipywidgets import widgets
@@ -138,16 +139,15 @@ class MeanWithCI:
         cols = [col for col in filtered_data.columns if col not in [xcol, ycol, zcol]]
         df = filtered_data[[xcol, ycol, zcol] + cols]
         ret = []
-        columns=[xcol, ycol] if not self.ci_level else [xcol, ycol, f'd_{self.ci_level}', f'u_{self.ci_level}']
+        columns = [xcol, ycol] if not self.ci_level else [xcol, ycol, f'ci_d_{self.ci_level}', f'ci_u_{self.ci_level}']
         for zvalue in zvals:
             df = filtered_data[filtered_data[zcol] == zvalue]
             plt_data: List[Any] = []
-            for x, yseries in df.groupby(xcol).premium:
+            for x, yseries in df.groupby(xcol)[ycol]:
                 y = yseries.values
-                print(y)
                 mean = self.mean_func(y)
                 if self.ci_level:
-                    ci_up, ci_down = bootstrap_ci(y, self.ci_level / 100)
+                    ci_up, ci_down = bootstrap_ci(y, ci_level=self.ci_level / 100)
                     plt_data.append((x, mean, ci_down, ci_up))
                 else:
                     plt_data.append((x, mean))
@@ -230,6 +230,30 @@ class LineConfig:
     show_detail: bool = True
         
         
+def _plotly_color_to_rgb(plotly_color: str) -> Tuple[int, int, int]:
+    '''
+    Convert plotly color which is a string into r, g, b values
+    >>> assert _plotly_color_to_rgb('rgb(31, 119, 180)') == (31, 119, 180)
+    '''
+    plotly_color = plotly_color.replace('rgb(', '').replace(')', '')
+    s = plotly_color.split(',')
+    r, g, b = int(s[0]), int(s[1]), int(s[2])
+    return r, g, b
+
+        
+def _lighten_color(r: int, g: int, b: int) -> Tuple[int, int, int]:
+    '''
+    Lighten color so we can show confidence intervals in a lighter shade than the line itself
+    We convert to hls and increase lightness and decrease saturation
+    >>> assert _lighten_color(31, 119, 180) == (102, 168, 214)
+    '''
+    hls = colorsys.rgb_to_hls(r, g, b)
+    light_hls = (hls[0], hls[1] * 1.5, hls[2] * 0.5)
+    rgb = colorsys.hls_to_rgb(*light_hls)
+    rgb = (int(round(rgb[0])), int(round(rgb[1])), int(round(rgb[2])))
+    return rgb
+    
+        
 class LineGraphWithDetailDisplay:
     '''
     Draws line graphs and also includes a detail pane.
@@ -255,6 +279,7 @@ class LineGraphWithDetailDisplay:
         self.default_line_config = LineConfig()
         self.detail_data: Dict[Any, pd.DataFrame] = {}
         self.xcol = ''
+        self.zvalues: Dict[int, Any] = {}  # trace index by zvalue
  
     def __call__(self, xaxis_title: str, yaxis_title: str, line_data: List[LineDataType]) -> List[widgets.Widget]:
         '''
@@ -271,6 +296,8 @@ class LineGraphWithDetailDisplay:
         
         fig_widget = go.FigureWidget(make_subplots(specs=[[{"secondary_y": secondary_y}]]))
         detail_widget = widgets.Output()
+        
+        trace_num = 0
 
         for line_num, (zvalue, line_df, _detail_data) in enumerate(line_data):
             x = line_df.iloc[:, 0].values
@@ -282,30 +309,54 @@ class LineGraphWithDetailDisplay:
             color = line_config.color if line_config.color else DEFAULT_PLOTLY_COLORS[line_num]
             
             hovertemplate = self.hovertemplate
+            customdata = None
             
             if hovertemplate is None:
-                hovertemplate = f'Series: {zvalue} {xaxis_title}: ' + '%{x} ' + f'{yaxis_title}: ' + '%{y:.2f}'
+                unique, counts = np.unique(_detail_data[self.xcol].values, return_counts=True)
+                customdata = counts[np.searchsorted(unique, x)]
+                hovertemplate = 'N: %{customdata}'  # number of entries used to compute each x
+                hovertemplate += f' Series: {zvalue} {xaxis_title}: ' + '%{x} ' + f'{yaxis_title}: ' + '%{y:.2f}'
                 
             trace = go.Scatter(
                 x=x,
                 y=y,
+                customdata=customdata,
                 mode=marker_mode,
                 name=str(zvalue),
                 line=dict(color=color),
                 hovertemplate=hovertemplate              
             )
-            
+           
+            self.zvalues[trace_num] = zvalue
+ 
             fig_widget.add_trace(trace, secondary_y=line_config.secondary_y)
-            
             if line_config.show_detail:
-                fig_widget.data[line_num].on_click(self._on_graph_click, append=True)
+                fig_widget.data[trace_num].on_click(self._on_graph_click, append=True)
+            trace_num += 1
+
+            if len(line_df.columns) > 2:  # x, y, ci up and ci down 
+                fill_color = _plotly_color_to_rgb(color)
+                fill_color = _lighten_color(*fill_color)
+                # we set transparency to 0.5 so we can see lines under the ci fill
+                fill_color_str = f'rgba({fill_color[0]},{fill_color[1]},{fill_color[2]},0.5)'
+                ci_down = line_df.iloc[:, 2].values
+                ci_up = line_df.iloc[:, 3].values
+                ci_trace = go.Scatter(
+                    x=np.concatenate([x, x[::-1]]),  # x, then x reversed
+                    y=np.concatenate([ci_up, ci_down[::-1]]),  # upper, then lower reversed
+                    fill='toself',
+                    fillcolor=fill_color_str,
+                    line=dict(color='rgba(255,255,255,0)'),
+                    hoverinfo="skip",
+                    showlegend=False)
+            
+                fig_widget.add_trace(ci_trace, secondary_y=line_config.secondary_y)
+                trace_num += 1
             
         fig_widget.update_layout(title=self.title, xaxis_title=xaxis_title)
-        
+        fig_widget.update_layout(yaxis_title=yaxis_title)
         if secondary_y:
             fig_widget.update_yaxes(title_text=yaxis_title, secondary_y=True)
-        else:
-            fig_widget.update_layout(yaxis_title=yaxis_title)
             
         self.fig_widget = fig_widget
         self.detail_widget = detail_widget
@@ -323,12 +374,9 @@ class LineGraphWithDetailDisplay:
         '''
         if not len(points.xs): return
         trace_idx = points.trace_index
-        zvalue = list(self.detail_data.keys())[trace_idx]
+        zvalue = self.zvalues[trace_idx]
         _detail_data = self.detail_data[zvalue]
-        mask = np.full(len(_detail_data), True)
-        x_data = _detail_data[self.xcol].values
-        mask &= (x_data == points.xs[0])
-        _detail_data = _detail_data[mask]
+        _detail_data = _detail_data[_detail_data[self.xcol].values == points.xs[0]]
         self.display_detail_func(self.detail_widget, _detail_data)
 
 
@@ -409,7 +457,7 @@ class InteractivePlot:
         for name in list(self.selection_widgets.keys())[owner_idx + 1:]:
             widget = self.selection_widgets[name]
             widget_options = self.dim_filter_func(self.data, name, dim_select_conditions)
-            _logger.info(f'setting values: {widget_options} on widget: {name}')
+            _logger.debug(f'setting values: {widget_options} on widget: {name}')
             widget.options = self.dim_filter_func(self.data, name, dim_select_conditions)
             
         if owner_idx == -1: return
@@ -420,11 +468,11 @@ class InteractivePlot:
         self.display_form_func(list(self.selection_widgets.values()) + plot_widgets)
 
         
-# Unit Tests
+# unit tests
 class TestInteractivePlot(unittest.TestCase):
-    def test_1(self):
+    def test_interactive_plot(self):
         np.random.seed(0)
-        size = 10000
+        size = 1000
         dte = np.random.randint(5, 10, size)
         put_call = np.random.choice(['put', 'call'], size)
         year = np.random.choice([2018, 2019, 2020, 2021], size)
@@ -433,9 +481,13 @@ class TestInteractivePlot(unittest.TestCase):
         premium = np.abs(delta * 10) * dte + np.random.normal(size=size) * dte / 10
         data = pd.DataFrame({'dte': dte, 'put_call': put_call, 'year': year, 'delta': delta, 'premium': premium})
         labels = {'premium': 'Premium $', 'year': 'Year', 'dte': 'Days to Expiry', 'delta_rnd': 'Delta'}
+        secy_line_config = LineConfig(secondary_y=True)
+        
         ip = InteractivePlot(data, 
                              labels, 
-                             transform_func=self.transform)
+                             transform_func=self.transform,
+                             stat_func=MeanWithCI(ci_level=95),
+                             plot_func=LineGraphWithDetailDisplay(line_configs={'put': secy_line_config}))
         ip.create_pivot('delta_rnd', 'premium', 'put_call', dimensions={'year': 2018, 'dte': None})
     
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -447,19 +499,3 @@ if __name__ == '__main__':
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
     print('done')
-def foo():
-    np.random.seed(0)
-        size = 10000
-        dte = np.random.randint(5, 10, size)
-        put_call = np.random.choice(['put', 'call'], size)
-        year = np.random.choice([2018, 2019, 2020, 2021], size)
-        delta = np.random.uniform(0, 0.5, size)
-        delta = np.where(put_call == 'call', delta, -delta)
-        premium = np.abs(delta * 10) * dte + np.random.normal(size=size) * dte / 10
-        data = pd.DataFrame({'dte': dte, 'put_call': put_call, 'year': year, 'delta': delta, 'premium': premium})
-
-
-
-        for put_call, g in data.groupby('put_call').premium:
-            ci_up, ci_down = pq.bootstrap_ci(g)
-

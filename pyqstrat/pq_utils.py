@@ -538,22 +538,22 @@ def linear_interpolate(a1: Union[np.ndarray, float],
 
 
 def bootstrap_ci(a: np.ndarray, 
-              n: int = 1000, 
-              func: Callable[[np.ndarray], np.ndarray] = np.mean, 
-              ci: float = 0.95) -> Tuple[float, float]:
+                 ci_level: float = 0.95,
+                 n: int = 1000, 
+                 func: Callable[[np.ndarray], np.ndarray] = np.mean) -> Tuple[float, float]:
     '''
     Non parametric bootstrap for confidence intervals
     Args:
         a: The data to bootstrap from
+        ci_level: The confidence interval level, e.g. 0.95 for 95%.  Default 0.95
         n: Number of boostrap iterations. Default 1000
         func: The function to use, e.g np.mean or np.median. Default np.mean
-        ci: The confidence interval level, e.g. 0.95 for 95%.  Default 0.95
+ 
         
     Return:
         A tuple containing the lower and upper ci
     >>> np.random.seed(0)
     >>> x = np.random.uniform(high=10, size=100000)
-    >>> print(np.mean(x))
     >>> assert np.allclose(bootstrap_ci(x), (4.9773159, 5.010328))
     '''
     simulations = np.full(n, np.nan)
@@ -562,7 +562,7 @@ def bootstrap_ci(a: np.ndarray,
         itersample = np.random.choice(a, size=sample_size, replace=True)
         simulations[c] = func(itersample)
     simulations.sort()
-    u_pval = (1 + ci) / 2.
+    u_pval = (1 + ci_level) / 2.
     l_pval = (1 - u_pval)
     l_indx = int(np.floor(n * l_pval))
     u_indx = int(np.floor(n * u_pval))

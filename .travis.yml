@@ -25,7 +25,7 @@ install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  - conda create --channel conda-forge -vv -q -n test-environment python=$TRAVIS_PYTHON_VERSION pybind11 pytest pandas numpy matplotlib scipy ipython sortedcontainers libzip boost-cpp hdf5 h5py statsmodels mypy flake8
+  - conda create --channel conda-forge -vv -q -n test-environment python=$TRAVIS_PYTHON_VERSION pybind11 pytest pandas numpy matplotlib scipy ipython sortedcontainers libzip boost-cpp hdf5 h5py statsmodels mypy flake8 plotly
   - source activate test-environment
   - CXX=g++-5 CC=g++-5 python setup.py build_ext --inplace
 
