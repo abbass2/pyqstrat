@@ -167,16 +167,22 @@ class SimpleDetailTable:
     Displays a pandas DataFrame under a plot that contains the data used to compute a statistic of y for each x, y pair
     '''
     
-    def __init__(self, colnames: Optional[List[str]] = None, float_format: str = '{:.4g}', min_rows: int = 100) -> None:
+    def __init__(self, 
+                 colnames: Optional[List[str]] = None, 
+                 float_format: str = '{:.4g}', 
+                 min_rows: int = 100, 
+                 copy_to_clipboard: bool = True) -> None:
         '''
         Args:
             colnames: List of column names to display. If None we display all columns. Default None
             float_format: Format for each floating point column. Default {:.4g}
             min_rows: Do not truncate the display of the table before this many rows. Default 100
+            copy_to_clipboard: If set, we copy the dataframe to the clipboard. On linux, you must install xclip for this to work
        '''
         self.colnames = colnames
         self.float_format = float_format
         self.min_rows = min_rows
+        self.copy_to_clipboard = True
         
     def __call__(self, detail_widget: widgets.Widget, data: pd.DataFrame) -> None:
         '''
@@ -195,7 +201,9 @@ class SimpleDetailTable:
         with detail_widget:
             clear_output()
             if self.colnames: data = data[self.colnames]
-            display(data.reset_index(drop=True))
+            data = data.reset_index(drop=True)
+            display(data)
+            if self.copy_to_clipboard: data.to_clipboard(index=False)
                 
         if self.float_format: pd.options.display.float_format = orig_float_format
         if self.min_rows: pd.options.display.min_rows = orig_min_rows
