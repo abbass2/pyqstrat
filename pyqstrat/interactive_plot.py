@@ -20,7 +20,6 @@ from typing import List, Tuple, Callable, Any, Sequence, Dict, Optional
 import traitlets
 from pyqstrat.pq_utils import bootstrap_ci, np_bucket, get_paths, get_child_logger
 
-
 # Local Imports
 ROOT_DIR = os.path.join(sys.path[0])
 sys.path.insert(1, ROOT_DIR)
@@ -34,7 +33,6 @@ DEFAULT_PLOTLY_COLORS = ['rgb(31, 119, 180)', 'rgb(255, 127, 14)',
                          'rgb(148, 103, 189)', 'rgb(140, 86, 75)',
                          'rgb(227, 119, 194)', 'rgb(127, 127, 127)',
                          'rgb(188, 189, 34)', 'rgb(23, 190, 207)']
-
 
 LineDataType = Tuple[str, 
                      pd.DataFrame, 
@@ -107,8 +105,10 @@ def simple_dimension_filter(data: pd.DataFrame, dim_name: str, selected_values: 
     '''
     mask = np.full(len(data), True)
     for name, value in selected_values:
+        if value == 'All': continue
         mask &= (data[name] == value)
-    return np.unique(data[mask][dim_name].values)  # will sort values before returning them
+    values = np.unique(data[mask][dim_name].values)  # will sort values before returning them
+    return ['All'] + values.tolist()
     
     
 def simple_data_filter(data: pd.DataFrame, selected_values: List[Tuple[str, Any]]) -> pd.DataFrame:
@@ -117,6 +117,7 @@ def simple_data_filter(data: pd.DataFrame, selected_values: List[Tuple[str, Any]
     '''
     mask = np.full(len(data), True)
     for name, value in selected_values:
+        if value == 'All': continue
         mask &= (data[name] == value)
     return data[mask]
     
