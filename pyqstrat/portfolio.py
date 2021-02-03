@@ -5,7 +5,7 @@ from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, p
 from pyqstrat.strategy import Strategy
 from pyqstrat.pq_utils import str2date
 
-from typing import Sequence, MutableMapping, Mapping, Tuple
+from typing import Sequence, MutableMapping, Mapping, Tuple, Optional
 
 
 class Portfolio:
@@ -48,8 +48,8 @@ class Portfolio:
             
     def _generate_order_iterations(self, 
                                    strategies: Sequence[Strategy], 
-                                   start_date: np.datetime64, 
-                                   end_date: np.datetime64) -> Tuple[np.ndarray, Sequence[Tuple[Strategy, np.ndarray]]]:
+                                   start_date: Optional[np.datetime64], 
+                                   end_date: Optional[np.datetime64]) -> Tuple[np.ndarray, Sequence[Tuple[Strategy, np.ndarray]]]:
         '''
         >>> class Strategy:
         ...    def __init__(self, num): 

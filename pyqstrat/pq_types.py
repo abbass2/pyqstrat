@@ -53,7 +53,7 @@ class ContractGroup:
 class Contract:
     _symbol_names: MutableSet[str] = set()
     symbol: str
-    expiry: np.datetime64
+    expiry: Optional[np.datetime64]
     multiplier: float
     properties: SimpleNamespace
     contract_group: ContractGroup

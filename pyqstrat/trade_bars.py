@@ -50,7 +50,7 @@ class TradeBars:
         assert(v is None or len(v) == len(timestamps))
         assert(vwap is None or len(vwap) == len(timestamps))
         
-        if not np.all(np.diff(timestamps).astype(np.float) > 0):  # check for monotonically increasing timestamps
+        if not np.all(np.diff(timestamps).astype(float) > 0):  # check for monotonically increasing timestamps
             raise Exception('timestamps must be unique monotonically increasing')
         self.timestamps, self.o, self.h, self.l, self.c, self.v, self.vwap = timestamps, o, h, l, c, v, vwap
             
@@ -107,7 +107,7 @@ class TradeBars:
         
     def _set_valid_rows(self) -> None:
         col_list = [col for col in [self.o, self.h, self.l, self.c, self.vwap] if col is not None]
-        nans = np.any(np.isnan(col_list), axis=0)
+        nans = np.any(np.isnan(col_list), axis=0)  # type: ignore
         self.valid_rows = ~nans
     
     def valid_row(self, i: int) -> bool:
@@ -316,7 +316,7 @@ class TradeBars:
 
     def plot(self,
              figsize: Tuple[int, int] = (15, 8),
-             date_range: Optional[Union[Tuple[str, str], Tuple[np.datetime64, np.datetime64]]] = None,
+             date_range: Optional[Union[Tuple[str, str], Tuple[Optional[np.datetime64], Optional[np.datetime64]]]] = None,
              sampling_frequency: str = None,
              title: str = 'Price / Volume') -> None:
         '''

@@ -126,7 +126,7 @@ class MeanWithCI:
     '''
     Computes mean (or median) and optionally confidence intervals for plotting
     '''
-    def __init__(self, mean_func: Callable[[np.ndarray], np.ndarray] = np.mean, ci_level: int = 0) -> None:
+    def __init__(self, mean_func: Callable[[np.ndarray], np.ndarray] = np.nanmean, ci_level: int = 0) -> None:  # type: ignore
         '''
         Args:
             mean: The function to compute ci for

@@ -69,7 +69,8 @@ class EminiFuture:
         year = curr_date.year
         month = curr_date.month
         day = curr_date.day
-        third_friday = EminiFuture.calendar.third_friday_of_month(month, year).astype(datetime.date)
+        third_friday_ = EminiFuture.calendar.third_friday_of_month(month, year)
+        third_friday: datetime.date = third_friday_.astype(datetime.date)  # type: ignore
         if month < 3 or (month == 3 and day < third_friday.day): month_str = 'H'
         elif month < 6 or (month == 6 and day < third_friday.day): month_str = 'M'
         elif month < 9 or (month == 9 and day < third_friday.day): month_str = 'U'
@@ -171,14 +172,15 @@ class EminiOption:
         '''
         assert ':' not in symbol, f'{symbol} contains: pass in option root instead'
         weekday, year, month, week = EminiOption.decode_symbol(symbol)
-        expiry = get_date_from_weekday(weekday.weekday, year, month, week)
+        expiry_ = get_date_from_weekday(weekday.weekday, year, month, week)
         if weekday in [rd.WE, rd.FR]:
-            expiry = EminiOption.calendar.add_trading_days(expiry, num_days=0, roll='backward')
+            expiry = EminiOption.calendar.add_trading_days(expiry_, num_days=0, roll='backward')
         else:
-            expiry = EminiOption.calendar.add_trading_days(expiry, num_days=0, roll='forward')
+            expiry = EminiOption.calendar.add_trading_days(expiry_, num_days=0, roll='forward')
         # Option expirations changed on 9/20/2015 from 3:15 to 3 pm - 
         # See https://www.cmegroup.com/market-regulation/files/15-384.pdf
-        expiry += np.where(expiry < np.datetime64('2015-09-20'), np.timedelta64(15 * 60 + 15, 'm'), np.timedelta64(15, 'h')) 
+        expiry += np.where(expiry < np.datetime64('2015-09-20'), np.timedelta64(15 * 60 + 15, 'm'), np.timedelta64(15, 'h'))
+        assert isinstance(expiry, np.datetime64)
         return expiry
        
 

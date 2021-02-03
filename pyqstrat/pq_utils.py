@@ -94,7 +94,7 @@ def set_defaults(df_float_sf: int = 9,
     if df_display_max_columns is not None: pd.options.display.max_columns = df_display_max_columns
     if plot_style is not None: plt.style.use(plot_style)
     if mpl_figsize is not None: mpl.rcParams['figure.figsize'] = mpl_figsize
-    if np_seterr is not None: np.seterr(np_seterr)
+    if np_seterr is not None: np.seterr(np_seterr)  # type: ignore
     pd.options.mode.chained_assignment = None  # Turn off bogus 'view' warnings from pandas when modifying dataframes
     # Display all cell outputs
     plt.rcParams.update({'figure.max_open_warning': 100})  # For unit tests, avoid warning when opening more than 20 figures
@@ -102,13 +102,13 @@ def set_defaults(df_float_sf: int = 9,
         set_ipython_defaults(jupyter_multiple_display)
     
 
-def str2date(s: Optional[Union[np.datetime64, str]]) -> np.datetime64:
+def str2date(s: Optional[Union[np.datetime64, str]]) -> Optional[np.datetime64]:
     '''Converts a string like "2008-01-15 15:00:00" to a numpy datetime64.  If s is not a string, return s back'''
     if isinstance(s, str): return np.datetime64(s)
     return s
 
 
-def strtup2date(tup: Any) -> Tuple[np.datetime64, np.datetime64]:
+def strtup2date(tup: Any) -> Tuple[Optional[np.datetime64], Optional[np.datetime64]]:
     '''Converts a string tuple like ("2008-01-15", "2009-01-16") to a numpy datetime64 tuple.  
       If the tuple does not contain strings, return it back unchanged'''
     if tup and type(tup) is tuple and isinstance(tup[0], str): return (str2date(tup[0]), str2date(tup[1]))
@@ -151,19 +151,19 @@ def np_get_index(array: np.ndarray, value: Any) -> int:
     return -1
 
 
-def np_find_closest(a: np.ndarray, v: Any) -> int:
+def np_find_closest(a: np.ndarray, v: Any) -> Union[int, np.ndarray]:
     '''
     From https://stackoverflow.com/questions/8914491/finding-the-nearest-value-and-return-the-index-of-array-in-python
     Find index of closest value to array v in array a.  Returns an array of the same size as v
     a must be sorted
     >>> assert(all(np_find_closest(np.array([3, 4, 6]), np.array([4, 2])) == np.array([1, 0])))
     '''
-    idx = a.searchsorted(v)
-    idx = np.clip(idx, 1, len(a) - 1)
+    idx_ = a.searchsorted(v)
+    idx = np.clip(idx_, 1, len(a) - 1)
     left = a[idx - 1]
     right = a[idx]
     idx -= v - left < right - v
-    return idx
+    return idx  # type: ignore
 
 
 def np_rolling_window(a: np.ndarray, window: int) -> np.ndarray:
@@ -175,7 +175,7 @@ def np_rolling_window(a: np.ndarray, window: int) -> np.ndarray:
     '''
     shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
     strides = a.strides + (a.strides[-1],)
-    return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
+    return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)  # type: ignore
 
 
 def np_round(a: np.ndarray, clip: float):
@@ -189,7 +189,7 @@ def np_round(a: np.ndarray, clip: float):
     15.75
     '''
         
-    return np.round(np.array(a, dtype=np.float) / clip) * clip
+    return np.round(np.array(a, dtype=float) / clip) * clip
 
 
 def np_bucket(a: np.ndarray, buckets: List[Any], default_value=0, side='mid') -> np.ndarray:
@@ -244,12 +244,13 @@ def day_of_week_num(a: Union[np.datetime64, np.ndarray]) -> Union[int, np.ndarra
     >>> day_of_week_num(np.datetime64('2015-01-04'))
     6
     '''
-    ret = (a.astype('datetime64[D]').view('int64') - 4) % 7
-    if np.isscalar(ret): ret = ret.item()
+    int_date: int = a.astype('datetime64[D]').view('int64')  # type: ignore
+    ret = (int_date - 4) % 7
+    # if np.isscalar(ret): ret = ret.item()
     return ret
 
 
-def percentile_of_score(a: np.ndarray) -> np.ndarray:
+def percentile_of_score(a: np.ndarray) -> Optional[np.ndarray]:
     '''
     For each element in a, find the percentile of a its in.  From stackoverflow.com/a/29989971/5351549
     Like scipy.stats.percentileofscore but runs in O(n log(n)) time.
@@ -263,27 +264,29 @@ def percentile_of_score(a: np.ndarray) -> np.ndarray:
 
 
 def date_2_num(d: Union[np.datetime64, np.ndarray]) -> Union[int, np.ndarray]:
-    '''
-    Adopted from matplotlib.mdates.date2num so we don't have to add a dependency on matplotlib here
-    '''
-    extra = d - d.astype('datetime64[s]').astype(d.dtype)
-    extra = extra.astype('timedelta64[ns]')
-    t0 = np.datetime64('0001-01-01T00:00:00').astype('datetime64[s]')
-    dt = (d.astype('datetime64[s]') - t0).astype(np.float64)
-    dt += extra.astype(np.float64) / 1.0e9
-    dt = dt / SEC_PER_DAY + 1.0
+    from matplotlib.dates import date2num
+    return date2num(d)
+#     '''
+#     Adopted from matplotlib.mdates.date2num so we don't have to add a dependency on matplotlib here
+#     '''
+#     extra = d - d.astype('datetime64[s]').astype(d.dtype)
+#     extra = extra.astype('timedelta64[ns]')
+#     t0 = np.datetime64('0001-01-01T00:00:00').astype('datetime64[s]')
+#     dt: Union[float, np.ndarray] = (d.astype('datetime64[s]') - t0).astype(float)  # type: ignore
+#     dt += extra.astype(float) / 1.0e9
+#     dt = dt / SEC_PER_DAY + 1.0
 
-    NaT_int = np.datetime64('NaT').astype(np.int64)
-    d_int = d.astype(np.int64)
-    try:
-        dt[d_int == NaT_int] = np.nan
-    except TypeError:
-        if d_int == NaT_int:
-            dt = np.nan
-    return dt
+#     NaT_int = np.datetime64('NaT').astype(np.int64)
+#     d_int = d.astype(np.int64)
+#     try:
+#         dt[d_int == NaT_int] = np.nan
+#     except TypeError:
+#         if d_int == NaT_int:
+#             dt = np.nan
+#     return dt
 
 
-def resample_vwap(df: pd.DataFrame, sampling_frequency: str) -> np.ndarray:
+def resample_vwap(df: pd.DataFrame, sampling_frequency: str) -> Optional[np.ndarray]:
     '''
     Compute weighted average of vwap given higher frequency vwap and volume
     '''
@@ -389,7 +392,8 @@ def monotonically_increasing(array: np.ndarray) -> bool:
     False
     '''
     if not len(array): return False
-    return np.all(np.diff(array).astype(np.float) > 0)
+    ret: bool = np.all(np.diff(array).astype(float) > 0).astype(bool)  # type: ignore
+    return ret
 
 
 def infer_frequency(timestamps: np.ndarray) -> float:
@@ -540,7 +544,7 @@ def linear_interpolate(a1: Union[np.ndarray, float],
 def bootstrap_ci(a: np.ndarray, 
                  ci_level: float = 0.95,
                  n: int = 1000, 
-                 func: Callable[[np.ndarray], np.ndarray] = np.mean) -> Tuple[float, float]:
+                 func: Callable[[np.ndarray], np.ndarray] = np.mean) -> Tuple[float, float]:  # type: ignore
     '''
     Non parametric bootstrap for confidence intervals
     Args:

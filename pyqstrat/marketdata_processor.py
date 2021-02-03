@@ -245,7 +245,7 @@ def get_field_indices(field_names: Sequence[str], headers: Sequence[str]) -> Seq
     Returns:
         list of int: indices of each field name in the headers list
     '''
-    field_ids = np.ones(len(field_names), dtype=np.int) * -1
+    field_ids = np.ones(len(field_names), dtype=int) * -1
     for i, field_name in enumerate(field_names):
         if field_name not in headers: raise Exception(f'{field_name} not in {headers}')
         field_ids[i] = headers.index(field_name)

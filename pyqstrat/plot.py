@@ -261,10 +261,10 @@ class TradeBarSeries(TimePlotData):
     def __init__(self, 
                  name: str,
                  timestamps: np.ndarray,
-                 o: np.ndarray,
-                 h: np.ndarray,
-                 l: np.ndarray,  # noqa: E741: ignore # l ambiguous
-                 c: np.ndarray,
+                 o: Optional[np.ndarray],
+                 h: Optional[np.ndarray],
+                 l: Optional[np.ndarray],  # noqa: E741: ignore # l ambiguous
+                 c: Optional[np.ndarray],
                  v: np.ndarray = None,
                  vwap: np.ndarray = None,
                  display_attributes: DisplayAttributes = None) -> None:
@@ -278,8 +278,8 @@ class TradeBarSeries(TimePlotData):
         self.h = h
         self.l = l  # noqa: E741: ignore # l ambiguous
         self.c = c
-        self.v = np.ones(len(self.timestamps), dtype=np.float64) * np.nan if v is None else v
-        self.vwap = np.ones(len(self.timestamps), dtype=np.float64) * np.nan if vwap is None else vwap
+        self.v = np.ones(len(self.timestamps), dtype=float) * np.nan if v is None else v
+        self.vwap = np.ones(len(self.timestamps), dtype=float) * np.nan if vwap is None else vwap
         
         if display_attributes is None: display_attributes = CandleStickPlotAttributes()
         self.display_attributes = display_attributes
@@ -310,7 +310,7 @@ class TradeSet(TimePlotData):
         self.name = name
         self.trades = trades
         self.timestamps = np.array([trade.timestamp for trade in trades], dtype='M8[ns]')
-        self.values = np.array([trade.price for trade in trades], dtype=np.float)
+        self.values = np.array([trade.price for trade in trades], dtype=float)
         if display_attributes is None:
             display_attributes = ScatterPlotAttributes(marker='P', marker_color='red', marker_size=50)
         self.display_attributes = display_attributes
@@ -329,10 +329,10 @@ class TradeSet(TimePlotData):
     
 
 def draw_poly(ax: mpl.axes.Axes, 
-              left: float,
-              bottom: float, 
-              top: float, 
-              right: float, 
+              left: np.ndarray,
+              bottom: np.ndarray, 
+              top: np.ndarray, 
+              right: np.ndarray, 
               facecolor: str, 
               edgecolor: str, 
               zorder: int) -> None:
@@ -360,8 +360,8 @@ def draw_candlestick(ax: mpl.axes.Axes,
                      o: np.ndarray, 
                      h: np.ndarray, 
                      l: np.ndarray,  # noqa: E741: ignore # l ambiguous
-                     c: np.ndarray, 
-                     v: np.ndarray, 
+                     c: np.ndarray,
+                     v: Optional[np.ndarray], 
                      vwap: np.ndarray, 
                      colorup: str = 'darkgreen', 
                      colordown: str = '#F2583E') -> None:
@@ -496,7 +496,7 @@ def _adjust_axis_limit(lim: Tuple[float, float], values: Union[List, np.ndarray]
     if isinstance(values, list):
         values = np.array(values)
     if values.dtype == np.bool_:
-        values = values.astype(np.float)
+        values = values.astype(float)
     min_val, max_val = np.nanmin(values), np.nanmax(values)
     val_range = max_val - min_val
     lim_min = np.nanmin(values) - .1 * val_range
@@ -506,10 +506,8 @@ def _adjust_axis_limit(lim: Tuple[float, float], values: Union[List, np.ndarray]
 
 def _plot_data(ax: mpl.axes.Axes, data: PlotData) -> Optional[List[mpl.lines.Line2D]]:
     
-    x, y = None, None
-    
     lines = None  # Return line objects so we can add legends
-    
+
     disp = data.display_attributes
     
     if isinstance(data, XYData) or isinstance(data, TimeSeries):
@@ -542,7 +540,9 @@ def _plot_data(ax: mpl.axes.Axes, data: PlotData) -> Optional[List[mpl.lines.Lin
     elif isinstance(data, TradeSet) and isinstance(disp, ScatterPlotAttributes):
         lines = ax.scatter(np.arange(len(data.timestamps)), data.values, marker=disp.marker, c=disp.marker_color, s=disp.marker_size, zorder=100)
     elif isinstance(data, TradeBarSeries) and isinstance(disp, CandleStickPlotAttributes):
-        draw_candlestick(ax, np.arange(len(data.timestamps)), data.o, data.h, data.l, data.c, data.v, data.vwap, colorup=disp.colorup, colordown=disp.colordown)
+        if not (data.o is None or data.h is None or data.l is None or data.c is None):
+            draw_candlestick(ax, np.arange(len(data.timestamps)), data.o, data.h, data.l, data.c, 
+                             data.v, data.vwap, colorup=disp.colorup, colordown=disp.colordown)
     elif isinstance(data, BucketedValues) and isinstance(disp, BoxPlotAttributes):
         draw_boxplot(
             ax, data.bucket_names, data.bucket_values, disp.proportional_widths, disp.notched,  # type: ignore
@@ -591,17 +591,17 @@ def draw_date_line(ax: mpl.axes.Axes,
     return ax.axvline(x=closest_index, linestyle=linestyle, color=color)
 
 
-def draw_horizontal_line(ax: mpl.axes.Axes, y: np.ndarray, linestyle: str, color: Optional[str]) -> mpl.lines.Line2D:
+def draw_horizontal_line(ax: mpl.axes.Axes, y: float, linestyle: str, color: Optional[str]) -> mpl.lines.Line2D:
     '''Draw horizontal line on a subplot'''
     return ax.axhline(y=y, linestyle=linestyle, color=color)
 
 
-def draw_vertical_line(ax: mpl.axes.Axes, x: np.ndarray, linestyle: str, color: Optional[str]) -> mpl.lines.Line2D:
+def draw_vertical_line(ax: mpl.axes.Axes, x: float, linestyle: str, color: Optional[str]) -> mpl.lines.Line2D:
     '''Draw vertical line on a subplot'''
     return ax.axvline(x=x, linestyle=linestyle, color=color)
            
 
-def get_date_formatter(plot_timestamps: np.datetime64, date_format: Optional[str]) -> DateFormatter:
+def get_date_formatter(plot_timestamps: np.ndarray, date_format: Optional[str]) -> DateFormatter:
     '''Create an appropriate DateFormatter for x axis labels.  
     If date_format is set to None, figures out an appropriate date format based on the range of timestamps passed in'''
     num_timestamps = mdates.date2num(plot_timestamps)
@@ -711,10 +711,11 @@ class Subplot:
             else:
                 raise Exception(f'unknown type: {data}')
         
-    def get_all_timestamps(self, date_range: Tuple[np.datetime64, np.datetime64]) -> np.ndarray:
+    def get_all_timestamps(self, date_range: Tuple[Optional[np.datetime64], Optional[np.datetime64]]) -> np.ndarray:
         timestamps_list = [data.timestamps for data in self.data_list if isinstance(data, TimePlotData)]
         all_timestamps = np.array(reduce(np.union1d, timestamps_list))
-        if date_range: all_timestamps = all_timestamps[(all_timestamps >= date_range[0]) & (all_timestamps <= date_range[1])]
+        if date_range is not None and date_range[0] is not None and date_range[1] is not None:
+            all_timestamps = all_timestamps[(all_timestamps >= date_range[0]) & (all_timestamps <= date_range[1])]
         return all_timestamps
     
     def _reindex(self, all_timestamps: np.ndarray) -> None:
@@ -724,9 +725,10 @@ class Subplot:
             fill = not isinstance(data, TradeSet) and not (isinstance(disp, BarPlotAttributes) or isinstance(disp, ScatterPlotAttributes))
             data.reindex(all_timestamps, fill=fill)
             
-    def _draw(self, ax: mpl.axes.Axes, plot_timestamps: np.ndarray, date_formatter: Optional[DateFormatter]) -> None:
+    def _draw(self, ax: mpl.axes.Axes, plot_timestamps: Optional[np.ndarray], date_formatter: Optional[DateFormatter]) -> None:
         
         if self.time_plot:
+            assert plot_timestamps is not None
             self._reindex(plot_timestamps)
             if date_formatter is not None: ax.xaxis.set_major_formatter(date_formatter)
         
@@ -744,6 +746,7 @@ class Subplot:
             lines.append(line)
             
         for date_line in self.date_lines:  # vertical lines on time plot
+            assert plot_timestamps is not None
             line = draw_date_line(ax, plot_timestamps, date_line.date, date_line.line_type, date_line.color)
             if date_line.name is not None: lines.append(line)
                 
@@ -786,7 +789,7 @@ class Plot:
                  subplot_list: Sequence[Subplot],  
                  title: str = None, 
                  figsize: Tuple[float, float] = (15, 8), 
-                 date_range: Union[Tuple[str, str], Tuple[np.datetime64, np.datetime64]] = None,
+                 date_range: Union[Tuple[str, str], Tuple[Optional[np.datetime64], Optional[np.datetime64]]] = None,
                  date_format: str = None, 
                  sampling_frequency: str = None, 
                  show_grid: bool = True, 
@@ -820,7 +823,7 @@ class Plot:
         self.show_grid = show_grid
         self.hspace = hspace
         
-    def _get_plot_timestamps(self) -> np.ndarray:
+    def _get_plot_timestamps(self) -> Optional[np.ndarray]:
         timestamps_list = []
         for subplot in self.subplot_list:
             if not subplot.time_plot: continue

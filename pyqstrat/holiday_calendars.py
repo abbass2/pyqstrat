@@ -7,11 +7,13 @@ import inspect
 import calendar as cal
 import dateutil.relativedelta as rd
 
-from typing import Optional, Tuple, Union, MutableMapping
+from typing import Tuple, Union, MutableMapping
 from types import FrameType
 
+DateTimeType = Union[pd.Timestamp, str, np.datetime64, datetime.datetime, datetime.date]
 
-def _as_np_date(val: Union[pd.Timestamp, str, np.datetime64, datetime.datetime, datetime.date]) -> Optional[np.datetime64]:
+
+def _as_np_date(val: DateTimeType) -> Union[np.datetime64, np.ndarray, None]:
     '''
     Convert a pandas timestamp, string, np.datetime64('M8[ns]'), datetime, date to a numpy datetime64 [D] and remove time info.
     Returns None if the value cannot be converted
@@ -31,7 +33,7 @@ def _as_np_date(val: Union[pd.Timestamp, str, np.datetime64, datetime.datetime, 
     if isinstance(val, np.datetime64): 
         return val.astype('M8[D]')
     if isinstance(val, str) or isinstance(val, datetime.date) or isinstance(val, datetime.datetime):
-        np_date = np.datetime64(val).astype('M8[D]')
+        np_date = np.datetime64(val).astype('M8[D]')  # type: ignore
         if isinstance(np_date.astype(datetime.datetime), int):  # User can pass in a string like 20180101 which gets parsed as a year
             raise Exception(f'invalid date: {val}')
         return np_date
@@ -44,7 +46,7 @@ def _as_np_date(val: Union[pd.Timestamp, str, np.datetime64, datetime.datetime, 
     return None
 
 
-def _normalize_datetime(val: Union[pd.Timestamp, str, np.datetime64, datetime.datetime, datetime.date]) -> Tuple[np.datetime64, np.timedelta64]:
+def _normalize_datetime(val: DateTimeType) -> Tuple[np.datetime64, np.timedelta64]:
     '''
     Break up a datetime into numpy date and numpy timedelta.  
     
@@ -64,23 +66,24 @@ def _normalize_datetime(val: Union[pd.Timestamp, str, np.datetime64, datetime.da
     (array(['2015-01-01', '2015-02-01'], dtype='datetime64[D]'), array([18000000000000, 21600000000000], dtype='timedelta64[ns]'))
     '''
     if isinstance(val, pd.Timestamp): 
-        datetime = val.to_datetime64()
+        dtime = val.to_datetime64()
     elif isinstance(val, pd.Series) or isinstance(val, pd.DatetimeIndex):
-        datetime = val.values
+        dtime = val.values
     elif isinstance(val, np.ndarray) and np.issubdtype(val.dtype, np.datetime64): 
-        datetime = val
+        dtime = val
     else:
-        datetime = np.datetime64(val)
+        assert isinstance(val, datetime.datetime) or isinstance(val, datetime.date) or isinstance(val, str) or isinstance(val, np.datetime64)
+        dtime = np.datetime64(val)  # type: ignore
         
-    date = datetime.astype('M8[D]')
-    time_delta = datetime - date
+    date = dtime.astype('M8[D]')
+    time_delta = dtime - date
     return date, time_delta
 
 
-def _normalize(start: Union[str, datetime.datetime, np.datetime64],
-               end: Union[str, datetime.datetime, np.datetime64],
+def _normalize(start: DateTimeType,
+               end: DateTimeType,
                include_first: bool,
-               include_last: bool) -> Tuple[np.datetime64, np.datetime64]:
+               include_last: bool) -> Union[Tuple[np.datetime64, np.datetime64], Tuple[np.ndarray, np.ndarray]]:
     '''
     Given a start and end date, return a new start and end date, taking into account include_first and include_last flags
     
@@ -107,13 +110,15 @@ def _normalize(start: Union[str, datetime.datetime, np.datetime64],
     s = _as_np_date(start)
     e = _as_np_date(end)
     
+    assert s is not None and e is not None
+     
     if not include_first:
         s += np.timedelta64(1, 'D')
 
     if include_last:
         e += np.timedelta64(1, 'D')
 
-    return s, e
+    return s, e  # type: ignore
 
 
 def read_holidays(calendar_name: str, dirname: str = None) -> np.ndarray:
@@ -171,8 +176,8 @@ class Calendar:
         array([False, False,  True,  True,  True,  True,  True, False]...)
         '''
         if isinstance(dates, str) or isinstance(dates, datetime.date): 
-            dates = np.datetime64(dates, 'D')
-            if isinstance(dates.astype(datetime.datetime), int):  # User can pass in a string like 20180101 which gets parsed as a year
+            dates = np.datetime64(dates, 'D')  # type: ignore
+            if isinstance(dates.astype(datetime.datetime), int):  # user can pass in a string like 20180101 which gets parsed as a date
                 raise Exception(f'invalid date: {dates}')
         if isinstance(dates, pd.Series): dates = dates.values
         return np.is_busday(dates.astype('M8[D]'), busdaycal=self.bus_day_cal)
@@ -181,7 +186,7 @@ class Calendar:
                          start: Union[np.datetime64, pd.Series, np.ndarray, str, datetime.datetime, datetime.date],
                          end: Union[np.datetime64, pd.Series, np.ndarray, str, datetime.datetime, datetime.date],
                          include_first: bool = False,
-                         include_last: bool = True) -> Union[int, np.ndarray]:
+                         include_last: bool = True) -> Union[float, np.ndarray]:
         '''
         Count the number of trading days between two date series including those two dates
         
@@ -206,6 +211,7 @@ class Calendar:
         s_tmp, e_tmp = _normalize(start, end, include_first, include_last)
         # np.busday_count does not like nat dates
         if iterable:
+            assert isinstance(s_tmp, Iterable)
             ret = np.full(len(s_tmp), np.nan)
             mask = ~(np.isnat(s_tmp) | np.isnat(e_tmp))
             count = np.busday_count(s_tmp[mask], e_tmp[mask], busdaycal=self.bus_day_cal)
@@ -260,8 +266,9 @@ class Calendar:
         first_friday = first_day_of_month + datetime.timedelta(days=((FRIDAY - cal.monthrange(year, month)[0]) + 7) % 7)
         # 4 is friday of week
         third_friday_date = first_friday + datetime.timedelta(days=14)
-        third_friday = third_friday_date.date()
-        third_friday = self.add_trading_days(third_friday, 0, roll)
+        third_friday_dt = third_friday_date.date()
+        third_friday = self.add_trading_days(third_friday_dt, 0, roll)
+        assert isinstance(third_friday, np.datetime64)
         return third_friday
     
     def add_trading_days(self,
@@ -351,10 +358,10 @@ def get_date_from_weekday(weekday: int, year: int, month: int, week: int) -> np.
     '''
     if week == -1:  # Last day of month
         _, last_day = cal.monthrange(year, month)
-        return datetime.date(year, month, last_day)
-    first_day_of_month = datetime.date(year, month, 1)
+        return np.datetime64(datetime.datetime(year, month, last_day)).astype('M8[D]')
+    first_day_of_month = datetime.datetime(year, month, 1)
     date = first_day_of_month + rd.relativedelta(weeks=week - 1, weekday=weekday)
-    return np.datetime64(date)
+    return np.datetime64(date).astype('M8[D]')
     
 
 if __name__ == "__main__":

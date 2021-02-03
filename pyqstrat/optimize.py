@@ -259,9 +259,9 @@ class Optimizer:
         else:
             yvalues.append((y, np.array([experiment.other_costs[y] for experiment in experiments])))
             
-        xvalues = np.array(xvalues)
-        x_sort_indices = np.argsort(xvalues)
-        xvalues = xvalues[x_sort_indices]
+        xarray = np.array(xvalues)
+        x_sort_indices = np.argsort(xarray)
+        xarray = xarray[x_sort_indices]
         subplots = []
         for tup in yvalues:
             name = tup[0]
@@ -271,7 +271,7 @@ class Optimizer:
             disp = LinePlotAttributes(marker=marker, marker_size=marker_size, marker_color=marker_color)
            
             subplots.append(
-                Subplot(data_list=[XYData(name, xvalues, yarray, display_attributes=disp)], xlabel=x, ylabel=name, xlim=xlim))
+                Subplot(data_list=[XYData(name, xarray, yarray, display_attributes=disp)], xlabel=x, ylabel=name, xlim=xlim))
             
         plot = Plot(subplots, figsize=figsize, title='Optimizer 1D Test')
         plot.draw()

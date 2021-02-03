@@ -52,7 +52,7 @@ OrderTupType = Tuple[RuleType, ContractGroup, Dict[str, Any]]
 PlotPropertiesType = Mapping[str, Mapping[str, Any]]
 
 
-def _get_time_series_list(timestamps: np.datetime64, 
+def _get_time_series_list(timestamps: np.ndarray, 
                           names: Sequence[str], 
                           values: SimpleNamespace, 
                           properties: Optional[PlotPropertiesType]) -> List[TimeSeries]:
@@ -373,8 +373,14 @@ class Strategy:
                 timestamps = self.timestamps
 
                 null_value = False if sig_values.dtype == np.dtype('bool') else np.nan
-                if start_date: sig_values[0:np.searchsorted(timestamps, start_date)] = null_value
-                if end_date: sig_values[np.searchsorted(timestamps, end_date):] = null_value
+                
+                if start_date is not None:
+                    start_idx: int = np.searchsorted(timestamps, start_date)  # type: ignore
+                    sig_values[0:start_idx] = null_value
+                    
+                if end_date is not None:
+                    end_idx: int = np.searchsorted(timestamps, end_date)  # type: ignore
+                    sig_values[end_idx:] = null_value
 
                 indices = np.nonzero(np.isin(sig_values[:num_timestamps], sig_true_values))[0]
                 
@@ -609,7 +615,7 @@ class Strategy:
              pnl_columns: Sequence[str] = None, 
              title: str = None, 
              figsize: Tuple[int, int] = (20, 15), 
-             date_range: DateRangeType = None, 
+             _date_range: DateRangeType = None, 
              date_format: str = None, 
              sampling_frequency: str = None, 
              trade_marker_properties: PlotPropertiesType = None, 
@@ -636,7 +642,7 @@ class Strategy:
                 with different reason codes. By default we use the dictionary from the :obj:`ReasonCode` class
             hspace: Height (vertical) space between subplots.  Default is 0.15
         '''
-        date_range = strtup2date(date_range)
+        date_range = strtup2date(_date_range)
         if contract_groups is None: contract_groups = self.contract_groups
         if isinstance(contract_groups, ContractGroup): contract_groups = [contract_groups]
         if pnl_columns is None: pnl_columns = ['equity']

@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from pyqstrat.pq_types import ContractGroup, Trade, Contract
 from types import SimpleNamespace
-from typing import Sequence, Any, Tuple, Callable, Union, MutableSet, MutableSequence, MutableMapping, List
+from typing import Sequence, Any, Tuple, Callable, Union, MutableSet, MutableSequence, MutableMapping, List, Optional
 
 
 def calc_trade_pnl(open_qtys: np.ndarray, 
@@ -15,10 +15,10 @@ def calc_trade_pnl(open_qtys: np.ndarray,
                    multiplier: float) -> Tuple[np.ndarray, np.ndarray, float, float, float]:
     '''
     >>> print(calc_trade_pnl(
-    ...          open_qtys = np.array([], dtype = np.float), open_prices = np.array([], dtype = np.float), 
+    ...          open_qtys = np.array([], dtype = float), open_prices = np.array([], dtype = float), 
     ...            new_qtys = np.array([-8, 9, -4]), new_prices = np.array([10, 11, 6]), multiplier = 100))
     (array([-3.]), array([6.]), -3.0, 6.0, -1300.0)
-    >>> print(calc_trade_pnl(open_qtys = np.array([], dtype = np.float), open_prices = np.array([], dtype = np.float), new_qtys = np.array([3, 10, -5]), 
+    >>> print(calc_trade_pnl(open_qtys = np.array([], dtype = float), open_prices = np.array([], dtype = float), new_qtys = np.array([3, 10, -5]), 
     ...          new_prices = np.array([51, 50, 45]), multiplier = 100))
     (array([8.]), array([50.]), 8.0, 50.0, -2800.0)
     >>> print(calc_trade_pnl(open_qtys = np.array([]), open_prices = np.array([]), 
@@ -33,14 +33,14 @@ def calc_trade_pnl(open_qtys: np.ndarray,
     new_qtys = new_qtys.copy()
     new_prices = new_prices.copy()
 
-    _open_prices = np.zeros(len(open_prices) + len(new_prices), dtype=np.float)
+    _open_prices = np.zeros(len(open_prices) + len(new_prices), dtype=float)
     _open_prices[:len(open_prices)] = open_prices
     
-    _open_qtys = np.zeros(len(open_qtys) + len(new_qtys), dtype=np.float)
+    _open_qtys = np.zeros(len(open_qtys) + len(new_qtys), dtype=float)
     _open_qtys[:len(open_qtys)] = open_qtys
     
     new_qty_indices = np.nonzero(new_qtys)[0]
-    open_qty_indices = np.zeros(len(_open_qtys), dtype=np.int)
+    open_qty_indices = np.zeros(len(_open_qtys), dtype=int)
     nonzero_indices = np.nonzero(_open_qtys)[0]
     open_qty_indices[:len(nonzero_indices)] = nonzero_indices 
 
@@ -123,9 +123,9 @@ def calc_trade_pnl(open_qtys: np.ndarray,
 def leading_nan_to_zero(df: pd.DataFrame, columns: Sequence[str]) -> pd.DataFrame:
     for column in columns:
         vals = df[column].values
-        first_non_nan_index = np.ravel(np.nonzero(~np.isnan(vals)))
-        if len(first_non_nan_index):
-            first_non_nan_index = first_non_nan_index[0]
+        first_non_nan_index_ = np.ravel(np.nonzero(~np.isnan(vals)))  # type: ignore
+        if len(first_non_nan_index_):
+            first_non_nan_index = first_non_nan_index_[0]
         else:
             first_non_nan_index = -1
 
@@ -169,9 +169,9 @@ class ContractPNL:
         self._trade_pnl = SortedDict()
         self._net_pnl = SortedDict()
         # Store trades that are not offset so when new trades come in we can offset against these to calc pnl
-        self.open_qtys = np.empty(0, dtype=np.int)
-        self.open_prices = np.empty(0, dtype=np.float)
-        self.first_trade_timestamp = None
+        self.open_qtys = np.empty(0, dtype=int)
+        self.open_prices = np.empty(0, dtype=float)
+        self.first_trade_timestamp: Optional[np.datetime64] = None
         self.final_pnl = np.nan
         
     def _add_trades(self, trades: Sequence[Trade]) -> None:
@@ -228,9 +228,9 @@ class ContractPNL:
         price = np.nan
 
         if math.isclose(open_qty, 0):
-            unrealized = 0
+            unrealized = 0.0
         else:
-            price = self._price_function(self.contract, self._account_timestamps, i, self.strategy_context)
+            price = self._price_function(self.contract, self._account_timestamps, i, self.strategy_context)  # type: ignore
             assert np.isreal(price), \
                 f'Unexpected price type: {price} {type(price)} for contract: {self.contract} timestamp: {self._account_timestamps[i]}'
 
@@ -454,8 +454,8 @@ class Account:
                     net_pnl_diff = np.diff(df.net_pnl.values)  # np.diff returns a vector one shorter than the original
                     last_index = np.nonzero(net_pnl_diff)
                     if len(last_index[0]): 
-                        last_index = last_index[0][-1] + 1
-                        df = df.iloc[:last_index + 1]
+                        last_index_ = last_index[0][-1] + 1
+                        df = df.iloc[:last_index_ + 1]
                 df['contract_group'] = contract_group.name
                 dfs.append(df)
         ret_df = pd.concat(dfs)
@@ -479,12 +479,12 @@ class Account:
             symbol_pnls = list(self.symbol_pnls.values())
 
         timestamps = self.calc_timestamps
-        position = np.full(len(timestamps), 0., dtype=np.float)
-        realized = np.full(len(timestamps), 0., dtype=np.float)
-        unrealized = np.full(len(timestamps), 0., dtype=np.float)
-        fee = np.full(len(timestamps), 0., dtype=np.float)
-        commission = np.full(len(timestamps), 0., dtype=np.float)
-        net_pnl = np.full(len(timestamps), 0., dtype=np.float)
+        position = np.full(len(timestamps), 0., dtype=float)
+        realized = np.full(len(timestamps), 0., dtype=float)
+        unrealized = np.full(len(timestamps), 0., dtype=float)
+        fee = np.full(len(timestamps), 0., dtype=float)
+        commission = np.full(len(timestamps), 0., dtype=float)
+        net_pnl = np.full(len(timestamps), 0., dtype=float)
 
         for i, timestamp in enumerate(timestamps):
             for symbol_pnl in symbol_pnls:

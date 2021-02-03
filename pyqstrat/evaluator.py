@@ -158,7 +158,7 @@ def compute_k_ratio(equity: np.ndarray, periods_per_year: int, halflife_years: f
     if halflife_years:
         halflife = halflife_years * periods_per_year
         k = math.log(0.5) / halflife
-        w = np.empty(len(equity), dtype=np.float)
+        w = np.empty(len(equity), dtype=float)
         w = np.exp(k * t)
         w = w ** 2  # Statsmodels requires square of weights
         w = w[::-1]
@@ -185,7 +185,7 @@ def compute_rolling_dd(timestamps: np.ndarray, equity: np.ndarray) -> Tuple[np.n
         equity: numpy array of equity
     '''
     assert(len(timestamps) == len(equity))
-    if not len(timestamps): return np.array([], dtype='M8[ns]'), np.array([], dtype=np.float)
+    if not len(timestamps): return np.array([], dtype='M8[ns]'), np.array([], dtype=float)
     s = pd.Series(equity, index=timestamps)
     rolling_max = s.expanding(min_periods=1).max()
     dd = np.where(s >= rolling_max, 0.0, -(s - rolling_max) / rolling_max)
@@ -198,7 +198,7 @@ def compute_maxdd_pct(rolling_dd: np.ndarray) -> float:
     return np.nanmax(rolling_dd)
 
 
-def compute_maxdd_date(rolling_dd_dates: np.ndarray, rolling_dd: np.ndarray) -> float:
+def compute_maxdd_date(rolling_dd_dates: np.ndarray, rolling_dd: np.ndarray) -> np.datetime64:
     ''' Compute date of max drawdown given numpy array of timestamps, and corresponding rolling dd percentages'''
     if not len(rolling_dd_dates): return pd.NaT
     assert(len(rolling_dd_dates) == len(rolling_dd))
@@ -218,7 +218,8 @@ def compute_maxdd_start(rolling_dd_dates: np.ndarray, rolling_dd: np.ndarray, md
 def compute_mar(returns: np.ndarray, periods_per_year: float, mdd_pct: float) -> float:
     '''Compute MAR ratio, which is annualized return divided by biggest drawdown since inception.'''
     if not len(returns) or np.isnan(mdd_pct) or mdd_pct == 0: return np.nan
-    return np.mean(returns) * periods_per_year / mdd_pct
+    ret = np.mean(returns) * periods_per_year / mdd_pct
+    return ret  # type: ignore
 
 
 def compute_dates_3yr(timestamps: np.ndarray) -> np.ndarray:
@@ -233,7 +234,7 @@ def compute_dates_3yr(timestamps: np.ndarray) -> np.ndarray:
 def compute_returns_3yr(timestamps: np.ndarray, returns: np.ndarray) -> np.ndarray:
     '''Given an array of numpy datetimes and an array of returns, return those that are within 3 years 
         of the last date in the datetime array '''
-    if not len(timestamps): return np.array([], dtype=np.float)
+    if not len(timestamps): return np.array([], dtype=float)
     assert(len(timestamps) == len(returns))
     timestamps_3yr = compute_dates_3yr(timestamps)
     return returns[timestamps >= timestamps_3yr[0]]
@@ -241,7 +242,7 @@ def compute_returns_3yr(timestamps: np.ndarray, returns: np.ndarray) -> np.ndarr
 
 def compute_rolling_dd_3yr(timestamps: np.ndarray, equity: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     '''Compute rolling drawdowns over the last 3 years'''
-    if not len(timestamps): return np.array([], dtype='M8[D]')
+    if not len(timestamps): return np.array([], dtype='M8[D]'), np.array([], dtype=float)
     last_date = timestamps[-1]
     d = pd.to_datetime(last_date)
     start_3yr = np.datetime64(d.replace(year=d.year - 3))
@@ -279,7 +280,7 @@ def compute_bucketed_returns(timestamps: np.ndarray, returns: np.ndarray) -> Tup
             numpy arrays containing returns for each corresponding year
     '''
     assert(len(timestamps) == len(returns))
-    if not len(timestamps): return np.array([], dtype=np.str), np.array([], dtype=np.float)
+    if not len(timestamps): return [], [np.array([], dtype=float)]
     s = pd.Series(returns, index=timestamps)
     years_list = []
     rets_list = []
@@ -299,7 +300,7 @@ def compute_annual_returns(timestamps: np.ndarray, returns: np.ndarray, periods_
         
     '''
     assert(len(timestamps) == len(returns) and periods_per_year > 0)
-    if not len(timestamps): return np.array([], dtype=np.str), np.array([], dtype=np.float)
+    if not len(timestamps): return np.array([], dtype=int), np.array([], dtype=float)
     df = pd.DataFrame({'ret': returns, 'timestamp': timestamps})
     years = []
     gmeans = []
@@ -392,9 +393,9 @@ def handle_non_finite_returns(timestamps: np.ndarray,
         dtype='datetime64[D]'), array([ 1,  2,  3,  4,  4.5,  5]))
     '''
     
-    first_non_nan_index = np.ravel(np.nonzero(~np.isnan(rets)))
-    if len(first_non_nan_index):
-        first_non_nan_index = first_non_nan_index[0]
+    first_non_nan_index_ = np.ravel(np.nonzero(~np.isnan(rets)))  # type: ignore
+    if len(first_non_nan_index_):
+        first_non_nan_index = first_non_nan_index_[0]
     else:
         first_non_nan_index = -1
     
@@ -531,7 +532,7 @@ def display_return_metrics(metrics: Mapping[str, Any], float_precision: int = 3)
     format_str = '{:.' + str(float_precision) + 'g}'
         
     for k, v in _metrics.items():
-        if isinstance(v, np.float) or isinstance(v, float):
+        if isinstance(v, float) or isinstance(v, float):
             _metrics[k] = format_str.format(v)
        
     cols = ['gmean', 'amean', 'std', 'shrp', 'srt', 'k', 'calmar', 'mar', 'mdd_pct', 'mdd_dates', 'dd_3y_pct', 'dd_3y_timestamps', 'up_dwn'] + [
