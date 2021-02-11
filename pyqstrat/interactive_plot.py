@@ -18,14 +18,13 @@ from plotly.subplots import make_subplots
 
 from typing import List, Tuple, Callable, Any, Sequence, Dict, Optional
 import traitlets
-from pyqstrat.pq_utils import bootstrap_ci, np_bucket, get_paths, get_child_logger
+from pyqstrat.pq_utils import bootstrap_ci, np_bucket, get_child_logger
 
 # Local Imports
 ROOT_DIR = os.path.join(sys.path[0])
 sys.path.insert(1, ROOT_DIR)
 
 # Constants and Globals
-_paths = get_paths('..')
 _logger = get_child_logger(__name__)
 
 DEFAULT_PLOTLY_COLORS = ['rgb(31, 119, 180)', 'rgb(255, 127, 14)',
