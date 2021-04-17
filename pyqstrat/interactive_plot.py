@@ -70,7 +70,17 @@ CreateSelectionWidgetsFunctype = Callable[[Dict[str, str], Dict[str, str], Updat
 
 
 def percentile_buckets(a: np.ndarray, n=10):
-    return np_bucket(a, np.nanpercentile(a, np.arange(0, 100, int(round(100 / n)))))
+    '''
+    a = plt_df.dni.values[:]
+    n = 10
+    '''
+    pctiles = np.arange(0, 100, int(round(100 / n))) 
+    pctiles = np.append(pctiles, 100)
+    buckets = np.nanpercentile(a, pctiles)
+    conditions = [(a <= e) for e in buckets[1:]]
+    b = [np.mean(a[cond]) for cond in conditions]
+    ret = np.select(conditions, b)
+    return ret
 
 
 def display_form(form_widgets: Sequence[widgets.Widget]) -> None:
