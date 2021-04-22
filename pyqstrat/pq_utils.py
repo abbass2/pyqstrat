@@ -229,6 +229,29 @@ def np_bucket(a: np.ndarray, buckets: List[Any], default_value=0, side='mid') ->
     return ret
 
 
+def np_parse_array(s: str, dtype=float) -> np.ndarray:
+    """
+    Create a 1 or 2 d numpy array from a string that looks like:
+    [[2. 5. 3. 0. 0.]
+     [3. 5. 0. 4. 3.]]
+    or
+    [2. 5. 3. 0. 8.]  
+    
+    >>> x = np_parse_array('[[2. 5. 3. 0. 0.]\\n [3. 5. 0. 4. 3.]]')
+    >>> assert np.allclose(x, np.array([[2., 5., 3., 0., 0.], [3., 5., 0., 4., 3.]]))
+    >>> x = np_parse_array('[3 4. 5]')
+    >>> assert np.allclose(x, np.array([3, 4., 5]))
+    """
+    height = s.count(']') - 1
+    for char in [']', '[', '\n']:
+        s = s.replace(char, '')
+    x = np.fromstring(s, sep=' ', dtype=dtype)
+    if height > 0:
+        width = int(len(x) / height)
+        x = x.reshape(height, width)
+    return x
+
+
 def day_of_week_num(a: Union[np.datetime64, np.ndarray]) -> Union[int, np.ndarray]:
     '''
     From https://stackoverflow.com/questions/52398383/finding-day-of-the-week-for-a-datetime64
@@ -266,24 +289,6 @@ def percentile_of_score(a: np.ndarray) -> Optional[np.ndarray]:
 def date_2_num(d: Union[np.datetime64, np.ndarray]) -> Union[int, np.ndarray]:
     from matplotlib.dates import date2num
     return date2num(d)
-#     '''
-#     Adopted from matplotlib.mdates.date2num so we don't have to add a dependency on matplotlib here
-#     '''
-#     extra = d - d.astype('datetime64[s]').astype(d.dtype)
-#     extra = extra.astype('timedelta64[ns]')
-#     t0 = np.datetime64('0001-01-01T00:00:00').astype('datetime64[s]')
-#     dt: Union[float, np.ndarray] = (d.astype('datetime64[s]') - t0).astype(float)  # type: ignore
-#     dt += extra.astype(float) / 1.0e9
-#     dt = dt / SEC_PER_DAY + 1.0
-
-#     NaT_int = np.datetime64('NaT').astype(np.int64)
-#     d_int = d.astype(np.int64)
-#     try:
-#         dt[d_int == NaT_int] = np.nan
-#     except TypeError:
-#         if d_int == NaT_int:
-#             dt = np.nan
-#     return dt
 
 
 def resample_vwap(df: pd.DataFrame, sampling_frequency: str) -> Optional[np.ndarray]:

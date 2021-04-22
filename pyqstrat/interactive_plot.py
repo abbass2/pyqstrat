@@ -15,10 +15,9 @@ import plotly
 import plotly.callbacks
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-
 from typing import List, Tuple, Callable, Any, Sequence, Dict, Optional
 import traitlets
-from pyqstrat.pq_utils import bootstrap_ci, np_bucket, get_child_logger
+from pyqstrat.pq_utils import bootstrap_ci, get_child_logger
 
 # Local Imports
 ROOT_DIR = os.path.join(sys.path[0])
