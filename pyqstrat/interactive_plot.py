@@ -51,7 +51,8 @@ StatFuncType = Callable[[pd.DataFrame, str, str, str], List[LineDataType]]
 
 DetailDisplayType = Callable[[
     widgets.Widget, 
-    pd.DataFrame],
+    pd.DataFrame,
+    bool],
     None]
 
 
@@ -61,7 +62,7 @@ DataFrameTransformFuncType = Callable[[pd.DataFrame], pd.DataFrame]
 
 SeriesTransformFuncType = Callable[[pd.Series], pd.Series]
 
-DisplayFormFuncType = Callable[[Sequence[widgets.Widget]], None]
+DisplayFormFuncType = Callable[[Sequence[widgets.Widget], bool], None]
 
 UpdateFormFuncType = Callable[[int], None]
 
@@ -70,20 +71,22 @@ CreateSelectionWidgetsFunctype = Callable[[Dict[str, str], Dict[str, str], Updat
 
 def percentile_buckets(a: np.ndarray, n=10):
     '''
-    a = plt_df.dni.values[:]
-    n = 10
-    '''
+    >>> np.random.seed(0)
+    >>> a = np.random.uniform(size=10000)
+    >>> assert np.allclose(np.unique(percentile_buckets(a)), np.arange(0.05, 1, 0.1), atol=0.01)    '''
     pctiles = np.arange(0, 100, int(round(100 / n))) 
-    pctiles = np.append(pctiles, 100)
     buckets = np.nanpercentile(a, pctiles)
-    conditions = [(a <= e) for e in buckets[1:]]
+    conditions: List[Any] = []
+    for i, bucket in enumerate(buckets[:-1]):
+        conditions.append((a >= buckets[i]) & (a < buckets[i + 1]))
+    conditions.append((a >= buckets[-1]))
     b = [np.mean(a[cond]) for cond in conditions]
     ret = np.select(conditions, b)
     return ret
 
 
-def display_form(form_widgets: Sequence[widgets.Widget]) -> None:
-    clear_output()
+def display_form(form_widgets: Sequence[widgets.Widget], debug=False) -> None:
+    if not debug: clear_output()
     box_layout = widgets.Layout(
         display='flex',
         flex_flow='column',
@@ -193,7 +196,7 @@ class SimpleDetailTable:
         self.min_rows = min_rows
         self.copy_to_clipboard = True
         
-    def __call__(self, detail_widget: widgets.Widget, data: pd.DataFrame) -> None:
+    def __call__(self, detail_widget: widgets.Widget, data: pd.DataFrame, debug=False) -> None:
         '''
         Args:
             detail_widget: The widget to display the data in
@@ -208,7 +211,7 @@ class SimpleDetailTable:
             pd.options.display.min_rows = self.min_rows
             
         with detail_widget:
-            clear_output()
+            if not debug: clear_output()
             if self.colnames: data = data[self.colnames]
             data = data.reset_index(drop=True)
             display(data)
@@ -287,7 +290,8 @@ class LineGraphWithDetailDisplay:
                  display_detail_func: DetailDisplayType = SimpleDetailTable(), 
                  line_configs: Dict[str, LineConfig] = {}, 
                  title: str = None, 
-                 hovertemplate: str = None) -> None:
+                 hovertemplate: str = None, 
+                 debug=False) -> None:
         '''
         Args:
             display_detail_func: A function that displays the data on the detail pane. Default SimpleDetailTable
@@ -299,6 +303,7 @@ class LineGraphWithDetailDisplay:
         self.line_configs = line_configs
         self.title = title
         self.hovertemplate = hovertemplate
+        self.debug = debug
         self.default_line_config = LineConfig()
         self.detail_data: Dict[Any, pd.DataFrame] = {}
         self.xcol = ''
@@ -400,7 +405,7 @@ class LineGraphWithDetailDisplay:
         zvalue = self.zvalues[trace_idx]
         _detail_data = self.detail_data[zvalue]
         _detail_data = _detail_data[_detail_data[self.xcol].values == points.xs[0]]
-        self.display_detail_func(self.detail_widget, _detail_data)
+        self.display_detail_func(self.detail_widget, _detail_data, self.debug)
 
 
 class InteractivePlot:
@@ -416,7 +421,8 @@ class InteractivePlot:
                  data_filter_func: DataFilterType = simple_data_filter,
                  stat_func: StatFuncType = MeanWithCI(),
                  plot_func: PlotFuncType = LineGraphWithDetailDisplay(),
-                 display_form_func: DisplayFormFuncType = display_form) -> None:
+                 display_form_func: DisplayFormFuncType = display_form,
+                 debug=False) -> None:
         '''
         Args:
             data: The pandas dataframe to use for plotting
@@ -432,8 +438,10 @@ class InteractivePlot:
             plot_func: A function that plots the data.  This could also display detail data used to compute the statistics associated
                 with each data point.
             display_form_func: A function that displays the form given a list of plotly widgets (including the graph widget)
+            debug: Dont clear forms if this is true so we can see print output
         '''
-        self.data = transform_func(data)
+        self.data = data
+        self.transform_func = transform_func
         self.create_selection_widgets_func = create_selection_widgets_func
         if labels is None: labels = {}
         self.labels = labels
@@ -443,6 +451,7 @@ class InteractivePlot:
         self.plot_func = plot_func
         self.display_form_func = display_form_func
         self.selection_widgets: Dict[str, Any] = {}
+        self.debug = debug
         
     def create_pivot(self, xcol: str, ycol: str, zcol: str, dimensions: Dict[str, Any]) -> None:
         '''
@@ -486,9 +495,10 @@ class InteractivePlot:
         if owner_idx == -1: return
                          
         filtered_data = self.data_filter_func(self.data, select_conditions)
-        lines = self.stat_func(filtered_data, self.xcol, self.ycol, self.zcol)
+        transformed_data = self.transform_func(filtered_data)
+        lines = self.stat_func(transformed_data, self.xcol, self.ycol, self.zcol)
         plot_widgets = self.plot_func(self.xlabel, self.ylabel, lines)
-        self.display_form_func(list(self.selection_widgets.values()) + plot_widgets)
+        self.display_form_func(list(self.selection_widgets.values()) + plot_widgets, self.debug)
 
         
 # unit tests
@@ -525,3 +535,4 @@ if __name__ == '__main__':
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
     print('done')
+
