@@ -534,12 +534,9 @@ class TestInteractivePlot(unittest.TestCase):
         data['delta_rnd'] = percentile_buckets(np.abs(data.delta.values), 10)
         return data
     
-      
         
 if __name__ == '__main__':
-    import warnings
-    warnings.filterwarnings('error')
-    np.seterr('raise')
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
     print('done')
+
