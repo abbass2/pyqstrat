@@ -539,4 +539,3 @@ if __name__ == '__main__':
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
     print('done')
-
