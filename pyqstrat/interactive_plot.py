@@ -69,11 +69,13 @@ UpdateFormFuncType = Callable[[int], None]
 CreateSelectionWidgetsFunctype = Callable[[Dict[str, str], Dict[str, str], UpdateFormFuncType], Dict[str, Any]]
 
 
-def percentile_buckets(a: np.ndarray, n=10):
+def percentile_buckets(a: np.ndarray, n=10) -> np.ndarray:
     '''
     >>> np.random.seed(0)
     >>> a = np.random.uniform(size=10000)
-    >>> assert np.allclose(np.unique(percentile_buckets(a)), np.arange(0.05, 1, 0.1), atol=0.01)    '''
+    >>> assert np.allclose(np.unique(percentile_buckets(a)), np.arange(0.05, 1, 0.1), atol=0.01)
+    '''
+    if not len(a): return np.empty(0)
     pctiles = np.arange(0, 100, int(round(100 / n))) 
     buckets = np.nanpercentile(a, pctiles)
     conditions: List[Any] = []
@@ -163,6 +165,7 @@ class MeanWithCI:
             plt_data: List[Any] = []
             for x, yseries in df.groupby(xcol)[ycol]:
                 y = yseries.values
+                if not len(y): raise Exception(y)
                 mean = self.mean_func(y)
                 if self.ci_level:
                     ci_up, ci_down = bootstrap_ci(y, ci_level=self.ci_level / 100)
@@ -522,17 +525,21 @@ class TestInteractivePlot(unittest.TestCase):
                              labels, 
                              transform_func=self.transform,
                              stat_func=MeanWithCI(ci_level=95),
-                             plot_func=LineGraphWithDetailDisplay(line_configs={'put': secy_line_config}))
+                             plot_func=LineGraphWithDetailDisplay(line_configs={'put': secy_line_config}), debug=True)
         
         ip.create_pivot('delta_rnd', 'premium', 'put_call', dimensions={'year': 2018, 'dte': None})
     
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        data['delta_rnd'] = percentile_buckets(np.abs(data.delta), 10)
+        np.seterr('raise')
+        data['delta_rnd'] = percentile_buckets(np.abs(data.delta.values), 10)
         return data
     
       
+        
 if __name__ == '__main__':
+    import warnings
+    warnings.filterwarnings('error')
+    np.seterr('raise')
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
     print('done')
-
