@@ -252,6 +252,45 @@ def np_parse_array(s: str, dtype=float) -> np.ndarray:
     return x
 
 
+def np_inc_dates(dates: np.ndarray, num_days: int = 1) -> np.ndarray:
+    '''
+    Increment the given date array so each cell gets the next higher value in this array
+    >>> dates = np.array(['2021-06-01', '2021-06-01', '2021-08-01', '2021-04-01'], dtype='M8[D]')
+    >>> check = np.array([dates[2], dates[2], np.datetime64('nat'), dates[0]])
+    >>> assert np.array_equal(np_inc_dates(dates, 1), 
+    ...    np.array(['2021-08-01', '2021-08-01', 'NaT', '2021-06-01'], dtype='M8[D]'), equal_nan=True)
+    >>> assert np.array_equal(np_inc_dates(dates, 2), 
+    ...    np.array(['NaT', 'NaT', 'NaT', '2021-08-01'], dtype='M8[D]'), equal_nan=True)
+    >>> assert np.array_equal(np_inc_dates(dates, -1), 
+    ...    np.array(['2021-04-01', '2021-04-01', '2021-06-01', 'NaT'], dtype='M8[D]'), equal_nan=True)
+    >>> assert np.array_equal(np_inc_dates(dates, -2), 
+    ...    np.array(['NaT', 'NaT', '2021-04-01', 'NaT'], dtype='M8[D]'), equal_nan=True)
+    '''
+    uniq_dates = np.unique(dates)
+    date_values = np.concatenate([uniq_dates, [np.datetime64('nat')]])
+    indices = np.searchsorted(uniq_dates, dates) + num_days
+    indices = np.where((indices < 0) | (indices > len(uniq_dates)), len(uniq_dates), indices)
+    return date_values[indices]
+
+
+def np_uniques(arrays: List[np.ndarray]) -> np.ndarray:
+    '''
+    Given a list of numpy arrays that may have different datatype, generate a structured numpy
+    array with sorted, unique elements from that list
+    >>> array1 = np.array(['2018-01-02', '2018-01-03', '2018-01-02', '2018-01-03'], dtype='M8[D]')
+    >>> array2 = np.array(['P', 'P', 'P', 'C'])
+    >>> x = np_uniques([array1, array2])
+    >>> assert len(x) == 3
+    >>> assert x[0][0] == np.datetime64('2018-01-02')
+    >>> assert x[0][1] ==  'P'
+    '''
+    size = len(arrays[0])
+    cols = len(arrays)
+    data_ = [tuple([arrays[i][j] for i in range(cols)]) for j in range(size)]
+    data = np.array(data_, dtype=[('', col.dtype) for col in arrays])
+    return np.unique(data)
+
+
 def day_of_week_num(a: Union[np.datetime64, np.ndarray]) -> Union[int, np.ndarray]:
     '''
     From https://stackoverflow.com/questions/52398383/finding-day-of-the-week-for-a-datetime64
@@ -652,3 +691,4 @@ def get_paths(base_path: str = None) -> Paths:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
+

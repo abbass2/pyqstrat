@@ -80,7 +80,10 @@ def percentile_buckets(a: np.ndarray, n=10) -> np.ndarray:
     buckets = np.nanpercentile(a, pctiles)
     conditions: List[Any] = []
     for i, bucket in enumerate(buckets[:-1]):
-        conditions.append((a >= buckets[i]) & (a < buckets[i + 1]))
+        if buckets[i] == buckets[i + 1]:
+            conditions.append(a == buckets[i])
+        else:
+            conditions.append((a >= buckets[i]) & (a < buckets[i + 1]))
     conditions.append((a >= buckets[-1]))
     b = [np.mean(a[cond]) for cond in conditions]
     ret = np.select(conditions, b)
@@ -281,6 +284,11 @@ def _lighten_color(r: int, g: int, b: int) -> Tuple[int, int, int]:
     rgb = colorsys.hls_to_rgb(*light_hls)
     rgb = (int(round(rgb[0])), int(round(rgb[1])), int(round(rgb[2])))
     return rgb
+
+
+def foo(name, old, new):
+    import datetime
+    print(f'hello: {datetime.datetime.now()} {name} {old} {new}')
     
         
 class LineGraphWithDetailDisplay:
@@ -326,6 +334,8 @@ class LineGraphWithDetailDisplay:
         secondary_y = any([lc.secondary_y for lc in self.line_configs.values()])
         
         fig_widget = go.FigureWidget(make_subplots(specs=[[{"secondary_y": secondary_y}]]))
+        # fig_widget.on_trait_change(foo, '_js2py_restyle')
+        # fig_widget.on_trait_change()
         detail_widget = widgets.Output()
         
         trace_num = 0
@@ -386,6 +396,7 @@ class LineGraphWithDetailDisplay:
             
         fig_widget.update_layout(title=self.title, xaxis_title=xaxis_title)
         fig_widget.update_layout(yaxis_title=yaxis_title)
+        
         if secondary_y:
             fig_widget.update_yaxes(title_text=yaxis_title, secondary_y=True)
             
@@ -502,7 +513,7 @@ class InteractivePlot:
         lines = self.stat_func(transformed_data, self.xcol, self.ycol, self.zcol)
         plot_widgets = self.plot_func(self.xlabel, self.ylabel, lines)
         self.display_form_func(list(self.selection_widgets.values()) + plot_widgets, self.debug)
-
+                
         
 # unit tests
 class TestInteractivePlot(unittest.TestCase):
@@ -539,3 +550,4 @@ if __name__ == '__main__':
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
     print('done')
+
