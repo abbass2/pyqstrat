@@ -211,7 +211,7 @@ class ContractPNL:
             
     def calc_net_pnl(self, timestamp: np.datetime64) -> None:
         if timestamp in self._net_pnl: return
-        if timestamp < self.first_trade_timestamp: return
+        if self.first_trade_timestamp is None or timestamp < self.first_trade_timestamp: return
         # TODO: Option expiry should be a special case.  If option expires at 3:00 pm, we put in an expiry order at 3 pm and the
         # trade comes in at 3:01 pm.  In this case, the final pnl is recorded at 3:01 but should be at 3 pm.
         if self.contract.expiry is not None and timestamp > self.contract.expiry and not math.isnan(self.final_pnl): return

@@ -249,7 +249,7 @@ def get_field_indices(field_names: Sequence[str], headers: Sequence[str]) -> Seq
     for i, field_name in enumerate(field_names):
         if field_name not in headers: raise Exception(f'{field_name} not in {headers}')
         field_ids[i] = headers.index(field_name)
-    return field_ids
+    return list(field_ids)
 
 
 def process_marketdata_file(
