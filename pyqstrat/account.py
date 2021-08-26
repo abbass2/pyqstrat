@@ -357,7 +357,7 @@ class Account:
             trades_by_contract[contract].append(trade)
             
         for contract, contract_trades in trades_by_contract.items():
-            contract_trades.sort(key=lambda x: x.timestamp)
+            contract_trades.sort(key=lambda x: x.timestamp)  # type: ignore
             self.symbol_pnls[contract.symbol]._add_trades(contract_trades)
             
         self._trades += trades
