@@ -269,7 +269,7 @@ class Optimizer:
             yarray = yarray[x_sort_indices]
             
             disp = LinePlotAttributes(marker=marker, marker_size=marker_size, marker_color=marker_color)
-           
+            
             subplots.append(
                 Subplot(data_list=[XYData(name, xarray, yarray, display_attributes=disp)], xlabel=x, ylabel=name, xlim=xlim))
             
