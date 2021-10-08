@@ -4,6 +4,7 @@ import os
 import sys
 import concurrent
 import concurrent.futures
+import multiprocessing as mp
 from pyqstrat.pq_utils import has_display
 from pyqstrat.plot import Plot, Subplot, XYData, XYZData, SurfacePlotAttributes, LinePlotAttributes
 from typing import Mapping, Any, Callable, Generator, Tuple, Sequence, List, Optional
@@ -74,6 +75,10 @@ class Optimizer:
     # TODO: Needs to be rewritten to send costs back to generator when we do parallel gradient descent, etc.
     def _run_multi_process(self, raise_on_error: bool) -> None:
         fut_map = {}
+        
+        if mp.get_start_method == 'spawn':  # on mac m1 the default start method is set to spawn
+            mp.set_start_method('fork')
+        
         with concurrent.futures.ProcessPoolExecutor(self.max_processes) as executor:
             for suggestion in self.generator:
                 if suggestion is None: continue

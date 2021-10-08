@@ -195,6 +195,7 @@ def compute_rolling_dd(timestamps: np.ndarray, equity: np.ndarray) -> Tuple[np.n
 def compute_maxdd_pct(rolling_dd: np.ndarray) -> float:
     '''Compute max drawdown percentage given a numpy array of rolling drawdowns, ignoring NaNs'''
     if not len(rolling_dd): return np.nan
+    assert(rolling_dd.ndim < 2)
     return np.nanmax(rolling_dd)
 
 
