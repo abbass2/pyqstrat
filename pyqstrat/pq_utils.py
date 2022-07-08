@@ -691,3 +691,4 @@ def get_paths(base_path: str = None) -> Paths:
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
+

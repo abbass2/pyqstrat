@@ -897,7 +897,7 @@ def test_strategy() -> Strategy:
         elif contract.symbol == 'PEP':
             return strategy_context.pep_price[i]
         raise Exception(f'Unknown contract: {contract}')
-        
+
     Contract.clear()
     ContractGroup.clear()
         
@@ -934,9 +934,71 @@ def test_strategy() -> Strategy:
     assert(round(metrics['sharpe'], 4) == -9.7079)  # -7.2709)
     assert(round(metrics['mdd_pct'], 6) == 0.002574)  # -0.002841)
     return strategy
+
+
+def test_strategy_2():
+    '''Test of a dummy strategy'''
+    
+    def test_signal(contract_group: ContractGroup,
+                    timestamps: np.ndarray,
+                    indicators: SimpleNamespace, 
+                    parent_signals: SimpleNamespace,
+                    strategy_context: StrategyContextType) -> np.ndarray: 
+        # We don't need any indicators since the zscore is already part of the market data
+        return np.full(len(timestamps), True)
+    
+    def test_rule(contract_group: ContractGroup,
+                  i: int,
+                  timestamps: np.ndarray,
+                  indicators: SimpleNamespace,
+                  signal: np.ndarray,
+                  account: Account,
+                  strategy_context: StrategyContextType) -> Sequence[Order]:
+        
+        contract = contract_group.get_contract('TEST')
+        return [MarketOrder(contract, timestamps[i], 10, reason_code='ENTER')]
+            
+    def market_simulator(orders: Sequence[Order],
+                         i: int,
+                         timestamps: np.ndarray,
+                         indicators: Dict[ContractGroup, SimpleNamespace],
+                         signals: Dict[ContractGroup, SimpleNamespace],
+                         strategy_context: StrategyContextType) -> Sequence[Trade]:
+        trades = []
+        timestamp = timestamps[i]
+
+        for order in orders:
+            trade = Trade(order.contract, order, timestamps[i], order.qty, 50)
+            print(f'trade: {trade}')
+            trades.append(trade)
+        return trades
+    
+    def get_price(contract: Contract, timestamps: np.ndarray, i: int, strategy_context: StrategyContextType) -> float:
+        return 11
+                
+    timestamps = np.arange(np.datetime64('2018-01-05T08:00'), np.datetime64('2018-01-05T08:05'))
+    prices = np.array([8.9, 8.10, 8.11, 8.12, 8.13])
+    df = pd.DataFrame({'timestamp': timestamps, 'price': prices})
+    
+    ContractGroup.clear()
+    Contract.clear()
+    test_cg = ContractGroup.create('TEST')
+    contract = Contract.create('TEST', test_cg)
+    test_cg.add_contract(contract)
+    strategy = Strategy(timestamps, [test_cg], get_price)
+
+    strategy = Strategy(timestamps, [test_cg], get_price, trade_lag=0)
+    strategy.add_indicator('price', df.price.values)
+    strategy.add_signal('test_sig', test_signal, None, ['price'])
+    strategy.add_rule('test_rule', test_rule, signal_name='test_sig')
+
+    strategy.add_market_sim(market_simulator)
+    strategy.run()
+    return strategy
     
 
 if __name__ == "__main__":
     strategy = test_strategy()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+
