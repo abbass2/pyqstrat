@@ -203,8 +203,8 @@ class XYData(PlotData):
                  y: Union[np.ndarray, pd.Series],
                  display_attributes: DisplayAttributes = None) -> None:
         self.name = name
-        self.x = series_to_array(x)
-        self.y = series_to_array(y)
+        self.x = np.array(x) if isinstance(x, list) else series_to_array(x)
+        self.y = np.array(y) if isinstance(y, list) else series_to_array(y)
         if display_attributes is None: display_attributes = LinePlotAttributes()
         self.display_attributes = display_attributes
         
@@ -222,9 +222,9 @@ class XYZData(PlotData):
             name: Name to show in plot legend
         '''
         self.name = name
-        self.x = x
-        self.y = y
-        self.z = z
+        self.x = np.array(x) if isinstance(x, list) else series_to_array(x)
+        self.y = np.array(y) if isinstance(y, list) else series_to_array(y)
+        self.z = np.array(z) if isinstance(z, list) else series_to_array(z)
         if display_attributes is None: display_attributes = ContourPlotAttributes()
         self.display_attributes = display_attributes
     
@@ -757,7 +757,7 @@ class Subplot:
         for vertical_line in self.vertical_lines:
             line = draw_vertical_line(ax, vertical_line.x, vertical_line.line_type, vertical_line.color)
             if vertical_line.name is not None: lines.append(line)
-          
+                
         self.legend_names = [data.name for data in self.data_list]
         self.legend_names += [date_line.name for date_line in self.date_lines if date_line.name is not None]
         self.legend_names += [horizontal_line.name for horizontal_line in self.horizontal_lines if horizontal_line.name is not None]
@@ -767,7 +767,7 @@ class Subplot:
         if (len(self.data_list) > 1 or len(self.date_lines)) and self.display_legend: 
             ax.legend([line for line in lines if line is not None],
                       [self.legend_names[i] for i, line in enumerate(lines) if line is not None], loc=self.legend_loc)
- 
+            
         if self.log_y: 
             ax.set_yscale('log')
             ax.yaxis.set_major_locator(mtick.AutoLocator())

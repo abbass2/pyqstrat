@@ -6,7 +6,7 @@ import concurrent
 import concurrent.futures
 import multiprocessing as mp
 from pyqstrat.pq_utils import has_display
-from pyqstrat.plot import Plot, Subplot, XYData, XYZData, SurfacePlotAttributes, LinePlotAttributes
+from pyqstrat.plot import Plot, Subplot, XYData, XYZData, SurfacePlotAttributes, LinePlotAttributes, ContourPlotAttributes
 from typing import Mapping, Any, Callable, Generator, Tuple, Sequence, List, Optional
 
 
@@ -207,12 +207,13 @@ class Optimizer:
             if plot_type == 'contour':
                 zlabel = None
                 title = name
+                disp = ContourPlotAttributes(marker_size=marker_size, marker_color=marker_color, interpolation=interpolation)
             else:
                 zlabel = name
                 title = None
-                
-            disp = SurfacePlotAttributes(marker=marker, marker_size=marker_size, marker_color=marker_color, interpolation=interpolation)
+                disp = SurfacePlotAttributes(marker=marker, marker_size=marker_size, marker_color=marker_color, interpolation=interpolation)
             
+            print('xvalues', type(xvalues))
             subplots.append(Subplot(
                 data_list=[
                     XYZData(name, xvalues, yvalues, zarray, display_attributes=disp)],
@@ -318,7 +319,7 @@ def test_optimize():
     
     optimizer_2d = Optimizer('test', _generator_2d(), _cost_func_2d, max_processes=max_processes)
     optimizer_2d.run()
-    optimizer_2d.plot_3d(x='x', y='y')
+    optimizer_2d.plot_3d(x='x', y='y', plot_type='contour')
             
 
 if __name__ == "__main__":
