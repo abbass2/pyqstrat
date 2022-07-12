@@ -320,6 +320,7 @@ class Strategy:
         >>> class MockStrat:
         ...    def __init__(self):
         ...        self.timestamps = timestamps
+        ...        self.trade_lag = 0
         ...        self.account = self
         ...        self.rules = {'rule_a': rule_a, 'rule_b': rule_b}
         ...        self.market_sims = {ibm: market_sim_ibm, aapl: market_sim_aapl}
@@ -351,7 +352,7 @@ class Strategy:
         >>> assert(len(orders_iter[1]) == 2)
         >>> assert(orders_iter[1][0][1] == ibm)
         >>> assert(orders_iter[1][1][1] == aapl)
-        >>> assert(len(orders_iter[2]) == 0)
+        >>> assert(len(orders_iter[2]) == 2)
         '''
         start_date, end_date = str2date(start_date), str2date(end_date)
         if rule_names is None: rule_names = self.rule_names
@@ -385,7 +386,7 @@ class Strategy:
                 indices = np.nonzero(np.isin(sig_values[:num_timestamps], sig_true_values))[0]
                 
                 # Don't run rules on last index since we cannot fill any orders
-                if len(indices) and indices[-1] == len(sig_values) - 1: indices = indices[:-1] 
+                if len(indices) and indices[-1] == len(sig_values) - 1 and self.trade_lag > 0: indices = indices[:-1] 
                 indicator_values = self.indicator_values[cgroup]
                 iteration_params = {'indicator_values': indicator_values, 'signal_values': sig_values, 'rule_name': rule_name}
                 for idx in indices: orders_iter[idx].append((rule_function, cgroup, iteration_params))
@@ -505,7 +506,7 @@ class Strategy:
             df = pd.DataFrame({'timestamp': self.timestamps})
             if add_pnl: 
                 df_pnl = self.df_pnl(contract_group)
- 
+                
             indicator_values = self.indicator_values[contract_group]
             
             for k in sorted(indicator_values.__dict__):
@@ -580,7 +581,7 @@ class Strategy:
         df_orders = pd.DataFrame.from_records(order_records,
                                               columns=['symbol', 'type', 'timestamp', 'qty', 'reason_code', 'order_props', 'contract_props'])
         return df_orders
-   
+    
     def df_pnl(self, contract_group=None) -> pd.DataFrame:
         '''Returns a dataframe with P&L columns.  If contract group is set to None (default), sums up P&L across all contract groups'''
         return self.account.df_account_pnl(contract_group)
@@ -658,7 +659,7 @@ class Strategy:
             signal_names = [sig_name for sig_name in self.signals.keys() if hasattr(self.signal_values[contract_group], sig_name)]
             if signals:
                 signal_names = list(set(signal_names).intersection(signals))
- 
+                
             primary_indicator_list = _get_time_series_list(self.timestamps, primary_indicator_names, 
                                                            self.indicator_values[contract_group], indicator_properties)
             secondary_indicator_list = _get_time_series_list(self.timestamps, secondary_indicator_names, 
@@ -680,7 +681,7 @@ class Strategy:
                 secondary_y=primary_indicators_dual_axis,
                 height_ratio=0.5, 
                 ylabel='Primary Indicators')
- 
+            
             if len(secondary_indicator_list):
                 secondary_indicator_subplot = Subplot(secondary_indicator_list, 
                                                       secondary_y=secondary_indicators_dual_axis,
@@ -965,11 +966,8 @@ def test_strategy_2():
                          signals: Dict[ContractGroup, SimpleNamespace],
                          strategy_context: StrategyContextType) -> Sequence[Trade]:
         trades = []
-        timestamp = timestamps[i]
-
         for order in orders:
             trade = Trade(order.contract, order, timestamps[i], order.qty, 50)
-            print(f'trade: {trade}')
             trades.append(trade)
         return trades
     
@@ -998,7 +996,6 @@ def test_strategy_2():
     
 
 if __name__ == "__main__":
-    strategy = test_strategy()
+    strategy = test_strategy_2()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-
