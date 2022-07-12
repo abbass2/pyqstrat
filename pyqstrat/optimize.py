@@ -7,7 +7,7 @@ import concurrent.futures
 import multiprocessing as mp
 from pyqstrat.pq_utils import has_display
 from pyqstrat.plot import Plot, Subplot, XYData, XYZData, SurfacePlotAttributes, LinePlotAttributes, ContourPlotAttributes
-from typing import Mapping, Any, Callable, Generator, Tuple, Sequence, List, Optional
+from typing import Mapping, Any, Callable, Generator, Tuple, Sequence, List, Optional, Union
 
 
 class Experiment:
@@ -199,6 +199,7 @@ class Optimizer:
             zvalues.append((z, np.array([experiment.other_costs[z] for experiment in experiments])))
             
         title: Optional[str]
+        disp: Union[ContourPlotAttributes, SurfacePlotAttributes]
             
         subplots = []
         for tup in zvalues:
@@ -211,7 +212,8 @@ class Optimizer:
             else:
                 zlabel = name
                 title = None
-                disp = SurfacePlotAttributes(marker=marker, marker_size=marker_size, marker_color=marker_color, interpolation=interpolation)
+                disp = SurfacePlotAttributes(
+                    marker=marker, marker_size=marker_size, marker_color=marker_color, interpolation=interpolation)
             
             subplots.append(Subplot(
                 data_list=[
