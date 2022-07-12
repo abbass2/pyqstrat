@@ -76,10 +76,10 @@ class Optimizer:
     def _run_multi_process(self, raise_on_error: bool) -> None:
         fut_map = {}
         
-        if mp.get_start_method == 'spawn':  # on mac m1 the default start method is set to spawn
-            mp.set_start_method('fork')
+        # if mp.get_start_method == 'spawn':  # on mac m1 the default start method is set to spawn
+        #    mp.set_start_method('fork')
         
-        with concurrent.futures.ProcessPoolExecutor(self.max_processes) as executor:
+        with concurrent.futures.ProcessPoolExecutor(self.max_processes, mp_context=mp.get_context('fork')) as executor:
             for suggestion in self.generator:
                 if suggestion is None: continue
                 future = executor.submit(self.cost_func, suggestion)
@@ -292,7 +292,7 @@ def _generator_1d() -> Generator[Mapping[str, Any], Tuple[float, Mapping[str, fl
 def _cost_func_1d(suggestion: Mapping[str, Any]) -> Tuple[float, Mapping[str, float]]:
     x = suggestion['x']
     cost = np.sin(x)
-    ret = cost, {'std': -0.1 * cost}
+    ret = (cost, {'std': -0.1 * cost})
     return ret
 
 
