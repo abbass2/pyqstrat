@@ -213,7 +213,6 @@ class Optimizer:
                 title = None
                 disp = SurfacePlotAttributes(marker=marker, marker_size=marker_size, marker_color=marker_color, interpolation=interpolation)
             
-            print('xvalues', type(xvalues))
             subplots.append(Subplot(
                 data_list=[
                     XYZData(name, xvalues, yvalues, zarray, display_attributes=disp)],
