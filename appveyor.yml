@@ -45,6 +45,7 @@ install:
 build: false
 
 test_script:
+  - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
   - echo CONDA_PREFIX %CONDA_PREFIX%
   - "%CONDA_ROOT%\\Scripts\\activate test-environment"
   - echo CONDA_PREFIX %CONDA_PREFIX%
@@ -56,7 +57,6 @@ test_script:
   - python -c "import sys; print(sys.prefix)"
   - python --version
   - pip install scipy
-  - call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
   - python setup.py build_ext --inplace
   - python -m pytest pyqstrat
   - mypy --ignore-missing-imports pyqstrat/
