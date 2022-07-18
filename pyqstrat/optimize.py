@@ -76,9 +76,7 @@ class Optimizer:
     def _run_multi_process(self, raise_on_error: bool) -> None:
         fut_map = {}
         
-        # if mp.get_start_method == 'spawn':  # on mac m1 the default start method is set to spawn
-        #    mp.set_start_method('fork')
-        
+        # on mac m1 the default start method is set to spawn so change to fork instead
         with concurrent.futures.ProcessPoolExecutor(self.max_processes, mp_context=mp.get_context('fork')) as executor:
             for suggestion in self.generator:
                 if suggestion is None: continue
@@ -89,6 +87,7 @@ class Optimizer:
                 try:
                     cost, other_costs = future.result()
                 except Exception as e:
+                    suggestion = fut_map.get(future)
                     new_exc = type(e)(f'Exception: {str(e)} with suggestion: {suggestion}').with_traceback(sys.exc_info()[2])
                     if raise_on_error: raise new_exc
                     else: print(str(new_exc))
@@ -139,6 +138,7 @@ class Optimizer:
                 x: str, 
                 y: str, 
                 z: str = 'all', 
+                filter_func = None,
                 plot_type: str = 'surface', 
                 figsize: Tuple[float, float] = (15, 15), 
                 interpolation: str = 'linear', 
@@ -174,6 +174,7 @@ class Optimizer:
 
         # Get rid of nans since matplotlib does not like them
         experiments = [experiment for experiment in self.experiments if experiment.valid()]
+        if filter_func: experiments = filter_func(experiments)
         if not len(experiments):
             print('No valid experiments found')
             return

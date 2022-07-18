@@ -156,7 +156,36 @@ def find_index_before(sorted_dict: SortedDict, key: Any) -> int:
 
 
 class ContractPNL:
-    '''Computes pnl for a single contract over time given trades and market data'''
+    '''Computes pnl for a single contract over time given trades and market data
+    >>> from pyqstrat.pq_types import MarketOrder
+    >>> ContractGroup.clear()
+    >>> Contract.clear()
+    >>> aapl_cg = ContractGroup.create('AAPL')
+    >>> aapl_contract = Contract.create('AAPL', contract_group=aapl_cg)
+    >>> timestamps = np.arange(np.datetime64('2018-01-01'), np.datetime64('2018-01-04'))
+    >>> def get_price(contract, timestamps, idx, strategy_context):
+    ...    assert contract.symbol == 'AAPL', f'unknown contract: {contract}'
+    ...    return idx + 10.1
+
+    >>> contract_pnl = ContractPNL(aapl_contract, timestamps, get_price, SimpleNamespace()) 
+    >>> trade_5 = Trade(aapl_contract, MarketOrder(aapl_contract, timestamps[1], 20), timestamps[2], 10, 16.2)
+    >>> trade_6 = Trade(aapl_contract, MarketOrder(aapl_contract, timestamps[1], -20), timestamps[2], -10, 16.5)
+    >>> trade_7 = Trade(aapl_contract, MarketOrder(aapl_contract, timestamps[1], -20), timestamps[2], -10, 16.5)
+    >>> contract_pnl._add_trades([trade_5, trade_6])
+    >>> contract_pnl._add_trades([trade_7])
+    >>> df = contract_pnl.df()
+    >>> assert (len(df == 1))
+    >>> row = df.iloc[0]
+    >>> assert row.to_dict() == {'symbol': 'AAPL',
+    ... 'timestamp': pd.Timestamp('2018-01-03 00:00:00'),
+    ... 'position': -10,
+    ... 'price': 12.1,
+    ... 'unrealized': 44.0,
+    ... 'realized': 3.000000000000007,
+    ... 'commission': 0.0,
+    ... 'fee': 0.0,
+    ... 'net_pnl': 47.00000000000001}
+    '''
     def __init__(self, 
                  contract: Contract, 
                  account_timestamps: np.ndarray, 
@@ -173,6 +202,7 @@ class ContractPNL:
         self.open_prices = np.empty(0, dtype=float)
         self.first_trade_timestamp: Optional[np.datetime64] = None
         self.final_pnl = np.nan
+        self.new_trades_added = False
         
     def _add_trades(self, trades: Sequence[Trade]) -> None:
         '''
@@ -180,13 +210,15 @@ class ContractPNL:
             trades: Must be sorted by timestamp
         '''
         if not len(trades): return
-        timestamps = [trade.timestamp for trade in trades]
+        timestamps = np.unique([trade.timestamp for trade in trades])
         if len(self._trade_pnl):
-            k, v = self._trade_pnl.peekitem(0)
-            if timestamps[0] <= k:
-                raise Exception(f'Can only add a trade that is newer than last added current: {timestamps[0]} prev max timestamp: {k}')
-                
+            prev_max_timestamp, _ = self._trade_pnl.peekitem(-1)
+            assert timestamps[0] >= prev_max_timestamp, \
+                f'Trades can only be added with non-decreasing timestamps current: {timestamps[0]} prev max: {prev_max_timestamp}'
+            
         if self.first_trade_timestamp is None: self.first_trade_timestamp = timestamps[0]
+            
+        self.new_trades_added = True
                 
         for i, timestamp in enumerate(timestamps):
             t_trades = [trade for trade in trades if trade.timestamp == timestamp]
@@ -210,15 +242,18 @@ class ContractPNL:
             self.calc_net_pnl(timestamp)
             
     def calc_net_pnl(self, timestamp: np.datetime64) -> None:
-        if timestamp in self._net_pnl: return
+        # If we already calculated unrealized pnl for this timestamp and no new trades were added no need to do anything
+        if timestamp in self._net_pnl and not self.new_trades_added: return
         if self.first_trade_timestamp is None or timestamp < self.first_trade_timestamp: return
         # TODO: Option expiry should be a special case.  If option expires at 3:00 pm, we put in an expiry order at 3 pm and the
         # trade comes in at 3:01 pm.  In this case, the final pnl is recorded at 3:01 but should be at 3 pm.
         if self.contract.expiry is not None and timestamp > self.contract.expiry and not math.isnan(self.final_pnl): return
+        
+        # make sure timestamp is in the sequence of timestamps we were given 
         i = np.searchsorted(self._account_timestamps, timestamp)
-        assert(self._account_timestamps[i] == timestamp)
+        assert self._account_timestamps[i] == timestamp, f'timestamp {timestamp} not found'
 
-        # Find the index before or equal to current timestamp.  If not found, set to 0's
+        # Find most current trade PNL, i.e. with the index before or equal to current timestamp.  If not found, set to 0's
         trade_pnl_index = find_index_before(self._trade_pnl, timestamp)
         if trade_pnl_index == -1:
             realized, fee, commission, open_qty, open_qty, weighted_avg_price = 0, 0, 0, 0, 0, 0
@@ -235,21 +270,21 @@ class ContractPNL:
                 f'Unexpected price type: {price} {type(price)} for contract: {self.contract} timestamp: {self._account_timestamps[i]}'
 
             if math.isnan(price):
-                index = find_index_before(self._net_pnl, timestamp)  # Last index we computed net pnl for
+                index = find_index_before(self._net_pnl, timestamp)  # Most recent unrealized pnl
                 if index == -1:
-                    prev_unrealized = 0
+                    prev_unrealized, prev_open_qty = 0, 0
                 else:
-                    _, (_, prev_unrealized, _) = self._net_pnl.peekitem(index)
-
-                unrealized = prev_unrealized
+                    _, (_, prev_open_qty, prev_unrealized, _) = self._net_pnl.peekitem(index)
+                unrealized = prev_unrealized + (open_qty - prev_open_qty) * (price - weighted_avg_price) * self.contract.multiplier
             else:
                 unrealized = open_qty * (price - weighted_avg_price) * self.contract.multiplier
- 
+                
         net_pnl = realized + unrealized - commission - fee
 
-        self._net_pnl[timestamp] = (price, unrealized, net_pnl)
+        self._net_pnl[timestamp] = (price, open_qty, unrealized, net_pnl)
         if self.contract.expiry is not None and timestamp > self.contract.expiry:
             self.final_pnl = net_pnl
+        self.new_trades_added = False
         
     def position(self, timestamp: np.datetime64) -> float:
         index = find_index_before(self._trade_pnl, timestamp)
@@ -262,7 +297,7 @@ class ContractPNL:
             return self.final_pnl
         index = find_index_before(self._net_pnl, timestamp)
         if index == -1: return 0.
-        _, (_, _, net_pnl) = self._net_pnl.peekitem(index)  # Less than or equal to timestamp
+        _, (_, _, _, net_pnl) = self._net_pnl.peekitem(index)  # Less than or equal to timestamp
         return net_pnl
     
     def pnl(self, timestamp: np.datetime64) -> Tuple[float, float, float, float, float, float, float]:
@@ -273,16 +308,16 @@ class ContractPNL:
         
         index = find_index_before(self._net_pnl, timestamp)
         if index != -1:
-            _, (price, unrealized, net_pnl) = self._net_pnl.peekitem(index)  # Less than or equal to timestamp
+            _, (price, open_position, unrealized, net_pnl) = self._net_pnl.peekitem(index)  # Less than or equal to timestamp
         return position, price, realized, unrealized, fee, commission, net_pnl
-
+    
     def df(self) -> pd.DataFrame:
         '''Returns a pandas dataframe with pnl data'''
         df_trade_pnl = pd.DataFrame.from_records([
             (k, v[0], v[1], v[2], v[3]) for k, v in self._trade_pnl.items()],
             columns=['timestamp', 'position', 'realized', 'fee', 'commission'])
         df_net_pnl = pd.DataFrame.from_records([
-            (k, v[0], v[1], v[2]) for k, v in self._net_pnl.items()],
+            (k, v[0], v[2], v[3]) for k, v in self._net_pnl.items()],
             columns=['timestamp', 'price', 'unrealized', 'net_pnl'])
         all_timestamps = np.unique(np.concatenate((df_trade_pnl.timestamp.values, df_net_pnl.timestamp.values)))
         df_trade_pnl = df_trade_pnl.set_index('timestamp').reindex(all_timestamps, method='ffill').reset_index()
@@ -541,33 +576,42 @@ def test_account():
             price = idx + 10.1
         elif contract.symbol == "MSFT":
             price = idx + 15.3
+        elif contract.symbol == 'AAPL':
+            price = idx + 10
         else:
             raise Exception(f'unknown contract: {contract}')
         return price
+
     ContractGroup.clear()
     Contract.clear()
     ibm_cg = ContractGroup.create('IBM')
     msft_cg = ContractGroup.create('MSFT')
-    
+
     ibm_contract = Contract.create('IBM', contract_group=ibm_cg)
     msft_contract = Contract.create('MSFT', contract_group=msft_cg)
-    timestamps = np.array(['2018-01-01 09:00', '2018-01-02 08:00', '2018-01-02 09:00', '2018-01-05 13:35'], dtype='M8[m]')
-    account = Account([ibm_cg, msft_cg], timestamps, get_close_price, None)
-    # account = Account([Contract(symbol)], timestamps, get_close_price)
+
+    timestamps = np.array(['2018-01-01 09:00',
+                           '2018-01-02 08:00', 
+                           '2018-01-02 09:00', 
+                           '2018-01-05 13:35',
+                           '2018-01-05 13:36'], dtype='M8[m]')
     trade_1 = Trade(ibm_contract, MarketOrder(ibm_contract, np.datetime64('2018-01-01 09:00'), 10), 
                     np.datetime64('2018-01-02 08:00'), 10, 10.1, commission=0.01)
     trade_2 = Trade(ibm_contract, MarketOrder(ibm_contract, np.datetime64('2018-01-01 09:00'), -20),
                     np.datetime64('2018-01-02 09:00'), -20, 15.1, commission=0.02)
     trade_3 = Trade(msft_contract, MarketOrder(msft_contract, timestamps[1], 15), timestamps[1], 20, 13.2, commission=0.04)
     trade_4 = Trade(msft_contract, MarketOrder(msft_contract, timestamps[2], 20), timestamps[2], 20, 16.2, commission=0.05)
+    trade_5 = Trade(msft_contract, MarketOrder(msft_contract, timestamps[2], 5), timestamps[2], 5, 16.21, commission=0.03)
 
-    account.add_trades([trade_1, trade_2, trade_3, trade_4])
+    account = Account([ibm_cg, msft_cg], timestamps, get_close_price, None)
+    account.add_trades([trade_1, trade_2, trade_3, trade_4, trade_5])
     account.calc(np.datetime64('2018-01-05 13:35'))
-    assert(len(account.df_trades()) == 4)
+
+    assert(len(account.df_trades()) == 5)
     assert(len(account.df_pnl()) == 6)
-    assert(np.allclose(np.array([9.99, 61.96, 79.97, 103.91, 69.97, 143.91]), account.df_pnl().net_pnl.values, rtol=0))
-    assert(np.allclose(np.array([10, 20, -10, 40, -10, 40]), account.df_pnl().position.values, rtol=0))
-    assert(np.allclose(np.array([1000000., 1000183.88, 1000213.88]), account.df_account_pnl().equity.values, rtol=0))
+    assert(np.allclose(np.array([9.99, 61.96, 79.97, 109.33, 69.97, 154.33]), account.df_pnl().net_pnl.values, rtol=0))
+    assert(np.allclose(np.array([10, 20, -10, 45, -10, 45]), account.df_pnl().position.values, rtol=0))
+    assert(np.allclose(np.array([1000000., 1000189.3, 1000224.3]), account.df_account_pnl().equity.values, rtol=0))
 
 
 if __name__ == "__main__":
