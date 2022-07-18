@@ -8,8 +8,7 @@ import unittest
 import doctest
 import pandas as pd
 import numpy as np
-from IPython.core.display import display
-from IPython.core.display import clear_output
+from IPython.display import display, clear_output
 from ipywidgets import widgets
 import plotly
 import plotly.callbacks

@@ -509,7 +509,7 @@ def display_return_metrics(metrics: Mapping[str, Any], float_precision: int = 3)
     Returns:
         A one row dataframe with formatted metrics.
     '''
-    from IPython.core.display import display
+    from IPython.display import display
     
     _metrics = {}
     cols = ['gmean', 'amean', 'std', 'shrp', 'srt', 'k', 'calmar', 'mar', 'mdd_pct', 'mdd_start', 'mdd_date', 'dd_3y_pct', 
