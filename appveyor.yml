@@ -19,6 +19,9 @@ environment:
 platform:
   -x64
 
+# Not a .NET project, we build in the install step insteda
+build: false
+
 for:
 -
   matrix:
@@ -47,9 +50,6 @@ for:
      - conda info -a
      - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% pybind11 pandas numpy matplotlib pytest ipython sortedcontainers libzip hdf5 h5py statsmodels boost-cpp mypy flake8 plotly ipywidgets types-python-dateutil
 
-  # Not a .NET project, we build in the install step instead
-  build: false
-
   test_script:
     - echo CONDA_PREFIX %CONDA_PREFIX%
     - "%CONDA_ROOT%\\Scripts\\activate test-environment"
@@ -66,7 +66,3 @@ for:
     - python -m pytest pyqstrat
     - mypy --ignore-missing-imports pyqstrat/
     - flake8 --ignore W291,W293,E701 --max-line-length=160 pyqstrat/
-
-
-
-
