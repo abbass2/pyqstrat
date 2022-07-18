@@ -233,7 +233,7 @@ class Optimizer:
                 marker_color: str = 'r', 
                 xlim: Tuple[float, float] = None, 
                 hspace: float = None) -> None:
-        """Creates a 2D plot of the optimization output for plotting 1 parameter and costs.
+        """Creates a 2D plot of the optimization output for plotting 1 parameter and costs
         
         Args:
             x: Name of the parameter to plot on the x axis, corresponding to the same name in the generator.
