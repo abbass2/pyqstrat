@@ -1,6 +1,6 @@
 image:
-  - Visual Studio 2017
   - Ubuntu
+  - Visual Studio 2017
 
 
 matrix:
@@ -21,6 +21,12 @@ platform:
 # Not a .NET project, we build in the install step insteda
 build: false
 
+environment:
+   global:
+      PYTHON_ARCH: "64"
+      PYTHON_VERSION: "3.9"
+
+
 for:
 -
   matrix:
@@ -31,8 +37,6 @@ for:
     global:
       PYTHON: "C:\\conda"
       CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci-helpers\\appveyor\\windows_sdk.cmd"
-      PYTHON_ARCH: "64"
-      PYTHON_VERSION: "3.9"
 
   install:
     - if "%PYTHON_VERSION%" == "3.9" set "BASE_PYTHON_VERSION=3"
@@ -50,14 +54,10 @@ for:
     - echo CONDA_PREFIX %CONDA_PREFIX%
     - conda info -a
     - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% pybind11 pandas numpy matplotlib pytest ipython sortedcontainers libzip hdf5 h5py statsmodels boost-cpp mypy flake8 plotly ipywidgets types-python-dateutil
+    - conda list
 
   test_script:
-    - echo CONDA_PREFIX %CONDA_PREFIX%
     - "%CONDA_ROOT%\\Scripts\\activate test-environment"
-    - echo CONDA_PREFIX %CONDA_PREFIX%
-    - echo PATH %PATH%
-    - conda list
-    - conda info -a
     - python -c "import sys; print(sys.version)"
     - python -c "import sys; print(sys.executable)"
     - python -c "import sys; print(sys.prefix)"
@@ -67,3 +67,31 @@ for:
     - python -m pytest pyqstrat
     - mypy --ignore-missing-imports pyqstrat/
     - flake8 --ignore W291,W293,E701 --max-line-length=160 pyqstrat/
+
+-
+  matrix:
+    only:
+      - image Ubuntu
+
+  install:
+    #  - sudo apt-get install gcc-5 g++-5
+    # - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 1
+    - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - export PATH="$HOME/miniconda/bin:$PATH"
+    - hash -r
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update -q conda
+    # Useful for debugging any issues with conda
+    - conda info -a
+    - conda create --channel conda-forge -vv -q -n test-environment python=$T pybind11 pytest pandas numpy matplotlib scipy ipython sortedcontainers libzip boost-cpp hdf5 h5py statsmodels mypy flake8 plotly ipywidgets types-python-dateutil
+    - source activate test-environment
+    - CXX=g++-5 CC=g++-5 python setup.py build_ext --inplace
+
+  test_script:
+    - which python
+    - python -c 'import pyqstrat'
+    - python -m pytest pyqstrat
+    - mypy --ignore-missing-imports pyqstrat/*.py
+    - flake8 --ignore W291,W293,E701 --max-line-length=160 pyqstrat/*.py
+  
