@@ -87,8 +87,8 @@ class Optimizer:
                 try:
                     cost, other_costs = future.result()
                 except Exception as e:
-                    suggestion = fut_map.get(future)
-                    new_exc = type(e)(f'Exception: {str(e)} with suggestion: {suggestion}').with_traceback(sys.exc_info()[2])
+                    _suggestion = fut_map.get(future)
+                    new_exc = type(e)(f'Exception: {str(e)} with suggestion: {_suggestion}').with_traceback(sys.exc_info()[2])
                     if raise_on_error: raise new_exc
                     else: print(str(new_exc))
                     continue
@@ -138,7 +138,7 @@ class Optimizer:
                 x: str, 
                 y: str, 
                 z: str = 'all', 
-                filter_func = None,
+                filter_func: Callable[[pd.DataFrame], pd.DataFrame] = None,
                 plot_type: str = 'surface', 
                 figsize: Tuple[float, float] = (15, 15), 
                 interpolation: str = 'linear', 
@@ -159,6 +159,9 @@ class Optimizer:
               "cost" 
               The name of another cost variable corresponding to the output from the cost function
               "all", which creates a subplot for cost plus all other costs
+            filter_func: A function that can be used to reduce the dataset before plotting.
+                For example, you may want to filter on a dimension beyond x, y, z to pick a single value
+                from that dimension
             plot_type: surface or contour (default surface)
             figsize: Figure size
             interpolation: Can be ‘linear’, ‘nearest’ or ‘cubic’ for plotting z points between the ones passed in.  See scipy.interpolate.griddata for details
@@ -328,3 +331,4 @@ if __name__ == "__main__":
     test_optimize()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+

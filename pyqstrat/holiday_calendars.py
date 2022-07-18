@@ -3,12 +3,12 @@ import pandas as pd
 from collections.abc import Iterable
 import datetime
 import os
-import inspect
+# import inspect
 import calendar as cal
 import dateutil.relativedelta as rd
 
 from typing import Tuple, Union, MutableMapping
-from types import FrameType
+# from types import FrameType
 
 DateTimeType = Union[pd.Timestamp, str, np.datetime64, datetime.datetime, datetime.date]
 
@@ -126,8 +126,8 @@ def read_holidays(calendar_name: str, dirname: str = None) -> np.ndarray:
     Reads a csv with a holidays column containing holidays (not including weekends)
     '''
     
-    curr_frame: FrameType = inspect.currentframe()  # type: ignore  # wants Optional[FrameType]
-    if dirname is None: dirname = os.path.dirname(os.path.abspath(inspect.getfile(curr_frame)))
+    # curr_frame: FrameType = inspect.currentframe()  # type: ignore  # wants Optional[FrameType]
+    if dirname is None: dirname = os.getcwd()  # os.path.dirname(os.path.abspath(inspect.getfile(curr_frame)))
     
     if not os.path.isdir(dirname + '/refdata'):
         if os.path.isdir(dirname + '/../refdata'):
@@ -192,7 +192,7 @@ class Calendar:
         
         >>> eurex = Calendar.get_calendar(Calendar.EUREX)
         >>> eurex.num_trading_days('2009-01-01', '2011-12-31')
-        772
+        772.0
         >>> dates = pd.date_range('20130101',periods=8)
         >>> increments = np.array([5, 0, 3, 9, 4, 10, 15, 29])
         >>> import warnings
@@ -214,13 +214,13 @@ class Calendar:
             assert isinstance(s_tmp, Iterable)
             ret = np.full(len(s_tmp), np.nan)
             mask = ~(np.isnat(s_tmp) | np.isnat(e_tmp))
-            count = np.busday_count(s_tmp[mask], e_tmp[mask], busdaycal=self.bus_day_cal)
+            count = np.busday_count(s_tmp[mask], e_tmp[mask], busdaycal=self.bus_day_cal)  # type: ignore
             ret[mask] = count
             return ret
         else:
             if np.isnat(s_tmp) or np.isnat(s_tmp): return np.nan
-            count = np.busday_count(s_tmp, e_tmp, busdaycal=self.bus_day_cal)
-            return count
+            count = np.busday_count(s_tmp, e_tmp, busdaycal=self.bus_day_cal)  # type: ignore
+            return count.astype(float)
         
     def get_trading_days(self,
                          start: Union[np.datetime64, pd.Series, np.ndarray, str, datetime.datetime, datetime.date],
@@ -273,7 +273,7 @@ class Calendar:
     
     def add_trading_days(self,
                          start: Union[np.datetime64, pd.Series, np.ndarray, str, datetime.datetime, datetime.date],
-                         num_days: int, 
+                         num_days: Union[int, np.ndarray], 
                          roll: str = 'raise') -> Union[np.datetime64, np.ndarray]:
         '''
         Adds trading days to a start date
@@ -312,9 +312,9 @@ class Calendar:
         start_date, time_delta = _normalize_datetime(start)
         if roll == 'allow':
             # If today is a holiday, roll forward but subtract 1 day so
-            num_days = np.where(self.is_trading_day(start) | (num_days < 1), num_days, num_days - 1)
+            num_days = np.where(self.is_trading_day(start) | (num_days < 1), num_days, num_days - 1)  # type: ignore
             roll = 'forward'
-        out = np.busday_offset(start_date, num_days, roll=roll, busdaycal=self.bus_day_cal)
+        out = np.busday_offset(start_date, num_days, roll=roll, busdaycal=self.bus_day_cal)  # type: ignore
         out = out + time_delta  # for some reason += does not work correctly here.
         return out
         

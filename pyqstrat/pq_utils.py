@@ -489,7 +489,7 @@ def millis_since_epoch(dt: datetime.datetime) -> float:
 def day_symbol(day_int: Union[int, np.ndarray]) -> Union[str, np.ndarray]:
     day_str = np.select([day_int == 0, day_int == 1, day_int == 2, day_int == 3, day_int == 4, day_int == 5, day_int == 6],
                         ['M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'], default='')
-    if day_str.shape == (): day_str = np.asscalar(day_str)
+    if day_str.shape == (): day_str = day_str.item()
     return day_str
 
 

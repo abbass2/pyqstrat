@@ -591,7 +591,7 @@ def plot_return_metrics(metrics: Mapping[str, Any],
 def test_evaluator() -> None:
     from datetime import datetime, timedelta
     np.random.seed(10)
-    timestamps = np.arange(datetime(2018, 1, 1), datetime(2018, 3, 1), timedelta(days=1))
+    timestamps: np.ndarray = np.arange(datetime(2018, 1, 1), datetime(2018, 3, 1), timedelta(days=1))
     rets = np.random.normal(size=len(timestamps)) / 1000
     starting_equity = 1.e6
     

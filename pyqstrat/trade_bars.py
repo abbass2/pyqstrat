@@ -446,7 +446,8 @@ def roll_futures(fut_prices: pd.DataFrame,
 def test_trade_bars() -> None:
     from datetime import datetime, timedelta
     np.random.seed(0)
-    timestamps = np.arange(datetime(2018, 1, 1, 9, 0, 0), datetime(2018, 3, 1, 16, 0, 0), timedelta(minutes=5))
+    timestamps: np.ndarray = np.arange(datetime(2018, 1, 1, 9, 0, 0), 
+                                       datetime(2018, 3, 1, 16, 0, 0), timedelta(minutes=5))
     timestamps = np.array([dt for dt in timestamps.astype(object) if dt.hour >= 9 and dt.hour <= 16]).astype('M8[m]')
     rets = np.random.normal(size=len(timestamps)) / 1000
     c_0 = 100
