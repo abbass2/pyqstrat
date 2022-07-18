@@ -3,12 +3,12 @@ import pandas as pd
 from collections.abc import Iterable
 import datetime
 import os
-# import inspect
+import inspect
 import calendar as cal
 import dateutil.relativedelta as rd
 
 from typing import Tuple, Union, MutableMapping
-# from types import FrameType
+from types import FrameType
 
 DateTimeType = Union[pd.Timestamp, str, np.datetime64, datetime.datetime, datetime.date]
 
@@ -126,8 +126,9 @@ def read_holidays(calendar_name: str, dirname: str = None) -> np.ndarray:
     Reads a csv with a holidays column containing holidays (not including weekends)
     '''
     
-    # curr_frame: FrameType = inspect.currentframe()  # type: ignore  # wants Optional[FrameType]
-    if dirname is None: dirname = os.getcwd()  # os.path.dirname(os.path.abspath(inspect.getfile(curr_frame)))
+    curr_frame: FrameType = inspect.currentframe()  # type: ignore  # wants Optional[FrameType]
+    if dirname is None: dirname = os.path.dirname(os.path.abspath(inspect.getfile(curr_frame)))
+    if '/ipykernel_' in dirname: dirname = os.getcwd()  # sometimes we get jupyter cache dir
     
     if not os.path.isdir(dirname + '/refdata'):
         if os.path.isdir(dirname + '/../refdata'):
@@ -154,7 +155,6 @@ class Calendar:
         self.bus_day_cal = np.busdaycalendar(holidays=holidays)
         
     def is_trading_day(self, dates: Union[np.datetime64, pd.Series, np.ndarray, str, datetime.datetime, datetime.date]) -> Union[bool, np.ndarray]:
- 
         '''
         Returns whether the date is not a holiday or a weekend
         
