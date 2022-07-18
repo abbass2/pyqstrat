@@ -1,4 +1,7 @@
-image: Visual Studio 2017
+image:
+  - Visual Studio 2017
+  - Ubuntu
+
 
 matrix:
   # Finish when first job fails
@@ -32,12 +35,6 @@ for:
     global:
       PYTHON: "C:\\conda"
       CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci-helpers\\appveyor\\windows_sdk.cmd"
-
-for:
--
-  matrix:
-    only:
-      - image: Visual Studio 2017
 
   install:
     - if "%PYTHON_VERSION%" == "3.9" set "BASE_PYTHON_VERSION=3"
