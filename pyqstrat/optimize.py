@@ -331,4 +331,3 @@ if __name__ == "__main__":
     test_optimize()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-
