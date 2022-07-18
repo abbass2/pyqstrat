@@ -1,3 +1,5 @@
+image: Visual Studio 2017
+
 matrix:
   # Finish when first job fails
   fast_finish: true
@@ -23,7 +25,6 @@ platform:
   -x64
 
 install:
-  - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
   - if "%PYTHON_VERSION%" == "3.9" set "BASE_PYTHON_VERSION=3"
   - if "%PYTHON_ARCH%" == "64" set "ARCH_LABEL=-x64"
   # These are already installed on appveyor.  Update them.
