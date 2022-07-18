@@ -15,10 +15,6 @@ notifications:
     on_build_failure: true
     on_build_status_changed: true
 
-environment:
-  PYTHON_ARCH: "64"
-  PYTHON_VERSION: "3.9"
-
 platform:
   -x64
 
@@ -35,6 +31,8 @@ for:
     global:
       PYTHON: "C:\\conda"
       CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci-helpers\\appveyor\\windows_sdk.cmd"
+      PYTHON_ARCH: "64"
+      PYTHON_VERSION: "3.9"
 
   install:
     - if "%PYTHON_VERSION%" == "3.9" set "BASE_PYTHON_VERSION=3"
