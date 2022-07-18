@@ -44,9 +44,9 @@ for:
     - conda update -q conda
     # Useful for debugging any issues with conda
     - conda info -a
-    - conda create --channel conda-forge -vv -q -n test-environment python=$T pybind11 pytest pandas numpy matplotlib scipy ipython sortedcontainers libzip boost-cpp hdf5 h5py statsmodels mypy flake8 plotly ipywidgets types-python-dateutil
+    - conda create --channel conda-forge -q -n test-environment python=$PYTHON_VERSION pybind11 pytest pandas numpy matplotlib scipy ipython sortedcontainers libzip boost-cpp hdf5 h5py statsmodels mypy flake8 plotly ipywidgets types-python-dateutil
     - source activate test-environment
-    - CXX=g++-5 CC=g++-5 python setup.py build_ext --inplace
+    - CXX=g++-9 CC=g++-9 python setup.py build_ext --inplace
 
   test_script:
     - which python
