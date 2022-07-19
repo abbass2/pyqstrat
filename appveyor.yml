@@ -18,7 +18,7 @@ notifications:
 platform:
   -x64
 
-# Not a .NET project, we build in the install step insteda
+# Not a .NET project, we build in the install step instead
 build: false
 
 environment:
@@ -49,8 +49,8 @@ for:
     - which python
     - python -c 'import pyqstrat'
     - python -m pytest pyqstrat
-    - mypy --ignore-missing-imports pyqstrat/*.py
-    - flake8 --ignore W291,W293,E701 --max-line-length=160 pyqstrat/*.py
+    - mypy --ignore-missing-imports pyqstrat/
+    - flake8 --ignore W291,W293,E701 --max-line-length=160 pyqstrat/
   
 
 -
@@ -89,6 +89,6 @@ for:
     - pip install scipy
     - python setup.py build_ext --inplace
     - python -m pytest pyqstrat
-    - mypy --ignore-missing-imports pyqstrat/*.py
-    - flake8 --ignore W291,W293,E701 --max-line-length=160 pyqstrat/*.py
+    - mypy --ignore-missing-imports pyqstrat/
+    - flake8 --ignore W291,W293,E701 --max-line-length=160 pyqstrat/
 
