@@ -58,24 +58,11 @@ for:
     only:
       - image: Visual Studio 2017
 
- # environment:
- #   global:
- #     # PYTHON: "C:\\conda"
- #     # CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci-helpers\\appveyor\\windows_sdk.cmd"
-
   install:
-    # - if "%PYTHON_VERSION%" == "3.9" set "BASE_PYTHON_VERSION=3"
-    # - if "%PYTHON_ARCH%" == "64" set "ARCH_LABEL=-x64"
-    # These are already installed on appveyor.  Update them.
     - set "CONDA_ROOT=C:\Miniconda3-x64"
     - set "PATH=%CONDA_ROOT%;%CONDA_ROOT%\Scripts;%CONDA_ROOT%\Library\bin;%PATH%"
     - echo %PATH%
     - conda config --set always_yes yes
-    # Use the latest conda
-    # - conda install -n root -q conda --no-pin
-    # activate with newer conda, may set different variables
-    # - "%CONDA_ROOT%\\Scripts\\activate root"
-    # - echo CONDA_PREFIX %CONDA_PREFIX%
     - conda info -a
     - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% pybind11 pandas numpy matplotlib pytest ipython sortedcontainers libzip hdf5 h5py statsmodels boost-cpp mypy flake8 plotly ipywidgets types-python-dateutil
     - conda list
