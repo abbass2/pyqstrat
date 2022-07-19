@@ -22,9 +22,8 @@ platform:
 build: false
 
 environment:
-   global:
-      PYTHON_ARCH: "64"
-      PYTHON_VERSION: "3.9"
+  PYTHON_ARCH: "64"
+  PYTHON_VERSION: "3.9"
 
 
 for:
@@ -34,8 +33,6 @@ for:
       - image: Ubuntu
 
   install:
-    #  - sudo apt-get install gcc-5 g++-5
-    # - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 1
     - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH="$HOME/miniconda/bin:$PATH"
@@ -67,19 +64,18 @@ for:
       CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci-helpers\\appveyor\\windows_sdk.cmd"
 
   install:
-    - if "%PYTHON_VERSION%" == "3.9" set "BASE_PYTHON_VERSION=3"
-    - if "%PYTHON_ARCH%" == "64" set "ARCH_LABEL=-x64"
+    # - if "%PYTHON_VERSION%" == "3.9" set "BASE_PYTHON_VERSION=3"
+    # - if "%PYTHON_ARCH%" == "64" set "ARCH_LABEL=-x64"
     # These are already installed on appveyor.  Update them.
-    - set "CONDA_ROOT=C:\Miniconda%BASE_PYTHON_VERSION%%ARCH_LABEL%"
+    - set "CONDA_ROOT=C:\Miniconda3-x64"
     - set "PATH=%CONDA_ROOT%;%CONDA_ROOT%\Scripts;%CONDA_ROOT%\Library\bin;%PATH%"
-    - set PATH
-    - echo CONDA_PREFIX %CONDA_PREFIX%
+    - echo %PATH%
     - conda config --set always_yes yes
     # Use the latest conda
-    - conda install -n root -q conda --no-pin
+    # - conda install -n root -q conda --no-pin
     # activate with newer conda, may set different variables
-    - "%CONDA_ROOT%\\Scripts\\activate root"
-    - echo CONDA_PREFIX %CONDA_PREFIX%
+    # - "%CONDA_ROOT%\\Scripts\\activate root"
+    # - echo CONDA_PREFIX %CONDA_PREFIX%
     - conda info -a
     - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% pybind11 pandas numpy matplotlib pytest ipython sortedcontainers libzip hdf5 h5py statsmodels boost-cpp mypy flake8 plotly ipywidgets types-python-dateutil
     - conda list
@@ -93,6 +89,6 @@ for:
     - pip install scipy
     - python setup.py build_ext --inplace
     - python -m pytest pyqstrat
-    - mypy --ignore-missing-imports pyqstrat/
-    - flake8 --ignore W291,W293,E701 --max-line-length=160 pyqstrat/
+    - mypy --ignore-missing-imports pyqstrat/*.py
+    - flake8 --ignore W291,W293,E701 --max-line-length=160 pyqstrat/*.py
 
