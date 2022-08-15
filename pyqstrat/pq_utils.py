@@ -71,17 +71,12 @@ def set_ipython_defaults(jupyter_multiple_display=True) -> None:
     
     if jupyter_multiple_display:
         InteractiveShell.ast_node_interactivity = 'all'
-    # autoreload extension
-    # if 'autoreload' not in get_ipython().extension_manager.loaded: # type: ignore # noqa: 89
-    #    get_ipython().magic('load_ext autoreload') # type: ignore # noqa: 89
-    #    get_ipython().ipython.run_line_magic('autoreload', '2')  # type: ignore # noqa: 89
     
 
 def set_defaults(df_float_sf: int = 9, 
                  df_display_max_rows: int = 200, 
                  df_display_max_columns: int = 99,
                  np_seterr: str = 'raise',
-                 plot_style: str = 'ggplot',
                  mpl_figsize: Tuple[int, int] = (8, 6),
                  jupyter_multiple_display=True) -> None:
     '''
@@ -92,14 +87,12 @@ def set_defaults(df_float_sf: int = 9,
         df_display_max_rows: Number of rows to display for pandas dataframes when you print them (default 200).  Set to None to use pandas defaults
         df_display_max_columns: Number of columns to display for pandas dataframes when you print them (default 99).  Set to None to use pandas defaults
         np_seterr: Error mode for numpy warnings.  See numpy seterr function for details.  Set to None to use numpy defaults
-        plot_style: Style for matplotlib plots.  Set to None to use default plot style.
         mpl_figsize: Default figure size to use when displaying matplotlib plots (default 8,6).  Set to None to use defaults
         jupyter_multiple_display: If set, and you have multiple outputs in a Jupyter cell, output will contain all of them. Default True
     '''
     if df_float_sf is not None: pd.options.display.float_format = ('{:.' + str(df_float_sf) + 'g}').format
     if df_display_max_rows is not None: pd.options.display.max_rows = df_display_max_rows
     if df_display_max_columns is not None: pd.options.display.max_columns = df_display_max_columns
-    if plot_style is not None: plt.style.use(plot_style)
     if mpl_figsize is not None: mpl.rcParams['figure.figsize'] = mpl_figsize
     if np_seterr is not None: np.seterr(np_seterr)  # type: ignore
     pd.options.mode.chained_assignment = None  # Turn off bogus 'view' warnings from pandas when modifying dataframes

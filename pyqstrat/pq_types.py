@@ -468,6 +468,8 @@ class RoundTripTrade:
     qty: int
     entry_price: float
     exit_price: float
+    entry_reason: str
+    exit_reason: str
     entry_commission: float
     exit_commission: float
     entry_properties: Optional[SimpleNamespace]

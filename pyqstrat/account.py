@@ -356,6 +356,7 @@ def _net_trade(stacks: Dict[str, deque], trade: Trade) -> Optional[RoundTripTrad
                         entry.timestamp, trade.timestamp,
                         qty, 
                         entry.price, trade.price, 
+                        entry.order.reason_code, trade.order.reason_code,
                         entry.commission, trade.commission,
                         entry.properties, trade.properties,
                         pnl)
@@ -639,6 +640,8 @@ class Account:
             qty=s.qty,
             entry_price=s.entry_price,
             exit_price=s.exit_price,
+            entry_reason=s.entry_reason,
+            exit_reason=s.exit_reason,
             entry_commission=s.entry_commission,
             exit_commission=s.exit_commission,
             net_pnl=s.net_pnl) for s in rt_trades])

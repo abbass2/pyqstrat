@@ -64,7 +64,7 @@ for:
     - echo %PATH%
     - conda config --set always_yes yes
     - conda info -a
-    - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% pybind11 pandas numpy matplotlib pytest ipython sortedcontainers libzip hdf5 h5py statsmodels boost-cpp mypy flake8 plotly ipywidgets types-python-dateutil
+    - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% pybind11 pandas numpy matplotlib pytest ipython sortedcontainers libzip hdf5 h5py statsmodels boost-cpp mypy flake8 plotly ipywidgets types-python-dateutil zlib
     - conda list
 
   test_script:
