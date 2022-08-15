@@ -503,7 +503,7 @@ class Account:
             between (and including) start date and end date if they are specified. 
             If symbol is None trades for all symbols are returned'''
         rts: List[RoundTripTrade] = []
-        stacks: Dict[Contract, deque] = defaultdict(deque)
+        stacks: Dict[str, deque] = defaultdict(deque)
 
         trades = copy.deepcopy(self._trades)    
 
