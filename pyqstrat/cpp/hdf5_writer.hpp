@@ -5,14 +5,20 @@
 #undef timezone
 #endif
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Weverything"
 #include <H5Cpp.h>
+#pragma clang diagnostic pop
 
 #include <iostream>
 #include <sstream>
 #include <vector>
 #include <unordered_map>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Weverything"
 #include <pybind11/pybind11.h>
+#pragma clang diagnostic pop
 
 #include "utils.hpp"
 #include "pq_types.hpp"

@@ -216,10 +216,11 @@ void write_data(Group& group, const std::pair<std::string, Schema::Type>& field,
     clear_array(field.second, array);
 }
 
-DSetCreatPropList get_dataset_props() {
+DSetCreatPropList get_dataset_props(H5::DataType dtype) {
     DSetCreatPropList ds_props;  // create dataset creation prop list
     ds_props.setShuffle(); // Supposed to improve gzip and szip compression
-    ds_props.setFletcher32();  // Add checksum for corruption
+    if (dtype != STR_TYPE) // Fletcher checksum does not work for variable length strings
+        ds_props.setFletcher32();
     hsize_t chunk_size[1]{CHUNK_SIZE};
     ds_props.setChunk(1, chunk_size);  // then modify it for compression
     ds_props.setDeflate(6); // Compression level set to 6
@@ -235,7 +236,7 @@ void create_datasets(const Schema& schema, H5::Group group) {
         Schema::Type type = field.second;
         if (path_exists(group.getId(), name)) continue;
         DataType dtype = map_schema_type(type);
-        group.createDataSet(name, dtype, space, get_dataset_props());
+        group.createDataSet(name, dtype, space, get_dataset_props(dtype));
     }
 }
 
@@ -474,7 +475,6 @@ void test_hdf5_lib() {
     
     DSetCreatPropList ds_props;  // create dataset creation prop list
     ds_props.setShuffle(); // Supposed to improve gzip and szip compression
-    ds_props.setFletcher32();  // Add checksum for corruption
     hsize_t chunk_size[1]{10};
     ds_props.setChunk(1, chunk_size);  // then modify it for compression
     ds_props.setDeflate(6); // Compression level set to 6

@@ -1,4 +1,7 @@
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Weverything"
 #include <pybind11/pybind11.h>
+#pragma clang diagnostic pop
 #include <pybind11/stl.h>
 #include <pybind11/functional.h>
 #include <pybind11/chrono.h>

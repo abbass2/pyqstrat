@@ -451,7 +451,6 @@ def compute_return_metrics(timestamps: np.ndarray,
     >>> assert(round(metrics['sharpe'], 6) == 0.599382)
     >>> assert(all(metrics['returns_3yr'] == np.array([0.01, 0.02, 0, -0.015])))
     '''
-    
     assert(starting_equity > 0.)
     assert(type(rets) == np.ndarray and rets.dtype == np.float64)
     assert(type(timestamps) == np.ndarray and np.issubdtype(timestamps.dtype, np.datetime64) and monotonically_increasing(timestamps))
@@ -502,7 +501,7 @@ def compute_return_metrics(timestamps: np.ndarray,
     return ev
 
 
-def display_return_metrics(metrics: Mapping[str, Any], float_precision: int = 3) -> pd.DataFrame:
+def display_return_metrics(metrics: Mapping[str, Any], float_precision: int = 3, show=True) -> pd.DataFrame:
     '''
     Creates a dataframe making it convenient to view the output of the metrics obtained using the compute_return_metrics function.
     
@@ -538,7 +537,7 @@ def display_return_metrics(metrics: Mapping[str, Any], float_precision: int = 3)
     for k, v in _metrics.items():
         if isinstance(v, float) or isinstance(v, float):
             _metrics[k] = format_str.format(v)
-       
+            
     cols = ['gmean', 'amean', 'std', 'shrp', 'srt', 'k', 'calmar', 'mar', 'mdd_pct', 'mdd_dates', 'dd_3y_pct', 'dd_3y_timestamps', 'up_dwn'] + [
         str(year) for year in sorted(years)]
     
@@ -546,8 +545,10 @@ def display_return_metrics(metrics: Mapping[str, Any], float_precision: int = 3)
     for metric_name, metric_value in _metrics.items():
         df.insert(0, metric_name, metric_value)
     df = df[cols]
-        
-    display(df)
+    
+    if show:
+        display(df)
+    
     return df
 
 
