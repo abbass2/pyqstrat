@@ -80,7 +80,6 @@ if sys.platform in ["darwin"]:
     extra_link_args.append(f'-Wl,-rpath,{link_dirs}')
 
 libraries = [
-    'z',
     'zip',
     'hdf5_cpp',
     'hdf5'
