@@ -391,10 +391,8 @@ def roll_futures(fut_prices: pd.DataFrame,
     >>> date_func = lambda fut_prices: fut_prices.expiry - fut_prices.timestamp <= np.timedelta64(3, 'D')
     >>> condition_func = lambda fut_prices: fut_prices.v_next > fut_prices.v
     >>> df = roll_futures(fut_prices, date_func, condition_func, expiries)
-    >>> print(df[df.series == 'MAR2018'].timestamp.max() == np.datetime64('2018-03-14'))
-    True
-    >>> print(df[df.series == 'JUN2018'].timestamp.max() == np.datetime64('2018-03-15'))
-    True
+    >>> assert np.max(df[df.series == 'MAR2018'].timestamp.values == np.datetime64('2018-03-14'))
+    >>> assert(np.max(df[df.series == 'JUN2018'].timestamp.values) == np.datetime64('2018-03-15'))
     '''
     if 'timestamp' not in fut_prices.columns or 'series' not in fut_prices.columns:
         raise Exception('timestamp or series not found in columns: {fut_prices.columns}')

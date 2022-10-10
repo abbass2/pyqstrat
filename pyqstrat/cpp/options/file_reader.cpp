@@ -3,10 +3,10 @@
 
 #ifndef _WIN32
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Weverything"
+//#pragma clang diagnostic push
+//#pragma clang diagnostic ignored "-Weverything"
 #include <boost/iostreams/filter/bzip2.hpp>
-#pragma clang diagnostic pop
+//#pragma clang diagnostic pop
 
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filter/lzma.hpp>
