@@ -11,6 +11,9 @@
 **/*.so
 **/var/**
 **/*.ipynb
+project.xcworkspace
+xcshareddata
+xcuserdata
 .DS_Store
 clean.sh
 .buildinfo
