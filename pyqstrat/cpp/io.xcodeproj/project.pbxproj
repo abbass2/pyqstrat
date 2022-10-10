@@ -386,6 +386,7 @@
 					"-lzip",
 					"-undefined",
 					dynamic_lookup,
+					"-Wl,-no_fixup_chains",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -410,6 +411,7 @@
 					"-lzip",
 					"-undefined",
 					dynamic_lookup,
+					"-Wl,-no_fixup_chains",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

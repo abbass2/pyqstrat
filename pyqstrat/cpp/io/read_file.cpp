@@ -68,7 +68,8 @@ static PyObject* create_np_str_array(const std::vector<std::string>& vals, size_
 
     npy_intp dim = static_cast<npy_intp>(vals.size());
     
-    PyObject* arr = PyArray_New(&PyArray_Type, 1, &dim, NPY_STRING, NULL, mem, itemsize, NPY_ARRAY_CARRAY | NPY_ARRAY_OWNDATA, NULL);
+    PyObject* arr = PyArray_New(&PyArray_Type, 1, &dim, NPY_STRING, NULL, mem,
+                                static_cast<int>(itemsize), NPY_ARRAY_CARRAY | NPY_ARRAY_OWNDATA, NULL);
     PyArray_ENABLEFLAGS((PyArrayObject*)arr, NPY_ARRAY_OWNDATA);
     return arr;
 }

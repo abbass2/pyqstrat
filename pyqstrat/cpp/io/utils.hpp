@@ -8,7 +8,7 @@
 #ifndef utils_hpp
 #define utils_hpp
 
-
+#include <string.h>
 #include <sstream>
 
 #define error(msg) \

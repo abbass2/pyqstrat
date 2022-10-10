@@ -14,8 +14,15 @@
 #include <mutex>
 #include <zip.h>
 #include <math.h>
+#include <string.h>
 #include <unordered_map>
 #include "utils.hpp"
+
+
+// Windows uses _strdup instead of non-standard strdup function
+#ifdef _MSC_VER
+    #define strdup _strdup
+#endif
 
 using namespace std;
 
@@ -29,7 +36,7 @@ vector<char*> tokenize_line(char *s, char delim, const vector<int>& col_indices)
     size_t col_idx = 0;
     char* begin = s;
     size_t curr_col_idx = 0;
-    size_t size = strlen(s);
+    size_t size = ::strlen(s);
     for (size_t i = 0; i < size; ++i) {
         if (s[i] == delim) {
             s[i] = '\0';
