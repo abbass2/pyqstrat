@@ -22,20 +22,25 @@
 // Windows uses _strdup instead of non-standard strdup function
 #ifdef _MSC_VER
     #define strdup _strdup
-#endif
-
-#ifdef _MSC_VER
-#include <BaseTsd.h>
-typedef SSIZE_T ssize_t;
-#else
-#include <unistd.h>
+    #define _CRT_SECURE_NO_WARNINGS
+    #include <BaseTsd.h>
+    typedef SSIZE_T ssize_t;
 #endif
 
 using namespace std;
 
-// whether to use native getline implementation in C or use our own buffered file read
-// for csv files.  getline seems to be about the same speed as our own implementation.
-static const bool USE_GETLINE = false;
+static const float NANF = nanf("");
+static const double NAND = nan("");
+
+string get_error(int err_num) {
+    char errmsg[255];
+#ifdef _MSC_VER
+    ::strerror_s(errmsg, 255, err_num);
+#else
+    ::strerror_r(err_num, errmsg, 255);
+#endif
+    return string(errmsg);
+}
 
 vector<char*> tokenize_line(char *s, char delim, const vector<int>& col_indices) {
     vector<char*> ret;
@@ -98,7 +103,7 @@ float str_to_float(const char* str, char decimal_point, char thousands_separator
         result += *str - '0';
         str++;
     }
-    if (!zero && (result == 0)) return nanf("");
+    if (!zero && (result == 0)) return NANF;
 
     float multiplier = 0.1f;
     if (*str == decimal_point) {
@@ -142,7 +147,7 @@ double str_to_double(const char* str, char decimal_point, char thousands_separat
         result += *str - '0';
         str++;
     }
-    if (!zero && (result == 0)) return nan("");
+    if (!zero && (result == 0)) return NAND;
     
     float multiplier = 0.1f;
     if (*str == decimal_point) {
@@ -337,7 +342,7 @@ public:
                     _fifo.pop();
                 }
                 zip_archive = zip_open(zip_filename.c_str(), ZIP_RDONLY, NULL);
-                if (!zip_archive) error("can't read: " << zip_filename << " : " << strerror(errno));
+                if (!zip_archive) error("can't read: " << zip_filename << " : " << get_error(errno));
                 _zip_archives.insert(make_pair(zip_filename, zip_archive));
                 _fifo.push(zip_filename);
             } else {
@@ -429,7 +434,7 @@ public:
         ZipArchive& archive = ZipArchive::get_instance();
         zip_t* zip_archive = archive.get_archive(zip_filename);
         _zip_file = zip_fopen(zip_archive, inner_filename.c_str(), ZIP_FL_ENC_GUESS);
-        if (!_zip_file) error("can't read: " << inner_filename << " from " << filename << " : " << strerror(errno));
+        if (!_zip_file) error("can't read: " << inner_filename << " from " << filename << " : " << get_error(errno));
     }
     
     string filename() override { return _filename; }
@@ -471,10 +476,6 @@ public:
     }
 
     ssize_t getline(char** line) override {
-        if (USE_GETLINE) {
-            size_t size;
-            return ::getline(line, &size, _file);
-        }
         return read_line(&_buf, &_buf_size, &_buf_idx, line, this);
     }
     
@@ -507,7 +508,6 @@ bool read_csv_file(Reader* reader,
                    char separator,
                    int skip_rows,
                    int max_rows,
-                   bool free_line,
                    vector<void*>& output) {
     
     int row_num = 0;
@@ -527,22 +527,12 @@ bool read_csv_file(Reader* reader,
         }
         // cout << "row num: " << row_num << " len: " << strlen(line) << " " << line << endl;
         row_num++;
-        //if (row_num > 1000000) {
-        // cout << "hello" << endl;
-        // }
-        
  
-        if (row_num <= skip_rows) {
-            if (free_line && (line != NULL)) ::free(line);
-            continue;
-        }
+        if (row_num <= skip_rows) continue;
         
         if ((max_rows != 0) && (row_num > max_rows)) break;
         auto fields = tokenize_line(line, separator, col_indices);
-        if (!fields.size()) {
-            if (free_line && (line != NULL)) ::free(line);
-            continue; // empty line
-        }
+        if (!fields.size()) continue; // empty line
         if (fields.size() != dtypes.size()) {
             //replace nulls we added with separator so we can print out the line
             string _line(line, line_size);
@@ -554,8 +544,6 @@ bool read_csv_file(Reader* reader,
 
         }
         add_line(fields, dtypes, output);
-        if (free_line && (line != NULL)) ::free(line);
-
     }
     return more_to_read;
 }
@@ -592,12 +580,12 @@ bool read_csv(const std::string& filename,
     Reader* reader = NULL;
     if (i == filename.npos) {
         reader = new FileReader(filename);
-        bool tmp = read_csv_file(reader, col_indices, dtypes, separator, skip_rows, max_rows, USE_GETLINE, output);
+        bool tmp = read_csv_file(reader, col_indices, dtypes, separator, skip_rows, max_rows, output);
         if (tmp) more_to_read = true;
         delete reader;
     } else {
         reader = new ZipReader(filename);
-        bool tmp = read_csv_file(reader, col_indices, dtypes, separator, skip_rows, max_rows, false, output);
+        bool tmp = read_csv_file(reader, col_indices, dtypes, separator, skip_rows, max_rows, output);
         if (tmp) more_to_read = true;
         delete reader;
     }

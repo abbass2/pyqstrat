@@ -13,6 +13,8 @@ if __name__ == '__main__':
     if _conda_prefix is None and _conda_prefix_1 is None:
         raise RuntimeError("CONDA_PREFIX and CONDA_PREFIX_1 not found in env variables")
 
+    _windows = (sys.platform == "win32")
+
     conda_prefix = _conda_prefix if _conda_prefix else _conda_prefix_1
     pybind_11_include = [pybind11.get_include()]
     np_include = [np.get_include()]
@@ -29,6 +31,9 @@ if __name__ == '__main__':
         include_dirs = [f'{conda_prefix}/lib']       
         library_dirs = [f'{conda_prefix}/lib']
 
+
+    extra_compile_args=[] if _windows else ['-std=c++11', '-Ofast']
+        
     cpp_dir = 'pyqstrat/cpp'
 
     io_module = Extension('pyqstrat.pyqstrat_io',
@@ -36,7 +41,7 @@ if __name__ == '__main__':
                           include_dirs=include_dirs + np_include,
                           library_dirs=library_dirs,
                           libraries=['zip'],
-                          extra_compile_args=['-std=c++11', '-Ofast'])
+                          extra_compile_args=extra_compile_args)
 
     opt_cpp_files = glob.glob(f'{cpp_dir}/options/*.cpp') + glob.glob(f'{cpp_dir}/lets_be_rational/*.cpp')
     options_module = Extension('pyqstrat.pyqstrat_cpp',
@@ -44,7 +49,7 @@ if __name__ == '__main__':
                                include_dirs=include_dirs + pybind_11_include,
                                library_dirs=library_dirs,
                                libraries=['zip', 'hdf5_cpp', 'hdf5', 'boost_iostreams'],
-                               extra_compile_args=['-std=c++11', '-Ofast'])
+                               extra_compile_args=extra_compile_args)
 
     with open('version.txt', 'r') as f:
         version = f.read().strip()
