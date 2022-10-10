@@ -1,4 +1,5 @@
 # flake8: noqa
+# include functions for easy reference from pq prefix
 from pyqstrat.pq_utils import *
 from pyqstrat.pq_types import *
 from pyqstrat.pq_io import *
