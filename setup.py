@@ -29,19 +29,21 @@ if __name__ == '__main__':
         include_dirs = [f'{conda_prefix}/lib']       
         library_dirs = [f'{conda_prefix}/lib']
 
-    io_module = Extension('pyqstrat_io',
-                          sources = ['pyqstrat/cpp/io/' + file for file in ['read_file.cpp', 'csv_reader.cpp']],
+    cpp_dir = 'pyqstrat/cpp'
+
+    io_module = Extension('pyqstrat.pyqstrat_io',
+                          sources = [f'{cpp_dir}/io/{file}' for file in ['read_file.cpp', 'csv_reader.cpp']],
                           include_dirs=include_dirs + np_include,
                           library_dirs=library_dirs,
-                          libraries=['z', 'zip'],
+                          libraries=['zip'],
                           extra_compile_args=['-std=c++11', '-Ofast'])
 
-    opt_cpp_files = glob.glob('pyqstrat/cpp/options/*.cpp')
-    options_module = Extension('pyqstrat_cpp',
+    opt_cpp_files = glob.glob(f'{cpp_dir}/options/*.cpp') + glob.glob(f'{cpp_dir}/lets_be_rational/*.cpp')
+    options_module = Extension('pyqstrat.pyqstrat_cpp',
                                sources=opt_cpp_files,
                                include_dirs=include_dirs + pybind_11_include,
                                library_dirs=library_dirs,
-                               libraries=['z', 'hdf5_cpp', 'hdf5'],
+                               libraries=['zip', 'hdf5_cpp', 'hdf5', 'boost_iostreams'],
                                extra_compile_args=['-std=c++11', '-Ofast'])
 
     with open('version.txt', 'r') as f:
