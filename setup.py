@@ -37,7 +37,7 @@ if __name__ == '__main__':
                           extra_compile_args=['-std=c++11', '-Ofast'])
 
     opt_cpp_files = glob.glob('pyqstrat/cpp/options/*.cpp')
-    options_module = Extension('options',
+    options_module = Extension('pyqstrat_cpp',
                                sources=opt_cpp_files,
                                include_dirs=include_dirs + pybind_11_include,
                                library_dirs=library_dirs,

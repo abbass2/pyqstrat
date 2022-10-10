@@ -75,7 +75,7 @@ static PyObject* create_np_str_array(const std::vector<std::string>& vals, size_
 }
 
 template<typename T> PyObject* create_np_array(PyArray_Descr* descr, void* data) {
-    npy_intp dims[0];
+    npy_intp dims[1];
     auto vec = static_cast<vector<T>*>(data);
     dims[0] = vec->size();
     auto _data = new T[vec->size()];

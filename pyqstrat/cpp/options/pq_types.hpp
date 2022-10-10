@@ -4,10 +4,10 @@
 #include <string>
 #include <iostream>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Weverything"
+//#pragma clang diagnostic push
+//#pragma clang diagnostic ignored "-Weverything"
 #include <pybind11/pybind11.h>
-#pragma clang diagnostic pop
+//#pragma clang diagnostic pop
 
 struct ParseException : public std::runtime_error {
     ParseException(const char* m);
