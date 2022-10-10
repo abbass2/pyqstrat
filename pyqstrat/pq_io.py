@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import datetime
 from typing import List, Dict, Tuple, Any
+from pyqstrat.pq_utils import get_temp_dir
 
 
 def np_arrays_to_hdf5(data: List[Tuple[str, np.ndarray]], 
@@ -70,10 +71,18 @@ def np_arrays_to_hdf5(data: List[Tuple[str, np.ndarray]],
         if key in f: 
             del f[key]
         f.move(tmp_key, key)
-        grp.file.flush()
+        f.flush()
         
 
 def hdf5_to_np_arrays(filename: str, key: str) -> List[Tuple[str, np.ndarray]]:
+    '''
+    Read a list of numpy arrays previously written out by np_arrays_to_hdf5
+    Args:
+        filename: path of the hdf5 file to read
+        key: group and or / subgroups to read from.  For example, "g1/g2" will read from the subgrp g2 within the grp g1
+    Return:
+        a list of numpy arrays along with their names
+        '''
     ret: List[Tuple[str, np.ndarray]] = []
     with h5py.File(filename, 'r') as f:
         assert key in f, f'{key} not found in {filename}'
@@ -91,6 +100,9 @@ def hdf5_to_np_arrays(filename: str, key: str) -> List[Tuple[str, np.ndarray]]:
         
         
 def df_to_hdf5(df: pd.DataFrame, filename: str, key: str, dtypes: Dict[str, str] = None, optimize_vlen_str=True) -> None:
+    '''
+    Write out a pandas dataframe to hdf5 using the np_arrays_to_hdf5 function
+    '''
     arrays = []
     for column in df.columns:
         arrays.append((column, df[column].values))
@@ -98,13 +110,16 @@ def df_to_hdf5(df: pd.DataFrame, filename: str, key: str, dtypes: Dict[str, str]
     
 
 def hdf5_to_df(filename: str, key: str) -> pd.DataFrame:
+    '''
+    Read a pandas dataframe previously written out using df_to_hdf5 or np_arrays_to_hdf5
+    '''
     arrays = hdf5_to_np_arrays(filename, key)
     array_dict = {name: array for name, array in arrays}
     return pd.DataFrame(array_dict)
 
 
 def test_hdf5_to_df():
-    size = int(1e6)
+    size = int(100)
     a = np.random.randint(0, 10000, size)
     b = a * 1.1
     letters = np.random.choice(list(string.ascii_letters), (size, 5))
@@ -112,10 +127,12 @@ def test_hdf5_to_df():
     for i, row in enumerate(letters):
         c[i] = ''.join(row)
     d = (a * 1000).astype('M8[m]')
+    temp_dir = get_temp_dir()
+    # os.remove(f'{temp_dir}/test.hdf5')
 
-    np_arrays_to_hdf5([("b", b), ("a", a), ("c", c), ("d", d)], 'test.hdf5', 'key1/key2')
-    file_size = os.path.getsize('test.hdf5')
-    print(f"file size: {file_size / 1e6:.0f} MB")
+    np_arrays_to_hdf5([("b", b), ("a", a), ("c", c), ("d", d)], f'{temp_dir}/test.hdf5', 'key1/key2')
+    file_size = os.path.getsize(f'{temp_dir}/test.hdf5')
+    print(f"file size: {file_size / 1e3:.0f} KB")
 
     def read():
         '''
@@ -127,10 +144,9 @@ def test_hdf5_to_df():
             _ = f['key1/key2/c'][:]
             _ = f['key1/key2/d'][:]
 
-    # %timeit read()
     df_in = pd.DataFrame(dict(a=a, b=b, c=c, d=d))
-    df_to_hdf5(df_in, '/tmp/test.hdf5', 'key1/key2', dtypes={'d': 'M8[m]'})
-    df_out = hdf5_to_df('/tmp/test.hdf5', 'key1/key2')
+    df_to_hdf5(df_in, f'{temp_dir}/test.hdf5', 'key1/key2', dtypes={'d': 'M8[m]'})
+    df_out = hdf5_to_df(f'{temp_dir}/test.hdf5', 'key1/key2')
     from pandas.testing import assert_frame_equal
     assert_frame_equal(df_in, df_out)
     

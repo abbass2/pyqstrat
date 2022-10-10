@@ -122,7 +122,8 @@ def remove_dups(lst: Sequence[Any], key_func: Callable[[Any], Any] = None) -> Mu
         lst: list to remove duplicates from
         key_func: A function that takes a list element and converts it to a key for detecting dups
         
-    Returns (List): A list with duplicates removed.  This is stable in the sense that original list elements will retain their order
+    Return:
+        A list with duplicates removed.  This is stable in the sense that original list elements will retain their order
     
     >>> print(remove_dups(['a', 'd', 'a', 'c']))
     ['a', 'd', 'c']
