@@ -18,7 +18,7 @@ double implied_vol(bool call, double price, double S, double K, double t, double
 
 // From lets be rational
 
-#include "lets_be_rational/importexport.h"
+#include "../lets_be_rational/importexport.h"
 
 EXPORT_EXTERN_C double implied_volatility_from_a_transformed_rational_guess(double price, double F, double K, double T, double q);
 

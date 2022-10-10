@@ -7,42 +7,39 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		3E3C2D7228C4077300CBF225 /* zip_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D5828C4077300CBF225 /* zip_reader.cpp */; };
-		3E3C2D7328C4077300CBF225 /* hdf5_writer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D5928C4077300CBF225 /* hdf5_writer.cpp */; };
-		3E3C2D7428C4077300CBF225 /* pybind_options.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D5A28C4077300CBF225 /* pybind_options.cpp */; };
-		3E3C2D7528C4077300CBF225 /* test_quote_pair.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D5B28C4077300CBF225 /* test_quote_pair.cpp */; };
-		3E3C2D7828C4077300CBF225 /* options.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D5E28C4077300CBF225 /* options.cpp */; };
-		3E3C2D7B28C4077300CBF225 /* text_file_processor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6128C4077300CBF225 /* text_file_processor.cpp */; };
-		3E3C2D7C28C4077300CBF225 /* aggregators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6228C4077300CBF225 /* aggregators.cpp */; };
-		3E3C2D7D28C4077300CBF225 /* test_file_processor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6328C4077300CBF225 /* test_file_processor.cpp */; };
-		3E3C2D8028C4077300CBF225 /* py_import_call_execute.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6628C4077300CBF225 /* py_import_call_execute.cpp */; };
-		3E3C2D8128C4077300CBF225 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6728C4077300CBF225 /* utils.cpp */; };
-		3E3C2D8328C4077300CBF225 /* pybind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6928C4077300CBF225 /* pybind.cpp */; };
-		3E3C2D8628C4077300CBF225 /* text_file_parsers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6C28C4077300CBF225 /* text_file_parsers.cpp */; };
-		3E3C2D8728C4077300CBF225 /* tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6D28C4077300CBF225 /* tests.cpp */; };
-		3E3C2D8828C4077300CBF225 /* file_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6E28C4077300CBF225 /* file_reader.cpp */; };
-		3E47C9B928C425FE0059B465 /* aggregators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6228C4077300CBF225 /* aggregators.cpp */; };
-		3E47C9BC28C425FE0059B465 /* file_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6E28C4077300CBF225 /* file_reader.cpp */; };
-		3E47C9BE28C425FE0059B465 /* hdf5_writer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D5928C4077300CBF225 /* hdf5_writer.cpp */; };
-		3E47C9C028C425FE0059B465 /* options.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D5E28C4077300CBF225 /* options.cpp */; };
-		3E47C9C328C425FE0059B465 /* py_import_call_execute.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6628C4077300CBF225 /* py_import_call_execute.cpp */; };
-		3E47C9C528C425FE0059B465 /* pybind_options.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D5A28C4077300CBF225 /* pybind_options.cpp */; };
-		3E47C9C628C425FE0059B465 /* pybind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6928C4077300CBF225 /* pybind.cpp */; };
-		3E47C9C728C425FE0059B465 /* test_file_processor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6328C4077300CBF225 /* test_file_processor.cpp */; };
-		3E47C9C828C425FE0059B465 /* test_quote_pair.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D5B28C4077300CBF225 /* test_quote_pair.cpp */; };
-		3E47C9CA28C425FE0059B465 /* tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6D28C4077300CBF225 /* tests.cpp */; };
-		3E47C9CB28C425FE0059B465 /* text_file_parsers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6C28C4077300CBF225 /* text_file_parsers.cpp */; };
-		3E47C9CD28C425FE0059B465 /* text_file_processor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6128C4077300CBF225 /* text_file_processor.cpp */; };
-		3E47C9CF28C425FE0059B465 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D6728C4077300CBF225 /* utils.cpp */; };
-		3E47C9D128C425FE0059B465 /* zip_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E3C2D5828C4077300CBF225 /* zip_reader.cpp */; };
-		3E47C9D728C43C760059B465 /* rationalcubic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E47C9D328C43C760059B465 /* rationalcubic.cpp */; };
-		3E47C9D828C43C760059B465 /* erf_cody.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E47C9D428C43C760059B465 /* erf_cody.cpp */; };
-		3E47C9D928C43C760059B465 /* normaldistribution.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E47C9D528C43C760059B465 /* normaldistribution.cpp */; };
-		3E47C9DA28C43C760059B465 /* lets_be_rational.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E47C9D628C43C760059B465 /* lets_be_rational.cpp */; };
-		3E47C9DB28C452190059B465 /* lets_be_rational.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E47C9D628C43C760059B465 /* lets_be_rational.cpp */; };
-		3E47C9DC28C452220059B465 /* normaldistribution.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E47C9D528C43C760059B465 /* normaldistribution.cpp */; };
-		3E47C9DD28C452220059B465 /* rationalcubic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E47C9D328C43C760059B465 /* rationalcubic.cpp */; };
-		3E47C9DE28C452220059B465 /* erf_cody.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E47C9D428C43C760059B465 /* erf_cody.cpp */; settings = {COMPILER_FLAGS = "-Wno-documentation"; }; };
+		3E18AFD228F39090004369C9 /* normaldistribution.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFCB28F3908F004369C9 /* normaldistribution.cpp */; };
+		3E18AFD328F39090004369C9 /* normaldistribution.h in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFCC28F3908F004369C9 /* normaldistribution.h */; };
+		3E18AFD428F39090004369C9 /* rationalcubic.h in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFCD28F3908F004369C9 /* rationalcubic.h */; };
+		3E18AFD528F39090004369C9 /* importexport.h in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFCE28F39090004369C9 /* importexport.h */; };
+		3E18AFD628F39090004369C9 /* erf_cody.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFCF28F39090004369C9 /* erf_cody.cpp */; };
+		3E18AFD728F39090004369C9 /* lets_be_rational.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFD028F39090004369C9 /* lets_be_rational.cpp */; };
+		3E18AFD828F39090004369C9 /* rationalcubic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFD128F39090004369C9 /* rationalcubic.cpp */; };
+		3E18AFF328F390A2004369C9 /* pybind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFD928F390A1004369C9 /* pybind.cpp */; };
+		3E18AFF428F390A2004369C9 /* zip_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFDA28F390A1004369C9 /* zip_reader.cpp */; };
+		3E18AFF528F390A2004369C9 /* file_reader.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFDB28F390A1004369C9 /* file_reader.hpp */; };
+		3E18AFF628F390A2004369C9 /* zip_reader.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFDC28F390A1004369C9 /* zip_reader.hpp */; };
+		3E18AFF728F390A2004369C9 /* pq_types.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFDD28F390A1004369C9 /* pq_types.hpp */; };
+		3E18AFF828F390A2004369C9 /* utils.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFDE28F390A1004369C9 /* utils.hpp */; };
+		3E18AFF928F390A2004369C9 /* test_quote_pair.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFDF28F390A1004369C9 /* test_quote_pair.hpp */; };
+		3E18AFFA28F390A2004369C9 /* aggregators.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFE028F390A2004369C9 /* aggregators.hpp */; };
+		3E18AFFB28F390A2004369C9 /* text_file_parsers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFE128F390A2004369C9 /* text_file_parsers.cpp */; };
+		3E18AFFC28F390A2004369C9 /* hdf5_writer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFE228F390A2004369C9 /* hdf5_writer.cpp */; };
+		3E18AFFD28F390A2004369C9 /* aggregators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFE328F390A2004369C9 /* aggregators.cpp */; };
+		3E18AFFE28F390A2004369C9 /* py_import_call_execute.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFE428F390A2004369C9 /* py_import_call_execute.cpp */; };
+		3E18AFFF28F390A2004369C9 /* text_file_parsers.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFE528F390A2004369C9 /* text_file_parsers.hpp */; };
+		3E18B00028F390A2004369C9 /* options.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFE628F390A2004369C9 /* options.cpp */; };
+		3E18B00128F390A2004369C9 /* file_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFE728F390A2004369C9 /* file_reader.cpp */; };
+		3E18B00228F390A2004369C9 /* hdf5_writer.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFE828F390A2004369C9 /* hdf5_writer.hpp */; };
+		3E18B00328F390A2004369C9 /* py_import_call_execute.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFE928F390A2004369C9 /* py_import_call_execute.hpp */; };
+		3E18B00428F390A2004369C9 /* text_file_processor.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFEA28F390A2004369C9 /* text_file_processor.hpp */; };
+		3E18B00528F390A2004369C9 /* test_file_processor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFEB28F390A2004369C9 /* test_file_processor.cpp */; };
+		3E18B00628F390A2004369C9 /* tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFEC28F390A2004369C9 /* tests.cpp */; };
+		3E18B00728F390A2004369C9 /* test_quote_pair.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFED28F390A2004369C9 /* test_quote_pair.cpp */; };
+		3E18B00828F390A2004369C9 /* options.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFEE28F390A2004369C9 /* options.hpp */; };
+		3E18B00928F390A2004369C9 /* pybind_options.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFEF28F390A2004369C9 /* pybind_options.cpp */; };
+		3E18B00A28F390A2004369C9 /* date.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFF028F390A2004369C9 /* date.hpp */; };
+		3E18B00B28F390A2004369C9 /* text_file_processor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFF128F390A2004369C9 /* text_file_processor.cpp */; };
+		3E18B00C28F390A2004369C9 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFF228F390A2004369C9 /* utils.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -58,26 +55,41 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		3E18AFCB28F3908F004369C9 /* normaldistribution.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = normaldistribution.cpp; path = lets_be_rational/normaldistribution.cpp; sourceTree = "<group>"; };
+		3E18AFCC28F3908F004369C9 /* normaldistribution.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = normaldistribution.h; path = lets_be_rational/normaldistribution.h; sourceTree = "<group>"; };
+		3E18AFCD28F3908F004369C9 /* rationalcubic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rationalcubic.h; path = lets_be_rational/rationalcubic.h; sourceTree = "<group>"; };
+		3E18AFCE28F39090004369C9 /* importexport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = importexport.h; path = lets_be_rational/importexport.h; sourceTree = "<group>"; };
+		3E18AFCF28F39090004369C9 /* erf_cody.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = erf_cody.cpp; path = lets_be_rational/erf_cody.cpp; sourceTree = "<group>"; };
+		3E18AFD028F39090004369C9 /* lets_be_rational.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lets_be_rational.cpp; path = lets_be_rational/lets_be_rational.cpp; sourceTree = "<group>"; };
+		3E18AFD128F39090004369C9 /* rationalcubic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = rationalcubic.cpp; path = lets_be_rational/rationalcubic.cpp; sourceTree = "<group>"; };
+		3E18AFD928F390A1004369C9 /* pybind.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = pybind.cpp; path = options/pybind.cpp; sourceTree = "<group>"; };
+		3E18AFDA28F390A1004369C9 /* zip_reader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = zip_reader.cpp; path = options/zip_reader.cpp; sourceTree = "<group>"; };
+		3E18AFDB28F390A1004369C9 /* file_reader.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = file_reader.hpp; path = options/file_reader.hpp; sourceTree = "<group>"; };
+		3E18AFDC28F390A1004369C9 /* zip_reader.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = zip_reader.hpp; path = options/zip_reader.hpp; sourceTree = "<group>"; };
+		3E18AFDD28F390A1004369C9 /* pq_types.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = pq_types.hpp; path = options/pq_types.hpp; sourceTree = "<group>"; };
+		3E18AFDE28F390A1004369C9 /* utils.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = utils.hpp; path = options/utils.hpp; sourceTree = "<group>"; };
+		3E18AFDF28F390A1004369C9 /* test_quote_pair.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = test_quote_pair.hpp; path = options/test_quote_pair.hpp; sourceTree = "<group>"; };
+		3E18AFE028F390A2004369C9 /* aggregators.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = aggregators.hpp; path = options/aggregators.hpp; sourceTree = "<group>"; };
+		3E18AFE128F390A2004369C9 /* text_file_parsers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = text_file_parsers.cpp; path = options/text_file_parsers.cpp; sourceTree = "<group>"; };
+		3E18AFE228F390A2004369C9 /* hdf5_writer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hdf5_writer.cpp; path = options/hdf5_writer.cpp; sourceTree = "<group>"; };
+		3E18AFE328F390A2004369C9 /* aggregators.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = aggregators.cpp; path = options/aggregators.cpp; sourceTree = "<group>"; };
+		3E18AFE428F390A2004369C9 /* py_import_call_execute.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = py_import_call_execute.cpp; path = options/py_import_call_execute.cpp; sourceTree = "<group>"; };
+		3E18AFE528F390A2004369C9 /* text_file_parsers.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = text_file_parsers.hpp; path = options/text_file_parsers.hpp; sourceTree = "<group>"; };
+		3E18AFE628F390A2004369C9 /* options.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = options.cpp; path = options/options.cpp; sourceTree = "<group>"; };
+		3E18AFE728F390A2004369C9 /* file_reader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = file_reader.cpp; path = options/file_reader.cpp; sourceTree = "<group>"; };
+		3E18AFE828F390A2004369C9 /* hdf5_writer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = hdf5_writer.hpp; path = options/hdf5_writer.hpp; sourceTree = "<group>"; };
+		3E18AFE928F390A2004369C9 /* py_import_call_execute.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = py_import_call_execute.hpp; path = options/py_import_call_execute.hpp; sourceTree = "<group>"; };
+		3E18AFEA28F390A2004369C9 /* text_file_processor.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = text_file_processor.hpp; path = options/text_file_processor.hpp; sourceTree = "<group>"; };
+		3E18AFEB28F390A2004369C9 /* test_file_processor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = test_file_processor.cpp; path = options/test_file_processor.cpp; sourceTree = "<group>"; };
+		3E18AFEC28F390A2004369C9 /* tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tests.cpp; path = options/tests.cpp; sourceTree = "<group>"; };
+		3E18AFED28F390A2004369C9 /* test_quote_pair.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = test_quote_pair.cpp; path = options/test_quote_pair.cpp; sourceTree = "<group>"; };
+		3E18AFEE28F390A2004369C9 /* options.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = options.hpp; path = options/options.hpp; sourceTree = "<group>"; };
+		3E18AFEF28F390A2004369C9 /* pybind_options.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = pybind_options.cpp; path = options/pybind_options.cpp; sourceTree = "<group>"; };
+		3E18AFF028F390A2004369C9 /* date.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = date.hpp; path = options/date.hpp; sourceTree = "<group>"; };
+		3E18AFF128F390A2004369C9 /* text_file_processor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = text_file_processor.cpp; path = options/text_file_processor.cpp; sourceTree = "<group>"; };
+		3E18AFF228F390A2004369C9 /* utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = utils.cpp; path = options/utils.cpp; sourceTree = "<group>"; };
 		3E3C2D4928C4069400CBF225 /* libpyqstrat.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libpyqstrat.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
-		3E3C2D5828C4077300CBF225 /* zip_reader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zip_reader.cpp; sourceTree = SOURCE_ROOT; };
-		3E3C2D5928C4077300CBF225 /* hdf5_writer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hdf5_writer.cpp; sourceTree = SOURCE_ROOT; };
-		3E3C2D5A28C4077300CBF225 /* pybind_options.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pybind_options.cpp; sourceTree = SOURCE_ROOT; };
-		3E3C2D5B28C4077300CBF225 /* test_quote_pair.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = test_quote_pair.cpp; sourceTree = SOURCE_ROOT; };
-		3E3C2D5E28C4077300CBF225 /* options.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = options.cpp; sourceTree = SOURCE_ROOT; };
-		3E3C2D6128C4077300CBF225 /* text_file_processor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = text_file_processor.cpp; sourceTree = SOURCE_ROOT; };
-		3E3C2D6228C4077300CBF225 /* aggregators.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = aggregators.cpp; sourceTree = SOURCE_ROOT; };
-		3E3C2D6328C4077300CBF225 /* test_file_processor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = test_file_processor.cpp; sourceTree = SOURCE_ROOT; };
-		3E3C2D6628C4077300CBF225 /* py_import_call_execute.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = py_import_call_execute.cpp; sourceTree = SOURCE_ROOT; };
-		3E3C2D6728C4077300CBF225 /* utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = utils.cpp; sourceTree = SOURCE_ROOT; };
-		3E3C2D6928C4077300CBF225 /* pybind.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pybind.cpp; sourceTree = SOURCE_ROOT; };
-		3E3C2D6C28C4077300CBF225 /* text_file_parsers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = text_file_parsers.cpp; sourceTree = SOURCE_ROOT; };
-		3E3C2D6D28C4077300CBF225 /* tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tests.cpp; sourceTree = SOURCE_ROOT; };
-		3E3C2D6E28C4077300CBF225 /* file_reader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = file_reader.cpp; sourceTree = SOURCE_ROOT; };
 		3E47C9B128C4201C0059B465 /* pyqstrat_main */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = pyqstrat_main; sourceTree = BUILT_PRODUCTS_DIR; };
-		3E47C9D328C43C760059B465 /* rationalcubic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = rationalcubic.cpp; path = lets_be_rational/rationalcubic.cpp; sourceTree = SOURCE_ROOT; };
-		3E47C9D428C43C760059B465 /* erf_cody.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = erf_cody.cpp; path = lets_be_rational/erf_cody.cpp; sourceTree = SOURCE_ROOT; };
-		3E47C9D528C43C760059B465 /* normaldistribution.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = normaldistribution.cpp; path = lets_be_rational/normaldistribution.cpp; sourceTree = SOURCE_ROOT; };
-		3E47C9D628C43C760059B465 /* lets_be_rational.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lets_be_rational.cpp; path = lets_be_rational/lets_be_rational.cpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,7 +113,39 @@
 		3E3C2D4028C4069400CBF225 = {
 			isa = PBXGroup;
 			children = (
-				3E3C2D4B28C4069400CBF225 /* sources */,
+				3E18AFE328F390A2004369C9 /* aggregators.cpp */,
+				3E18AFE028F390A2004369C9 /* aggregators.hpp */,
+				3E18AFF028F390A2004369C9 /* date.hpp */,
+				3E18AFE728F390A2004369C9 /* file_reader.cpp */,
+				3E18AFDB28F390A1004369C9 /* file_reader.hpp */,
+				3E18AFE228F390A2004369C9 /* hdf5_writer.cpp */,
+				3E18AFE828F390A2004369C9 /* hdf5_writer.hpp */,
+				3E18AFE628F390A2004369C9 /* options.cpp */,
+				3E18AFEE28F390A2004369C9 /* options.hpp */,
+				3E18AFDD28F390A1004369C9 /* pq_types.hpp */,
+				3E18AFE428F390A2004369C9 /* py_import_call_execute.cpp */,
+				3E18AFE928F390A2004369C9 /* py_import_call_execute.hpp */,
+				3E18AFEF28F390A2004369C9 /* pybind_options.cpp */,
+				3E18AFD928F390A1004369C9 /* pybind.cpp */,
+				3E18AFEB28F390A2004369C9 /* test_file_processor.cpp */,
+				3E18AFED28F390A2004369C9 /* test_quote_pair.cpp */,
+				3E18AFDF28F390A1004369C9 /* test_quote_pair.hpp */,
+				3E18AFEC28F390A2004369C9 /* tests.cpp */,
+				3E18AFE128F390A2004369C9 /* text_file_parsers.cpp */,
+				3E18AFE528F390A2004369C9 /* text_file_parsers.hpp */,
+				3E18AFF128F390A2004369C9 /* text_file_processor.cpp */,
+				3E18AFEA28F390A2004369C9 /* text_file_processor.hpp */,
+				3E18AFF228F390A2004369C9 /* utils.cpp */,
+				3E18AFDE28F390A1004369C9 /* utils.hpp */,
+				3E18AFDA28F390A1004369C9 /* zip_reader.cpp */,
+				3E18AFDC28F390A1004369C9 /* zip_reader.hpp */,
+				3E18AFCF28F39090004369C9 /* erf_cody.cpp */,
+				3E18AFCE28F39090004369C9 /* importexport.h */,
+				3E18AFD028F39090004369C9 /* lets_be_rational.cpp */,
+				3E18AFCB28F3908F004369C9 /* normaldistribution.cpp */,
+				3E18AFCC28F3908F004369C9 /* normaldistribution.h */,
+				3E18AFD128F39090004369C9 /* rationalcubic.cpp */,
+				3E18AFCD28F3908F004369C9 /* rationalcubic.h */,
 				3E3C2D4A28C4069400CBF225 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -115,31 +159,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		3E3C2D4B28C4069400CBF225 /* sources */ = {
-			isa = PBXGroup;
-			children = (
-				3E47C9D428C43C760059B465 /* erf_cody.cpp */,
-				3E47C9D628C43C760059B465 /* lets_be_rational.cpp */,
-				3E47C9D528C43C760059B465 /* normaldistribution.cpp */,
-				3E47C9D328C43C760059B465 /* rationalcubic.cpp */,
-				3E3C2D6228C4077300CBF225 /* aggregators.cpp */,
-				3E3C2D6E28C4077300CBF225 /* file_reader.cpp */,
-				3E3C2D5928C4077300CBF225 /* hdf5_writer.cpp */,
-				3E3C2D5E28C4077300CBF225 /* options.cpp */,
-				3E3C2D6628C4077300CBF225 /* py_import_call_execute.cpp */,
-				3E3C2D5A28C4077300CBF225 /* pybind_options.cpp */,
-				3E3C2D6928C4077300CBF225 /* pybind.cpp */,
-				3E3C2D6328C4077300CBF225 /* test_file_processor.cpp */,
-				3E3C2D5B28C4077300CBF225 /* test_quote_pair.cpp */,
-				3E3C2D6D28C4077300CBF225 /* tests.cpp */,
-				3E3C2D6C28C4077300CBF225 /* text_file_parsers.cpp */,
-				3E3C2D6128C4077300CBF225 /* text_file_processor.cpp */,
-				3E3C2D6728C4077300CBF225 /* utils.cpp */,
-				3E3C2D5828C4077300CBF225 /* zip_reader.cpp */,
-			);
-			path = sources;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -147,6 +166,21 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3E18AFFF28F390A2004369C9 /* text_file_parsers.hpp in Headers */,
+				3E18AFD328F39090004369C9 /* normaldistribution.h in Headers */,
+				3E18AFF928F390A2004369C9 /* test_quote_pair.hpp in Headers */,
+				3E18B00A28F390A2004369C9 /* date.hpp in Headers */,
+				3E18AFD428F39090004369C9 /* rationalcubic.h in Headers */,
+				3E18B00428F390A2004369C9 /* text_file_processor.hpp in Headers */,
+				3E18B00228F390A2004369C9 /* hdf5_writer.hpp in Headers */,
+				3E18AFD528F39090004369C9 /* importexport.h in Headers */,
+				3E18B00828F390A2004369C9 /* options.hpp in Headers */,
+				3E18AFF628F390A2004369C9 /* zip_reader.hpp in Headers */,
+				3E18AFF828F390A2004369C9 /* utils.hpp in Headers */,
+				3E18B00328F390A2004369C9 /* py_import_call_execute.hpp in Headers */,
+				3E18AFFA28F390A2004369C9 /* aggregators.hpp in Headers */,
+				3E18AFF528F390A2004369C9 /* file_reader.hpp in Headers */,
+				3E18AFF728F390A2004369C9 /* pq_types.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -194,7 +228,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastUpgradeCheck = 1340;
+				LastUpgradeCheck = 1400;
 				TargetAttributes = {
 					3E3C2D4828C4069400CBF225 = {
 						CreatedOnToolsVersion = 13.4.1;
@@ -228,24 +262,24 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3E3C2D7528C4077300CBF225 /* test_quote_pair.cpp in Sources */,
-				3E3C2D8128C4077300CBF225 /* utils.cpp in Sources */,
-				3E47C9D928C43C760059B465 /* normaldistribution.cpp in Sources */,
-				3E3C2D8028C4077300CBF225 /* py_import_call_execute.cpp in Sources */,
-				3E3C2D8728C4077300CBF225 /* tests.cpp in Sources */,
-				3E3C2D8828C4077300CBF225 /* file_reader.cpp in Sources */,
-				3E3C2D7B28C4077300CBF225 /* text_file_processor.cpp in Sources */,
-				3E3C2D8328C4077300CBF225 /* pybind.cpp in Sources */,
-				3E3C2D7828C4077300CBF225 /* options.cpp in Sources */,
-				3E47C9D828C43C760059B465 /* erf_cody.cpp in Sources */,
-				3E3C2D7C28C4077300CBF225 /* aggregators.cpp in Sources */,
-				3E47C9D728C43C760059B465 /* rationalcubic.cpp in Sources */,
-				3E3C2D7228C4077300CBF225 /* zip_reader.cpp in Sources */,
-				3E3C2D7328C4077300CBF225 /* hdf5_writer.cpp in Sources */,
-				3E47C9DA28C43C760059B465 /* lets_be_rational.cpp in Sources */,
-				3E3C2D8628C4077300CBF225 /* text_file_parsers.cpp in Sources */,
-				3E3C2D7D28C4077300CBF225 /* test_file_processor.cpp in Sources */,
-				3E3C2D7428C4077300CBF225 /* pybind_options.cpp in Sources */,
+				3E18AFD628F39090004369C9 /* erf_cody.cpp in Sources */,
+				3E18B00728F390A2004369C9 /* test_quote_pair.cpp in Sources */,
+				3E18B00B28F390A2004369C9 /* text_file_processor.cpp in Sources */,
+				3E18AFFE28F390A2004369C9 /* py_import_call_execute.cpp in Sources */,
+				3E18AFD228F39090004369C9 /* normaldistribution.cpp in Sources */,
+				3E18B00928F390A2004369C9 /* pybind_options.cpp in Sources */,
+				3E18AFD828F39090004369C9 /* rationalcubic.cpp in Sources */,
+				3E18AFFC28F390A2004369C9 /* hdf5_writer.cpp in Sources */,
+				3E18AFF328F390A2004369C9 /* pybind.cpp in Sources */,
+				3E18AFF428F390A2004369C9 /* zip_reader.cpp in Sources */,
+				3E18B00628F390A2004369C9 /* tests.cpp in Sources */,
+				3E18AFFD28F390A2004369C9 /* aggregators.cpp in Sources */,
+				3E18B00528F390A2004369C9 /* test_file_processor.cpp in Sources */,
+				3E18B00028F390A2004369C9 /* options.cpp in Sources */,
+				3E18AFFB28F390A2004369C9 /* text_file_parsers.cpp in Sources */,
+				3E18B00C28F390A2004369C9 /* utils.cpp in Sources */,
+				3E18B00128F390A2004369C9 /* file_reader.cpp in Sources */,
+				3E18AFD728F39090004369C9 /* lets_be_rational.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -253,24 +287,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3E47C9DC28C452220059B465 /* normaldistribution.cpp in Sources */,
-				3E47C9B928C425FE0059B465 /* aggregators.cpp in Sources */,
-				3E47C9BC28C425FE0059B465 /* file_reader.cpp in Sources */,
-				3E47C9BE28C425FE0059B465 /* hdf5_writer.cpp in Sources */,
-				3E47C9C028C425FE0059B465 /* options.cpp in Sources */,
-				3E47C9C328C425FE0059B465 /* py_import_call_execute.cpp in Sources */,
-				3E47C9C528C425FE0059B465 /* pybind_options.cpp in Sources */,
-				3E47C9C628C425FE0059B465 /* pybind.cpp in Sources */,
-				3E47C9C728C425FE0059B465 /* test_file_processor.cpp in Sources */,
-				3E47C9C828C425FE0059B465 /* test_quote_pair.cpp in Sources */,
-				3E47C9CA28C425FE0059B465 /* tests.cpp in Sources */,
-				3E47C9CB28C425FE0059B465 /* text_file_parsers.cpp in Sources */,
-				3E47C9DE28C452220059B465 /* erf_cody.cpp in Sources */,
-				3E47C9DB28C452190059B465 /* lets_be_rational.cpp in Sources */,
-				3E47C9CD28C425FE0059B465 /* text_file_processor.cpp in Sources */,
-				3E47C9DD28C452220059B465 /* rationalcubic.cpp in Sources */,
-				3E47C9CF28C425FE0059B465 /* utils.cpp in Sources */,
-				3E47C9D128C425FE0059B465 /* zip_reader.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -311,6 +327,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CONDA_PREFIX = /Users/sal/mambaforge/envs/py39;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -371,6 +388,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CONDA_PREFIX = /Users/sal/mambaforge/envs/py39;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -395,6 +413,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CONDA_PREFIX = /Users/sal/mambaforge/envs/py39;
+				DEAD_CODE_STRIPPING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				EXECUTABLE_PREFIX = lib;
@@ -415,6 +434,7 @@
 					"-lboost_iostreams",
 					"-undefined",
 					dynamic_lookup,
+					"-Wl,-no_fixup_chains",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -426,6 +446,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CONDA_PREFIX = /Users/sal/mambaforge/envs/py39;
+				DEAD_CODE_STRIPPING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				EXECUTABLE_PREFIX = lib;
@@ -446,6 +467,7 @@
 					"-lboost_iostreams",
 					"-undefined",
 					dynamic_lookup,
+					"-Wl,-no_fixup_chains",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -455,8 +477,10 @@
 		3E47C9B628C4201C0059B465 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				CONDA_PREFIX = /Users/sal/mambaforge/envs/py39;
+				DEAD_CODE_STRIPPING = YES;
 				HEADER_SEARCH_PATHS = (
 					"${CONDA_PREFIX}/include",
 					"${CONDA_PREFIX}/include/python3.9",
@@ -481,8 +505,10 @@
 		3E47C9B728C4201C0059B465 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				CONDA_PREFIX = /Users/sal/mambaforge/envs/py39;
+				DEAD_CODE_STRIPPING = YES;
 				HEADER_SEARCH_PATHS = (
 					"${CONDA_PREFIX}/include",
 					"${CONDA_PREFIX}/include/python3.9",

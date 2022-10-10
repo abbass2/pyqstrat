@@ -144,7 +144,7 @@ void TradeBarAggregator::call(const Record* record, int line_number) {
 }
     
 void TradeBarAggregator::close() {
-    std::for_each(_trade_bars_by_symbol.begin(), _trade_bars_by_symbol.end(), [](auto& entry){ entry.second->close(); });
+    for (auto entry : _trade_bars_by_symbol) entry.second->close();
 }
 
 TradeBarAggregator::~TradeBarAggregator() {
@@ -262,7 +262,7 @@ void QuoteTOBAggregator::call(const Record* record, int line_number) {
 }
 
 void QuoteTOBAggregator::close() {
-    std::for_each(_tob_by_symbol.begin(), _tob_by_symbol.end(), [](auto& entry){ entry.second->close(); });
+    for (auto entry: _tob_by_symbol) entry.second->close();
 }
 
 QuoteTOBAggregator::~QuoteTOBAggregator() {
