@@ -21,6 +21,15 @@ pyqstrat.pq\_types module
     :undoc-members:
     :show-inheritance:
 
+
+       pyqstrat.pq\_io module
+-------------------------
+
+.. automodule:: pyqstrat.pq_io
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyqstrat.holiday\_calendars module
 ----------------------------------
 
@@ -89,15 +98,16 @@ pyqstrat.pyqstrat\_cpp module
     :show-inheritance:
     :special-members: __call__, __init__
 
+		      
+pyqstrat.pyqstrat\_io module
+-----------------------------
 
-pyqstrat.marketdata\_processor module
--------------------------------------
-
-.. automodule:: pyqstrat.marketdata_processor
+.. automodule:: pyqstrat.pyqstrat_cpp
     :members:
     :undoc-members:
     :show-inheritance:
     :special-members: __call__, __init__
+
 
 pyqstrat.trade\_bars module
 ---------------------------
