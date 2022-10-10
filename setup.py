@@ -45,10 +45,9 @@ if __name__ == '__main__':
 
     opt_cpp_files = glob.glob(f'{cpp_dir}/options/*.cpp') + glob.glob(f'{cpp_dir}/lets_be_rational/*.cpp')
     options_module = Extension('pyqstrat.pyqstrat_cpp',
-                               sources=opt_cpp_files,
+                               sources = opt_cpp_files,
                                include_dirs=include_dirs + pybind_11_include,
                                library_dirs=library_dirs,
-                               libraries=['zip', 'hdf5_cpp', 'hdf5', 'boost_iostreams'],
                                extra_compile_args=extra_compile_args)
 
     with open('version.txt', 'r') as f:
