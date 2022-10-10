@@ -13,4 +13,5 @@ from pyqstrat.plot import *
 from pyqstrat.interactive_plot import *
 from pyqstrat.evaluator import *
 from pyqstrat.pyqstrat_cpp import *
-from pyqstrat.marketdata_processor import *
+from pyqstrat.pyqstrat_io import *
+

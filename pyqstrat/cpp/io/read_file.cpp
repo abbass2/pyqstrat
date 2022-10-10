@@ -27,12 +27,6 @@
 extern "C" char* strptime(const char* s,
                           const char* f,
                           struct tm* tm) {
-  // Isn't the C++ standard lib nice? std::get_time is defined such that its
-  // format parameters are the exact same as strptime. Of course, we have to
-  // create a string stream first, and imbue it with the current C locale, and
-  // we also have to make sure we return the right things if it fails, or
-  // if it succeeds, but this is still far simpler an implementation than any
-  // of the versions in any of the C standard libraries.
   std::istringstream input(s);
   input.imbue(std::locale(setlocale(LC_ALL, nullptr)));
   input >> std::get_time(tm, f);
@@ -325,7 +319,9 @@ static struct PyModuleDef io_module = {
 };
 
 /* The classes below are exported */
+#ifdef __GNUC__
 #pragma GCC visibility push(default)
+#endif
 
 PyMODINIT_FUNC
 PyInit_pyqstrat_io(void) {
@@ -333,4 +329,7 @@ PyInit_pyqstrat_io(void) {
     return PyModule_Create(&io_module);
 }
 
+#ifdef __GNUC__
 #pragma GCC visibility pop
+#endif
+
