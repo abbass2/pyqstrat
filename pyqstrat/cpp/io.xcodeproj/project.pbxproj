@@ -1,0 +1,452 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 55;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		3E18AFC228F3789D004369C9 /* read_file.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFBD28F3789D004369C9 /* read_file.cpp */; };
+		3E18AFC328F3789D004369C9 /* csv_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFBF28F3789D004369C9 /* csv_reader.cpp */; };
+		3E18AFC528F378D9004369C9 /* csv_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFBF28F3789D004369C9 /* csv_reader.cpp */; };
+		3E18AFC628F378D9004369C9 /* csv_reader.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFC028F3789D004369C9 /* csv_reader.hpp */; };
+		3E18AFC828F378D9004369C9 /* read_file.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFBD28F3789D004369C9 /* read_file.cpp */; };
+		3E18AFC928F378D9004369C9 /* utils.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFBE28F3789D004369C9 /* utils.hpp */; };
+		3E18AFCA28F378ED004369C9 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFC128F3789D004369C9 /* main.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		3E47C9FE28C7D0850059B465 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		3E18AFBD28F3789D004369C9 /* read_file.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = read_file.cpp; path = io/read_file.cpp; sourceTree = "<group>"; };
+		3E18AFBE28F3789D004369C9 /* utils.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = utils.hpp; path = io/utils.hpp; sourceTree = "<group>"; };
+		3E18AFBF28F3789D004369C9 /* csv_reader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = csv_reader.cpp; path = io/csv_reader.cpp; sourceTree = "<group>"; };
+		3E18AFC028F3789D004369C9 /* csv_reader.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = csv_reader.hpp; path = io/csv_reader.hpp; sourceTree = "<group>"; };
+		3E18AFC128F3789D004369C9 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = io/main.cpp; sourceTree = "<group>"; };
+		3E47CA0028C7D0850059B465 /* io_app */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = io_app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3E500BF028D26AA1004B5978 /* libio_lib.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libio_lib.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3E47C9FD28C7D0850059B465 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3E500BEE28D26AA1004B5978 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3E47C9F728C7D0850059B465 = {
+			isa = PBXGroup;
+			children = (
+				3E18AFBF28F3789D004369C9 /* csv_reader.cpp */,
+				3E18AFC028F3789D004369C9 /* csv_reader.hpp */,
+				3E18AFC128F3789D004369C9 /* main.cpp */,
+				3E18AFBD28F3789D004369C9 /* read_file.cpp */,
+				3E18AFBE28F3789D004369C9 /* utils.hpp */,
+				3E47CA0128C7D0850059B465 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		3E47CA0128C7D0850059B465 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3E47CA0028C7D0850059B465 /* io_app */,
+				3E500BF028D26AA1004B5978 /* libio_lib.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		3E500BEC28D26AA1004B5978 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3E18AFC928F378D9004369C9 /* utils.hpp in Headers */,
+				3E18AFC628F378D9004369C9 /* csv_reader.hpp in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		3E47C9FF28C7D0850059B465 /* io_app */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3E47CA0728C7D0850059B465 /* Build configuration list for PBXNativeTarget "io_app" */;
+			buildPhases = (
+				3E47C9FC28C7D0850059B465 /* Sources */,
+				3E47C9FD28C7D0850059B465 /* Frameworks */,
+				3E47C9FE28C7D0850059B465 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = io_app;
+			productName = testcpp;
+			productReference = 3E47CA0028C7D0850059B465 /* io_app */;
+			productType = "com.apple.product-type.tool";
+		};
+		3E500BEF28D26AA1004B5978 /* io_lib */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3E500BF828D26AA1004B5978 /* Build configuration list for PBXNativeTarget "io_lib" */;
+			buildPhases = (
+				3E500BEC28D26AA1004B5978 /* Headers */,
+				3E500BED28D26AA1004B5978 /* Sources */,
+				3E500BEE28D26AA1004B5978 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = io_lib;
+			productName = csv_reader;
+			productReference = 3E500BF028D26AA1004B5978 /* libio_lib.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		3E47C9F828C7D0850059B465 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1400;
+				TargetAttributes = {
+					3E47C9FF28C7D0850059B465 = {
+						CreatedOnToolsVersion = 13.4.1;
+					};
+					3E500BEF28D26AA1004B5978 = {
+						CreatedOnToolsVersion = 14.0;
+					};
+				};
+			};
+			buildConfigurationList = 3E47C9FB28C7D0850059B465 /* Build configuration list for PBXProject "io" */;
+			compatibilityVersion = "Xcode 13.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 3E47C9F728C7D0850059B465;
+			productRefGroup = 3E47CA0128C7D0850059B465 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				3E47C9FF28C7D0850059B465 /* io_app */,
+				3E500BEF28D26AA1004B5978 /* io_lib */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3E47C9FC28C7D0850059B465 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3E18AFC228F3789D004369C9 /* read_file.cpp in Sources */,
+				3E18AFC328F3789D004369C9 /* csv_reader.cpp in Sources */,
+				3E18AFCA28F378ED004369C9 /* main.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3E500BED28D26AA1004B5978 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3E18AFC828F378D9004369C9 /* read_file.cpp in Sources */,
+				3E18AFC528F378D9004369C9 /* csv_reader.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		3E47CA0528C7D0850059B465 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CONDA_PREFIX = /Users/sal/mambaforge/envs/py39;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"${CONDA_PREFIX}/include",
+					"${CONDA_PREFIX}/include/python3.9",
+					"${CONDA_PREFIX}/lib/python3.9/site-packages/pybind11/include",
+					"${CONDA_PREFIX}/lib/python3.9/site-packages/numpy/core/include",
+				);
+				LD_RUNPATH_SEARCH_PATHS = "${CONDA_PREFIX}/lib";
+				LIBRARY_SEARCH_PATHS = "${CONDA_PREFIX}/lib";
+				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = (
+					"-lz",
+					"-lzip",
+					"-lhdf5_cpp",
+					"-lhdf5",
+					"-lboost_iostreams",
+					"-undefined",
+					dynamic_lookup,
+				);
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		3E47CA0628C7D0850059B465 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CONDA_PREFIX = /Users/sal/mambaforge/envs/py39;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = fast;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"${CONDA_PREFIX}/include",
+					"${CONDA_PREFIX}/include/python3.9",
+					"${CONDA_PREFIX}/lib/python3.9/site-packages/pybind11/include",
+					"${CONDA_PREFIX}/lib/python3.9/site-packages/numpy/core/include",
+				);
+				LD_RUNPATH_SEARCH_PATHS = "${CONDA_PREFIX}/lib";
+				LIBRARY_SEARCH_PATHS = "${CONDA_PREFIX}/lib";
+				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = (
+					"-lz",
+					"-lzip",
+					"-lhdf5_cpp",
+					"-lhdf5",
+					"-lboost_iostreams",
+					"-undefined",
+					dynamic_lookup,
+				);
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		3E47CA0828C7D0850059B465 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
+				OTHER_LDFLAGS = (
+					"-lz",
+					"-lzip",
+					"-undefined",
+					dynamic_lookup,
+					"-lpython3.9",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		3E47CA0928C7D0850059B465 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = (
+					"-lz",
+					"-lzip",
+					"-undefined",
+					dynamic_lookup,
+					"-lpython3.9",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		3E500BF928D26AA1004B5978 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = (
+					"-lz",
+					"-lzip",
+					"-undefined",
+					dynamic_lookup,
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		3E500BFA28D26AA1004B5978 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_OPTIMIZATION_LEVEL = fast;
+				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = (
+					"-lz",
+					"-lzip",
+					"-undefined",
+					dynamic_lookup,
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3E47C9FB28C7D0850059B465 /* Build configuration list for PBXProject "io" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3E47CA0528C7D0850059B465 /* Debug */,
+				3E47CA0628C7D0850059B465 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3E47CA0728C7D0850059B465 /* Build configuration list for PBXNativeTarget "io_app" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3E47CA0828C7D0850059B465 /* Debug */,
+				3E47CA0928C7D0850059B465 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3E500BF828D26AA1004B5978 /* Build configuration list for PBXNativeTarget "io_lib" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3E500BF928D26AA1004B5978 /* Debug */,
+				3E500BFA28D26AA1004B5978 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 3E47C9F828C7D0850059B465 /* Project object */;
+}
