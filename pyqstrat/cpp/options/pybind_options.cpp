@@ -1,17 +1,9 @@
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Weverything"
-#endif
 #include <pybind11/pybind11.h>
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
 #include <pybind11/stl.h>
 #include <pybind11/functional.h>
 #include <pybind11/chrono.h>
 #include <pybind11/iostream.h>
 #include <pybind11/numpy.h>
-
 
 #include "options.hpp"
 
