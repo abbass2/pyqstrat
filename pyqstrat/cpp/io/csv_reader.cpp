@@ -24,6 +24,13 @@
     #define strdup _strdup
 #endif
 
+#ifdef _MSC_VER
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#else
+#include <unistd.h>
+#endif
+
 using namespace std;
 
 // whether to use native getline implementation in C or use our own buffered file read
