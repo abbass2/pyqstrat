@@ -16,12 +16,9 @@ The goals are:
 Using this framework, you can:
 
 * Create indicators, trading signals, trading rules and market simulators and add them to a strategy
-* Add multiple symbols representing real or "virtual" instruments to a strategy
-* Reuse existing market simulation or build your own to simulate how and when orders are filled
+* Create contract groups for PNL grouping. For example, for futures and options, you often have a group such as the "front-month future" or the "delta hedge" where the actual instruments change over time but you still want to analyze PNL at the contract group level.
+* Reuse existing market simulation or add your own assumptions to simulate how and when orders are filled
 * Measure returns, drawdowns, common return metrics such as sharpe, calmar and also add your own metrics.
-* Explore historical market data to understand its characteristics and check for errors before using it in backtesting.
-* Simulate futures rolling.
-* Plot trades, market data, indicators and add custom subplots to give you insight into your strategy's behavior.
 * Optimize your strategy's parameters using all the CPU cores on your machine.
 
 
@@ -29,7 +26,7 @@ Using this framework, you can:
 
 Installation
 ------------
-I would strongly recommend installing anaconda and creating an anaconda environment. See installation instructions at https://docs.anaconda.com/anaconda/install/
+I would strongly recommend installing anaconda and creating an anaconda environment. I personally prefer miniconda which runs much faster than the original anaconda.  See https://github.com/conda-forge/miniforge for installation instructions.
 
 pyqstrat relies on numpy, scipy, matplotlib and pandas which in turn use Fortran and C code that needs to be compiled.
 
