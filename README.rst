@@ -3,7 +3,7 @@
 Introduction
 ============
 
-The ``pyqstrat`` package is designed for backtesting quantitative strategies.  It was originally built for my own use as a quant trader / researcher, after I could not find a python based framework that was fast, extensible and transparent enough for use in my work.  
+The ``pyqstrat`` package is designed for backtesting quantitative strategies. It was originally built for my own use as a quant trader / researcher, after I could not find a python based framework that was fast, extensible and transparent enough for use in my work.  
 
 This framework is designed for capable programmers who are comfortable with numpy and reasonably advanced Python techniques.
 
@@ -11,11 +11,10 @@ The goals are:
 
 * Speed - Performance sensitive components are written at the numpy level, or in C++, which can lead to performance improvement of several orders of magnitude over regular Python code.  Where possible, we parrallelize work so you can take advantage of all the cores available on your machine.
 * Transparency - If you are going to commit money to a strategy, you want to know exactly what assumptions you are making.  The code is written and documented so these are as clear as possible.
-* Extensibility - It would be impossible to think of all requirements for backtesting strategies that traders could come up with.  In addition, traders will want to measure different metrics depending on the strategy being traded.
+* Extensibility - It would be impossible to think of all requirements for backtesting strategies that traders could come up with. In addition, traders will want to measure different metrics depending on the strategy being traded.
 
 Using this framework, you can:
 
-* Construct a portfolio containing multiple strategies that run concurrently
 * Create indicators, trading signals, trading rules and market simulators and add them to a strategy
 * Add multiple symbols representing real or "virtual" instruments to a strategy
 * Reuse existing market simulation or build your own to simulate how and when orders are filled
@@ -24,7 +23,7 @@ Using this framework, you can:
 * Simulate futures rolling.
 * Plot trades, market data, indicators and add custom subplots to give you insight into your strategy's behavior.
 * Optimize your strategy's parameters using all the CPU cores on your machine.
-* Process large market data files into quote and trade bars using all the CPU cores on your machine
+
 
 ** NOTE: This is beta software and the API will change **
 
@@ -32,11 +31,11 @@ Installation
 ------------
 I would strongly recommend installing anaconda and creating an anaconda environment. See installation instructions at https://docs.anaconda.com/anaconda/install/
 
-pyqstrat relies on numpy, scipy, matplotlib and pandas which in turn use Fortran and C code that needs to be compiled.  It uses boost C++ libaries.  It uses HDF5 data format as its market data file format.
+pyqstrat relies on numpy, scipy, matplotlib and pandas which in turn use Fortran and C code that needs to be compiled.
 
 ::
 
-   conda install --channel conda-forge boost-cpp hdf5 libzip
+   conda install --channel conda-forge libzip
 
    pip install pyqstrat
 
