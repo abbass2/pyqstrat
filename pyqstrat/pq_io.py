@@ -8,14 +8,16 @@ import numpy as np
 import pandas as pd
 import datetime
 from typing import List, Dict, Tuple, Any
-from pyqstrat.pq_utils import get_temp_dir
+from pyqstrat.pq_utils import get_temp_dir, get_child_logger
+
+_logger = get_child_logger(__name__)
 
 
 def np_arrays_to_hdf5(data: List[Tuple[str, np.ndarray]], 
                       filename: str, 
                       key: str, 
                       dtypes: Dict[str, str] = None, 
-                      optimize_vlen_str: bool = True,
+                      as_utf8: List[str] = None,
                       compression_args: Dict[Any, Any] = None) -> None:
     '''
     Write a list of numpy arrays to hdf5
@@ -24,8 +26,8 @@ def np_arrays_to_hdf5(data: List[Tuple[str, np.ndarray]],
         filename: filename of the hdf5 file
         key: group and or / subgroups to write to.  For example, "g1/g2" will write to the subgrp g2 within the grp g1
         dtypes: dict used to override datatype for a column.  For example, {"col1": "f4"} will write a 4 byte float array for col1
-        optimize_vlen_str: if set, for every variable length string array, i.e dtype = 'O', we try to find the maximum string length
-            and if it is < 100, we write out fixed length strings instead of variable length. This is much faster to read and process
+        as_utf_8: each column listed here will be saved with utf8 encoding. For all other strings, we will compute the max length
+            and store as a fixed length byte array with ascii encoding, i.e. a S[max length] datatype. This is much faster to read and process
         compression_args: if you want to compress the hdf5 file. You can use the hdf5plugin module and arguments such as hdf5plugin.Blosc()
         '''
     if not len(data): return
@@ -33,6 +35,9 @@ def np_arrays_to_hdf5(data: List[Tuple[str, np.ndarray]],
     
     if compression_args is None:
         compression_args = {}
+        
+    if as_utf8 is None:
+        as_utf8 = []
     
     with h5py.File(filename, 'a') as f:
         if tmp_key in f: del f[tmp_key]
@@ -44,24 +49,19 @@ def np_arrays_to_hdf5(data: List[Tuple[str, np.ndarray]],
                 if dtype.kind == 'M':  # datetime
                     dtype = h5py.opaque_dtype(dtype)
                     array = array.astype(dtype)
-            else:
+            else:  # we need to figure out datatype
                 dtype = array.dtype
-                if dtype.kind == 'O':  # strings
-                    if optimize_vlen_str:
-                        max_len = len(max(array, key=len))
-                        if max_len < 100:
-                            dtype = np.dtype(f'S{max_len}')
-                            array = array.astype(dtype)
-                        else:
-                            dtype = h5py.string_dtype(encoding='utf-8')
-                    else:
-                        dtype = h5py.string_dtype(encoding='utf-8')
+                if colname in as_utf8:
+                    array = np.char.encode(array, 'utf-8')
+                elif dtype.kind == 'O':
+                    array = np.where(array == None, '', array)  # noqa: E711 comparison to None should be 'if cond is None:'
+                    array = array.astype('S')
                 elif dtype.kind == 'M':  # datetime
                     dtype = h5py.opaque_dtype(dtype)
                     array = array.astype(dtype)
             if colname in grp:
                 del grp[colname]
-            grp.create_dataset(name=colname, data=array, shape=[len(array)], dtype=dtype, **compression_args)
+            grp.create_dataset(name=colname, data=array, shape=[len(array)], dtype=array.dtype, **compression_args)
             
         grp.attrs['type'] = 'dataframe'
         grp.attrs['timestamp'] = str(datetime.datetime.now())
@@ -95,18 +95,21 @@ def hdf5_to_np_arrays(filename: str, key: str) -> List[Tuple[str, np.ndarray]]:
                 # decode bytes to numpy unicode
                 dtype = f'U{array.dtype.itemsize}'
                 array = array.astype(dtype)
+            elif array.dtype == 'O':
+                array = array.astype('S')
+                array = np.char.decode(array, encoding='utf-8')
             ret.append((col, array))
     return ret
         
         
-def df_to_hdf5(df: pd.DataFrame, filename: str, key: str, dtypes: Dict[str, str] = None, optimize_vlen_str=True) -> None:
+def df_to_hdf5(df: pd.DataFrame, filename: str, key: str, dtypes: Dict[str, str] = None, as_utf8: List[str] = None) -> None:
     '''
     Write out a pandas dataframe to hdf5 using the np_arrays_to_hdf5 function
     '''
     arrays = []
     for column in df.columns:
         arrays.append((column, df[column].values))
-    np_arrays_to_hdf5(arrays, filename, key, dtypes, optimize_vlen_str)
+    np_arrays_to_hdf5(arrays, filename, key, dtypes, as_utf8)
     
 
 def hdf5_to_df(filename: str, key: str) -> pd.DataFrame:
@@ -118,6 +121,21 @@ def hdf5_to_df(filename: str, key: str) -> pd.DataFrame:
     return pd.DataFrame(array_dict)
 
 
+def hdf5_repack(inp_filename: str, out_filename: str) -> None:
+    '''
+    Copy groups from input filename to output filename.
+    Serves the same purpose as the h5repack command line tool, i.e. 
+    discards empty space in the input file so the output file may be smaller
+    '''
+    with h5py.File(inp_filename, 'r') as inpf:
+        num_items = len(list(inpf.keys()))
+        with h5py.File(out_filename + '.tmp', 'w') as outf:
+            for i, name in enumerate(inpf):
+                _logger.info(f'copying {name} {i} of {num_items}')
+                inpf.copy(inpf[name], outf)
+    os.rename(out_filename + '.tmp', out_filename)
+
+
 def test_hdf5_to_df():
     size = int(100)
     a = np.random.randint(0, 10000, size)
@@ -126,6 +144,7 @@ def test_hdf5_to_df():
     c = np.empty(size, dtype='O')
     for i, row in enumerate(letters):
         c[i] = ''.join(row)
+    c[1] = None
     d = (a * 1000).astype('M8[m]')
     temp_dir = get_temp_dir()
     # os.remove(f'{temp_dir}/test.hdf5')
@@ -133,23 +152,19 @@ def test_hdf5_to_df():
     np_arrays_to_hdf5([("b", b), ("a", a), ("c", c), ("d", d)], f'{temp_dir}/test.hdf5', 'key1/key2')
     file_size = os.path.getsize(f'{temp_dir}/test.hdf5')
     print(f"file size: {file_size / 1e3:.0f} KB")
-
-    def read():
-        '''
-        for performance testing using timeit
-        '''
-        with h5py.File('test.hdf5', 'r') as f:
-            _ = f['key1/key2/a'][:]
-            _ = f['key1/key2/b'][:]
-            _ = f['key1/key2/c'][:]
-            _ = f['key1/key2/d'][:]
+    hdf5_repack(f'{temp_dir}/test.hdf5', f'{temp_dir}/test.hdf5.tmp')
+    os.rename(f'{temp_dir}/test.hdf5.tmp', f'{temp_dir}/test.hdf5')
+    file_size = os.path.getsize(f'{temp_dir}/test.hdf5')
+    print(f"file size: {file_size / 1e3:.0f} KB")
+    assert file_size > 13000 and file_size < 14000, f'invalid file size: {file_size}'
 
     df_in = pd.DataFrame(dict(a=a, b=b, c=c, d=d))
     df_to_hdf5(df_in, f'{temp_dir}/test.hdf5', 'key1/key2', dtypes={'d': 'M8[m]'})
     df_out = hdf5_to_df(f'{temp_dir}/test.hdf5', 'key1/key2')
+    df_out.c = np.where(df_out.c == '', None, df_out.c)
     from pandas.testing import assert_frame_equal
     assert_frame_equal(df_in, df_out)
-    
+
 
 if __name__ == '__main__':
     test_hdf5_to_df()
