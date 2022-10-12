@@ -148,16 +148,19 @@ def test_hdf5_to_df():
     d = (a * 1000).astype('M8[m]')
     temp_dir = get_temp_dir()
     # os.remove(f'{temp_dir}/test.hdf5')
-
+    if os.path.isfile(f'{temp_dir}/test.hdf5'): os.remove(f'{temp_dir}/test.hdf5')
     np_arrays_to_hdf5([("b", b), ("a", a), ("c", c), ("d", d)], f'{temp_dir}/test.hdf5', 'key1/key2')
     file_size = os.path.getsize(f'{temp_dir}/test.hdf5')
     print(f"file size: {file_size / 1e3:.0f} KB")
+    
     hdf5_repack(f'{temp_dir}/test.hdf5', f'{temp_dir}/test.hdf5.tmp')
+    if os.path.isfile(f'{temp_dir}/test.hdf5'): os.remove(f'{temp_dir}/test.hdf5')
     os.rename(f'{temp_dir}/test.hdf5.tmp', f'{temp_dir}/test.hdf5')
     file_size = os.path.getsize(f'{temp_dir}/test.hdf5')
     print(f"file size: {file_size / 1e3:.0f} KB")
-    assert file_size > 13000 and file_size < 14000, f'invalid file size: {file_size}'
+    assert file_size > 10000 and file_size < 14000, f'invalid file size: {file_size}'
 
+    if os.path.isfile(f'{temp_dir}/test.hdf5'): os.remove(f'{temp_dir}/test.hdf5')
     df_in = pd.DataFrame(dict(a=a, b=b, c=c, d=d))
     df_to_hdf5(df_in, f'{temp_dir}/test.hdf5', 'key1/key2', dtypes={'d': 'M8[m]'})
     df_out = hdf5_to_df(f'{temp_dir}/test.hdf5', 'key1/key2')
