@@ -44,10 +44,11 @@ def np_arrays_to_hdf5(data: List[Tuple[str, np.ndarray]],
         grp = f.create_group(tmp_key)
         for colname, array in data:
             if dtypes is not None and colname in dtypes:
-                _dtype = dtypes[colname]
-                dtype = np.dtype(_dtype)
+                dtype = np.dtype(dtypes[colname])
                 if dtype.kind == 'M':  # datetime
                     dtype = h5py.opaque_dtype(dtype)
+                    array = array.astype(dtype)
+                else:
                     array = array.astype(dtype)
             else:  # we need to figure out datatype
                 dtype = array.dtype
