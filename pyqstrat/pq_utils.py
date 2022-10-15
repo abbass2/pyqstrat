@@ -450,7 +450,7 @@ def infer_frequency(timestamps: np.ndarray) -> float:
     0.01041667
     '''
     if isinstance(timestamps, pd.Series): timestamps = timestamps.values
-    assert(monotonically_increasing(timestamps))
+    assert (monotonically_increasing(timestamps))
     numeric_dates = date_2_num(timestamps)
     diff_dates = np.round(np.diff(numeric_dates), 8)
     (values, counts) = np.unique(diff_dates, return_counts=True)
@@ -615,7 +615,7 @@ def bootstrap_ci(a: np.ndarray,
     l_pval = (1 - u_pval)
     l_indx = int(np.floor(n * l_pval))
     u_indx = int(np.floor(n * u_pval))
-    return(simulations[l_indx], simulations[u_indx])
+    return (simulations[l_indx], simulations[u_indx])
 
 
 def _add_stream_handler(logger: logging.Logger, log_level: int = logging.INFO, formatter: logging.Formatter = None) -> None:
@@ -650,6 +650,18 @@ def in_ipython() -> bool:
     '''
     import builtins
     return '__IPYTHON__' in vars(builtins)
+
+
+class PQException(Exception):
+    pass
+
+
+def assert_(condition: bool, msg: str) -> None:
+    '''
+    Like a python assert but raises an exception that is not turned off by 
+    using the python optimization switch
+    '''
+    if not condition: raise PQException(str)
 
 
 class Paths:

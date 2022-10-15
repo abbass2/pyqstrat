@@ -15,9 +15,7 @@
 		3E18AFD728F39090004369C9 /* lets_be_rational.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFD028F39090004369C9 /* lets_be_rational.cpp */; };
 		3E18AFD828F39090004369C9 /* rationalcubic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFD128F39090004369C9 /* rationalcubic.cpp */; };
 		3E18AFF328F390A2004369C9 /* pybind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFD928F390A1004369C9 /* pybind.cpp */; };
-		3E18AFFE28F390A2004369C9 /* py_import_call_execute.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFE428F390A2004369C9 /* py_import_call_execute.cpp */; };
 		3E18B00028F390A2004369C9 /* options.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFE628F390A2004369C9 /* options.cpp */; };
-		3E18B00328F390A2004369C9 /* py_import_call_execute.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFE928F390A2004369C9 /* py_import_call_execute.hpp */; };
 		3E18B00828F390A2004369C9 /* options.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 3E18AFEE28F390A2004369C9 /* options.hpp */; };
 		3E18B00928F390A2004369C9 /* pybind_options.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E18AFEF28F390A2004369C9 /* pybind_options.cpp */; };
 /* End PBXBuildFile section */
@@ -43,9 +41,7 @@
 		3E18AFD028F39090004369C9 /* lets_be_rational.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lets_be_rational.cpp; path = lets_be_rational/lets_be_rational.cpp; sourceTree = "<group>"; };
 		3E18AFD128F39090004369C9 /* rationalcubic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = rationalcubic.cpp; path = lets_be_rational/rationalcubic.cpp; sourceTree = "<group>"; };
 		3E18AFD928F390A1004369C9 /* pybind.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = pybind.cpp; path = options/pybind.cpp; sourceTree = "<group>"; };
-		3E18AFE428F390A2004369C9 /* py_import_call_execute.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = py_import_call_execute.cpp; path = options/py_import_call_execute.cpp; sourceTree = "<group>"; };
 		3E18AFE628F390A2004369C9 /* options.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = options.cpp; path = options/options.cpp; sourceTree = "<group>"; };
-		3E18AFE928F390A2004369C9 /* py_import_call_execute.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = py_import_call_execute.hpp; path = options/py_import_call_execute.hpp; sourceTree = "<group>"; };
 		3E18AFEE28F390A2004369C9 /* options.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = options.hpp; path = options/options.hpp; sourceTree = "<group>"; };
 		3E18AFEF28F390A2004369C9 /* pybind_options.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = pybind_options.cpp; path = options/pybind_options.cpp; sourceTree = "<group>"; };
 		3E3C2D4928C4069400CBF225 /* libpyqstrat.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libpyqstrat.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -75,8 +71,6 @@
 			children = (
 				3E18AFE628F390A2004369C9 /* options.cpp */,
 				3E18AFEE28F390A2004369C9 /* options.hpp */,
-				3E18AFE428F390A2004369C9 /* py_import_call_execute.cpp */,
-				3E18AFE928F390A2004369C9 /* py_import_call_execute.hpp */,
 				3E18AFEF28F390A2004369C9 /* pybind_options.cpp */,
 				3E18AFD928F390A1004369C9 /* pybind.cpp */,
 				3E18AFCF28F39090004369C9 /* erf_cody.cpp */,
@@ -110,7 +104,6 @@
 				3E18AFD428F39090004369C9 /* rationalcubic.h in Headers */,
 				3E18AFD528F39090004369C9 /* importexport.h in Headers */,
 				3E18B00828F390A2004369C9 /* options.hpp in Headers */,
-				3E18B00328F390A2004369C9 /* py_import_call_execute.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -193,7 +186,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				3E18AFD628F39090004369C9 /* erf_cody.cpp in Sources */,
-				3E18AFFE28F390A2004369C9 /* py_import_call_execute.cpp in Sources */,
 				3E18AFD228F39090004369C9 /* normaldistribution.cpp in Sources */,
 				3E18B00928F390A2004369C9 /* pybind_options.cpp in Sources */,
 				3E18AFD828F39090004369C9 /* rationalcubic.cpp in Sources */,
