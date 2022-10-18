@@ -53,7 +53,7 @@ def np_arrays_to_hdf5(data: List[Tuple[str, np.ndarray]],
             else:  # we need to figure out datatype
                 dtype = array.dtype
                 if colname in as_utf8:
-                    array = np.char.encode(array, 'utf-8')
+                    array = np.char.encode(array.astype('U'), 'utf-8')
                 elif dtype.kind == 'O':
                     array = np.where(array == None, '', array)  # noqa: E711 comparison to None should be 'if cond is None:'
                     array = array.astype('S')
@@ -68,6 +68,7 @@ def np_arrays_to_hdf5(data: List[Tuple[str, np.ndarray]],
         grp.attrs['timestamp'] = str(datetime.datetime.now())
         grp.attrs['rows'] = len(array)
         grp.attrs['columns'] = ','.join([tup[0] for tup in data])
+        grp.attrs['utf8_cols'] = ','.join(as_utf8)
 
         if key in f: 
             del f[key]
@@ -90,8 +91,14 @@ def hdf5_to_np_arrays(filename: str, key: str) -> List[Tuple[str, np.ndarray]]:
         grp = f[key]
         assert 'type' in grp.attrs and grp.attrs['type'] == 'dataframe', f'{key} not a dataframe'
         columns = grp.attrs['columns'].split(',')
+        utf8_cols: List[str] = []
+        if 'utf8_cols' in grp.attrs:
+            utf8_cols = grp.attrs['utf8_cols'].split(',')
         for col in columns:
             array = grp[col][:]
+            if col in utf8_cols:
+                array = np.char.decode(array, 'utf-8')
+                dtype = f'U{array.dtype.itemsize}'
             if array.dtype.kind == 'S':
                 # decode bytes to numpy unicode
                 dtype = f'U{array.dtype.itemsize}'
