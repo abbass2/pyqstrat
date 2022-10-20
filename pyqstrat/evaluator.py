@@ -6,7 +6,7 @@ import numpy as np
 import statsmodels as sm
 import statsmodels.api as smapi
 import math
-from pyqstrat.pq_utils import monotonically_increasing, infer_frequency
+from pyqstrat.pq_utils import monotonically_increasing, infer_frequency, assert_
 from pyqstrat.plot import TimeSeries, DateLine, Subplot, HorizontalLine, BucketedValues, Plot, LinePlotAttributes
 import matplotlib as mpl
 import matplotlib.figure as mpl_fig
@@ -77,8 +77,9 @@ def compute_gmean(timestamps: np.ndarray, returns: np.ndarray, periods_per_year:
     0.018362
     """
     if not len(returns): return np.nan
-    assert(len(returns) == len(timestamps))
-    assert(isinstance(timestamps, np.ndarray) and isinstance(returns, np.ndarray))
+    assert_(len(returns) == len(timestamps))
+    assert_(np.all(returns > -1), f'found returns < -1: {returns[returns < -1]}')
+    assert_(isinstance(timestamps, np.ndarray) and isinstance(returns, np.ndarray))
     mask = np.isfinite(returns)
     timestamps = timestamps[mask]
     returns = returns[mask]
@@ -303,8 +304,10 @@ def compute_annual_returns(timestamps: np.ndarray, returns: np.ndarray, periods_
         an array of annualized returns for those years
         
     '''
-    assert(len(timestamps) == len(returns) and periods_per_year > 0)
+    assert_(len(timestamps) == len(returns) and periods_per_year > 0)
     if not len(timestamps): return np.array([], dtype=int), np.array([], dtype=float)
+    assert_(np.all(returns > -1), f'found returns < -1 {returns[returns < -1]}')
+
     df = pd.DataFrame({'ret': returns, 'timestamp': timestamps})
     years = []
     gmeans = []
@@ -451,9 +454,11 @@ def compute_return_metrics(timestamps: np.ndarray,
     >>> assert(round(metrics['sharpe'], 6) == 0.599382)
     >>> assert(all(metrics['returns_3yr'] == np.array([0.01, 0.02, 0, -0.015])))
     '''
-    assert(starting_equity > 0.)
-    assert(type(rets) == np.ndarray and rets.dtype == np.float64)
-    assert(type(timestamps) == np.ndarray and np.issubdtype(timestamps.dtype, np.datetime64) and monotonically_increasing(timestamps))
+    assert_(starting_equity > 0.)
+    assert_(type(rets) == np.ndarray and rets.dtype == np.float64)
+    assert_(type(timestamps) == np.ndarray and np.issubdtype(timestamps.dtype, np.datetime64) and monotonically_increasing(timestamps))
+    assert_(np.all(rets > -1), f'found returns < -1: {rets[rets < -1]}')
+
     
     timestamps, rets = handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros, subsequent_non_finite_to_zeros)
 

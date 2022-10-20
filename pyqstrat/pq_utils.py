@@ -656,12 +656,13 @@ class PQException(Exception):
     pass
 
 
-def assert_(condition: bool, msg: str) -> None:
+def assert_(condition: bool, msg: str = None) -> None:
     '''
     Like a python assert but raises an exception that is not turned off by 
     using the python optimization switch
     '''
-    if not condition: raise PQException(str)
+    if msg is None: msg = ''
+    if not condition: raise PQException(msg)
 
 
 class Paths:

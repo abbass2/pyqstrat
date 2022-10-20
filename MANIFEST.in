@@ -1,12 +1,8 @@
-global-include *.txt *.cpp *.hpp *.h *.py *.ipynb *.html *.csv
+global-include *.txt *.cpp *.hpp *.h *.py *.html *.csv
 
 include pytest.ini
-include *.sh
-include *.yaml
-include *.yml
 recursive-include pyqstrat *.gz
 recursive-include apidocs *.rst
-recursive-include apidocs *.sh
 recursive-include pyqstrat *.rst
 recursive-include pyqstrat *.sh
 
