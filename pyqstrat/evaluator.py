@@ -82,7 +82,7 @@ def compute_gmean(timestamps: np.ndarray, returns: np.ndarray, periods_per_year:
     mask = np.isfinite(returns)
     timestamps = timestamps[mask]
     returns = returns[mask]
-    assert_(np.all(returns[np.isfinite(returns)] > -1), f'found returns < -1: {returns[np.isfinite(returns) < -1]}')
+    assert_(np.all(returns[np.isfinite(returns)] > -1), f'found returns < -1: {returns[np.isfinite(returns) < -1]}')  # type: ignore
     num_periods = compute_num_periods(timestamps, periods_per_year)
     g_mean = ((1.0 + returns).prod())**(1.0 / num_periods)
     g_mean = np.power(g_mean, periods_per_year) - 1.0
@@ -308,7 +308,7 @@ def compute_annual_returns(timestamps: np.ndarray, returns: np.ndarray, periods_
     if not len(timestamps): return np.array([], dtype=int), np.array([], dtype=float)
     
     non_nan_rets = returns[np.isfinite(returns)]
-    assert_(np.all(non_nan_rets > -1), f'found returns < -1: {non_nan_rets[non_nan_rets <= -1]}')
+    assert_(np.all(non_nan_rets > -1), f'found returns < -1: {non_nan_rets[non_nan_rets <= -1]}')  # type: ignore
 
     df = pd.DataFrame({'ret': returns, 'timestamp': timestamps})
     years = []
@@ -460,7 +460,7 @@ def compute_return_metrics(timestamps: np.ndarray,
     assert_(type(rets) == np.ndarray and rets.dtype == np.float64)
     assert_(type(timestamps) == np.ndarray and np.issubdtype(timestamps.dtype, np.datetime64) and monotonically_increasing(timestamps))
     non_nan_rets = rets[np.isfinite(rets)]
-    assert_(np.all(non_nan_rets > -1), f'found returns < -1: {non_nan_rets[non_nan_rets <= -1]}')
+    assert_(np.all(non_nan_rets > -1), f'found returns < -1: {non_nan_rets[non_nan_rets <= -1]}')  # type: ignore
     
     timestamps, rets = handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros, subsequent_non_finite_to_zeros)
 

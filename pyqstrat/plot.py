@@ -868,8 +868,9 @@ class Plot:
             axes.append(ax)
             
         time_axes = [axes[i] for i, s in enumerate(self.subplot_list) if s.time_plot]
-        if len(time_axes):
-            time_axes[0].get_shared_x_axes().join(*time_axes)
+        if len(time_axes) > 1:
+            for ax1, ax2 in zip(time_axes[1:], time_axes[0:-1]):
+                ax1.sharex(ax2)
             
         for i, subplot in enumerate(self.subplot_list):
             subplot._draw(axes[i], plot_timestamps, date_formatter)

@@ -107,7 +107,7 @@ class Strategy:
         '''
         self.name = 'main'  # Set by portfolio when running multiple strategies
         self.timestamps = timestamps
-        assert_(len(contract_groups) and isinstance(contract_groups[0], ContractGroup))
+        assert_(len(contract_groups) > 0 and isinstance(contract_groups[0], ContractGroup))
         self.contract_groups = contract_groups
         if strategy_context is None: strategy_context = types.SimpleNamespace()
         self.strategy_context = strategy_context
@@ -780,7 +780,7 @@ class Strategy:
         return f'{pformat(self.indicators)} {pformat(self.rules)} {pformat(self.account)}'
     
 
-def test_strategy() -> Strategy:
+def test_strategy() -> None:
     import math
     import numpy as np
     import pandas as pd
@@ -957,10 +957,9 @@ def test_strategy() -> Strategy:
     assert_(round(metrics['gmean'], 6) == -0.062878)
     assert_(round(metrics['sharpe'], 4) == -9.7079)  # -7.2709)
     assert_(round(metrics['mdd_pct'], 6) == 0.002574)  # -0.002841)
-    return strategy
 
 
-def test_strategy_2():
+def test_strategy_2() -> None:
     '''Test of a dummy strategy'''
     
     def test_signal(contract_group: ContractGroup,
@@ -1015,11 +1014,10 @@ def test_strategy_2():
 
     strategy.add_market_sim(market_simulator)
     strategy.run()
-    return strategy
     
 
 if __name__ == "__main__":
-    strategy = test_strategy_2()
+    test_strategy_2()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
 # $$_end_code
