@@ -49,7 +49,8 @@ vector<char*> tokenize_line(char *s, char delim, const vector<int>& col_indices)
     char* begin = s;
     size_t curr_col_idx = 0;
     size_t size = ::strlen(s);
-    for (size_t i = 0; i < size; ++i) {
+    s[size] = delim;  // replace last \0 with delim so we can tokenize last column
+    for (size_t i = 0; i < size + 1; ++i) {
         if (s[i] == delim) {
             s[i] = '\0';
             if (col_indices[col_idx] == static_cast<int>(curr_col_idx)) {
@@ -64,7 +65,7 @@ vector<char*> tokenize_line(char *s, char delim, const vector<int>& col_indices)
     return ret;
 }
 
-vector<char*> tokenize_buffer(char *s, char delim, size_t size, ssize_t* last_idx) {
+/*vector<char*> tokenize_buffer(char *s, char delim, size_t size, ssize_t* last_idx) {
     static int i = 0;
     i++;
     vector<char*> ret;
@@ -85,7 +86,7 @@ vector<char*> tokenize_buffer(char *s, char delim, size_t size, ssize_t* last_id
     }
     return ret;
 
-}
+}*/
 
 
 float str_to_float(const char* str, char decimal_point, char thousands_separator) {
@@ -375,7 +376,6 @@ ssize_t get_index(char* buf, size_t n, char c) {
 }
 
 ssize_t read_line(char** buf, size_t* buf_size, size_t* begin_idx, char** line, Reader* reader) {
-    
     //if buffer is empty read up to buf size into it
     //if cannot read then return -1
     //if buf has data then try to read a line from last position
@@ -395,13 +395,18 @@ ssize_t read_line(char** buf, size_t* buf_size, size_t* begin_idx, char** line, 
     }
     //buf has data already, try to read a line
     end_idx = get_index(*buf + *begin_idx, *buf_size - *begin_idx, '\n');
+    int begin_inc = 1;
+    if (end_idx > 0 && (*buf + *begin_idx)[end_idx - 1] == '\r') { // windows cr/lf
+        end_idx -= 1;  // end_idx now points to \r in \r\n
+        begin_inc = 2;  // next line begins after end_idx + 2 (for \r\n)
+    }
 
     if (end_idx >= 0) {
         //found a line. update begin index and set line ptr to beginning of this line
         line_size = end_idx;
-        (*buf)[*begin_idx + end_idx] = '\0';
+        (*buf)[*begin_idx + end_idx] = '\0';  // replace \r or \n with \0 to end line
         *line = *buf + *begin_idx;
-        *begin_idx += end_idx + 1;
+        *begin_idx += (end_idx + begin_inc);
         return line_size;
     } else {
         //we read a partial line
@@ -536,12 +541,16 @@ bool read_csv_file(Reader* reader,
         if (fields.size() != dtypes.size()) {
             //replace nulls we added with separator so we can print out the line
             string _line(line, line_size);
-            for (int i=0; i < line_size; ++i) {
-                if (_line[i] == '\0') _line[i] = separator;
-            }
-            error(reader->filename() << " found " << fields.size() << " on row: " << row_num
-                  << " line: " << _line << " but dtypes arg length was " << dtypes.size())
+            std::replace(_line.begin(), _line.end(), '\0', separator);
+            std::replace(_line.begin(), _line.end(), '\r', ' ');
+            
+            /*ostringstream ostr;
+            for (auto field: fields)
+                ostr << field << ' ';
+            error(ostr.str());*/
 
+        error(reader->filename() << " found " << fields.size() << " " << " fields on row: " << row_num
+              << " line: " << _line << " but dtypes arg length was " << dtypes.size() << endl)
         }
         add_line(fields, dtypes, output);
     }

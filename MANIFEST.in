@@ -7,6 +7,8 @@ recursive-include pyqstrat *.rst
 recursive-include pyqstrat *.sh
 
 recursive-exclude pyqstrat/notebooks *.py
+recursive-include pyqstrat/notebooks *.ipynb
+
 prune dist
 prune docs
 
