@@ -60,7 +60,7 @@ def compute_num_periods(timestamps: np.ndarray, periods_per_year: float) -> floa
     >>> assert(compute_num_periods(np.array(['2015-01-01', '2015-03-01', '2015-05-01'], dtype='M8[D]'), 6) == 2)
     '''
     if not len(timestamps): return np.nan
-    assert(monotonically_increasing(timestamps))
+    assert_(monotonically_increasing(timestamps))
     fraction_of_year = (timestamps[-1] - timestamps[0]) / (np.timedelta64(1, 's') * 365 * 24 * 60 * 60)
     return round(fraction_of_year * periods_per_year)
     
@@ -78,11 +78,11 @@ def compute_gmean(timestamps: np.ndarray, returns: np.ndarray, periods_per_year:
     """
     if not len(returns): return np.nan
     assert_(len(returns) == len(timestamps))
-    assert_(np.all(returns > -1), f'found returns < -1: {returns[returns < -1]}')
     assert_(isinstance(timestamps, np.ndarray) and isinstance(returns, np.ndarray))
     mask = np.isfinite(returns)
     timestamps = timestamps[mask]
     returns = returns[mask]
+    assert_(np.all(returns[np.isfinite(returns)] > -1), f'found returns < -1: {returns[np.isfinite(returns) < -1]}')
     num_periods = compute_num_periods(timestamps, periods_per_year)
     g_mean = ((1.0 + returns).prod())**(1.0 / num_periods)
     g_mean = np.power(g_mean, periods_per_year) - 1.0
@@ -188,7 +188,7 @@ def compute_rolling_dd(timestamps: np.ndarray, equity: np.ndarray) -> Tuple[np.n
         timestamps: numpy array of datetime64
         equity: numpy array of equity
     '''
-    assert(len(timestamps) == len(equity))
+    assert_(len(timestamps) == len(equity))
     if not len(timestamps): return np.array([], dtype='M8[ns]'), np.array([], dtype=float)
     s = pd.Series(equity, index=timestamps)
     rolling_max = s.expanding(min_periods=1).max()
@@ -199,14 +199,14 @@ def compute_rolling_dd(timestamps: np.ndarray, equity: np.ndarray) -> Tuple[np.n
 def compute_maxdd_pct(rolling_dd: np.ndarray) -> float:
     '''Compute max drawdown percentage given a numpy array of rolling drawdowns, ignoring NaNs'''
     if not len(rolling_dd): return np.nan
-    assert(rolling_dd.ndim < 2)
+    assert_(rolling_dd.ndim < 2)
     return np.nanmax(rolling_dd)
 
 
 def compute_maxdd_date(rolling_dd_dates: np.ndarray, rolling_dd: np.ndarray) -> np.datetime64:
     ''' Compute date of max drawdown given numpy array of timestamps, and corresponding rolling dd percentages'''
     if not len(rolling_dd_dates): return pd.NaT
-    assert(len(rolling_dd_dates) == len(rolling_dd))
+    assert_(len(rolling_dd_dates) == len(rolling_dd))
     return rolling_dd_dates[np.argmax(rolling_dd)]
 
 
@@ -214,7 +214,7 @@ def compute_maxdd_start(rolling_dd_dates: np.ndarray, rolling_dd: np.ndarray, md
     '''Compute date when max drawdown starts, given numpy array of timestamps corresponding rolling dd 
         percentages and date of the max draw down'''
     if not len(rolling_dd_dates) or pd.isnull(mdd_date): return pd.NaT
-    assert(len(rolling_dd_dates) == len(rolling_dd))
+    assert_(len(rolling_dd_dates) == len(rolling_dd))
     maxdd_dates = rolling_dd_dates[(rolling_dd <= 0) & (rolling_dd_dates < mdd_date)]
     if not len(maxdd_dates): return pd.NaT
     return maxdd_dates[-1]
@@ -240,7 +240,7 @@ def compute_returns_3yr(timestamps: np.ndarray, returns: np.ndarray) -> np.ndarr
     '''Given an array of numpy datetimes and an array of returns, return those that are within 3 years 
         of the last date in the datetime array '''
     if not len(timestamps): return np.array([], dtype=float)
-    assert(len(timestamps) == len(returns))
+    assert_(len(timestamps) == len(returns))
     timestamps_3yr = compute_dates_3yr(timestamps)
     return returns[timestamps >= timestamps_3yr[0]]
 
@@ -284,7 +284,7 @@ def compute_bucketed_returns(timestamps: np.ndarray, returns: np.ndarray) -> Tup
         A tuple with the first element being a list of years and the second a list of 
             numpy arrays containing returns for each corresponding year
     '''
-    assert(len(timestamps) == len(returns))
+    assert_(len(timestamps) == len(returns))
     if not len(timestamps): return [], [np.array([], dtype=float)]
     s = pd.Series(returns, index=timestamps)
     years_list = []
@@ -306,7 +306,9 @@ def compute_annual_returns(timestamps: np.ndarray, returns: np.ndarray, periods_
     '''
     assert_(len(timestamps) == len(returns) and periods_per_year > 0)
     if not len(timestamps): return np.array([], dtype=int), np.array([], dtype=float)
-    assert_(np.all(returns > -1), f'found returns < -1 {returns[returns < -1]}')
+    
+    non_nan_rets = returns[np.isfinite(returns)]
+    assert_(np.all(non_nan_rets > -1), f'found returns < -1: {non_nan_rets[non_nan_rets <= -1]}')
 
     df = pd.DataFrame({'ret': returns, 'timestamp': timestamps})
     years = []
@@ -336,7 +338,7 @@ class Evaluator:
             initial_metrics: a dictionary of string name -> metric.  metric can be any object including a scalar, 
                 an array or a tuple
         """
-        assert(type(initial_metrics) == dict)
+        assert_(type(initial_metrics) == dict)
         self.metric_values: Dict[str, Any] = initial_metrics.copy()
         self._metrics: MutableMapping[str, Tuple[Callable, Sequence[str]]] = {}
         
@@ -457,8 +459,8 @@ def compute_return_metrics(timestamps: np.ndarray,
     assert_(starting_equity > 0.)
     assert_(type(rets) == np.ndarray and rets.dtype == np.float64)
     assert_(type(timestamps) == np.ndarray and np.issubdtype(timestamps.dtype, np.datetime64) and monotonically_increasing(timestamps))
-    assert_(np.all(rets > -1), f'found returns < -1: {rets[rets < -1]}')
-
+    non_nan_rets = rets[np.isfinite(rets)]
+    assert_(np.all(non_nan_rets > -1), f'found returns < -1: {non_nan_rets[non_nan_rets <= -1]}')
     
     timestamps, rets = handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros, subsequent_non_finite_to_zeros)
 
@@ -608,12 +610,12 @@ def test_evaluator() -> None:
     display_return_metrics(ev.metrics())
     plot_return_metrics(ev.metrics(), zero_line=False)
     
-    assert(round(ev.metric('sharpe'), 6) == 2.932954)
-    assert(round(ev.metric('sortino'), 6) == 5.690878)
-    assert(ev.metric('annual_returns')[0] == [2018])
-    assert(round(ev.metric('annual_returns')[1][0], 6) == [0.063530])
-    assert(ev.metric('mdd_start') == np.datetime64('2018-01-19'))
-    assert(ev.metric('mdd_date') == np.datetime64('2018-01-22'))
+    assert_(round(ev.metric('sharpe'), 6) == 2.932954)
+    assert_(round(ev.metric('sortino'), 6) == 5.690878)
+    assert_(ev.metric('annual_returns')[0] == [2018])
+    assert_(round(ev.metric('annual_returns')[1][0], 6) == [0.063530])
+    assert_(ev.metric('mdd_start') == np.datetime64('2018-01-19'))
+    assert_(ev.metric('mdd_date') == np.datetime64('2018-01-22'))
     
 
 if __name__ == "__main__":

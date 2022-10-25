@@ -13,7 +13,7 @@ from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, p
 from pyqstrat.account import Account
 from pyqstrat.pq_types import ContractGroup, Contract, Order, Trade, ReasonCode, MarketOrder, RoundTripTrade
 from pyqstrat.plot import TimeSeries, trade_sets_by_reason_code, Subplot, Plot, LinePlotAttributes, FilledLinePlotAttributes
-from pyqstrat.pq_utils import series_to_array, str2date, strtup2date
+from pyqstrat.pq_utils import series_to_array, str2date, strtup2date, assert_
 from types import SimpleNamespace
 import matplotlib as mpl
 from typing import Sequence, Callable, Any, Mapping, Union, Tuple, Optional, Dict, List
@@ -107,12 +107,12 @@ class Strategy:
         '''
         self.name = 'main'  # Set by portfolio when running multiple strategies
         self.timestamps = timestamps
-        assert(len(contract_groups) and isinstance(contract_groups[0], ContractGroup))
+        assert_(len(contract_groups) and isinstance(contract_groups[0], ContractGroup))
         self.contract_groups = contract_groups
         if strategy_context is None: strategy_context = types.SimpleNamespace()
         self.strategy_context = strategy_context
         self.account = Account(contract_groups, timestamps, price_function, strategy_context, starting_equity, pnl_calc_time)
-        assert trade_lag >= 0, f'trade_lag cannot be negative: {trade_lag}'
+        assert_(trade_lag >= 0, f'trade_lag cannot be negative: {trade_lag}')
         self.trade_lag = trade_lag
         self.run_final_calc = run_final_calc
         self.indicators: Dict[str, IndicatorType] = {}
@@ -210,7 +210,7 @@ class Strategy:
         self.rule_signals[name] = (signal_name, sig_true_values)
         self.rules[name] = rule_function
         if position_filter is not None:
-            assert(position_filter in ['zero', 'nonzero'])
+            assert_(position_filter in ['zero', 'nonzero'])
         self.position_filters[name] = position_filter
         
     def add_market_sim(self, market_sim_function: MarketSimulatorType) -> None:
@@ -351,11 +351,11 @@ class Strategy:
         >>> strategy = MockStrat()
         >>> Strategy._generate_order_iterations(strategy, rule_names, contract_groups, start_date, end_date)
         >>> orders_iter = strategy.orders_iter
-        >>> assert(len(orders_iter[0]) == 0)
-        >>> assert(len(orders_iter[1]) == 2)
-        >>> assert(orders_iter[1][0][1] == ibm)
-        >>> assert(orders_iter[1][1][1] == aapl)
-        >>> assert(len(orders_iter[2]) == 2)
+        >>> assert_(len(orders_iter[0]) == 0)
+        >>> assert_(len(orders_iter[1]) == 2)
+        >>> assert_(orders_iter[1][0][1] == ibm)
+        >>> assert_(orders_iter[1][1][1] == aapl)
+        >>> assert_(len(orders_iter[2]) == 2)
         '''
         start_date, end_date = str2date(start_date), str2date(end_date)
         if rule_names is None: rule_names = self.rule_names
@@ -793,8 +793,8 @@ def test_strategy() -> Strategy:
         ko_file_path = os.path.dirname(os.path.realpath(__file__)) + '/notebooks/support/coke_15_min_prices.csv.gz'
         pep_file_path = os.path.dirname(os.path.realpath(__file__)) + '/notebooks/support/pepsi_15_min_prices.csv.gz' 
     except NameError:
-        ko_file_path = '../notebooks/support/coke_15_min_prices.csv.gz'
-        pep_file_path = '../notebooks/support/pepsi_15_min_prices.csv.gz'
+        ko_file_path = 'notebooks/support/coke_15_min_prices.csv.gz'
+        pep_file_path = 'notebooks/support/pepsi_15_min_prices.csv.gz'
 
     ko_prices = pd.read_csv(ko_file_path)
     pep_prices = pd.read_csv(pep_file_path)
@@ -845,7 +845,7 @@ def test_strategy() -> Strategy:
                         account: Account,
                         strategy_context: StrategyContextType) -> Sequence[Order]:
         timestamp = timestamps[i]
-        assert(math.isclose(account.position(contract_group, timestamp), 0))
+        assert_(math.isclose(account.position(contract_group, timestamp), 0))
         signal_value = signal[i]
         risk_percent = 0.1
 
@@ -872,7 +872,7 @@ def test_strategy() -> Strategy:
                        strategy_context: StrategyContextType) -> Sequence[Order]:
         timestamp = timestamps[i]
         curr_pos = account.position(contract_group, timestamp)
-        assert(not math.isclose(curr_pos, 0))
+        assert_(not math.isclose(curr_pos, 0))
         signal_value = signal[i]
         orders = []
         symbol = contract_group.name
@@ -902,7 +902,7 @@ def test_strategy() -> Strategy:
             
             o, h, l = ind.o[i], ind.h[i], ind.l[i]  # noqa: E741  # l is ambiguous
 
-            assert isinstance(order, MarketOrder), f'Unexpected order type: {order}'
+            assert_(isinstance(order, MarketOrder), f'Unexpected order type: {order}')
             trade_price = 0.5 * (o + h) if order.qty > 0 else 0.5 * (o + l)
 
             if np.isnan(trade_price): continue
@@ -954,9 +954,9 @@ def test_strategy() -> Strategy:
 
     metrics = strategy.evaluate_returns(plot=False, display_summary=False, return_metrics=True)
     assert metrics is not None
-    assert(round(metrics['gmean'], 6) == -0.062878)
-    assert(round(metrics['sharpe'], 4) == -9.7079)  # -7.2709)
-    assert(round(metrics['mdd_pct'], 6) == 0.002574)  # -0.002841)
+    assert_(round(metrics['gmean'], 6) == -0.062878)
+    assert_(round(metrics['sharpe'], 4) == -9.7079)  # -7.2709)
+    assert_(round(metrics['mdd_pct'], 6) == 0.002574)  # -0.002841)
     return strategy
 
 
