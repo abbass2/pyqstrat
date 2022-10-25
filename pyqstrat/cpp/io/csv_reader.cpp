@@ -65,30 +65,6 @@ vector<char*> tokenize_line(char *s, char delim, const vector<int>& col_indices)
     return ret;
 }
 
-/*vector<char*> tokenize_buffer(char *s, char delim, size_t size, ssize_t* last_idx) {
-    static int i = 0;
-    i++;
-    vector<char*> ret;
-    ret.reserve(15);
-    char* begin = s;
-    for (size_t i = 0; i < size; ++i) {
-        if (s[i] == delim) {
-            s[i] = '\0';
-            char* str = ::strdup(str);
-            //char* str = static_cast<char*>(::malloc(s + i - begin + 1));
-            //strcpy(str, begin);
-            ret.push_back(str);
-            begin = s + i + 1;
-        }
-    }
-    if (begin < s + size) {
-        *last_idx = begin - s;
-    }
-    return ret;
-
-}*/
-
-
 float str_to_float(const char* str, char decimal_point, char thousands_separator) {
     // convert a string to a float
     float result = 0;
@@ -542,15 +518,8 @@ bool read_csv_file(Reader* reader,
             //replace nulls we added with separator so we can print out the line
             string _line(line, line_size);
             std::replace(_line.begin(), _line.end(), '\0', separator);
-            std::replace(_line.begin(), _line.end(), '\r', ' ');
-            
-            /*ostringstream ostr;
-            for (auto field: fields)
-                ostr << field << ' ';
-            error(ostr.str());*/
-
-        error(reader->filename() << " found " << fields.size() << " " << " fields on row: " << row_num
-              << " line: " << _line << " but dtypes arg length was " << dtypes.size() << endl)
+            error(reader->filename() << " found " << fields.size() << " " << " fields on row: " << row_num
+                  << " line: " << _line << " but dtypes arg length was " << dtypes.size() << endl)
         }
         add_line(fields, dtypes, output);
     }
