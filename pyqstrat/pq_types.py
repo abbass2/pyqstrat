@@ -420,13 +420,13 @@ class Trade:
             properties: Any data you want to store with this contract.
                 For example, you may want to store bid / ask prices at time of trade.  Default None
         '''
-        assert(isinstance(contract, Contract))
-        assert(isinstance(order, Order))
+        # assert(isinstance(contract, Contract))
+        # assert(isinstance(order, Order))
         assert(np.isfinite(qty))
         assert(np.isfinite(price))
         assert(np.isfinite(fee))
         assert(np.isfinite(commission))
-        assert(isinstance(timestamp, np.datetime64))
+        # assert(isinstance(timestamp, np.datetime64))
         
         self.contract = contract
         self.order = order

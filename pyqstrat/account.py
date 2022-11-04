@@ -8,8 +8,9 @@ import math
 import pandas as pd
 import numpy as np
 from pyqstrat.pq_types import ContractGroup, Trade, Contract, RoundTripTrade
+from pyqstrat.pq_utils import assert_
 from types import SimpleNamespace
-from typing import Sequence, Any, Tuple, Callable, Union, MutableSet, MutableSequence, MutableMapping, List, Optional, Dict
+from typing import Sequence, Any, Tuple, Callable, Union, List, Optional, Dict
 
 
 def calc_trade_pnl(open_qtys: np.ndarray, 
@@ -361,10 +362,44 @@ def _net_trade(stacks: Dict[str, deque], trade: Trade) -> Optional[RoundTripTrad
                         entry.properties, trade.properties,
                         pnl)
     resid = entry.qty - qty
+    entry.qty -= qty
     trade.qty += qty
     if resid == 0:
         stack.popleft()
     return rt
+
+
+def _roundtrip_trades(trades: list[Trade],
+                      contract_group: ContractGroup = None, 
+                      start_date: np.datetime64 = None, 
+                      end_date: np.datetime64 = None) -> list[RoundTripTrade]:
+    '''
+    >>> qtys = [100, -50, 20, -120, 10]
+    >>> prices = [9, 10, 8, 11, 12]                    
+    >>> trades = []
+    >>> contract = SimpleNamespace(symbol='AAPL', contract_group='AAPL', multiplier=1)
+    >>> order = SimpleNamespace(reason_code='DUMMY')
+    >>> for i, qty in enumerate(qtys):
+    ...    timestamp = np.datetime64('2022-11-05 08:00') + np.timedelta64(i, 'm')
+    ...    trades.append(Trade(contract, order, timestamp, qty, prices[i]))
+    >>> rts = _roundtrip_trades(trades, 'AAPL')
+    >>> assert [(rt.qty, rt.entry_price, rt.exit_price, rt.net_pnl) for rt in rts] == [
+    ...    (50, 9, 10, 50.0), (50, 9, 11, 100.0), (20, 8, 11, 60.0), (-10, 11, 12, -10.0)]
+    '''
+    rts: List[RoundTripTrade] = []
+    stacks: Dict[str, deque] = defaultdict(deque)
+
+    for _trade in trades:
+        trade = copy.deepcopy(_trade)
+        while True:
+            rt = _net_trade(stacks, trade)
+            if rt is None: break
+            rts.append(rt)
+            if trade.qty == 0: break
+
+    return [rt for rt in rts if (start_date is None or rt.entry_timestamp >= start_date) and (
+        end_date is None or rt.exit_timestamp <= end_date) and (
+        contract_group is None or rt.contract.contract_group == contract_group)]
 
 
 class Account:
@@ -392,14 +427,14 @@ class Account:
         self.timestamps = timestamps
         self.calc_timestamps = _get_calc_timestamps(timestamps, pnl_calc_time)
         
-        self.contracts: MutableSet[Contract] = set()
-        self._trades: MutableSequence[Trade] = []
+        self.contracts: set[Contract] = set()
+        self._trades: list[Trade] = []
         self._pnl = SortedDict()
-        self.symbol_pnls_by_contract_group: MutableMapping[str, MutableSequence[ContractPNL]] = defaultdict(list)
+        self.symbol_pnls_by_contract_group: dict[str, list[ContractPNL]] = defaultdict(list)
         
-        self.symbol_pnls: MutableMapping[str, ContractPNL] = {}
+        self.symbol_pnls: dict[str, ContractPNL] = {}
         
-    def symbols(self) -> MutableSequence[str]:
+    def symbols(self) -> list[str]:
         return [contract.symbol for contract in self.contracts]
         
     def _add_contract(self, contract: Contract, timestamp: np.datetime64) -> None:
@@ -414,7 +449,7 @@ class Account:
     def add_trades(self, trades: Sequence[Trade]) -> None:
         trades = sorted(trades, key=lambda x: getattr(x, 'timestamp'))
         # Break up trades by contract so we can add them in a batch
-        trades_by_contract: MutableMapping[Contract, List[Trade]] = defaultdict(list)
+        trades_by_contract: dict[Contract, List[Trade]] = defaultdict(list)
         for trade in trades:
             contract = trade.contract
             if contract not in self.contracts: self._add_contract(contract, trade.timestamp)
@@ -464,7 +499,7 @@ class Account:
             position += symbol_pnl.position(timestamp)
         return position
                 
-    def positions(self, contract_group: ContractGroup, timestamp: np.datetime64) -> MutableSequence[Tuple[Contract, float]]:
+    def positions(self, contract_group: ContractGroup, timestamp: np.datetime64) -> list[Tuple[Contract, float]]:
         '''
         Returns all non-zero positions in a contract group
         '''
@@ -488,7 +523,7 @@ class Account:
     def trades(self,
                contract_group: ContractGroup = None, 
                start_date: np.datetime64 = None, 
-               end_date: np.datetime64 = None) -> MutableSequence[Trade]:
+               end_date: np.datetime64 = None) -> list[Trade]:
         '''Returns a list of trades with the given symbol and with trade date between (and including) start date 
             and end date if they are specified. If symbol is None trades for all symbols are returned'''
         return [trade for trade in self._trades if (start_date is None or trade.timestamp >= start_date) and (
@@ -498,27 +533,12 @@ class Account:
     def roundtrip_trades(self,
                          contract_group: ContractGroup = None, 
                          start_date: np.datetime64 = None, 
-                         end_date: np.datetime64 = None) -> MutableSequence[RoundTripTrade]:
+                         end_date: np.datetime64 = None) -> List[RoundTripTrade]:
         '''Returns a list of round trip trades with the given symbol and with trade date 
             between (and including) start date and end date if they are specified. 
             If symbol is None trades for all symbols are returned'''
-        rts: List[RoundTripTrade] = []
-        stacks: Dict[str, deque] = defaultdict(deque)
+        return _roundtrip_trades(self._trades.copy(), contract_group, start_date, end_date)
 
-        trades = copy.deepcopy(self._trades)    
-
-        for _trade in trades:
-            trade = copy.deepcopy(_trade)
-            while True:
-                rt = _net_trade(stacks, trade)
-                if rt is None: break
-                rts.append(rt)
-                if trade.qty == 0: break
-                    
-        return [rt for rt in rts if (start_date is None or rt.entry_timestamp >= start_date)
-                and (end_date is None or rt.exit_timestamp <= end_date)
-                and (contract_group is None or rt.contract.contract_group == contract_group)]
-    
     def df_pnl(self, contract_groups: Union[ContractGroup, Sequence[ContractGroup]] = None) -> pd.DataFrame:
         '''
         Returns a dataframe with P&L columns broken down by contract group and symbol
@@ -647,7 +667,7 @@ class Account:
             net_pnl=s.net_pnl) for s in rt_trades])
         df_rts = df_rts.sort_values(by=['entry_timestamp', 'symbol'])
         return df_rts
- 
+
 
 def test_account():
     from pyqstrat.pq_types import MarketOrder
@@ -688,11 +708,11 @@ def test_account():
     account.add_trades([trade_1, trade_2, trade_3, trade_4, trade_5])
     account.calc(np.datetime64('2018-01-05 13:35'))
 
-    assert(len(account.df_trades()) == 5)
-    assert(len(account.df_pnl()) == 6)
-    assert(np.allclose(np.array([9.99, 61.96, 79.97, 109.33, 69.97, 154.33]), account.df_pnl().net_pnl.values, rtol=0))
-    assert(np.allclose(np.array([10, 20, -10, 45, -10, 45]), account.df_pnl().position.values, rtol=0))
-    assert(np.allclose(np.array([1000000., 1000189.3, 1000224.3]), account.df_account_pnl().equity.values, rtol=0))
+    assert_(len(account.df_trades()) == 5)
+    assert_(len(account.df_pnl()) == 6)
+    assert_(np.allclose(np.array([9.99, 61.96, 79.97, 109.33, 69.97, 154.33]), account.df_pnl().net_pnl.values, rtol=0))
+    assert_(np.allclose(np.array([10, 20, -10, 45, -10, 45]), account.df_pnl().position.values, rtol=0))
+    assert_(np.allclose(np.array([1000000., 1000189.3, 1000224.3]), account.df_account_pnl().equity.values, rtol=0))
 
 
 if __name__ == "__main__":
