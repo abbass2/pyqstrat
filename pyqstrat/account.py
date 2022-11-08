@@ -343,8 +343,7 @@ def _get_calc_timestamps(timestamps: np.ndarray, pnl_calc_time: int) -> np.ndarr
     return np.unique(timestamps[calc_indices])
 
 
-def _net_trade(stacks: Dict[str, deque], trade: Trade) -> Optional[RoundTripTrade]:
-    stack = stacks[trade.contract.symbol]
+def _net_trade(stack: deque, trade: Trade) -> Optional[RoundTripTrade]:
     if not len(stack) or np.sign(trade.qty) == np.sign(stack[0].qty):
         stack.append(trade)
         return None
@@ -392,7 +391,7 @@ def _roundtrip_trades(trades: list[Trade],
     for _trade in trades:
         trade = copy.deepcopy(_trade)
         while True:
-            rt = _net_trade(stacks, trade)
+            rt = _net_trade(stacks[trade.contract.symbol], trade)
             if rt is None: break
             rts.append(rt)
             if trade.qty == 0: break
