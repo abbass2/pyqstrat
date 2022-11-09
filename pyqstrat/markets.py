@@ -7,10 +7,10 @@ from dateutil._common import weekday
 import dateutil.relativedelta as rd
 import numpy as np
 from pyqstrat.holiday_calendars import Calendar, get_date_from_weekday
-from typing import Tuple, Mapping
+from pyqstrat.pq_utils import assert_
 
 FUTURE_CODES_INT = {'F': 1, 'G': 2, 'H': 3, 'J': 4, 'K': 5, 'M': 6, 'N': 7, 'Q': 8, 'U': 9, 'V': 10, 'X': 11, 'Z': 12}
-FUTURES_CODES_INVERTED: Mapping[int, str] = {v: k for k, v in FUTURE_CODES_INT.items()}
+FUTURES_CODES_INVERTED: dict[int, str] = {v: k for k, v in FUTURE_CODES_INT.items()}
 
 FUTURE_CODES_STR = {'F': 'jan', 'G': 'feb', 'H': 'mar', 'J': 'apr', 'K': 'may', 'M': 'jun', 
                     'N': 'jul', 'Q': 'aug', 'U': 'sep', 'V': 'oct', 'X': 'nov', 'Z': 'dec'}
@@ -26,7 +26,7 @@ def future_code_to_month(future_code: str) -> str:
     >>> future_code_to_month('X')
     'nov'
     '''
-    assert len(future_code) == 1, f'Future code must be a single character: {future_code}'
+    assert_(len(future_code) == 1, f'Future code must be a single character: {future_code}')
     if future_code not in FUTURE_CODES_STR: raise Exception(f'unknown future code: {future_code}')
     return FUTURE_CODES_STR[future_code]
     
@@ -44,7 +44,7 @@ def future_code_to_month_number(future_code: str) -> int:
     >>> future_code_to_month_number('X')
     11
     '''
-    assert len(future_code) == 1, f'Future code must be a single character: {future_code}'
+    assert_(len(future_code) == 1, f'Future code must be a single character: {future_code}')
     if future_code not in FUTURE_CODES_INT: raise Exception(f'unknown future code: {future_code}')
     return FUTURE_CODES_INT[future_code]
 
@@ -118,7 +118,7 @@ class EminiFuture:
         year_str = fut_symbol[-1:]
         
         month = future_code_to_month_number(month_str)
-        assert(isinstance(month, int))
+        assert_(isinstance(month, int))
         year = int(year_str)
         year_base = 2020 if year < 5 else 2010
         year = year_base + int(year_str)
@@ -131,7 +131,7 @@ class EminiOption:
     calendar = Calendar.get_calendar(Calendar.NYSE)
 
     @staticmethod
-    def decode_symbol(name: str) -> Tuple[weekday, int, int, int]:
+    def decode_symbol(name: str) -> tuple[weekday, int, int, int]:
         '''
         >>> EminiOption.decode_symbol('E1AF8')
         (MO, 2018, 1, 1)
@@ -173,7 +173,7 @@ class EminiOption:
         >>> EminiOption.get_expiry('EWF0')
         numpy.datetime64('2020-01-31T15:00')
         '''
-        assert ':' not in symbol, f'{symbol} contains: pass in option root instead'
+        assert_(':' not in symbol, f'{symbol} contains: pass in option root instead')
         weekday, year, month, week = EminiOption.decode_symbol(symbol)
         expiry_ = get_date_from_weekday(weekday.weekday, year, month, week)
         if weekday in [rd.WE, rd.FR]:

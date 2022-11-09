@@ -9,7 +9,7 @@
 # $$_end_markdown
 # $$_code
 # $$_ %%checkall
-# Library Imports
+from __future__ import annotations
 import os
 import sys
 import math
@@ -25,15 +25,14 @@ import plotly
 import plotly.callbacks
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from typing import List, Tuple, Callable, Any, Sequence, Dict, Optional
+from typing import Callable, Any
+from collections.abc import Sequence
 import traitlets
 from pyqstrat.pq_utils import bootstrap_ci, get_child_logger
 
-# Local Imports
 ROOT_DIR = os.path.join(sys.path[0])
 sys.path.insert(1, ROOT_DIR)
 
-# Constants and Globals
 _logger = get_child_logger(__name__)
 
 DEFAULT_PLOTLY_COLORS = ['rgb(31, 119, 180)', 'rgb(255, 127, 14)',
@@ -42,22 +41,20 @@ DEFAULT_PLOTLY_COLORS = ['rgb(31, 119, 180)', 'rgb(255, 127, 14)',
                          'rgb(227, 119, 194)', 'rgb(127, 127, 127)',
                          'rgb(188, 189, 34)', 'rgb(23, 190, 207)']
 
-LineDataType = Tuple[str, 
-                     pd.DataFrame, 
-                     Dict[Any, pd.DataFrame]]
+LineDataType = tuple[str, pd.DataFrame, dict[Any, pd.DataFrame]]
     
 DimensionFilterType = Callable[[
     pd.DataFrame,
     str,
-    List[Tuple[str, Any]]],
+    list[tuple[str, Any]]],
     np.ndarray]
 
 DataFilterType = Callable[[
     pd.DataFrame,
-    List[Tuple[str, Any]]],
+    list[tuple[str, Any]]],
     pd.DataFrame]
 
-StatFuncType = Callable[[pd.DataFrame, str, str, str], List[LineDataType]]
+StatFuncType = Callable[[pd.DataFrame, str, str, str], list[LineDataType]]
 
 DetailDisplayType = Callable[[
     widgets.Widget, 
@@ -66,7 +63,7 @@ DetailDisplayType = Callable[[
     None]
 
 
-PlotFuncType = Callable[[str, str, List[LineDataType]], List[widgets.Widget]]
+PlotFuncType = Callable[[str, str, list[LineDataType]], list[widgets.Widget]]
 
 DataFrameTransformFuncType = Callable[[pd.DataFrame], pd.DataFrame]
 
@@ -76,7 +73,7 @@ DisplayFormFuncType = Callable[[Sequence[widgets.Widget], bool], None]
 
 UpdateFormFuncType = Callable[[int], None]
 
-CreateSelectionWidgetsFunctype = Callable[[Dict[str, str], Dict[str, str], UpdateFormFuncType], Dict[str, Any]]
+CreateSelectionWidgetsFunctype = Callable[[dict[str, str], dict[str, str], UpdateFormFuncType], dict[str, Any]]
 
 
 def percentile_buckets(a: np.ndarray, n=10) -> np.ndarray:
@@ -88,7 +85,7 @@ def percentile_buckets(a: np.ndarray, n=10) -> np.ndarray:
     if not len(a): return np.empty(0)
     pctiles = np.arange(0, 100, int(round(100 / n))) 
     buckets = np.nanpercentile(a, pctiles)
-    conditions: List[Any] = []
+    conditions: list[Any] = []
     for i, bucket in enumerate(buckets[:-1]):
         if buckets[i] == buckets[i + 1]:
             conditions.append(a == buckets[i])
@@ -116,7 +113,7 @@ class SimpleTransform:
     '''
     Initial transformation of data.  For example, you might add columns that are quantiles of other columns
     '''
-    def __init__(self, transforms: List[Tuple[str, str, SeriesTransformFuncType]] = None) -> None:
+    def __init__(self, transforms: list[tuple[str, str, SeriesTransformFuncType]] | None = None) -> None:
         self.transforms = [] if transforms is None else transforms
         
     def __call__(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -125,7 +122,7 @@ class SimpleTransform:
         return data
     
 
-def simple_dimension_filter(data: pd.DataFrame, dim_name: str, selected_values: List[Tuple[str, Any]]) -> np.ndarray:
+def simple_dimension_filter(data: pd.DataFrame, dim_name: str, selected_values: list[tuple[str, Any]]) -> np.ndarray:
     '''
     Produces a list to put into a dropdown for selecting a dimension value
     '''
@@ -137,7 +134,7 @@ def simple_dimension_filter(data: pd.DataFrame, dim_name: str, selected_values: 
     return ['All'] + values.tolist()
     
     
-def simple_data_filter(data: pd.DataFrame, selected_values: List[Tuple[str, Any]]) -> pd.DataFrame:
+def simple_data_filter(data: pd.DataFrame, selected_values: list[tuple[str, Any]]) -> pd.DataFrame:
     '''
     Filters a dataframe based on the selected values
     '''
@@ -162,7 +159,7 @@ class MeanWithCI:
         self.mean_func = mean_func
         self.ci_level = ci_level
         
-    def __call__(self, filtered_data: pd.DataFrame, xcol: str, ycol: str, zcol: str) -> List[LineDataType]:
+    def __call__(self, filtered_data: pd.DataFrame, xcol: str, ycol: str, zcol: str) -> list[LineDataType]:
         '''
         For each unique value of x and z, compute mean (and optionally ci) of y.
         Return:
@@ -175,7 +172,7 @@ class MeanWithCI:
         columns = [xcol, ycol] if not self.ci_level else [xcol, ycol, f'ci_d_{self.ci_level}', f'ci_u_{self.ci_level}']
         for zvalue in zvals:
             df = filtered_data[filtered_data[zcol] == zvalue]
-            plt_data: List[Any] = []
+            plt_data: list[Any] = []
             for x, yseries in df.groupby(xcol)[ycol]:
                 y = yseries.values
                 if not len(y): raise Exception(y)
@@ -196,13 +193,13 @@ class SimpleDetailTable:
     '''
     
     def __init__(self, 
-                 colnames: Optional[List[str]] = None, 
+                 colnames: list[str] | None = None, 
                  float_format: str = '{:.4g}', 
                  min_rows: int = 100, 
                  copy_to_clipboard: bool = True) -> None:
         '''
         Args:
-            colnames: List of column names to display. If None we display all columns. Default None
+            colnames: list of column names to display. If None we display all columns. Default None
             float_format: Format for each floating point column. Default {:.4g}
             min_rows: Do not truncate the display of the table before this many rows. Default 100
             copy_to_clipboard: If set, we copy the dataframe to the clipboard. On linux, you must install xclip for this to work
@@ -237,11 +234,11 @@ class SimpleDetailTable:
         if self.min_rows: pd.options.display.min_rows = orig_min_rows
             
             
-def create_selection_dropdowns(dims: Dict[str, str], labels: Dict[str, str], update_form_func: UpdateFormFuncType) -> Dict[str, Any]:
+def create_selection_dropdowns(dims: dict[str, str], labels: dict[str, str], update_form_func: UpdateFormFuncType) -> dict[str, Any]:
     '''
     Create a list of selection widgets
     '''
-    selection_widgets: Dict[str, widgets.Widget] = {}
+    selection_widgets: dict[str, widgets.Widget] = {}
     for name in dims.keys():
         label = labels[name] if name in labels else name
         widget = widgets.Dropdown(description=label, style={'description_width': 'initial'})
@@ -253,7 +250,7 @@ def create_selection_dropdowns(dims: Dict[str, str], labels: Dict[str, str], upd
     return selection_widgets
 
 
-def on_widgets_updated(change: traitlets.utils.bunch.Bunch, update_form_func, selection_widgets: Dict[str, widgets.Widget]) -> None:
+def on_widgets_updated(change: traitlets.utils.bunch.Bunch, update_form_func, selection_widgets: dict[str, widgets.Widget]) -> None:
     '''
     Callback called by plotly when widgets are updated by the user.
     '''
@@ -265,14 +262,14 @@ def on_widgets_updated(change: traitlets.utils.bunch.Bunch, update_form_func, se
             
 @dataclass
 class LineConfig:
-    color: Optional[str] = None
+    color: str | None = None
     thickness: float = math.nan
     secondary_y: bool = False
     marker_mode: str = 'lines+markers'
     show_detail: bool = True
         
         
-def _plotly_color_to_rgb(plotly_color: str) -> Tuple[int, int, int]:
+def _plotly_color_to_rgb(plotly_color: str) -> tuple[int, int, int]:
     '''
     Convert plotly color which is a string into r, g, b values
     >>> assert _plotly_color_to_rgb('rgb(31, 119, 180)') == (31, 119, 180)
@@ -283,7 +280,7 @@ def _plotly_color_to_rgb(plotly_color: str) -> Tuple[int, int, int]:
     return r, g, b
 
         
-def _lighten_color(r: int, g: int, b: int) -> Tuple[int, int, int]:
+def _lighten_color(r: int, g: int, b: int) -> tuple[int, int, int]:
     '''
     Lighten color so we can show confidence intervals in a lighter shade than the line itself
     We convert to hls and increase lightness and decrease saturation
@@ -309,9 +306,9 @@ class LineGraphWithDetailDisplay:
     
     def __init__(self, 
                  display_detail_func: DetailDisplayType = SimpleDetailTable(), 
-                 line_configs: Dict[str, LineConfig] = {}, 
-                 title: str = None, 
-                 hovertemplate: str = None, 
+                 line_configs: dict[str, LineConfig] = {}, 
+                 title: str | None = None, 
+                 hovertemplate: str | None = None, 
                  debug=False) -> None:
         '''
         Args:
@@ -326,11 +323,11 @@ class LineGraphWithDetailDisplay:
         self.hovertemplate = hovertemplate
         self.debug = debug
         self.default_line_config = LineConfig()
-        self.detail_data: Dict[Any, pd.DataFrame] = {}
+        self.detail_data: dict[Any, pd.DataFrame] = {}
         self.xcol = ''
-        self.zvalues: Dict[int, Any] = {}  # trace index by zvalue
- 
-    def __call__(self, xaxis_title: str, yaxis_title: str, line_data: List[LineDataType]) -> List[widgets.Widget]:
+        self.zvalues: dict[int, Any] = {}  # trace index by zvalue
+            
+    def __call__(self, xaxis_title: str, yaxis_title: str, line_data: list[LineDataType]) -> list[widgets.Widget]:
         '''
         Draw the plot and also set it up so if you click on a point, we display the data used to compute that point.
         Args:
@@ -377,9 +374,9 @@ class LineGraphWithDetailDisplay:
                 line=dict(color=color),
                 hovertemplate=hovertemplate              
             )
-           
+            
             self.zvalues[trace_num] = zvalue
- 
+            
             fig_widget.add_trace(trace, secondary_y=line_config.secondary_y)
             if line_config.show_detail:
                 fig_widget.data[trace_num].on_click(self._on_graph_click, append=True)
@@ -438,7 +435,7 @@ class InteractivePlot:
     '''
     def __init__(self,
                  data: pd.DataFrame,
-                 labels: Dict[str, str] = None,
+                 labels: dict[str, str] | None = None,
                  transform_func: DataFrameTransformFuncType = SimpleTransform(),
                  create_selection_widgets_func: CreateSelectionWidgetsFunctype = create_selection_dropdowns,
                  dim_filter_func: DimensionFilterType = simple_dimension_filter,
@@ -474,10 +471,10 @@ class InteractivePlot:
         self.stat_func = stat_func
         self.plot_func = plot_func
         self.display_form_func = display_form_func
-        self.selection_widgets: Dict[str, Any] = {}
+        self.selection_widgets: dict[str, Any] = {}
         self.debug = debug
         
-    def create_pivot(self, xcol: str, ycol: str, zcol: str, dimensions: Dict[str, Any]) -> None:
+    def create_pivot(self, xcol: str, ycol: str, zcol: str, dimensions: dict[str, Any]) -> None:
         '''
         Create the initial pivot
         Args:
