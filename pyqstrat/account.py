@@ -273,7 +273,7 @@ class ContractPNL:
             unrealized = 0.0
         else:
             price = self._price_function(self.contract, self._account_timestamps, i, self.strategy_context)  # type: ignore
-            assert_(np.isreal(price),
+            assert_(bool(np.isreal(price)),
                     f'Unexpected price type: {price} {type(price)} for contract: {self.contract} timestamp: {self._account_timestamps[i]}')
 
             if math.isnan(price):
