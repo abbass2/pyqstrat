@@ -14,7 +14,7 @@ from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, p
 from pyqstrat.account import Account
 from pyqstrat.pq_types import ContractGroup, Contract, Order, Trade, ReasonCode, MarketOrder, RoundTripTrade
 from pyqstrat.plot import TimeSeries, trade_sets_by_reason_code, Subplot, Plot, LinePlotAttributes, FilledLinePlotAttributes
-from pq_utils import series_to_array, str2date, strtup2date, assert_
+from pyqstrat.pq_utils import series_to_array, str2date, strtup2date, assert_
 from types import SimpleNamespace
 import matplotlib as mpl
 from typing import Callable, Any, Union
@@ -359,7 +359,7 @@ class Strategy:
         >>> assert_(orders_iter[1][1][1] == aapl)
         >>> assert_(len(orders_iter[2]) == 2)
         '''
-        start_date, end_date = str2date(start_date), str2date(end_date)
+        _start_date, _end_date = np.datetime64(start_date), np.datetime64(end_date)
         if rule_names is None: rule_names = self.rule_names
         if contract_groups is None: contract_groups = self.contract_groups
 
@@ -380,12 +380,12 @@ class Strategy:
 
                 null_value = False if sig_values.dtype == np.dtype('bool') else np.nan
                 
-                if start_date is not None:
-                    start_idx: int = np.searchsorted(timestamps, start_date)  # type: ignore
+                if not np.isnat(_start_date):
+                    start_idx: int = np.searchsorted(timestamps, _start_date)  # type: ignore
                     sig_values[0:start_idx] = null_value
                     
-                if end_date is not None:
-                    end_idx: int = np.searchsorted(timestamps, end_date)  # type: ignore
+                if not np.isnat(_end_date):
+                    end_idx: int = np.searchsorted(timestamps, _end_date)  # type: ignore
                     sig_values[end_idx:] = null_value
 
                 indices = np.nonzero(np.isin(sig_values[:num_timestamps], sig_true_values))[0]
@@ -1029,6 +1029,7 @@ def test_strategy_2() -> None:
     
 
 if __name__ == "__main__":
+    test_strategy()
     test_strategy_2()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
