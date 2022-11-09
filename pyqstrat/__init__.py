@@ -5,7 +5,6 @@ from pyqstrat.pq_types import *
 from pyqstrat.pq_io import *
 from pyqstrat.holiday_calendars import *
 from pyqstrat.markets import *
-from pyqstrat.trade_bars import *
 from pyqstrat.account import * 
 from pyqstrat.strategy import *
 from pyqstrat.portfolio import *
