@@ -23,9 +23,11 @@ from matplotlib.colors import BoundaryNorm
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401  # not directly used but need to import to plot 3d 
 from scipy.interpolate import griddata
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from pyqstrat.pq_utils import series_to_array, strtup2date, has_display, resample_ts, resample_trade_bars, assert_
+from pyqstrat.pq_utils import series_to_array, has_display, resample_ts, resample_trade_bars, assert_
 from pyqstrat.pq_types import ReasonCode, Trade
 from collections.abc import Sequence
+
+NAT = np.datetime64('NaT')
 
 
 class DateFormatter(mtick.Formatter):
@@ -712,10 +714,10 @@ class Subplot:
             else:
                 raise Exception(f'unknown type: {data}')
         
-    def get_all_timestamps(self, date_range: tuple[np.datetime64 | None, np.datetime64 | None]) -> np.ndarray:
+    def get_all_timestamps(self, date_range: tuple[np.datetime64, np.datetime64] = (NAT, NAT)) -> np.ndarray:
         timestamps_list = [data.timestamps for data in self.data_list if isinstance(data, TimePlotData)]
         all_timestamps = np.array(reduce(np.union1d, timestamps_list))
-        if date_range is not None and date_range[0] is not None and date_range[1] is not None:
+        if not np.isnat(date_range[0]) and not np.isnat(date_range[1]):
             all_timestamps = all_timestamps[(all_timestamps >= date_range[0]) & (all_timestamps <= date_range[1])]
         return all_timestamps
     
@@ -790,7 +792,7 @@ class Plot:
                  subplot_list: Sequence[Subplot],  
                  title: str | None = None, 
                  figsize: tuple[float, float] = (15, 8), 
-                 date_range: tuple[str, str] | tuple[np.datetime64 | None, np.datetime64 | None] | None = None,
+                 date_range: tuple[np.datetime64, np.datetime64] = (NAT, NAT),
                  date_format: str | None = None, 
                  sampling_frequency: str | None = None, 
                  show_grid: bool = True, 
@@ -817,7 +819,7 @@ class Plot:
         self.subplot_list = subplot_list
         self.title = title
         self.figsize = figsize
-        self.date_range = strtup2date(date_range)
+        self.date_range = date_range
         self.date_format = date_format
         self.sampling_frequency = sampling_frequency
         self.show_date_gaps = show_date_gaps

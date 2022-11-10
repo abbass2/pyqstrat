@@ -7,9 +7,13 @@ import numpy as np
 from functools import reduce
 from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, plot_return_metrics
 from pyqstrat.strategy import Strategy
-from pyqstrat.pq_utils import str2date
-from typing import Optional, Any
+from pyqstrat.pq_utils import get_child_logger
+from typing import Any
 from collections.abc import Sequence
+
+_logger = get_child_logger(__name__)
+
+NAT = np.datetime64('NaT')
 
 
 class Portfolio:
@@ -38,7 +42,9 @@ class Portfolio:
         '''
         if strategy_names is None: strategy_names = list(self.strategies.keys())
         if len(strategy_names) == 0: raise Exception('a portfolio must have at least one strategy')
-        for name in strategy_names: self.strategies[name].run_indicators()
+        for name in strategy_names:
+            _logger.info(f'running strategy indicators: {name}')
+            self.strategies[name].run_indicators()
                 
     def run_signals(self, strategy_names: Sequence[str] | None = None) -> None:
         '''Compute signals for the strategies specified.  Must be called after run_indicators
@@ -48,12 +54,15 @@ class Portfolio:
         '''
         if strategy_names is None: strategy_names = list(self.strategies.keys())
         if len(strategy_names) == 0: raise Exception('a portfolio must have at least one strategy')
-        for name in strategy_names: self.strategies[name].run_signals()
+        for name in strategy_names: 
+            _logger.info(f'running signals: {name}')
+            self.strategies[name].run_indicators()
+            self.strategies[name].run_signals()
             
     def _generate_order_iterations(self, 
                                    strategies: Sequence[Strategy], 
-                                   start_date: Optional[np.datetime64], 
-                                   end_date: Optional[np.datetime64]) -> tuple[np.ndarray, Sequence[tuple[Strategy, np.ndarray]]]:
+                                   start_date: np.datetime64 = NAT, 
+                                   end_date: np.datetime64 = NAT) -> tuple[np.ndarray, Sequence[tuple[Strategy, np.ndarray]]]:
         '''
         >>> class Strategy:
         ...    def __init__(self, num): 
@@ -65,7 +74,7 @@ class Portfolio:
         ...        pass
         ...    def __repr__(self):
         ...        return f'{self.num}'
-        >>> all_timestamps, orders_iter = Portfolio._generate_order_iterations(None, [Strategy(0), Strategy(1)], None, None)
+        >>> all_timestamps, orders_iter = Portfolio._generate_order_iterations(None, [Strategy(0), Strategy(1)])
         >>> assert(all(all_timestamps == np.array(['2018-01-01', '2018-01-02', '2018-01-03','2018-01-04'], dtype = 'M8[D]')))
         >>> assert(all(orders_iter[0][1] == np.array([0, 1, 2, 3])))
         >>> assert(all(orders_iter[1][1] == np.array([0, 0, 1, 2])))
@@ -76,9 +85,9 @@ class Portfolio:
         
         all_timestamps = np.array(reduce(np.union1d, timestamps_list))
         
-        if start_date is not None:
+        if not np.isnat(start_date):
             all_timestamps = all_timestamps[(all_timestamps >= start_date)]
-        if end_date is not None:
+        if not np.isnat(end_date):
             all_timestamps = all_timestamps[(all_timestamps <= end_date)]
         
         iterations = []
@@ -92,12 +101,11 @@ class Portfolio:
                 
     def run_rules(self, 
                   strategy_names: Sequence[str] | None = None, 
-                  start_date: np.datetime64 | None = None, 
-                  end_date: np.datetime64 | None = None) -> None:
+                  start_date: np.datetime64 = NAT, 
+                  end_date: np.datetime64 = NAT) -> None:
         '''Run rules for the strategies specified.  Must be called after run_indicators and run_signals.  
           See run function for argument descriptions
         '''
-        start_date, end_date = str2date(start_date), str2date(end_date)
         if strategy_names is None: strategy_names = list(self.strategies.keys())
         if len(strategy_names) == 0: raise Exception('a portfolio must have at least one strategy')
 
@@ -107,6 +115,8 @@ class Portfolio:
         if start_date: min_date = max(min_date, start_date)
         max_date = max([strategy.timestamps[-1] for strategy in strategies])
         if end_date: max_date = min(max_date, end_date)
+            
+        _logger.info(f'generating order iterations: {start_date} {end_date}')
             
         all_timestamps, iterations = self._generate_order_iterations(strategies, start_date, end_date)
         
@@ -123,8 +133,8 @@ class Portfolio:
                 
     def run(self, 
             strategy_names: Sequence[str] | None = None, 
-            start_date: np.datetime64 | None = None, 
-            end_date: np.datetime64 | None = None) -> None:
+            start_date: np.datetime64 = NAT, 
+            end_date: np.datetime64 = NAT) -> None:
         '''
         Run indicators, signals and rules.
         
@@ -135,7 +145,6 @@ class Portfolio:
               so you can set this so they are all ready by this date.  Default None
             end_date: Don't run rules after this date.  Default None
          '''
-        start_date, end_date = str2date(start_date), str2date(end_date)
         self.run_indicators()
         self.run_signals()
         self.run_rules(strategy_names, start_date, end_date)

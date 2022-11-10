@@ -14,6 +14,8 @@ from types import SimpleNamespace
 from typing import Any, Callable
 from collections.abc import Sequence
 
+NAT = np.datetime64('NaT')
+
 
 def calc_trade_pnl(open_qtys: np.ndarray, 
                    open_prices: np.ndarray, 
@@ -374,8 +376,8 @@ def _net_trade(stack: deque, trade: Trade) -> RoundTripTrade | None:
 
 def _roundtrip_trades(trades: list[Trade],
                       contract_group: ContractGroup | None = None, 
-                      start_date: np.datetime64 | None = None, 
-                      end_date: np.datetime64 | None = None) -> list[RoundTripTrade]:
+                      start_date: np.datetime64 = NAT, 
+                      end_date: np.datetime64 = NAT) -> list[RoundTripTrade]:
     '''
     >>> qtys = [100, -50, 20, -120, 10]
     >>> prices = [9, 10, 8, 11, 12]                    
@@ -400,8 +402,8 @@ def _roundtrip_trades(trades: list[Trade],
             rts.append(rt)
             if trade.qty == 0: break
 
-    return [rt for rt in rts if (start_date is None or rt.entry_timestamp >= start_date) and (
-        end_date is None or rt.exit_timestamp <= end_date) and (
+    return [rt for rt in rts if (np.isnat(start_date) or rt.entry_timestamp >= start_date) and (
+        np.isnat(end_date) or rt.exit_timestamp <= end_date) and (
         contract_group is None or rt.contract.contract_group == contract_group)]
 
 
@@ -525,18 +527,18 @@ class Account:
     
     def trades(self,
                contract_group: ContractGroup | None = None, 
-               start_date: np.datetime64 | None = None, 
-               end_date: np.datetime64 | None = None) -> list[Trade]:
+               start_date: np.datetime64 = NAT, 
+               end_date: np.datetime64 = NAT) -> list[Trade]:
         '''Returns a list of trades with the given symbol and with trade date between (and including) start date 
             and end date if they are specified. If symbol is None trades for all symbols are returned'''
-        return [trade for trade in self._trades if (start_date is None or trade.timestamp >= start_date) and (
-            end_date is None or trade.timestamp <= end_date) and (
+        return [trade for trade in self._trades if (np.isnat(start_date) or trade.timestamp >= start_date) and (
+            np.isnat(end_date) or trade.timestamp <= end_date) and (
             contract_group is None or trade.contract.contract_group == contract_group)]
     
     def roundtrip_trades(self,
                          contract_group: ContractGroup | None = None, 
-                         start_date: np.datetime64 | None = None, 
-                         end_date: np.datetime64 | None = None) -> list[RoundTripTrade]:
+                         start_date: np.datetime64 = NAT, 
+                         end_date: np.datetime64 = NAT) -> list[RoundTripTrade]:
         '''Returns a list of round trip trades with the given symbol and with trade date 
             between (and including) start date and end date if they are specified. 
             If symbol is None trades for all symbols are returned'''
@@ -613,8 +615,8 @@ class Account:
     
     def df_trades(self, 
                   contract_group: ContractGroup | None = None, 
-                  start_date: np.datetime64 | None = None, 
-                  end_date: np.datetime64 | None = None) -> pd.DataFrame:
+                  start_date: np.datetime64 = NAT, 
+                  end_date: np.datetime64 = NAT) -> pd.DataFrame:
         '''
         Returns a dataframe of trades
         
@@ -623,7 +625,6 @@ class Account:
             start_date: Include trades with date greater than or equal to this timestamp.
             end_date: Include trades with date less than or equal to this timestamp.
         '''
-        # start_date, end_date = str2date(start_date), str2date(end_date)
         trades = self.trades(contract_group, start_date, end_date)
         df = pd.DataFrame.from_records([(
             trade.contract.symbol, 
@@ -644,8 +645,8 @@ class Account:
     
     def df_roundtrip_trades(self, 
                             contract_group: ContractGroup | None = None, 
-                            start_date: np.datetime64 | None = None, 
-                            end_date: np.datetime64 | None = None) -> pd.DataFrame:
+                            start_date: np.datetime64 = NAT, 
+                            end_date: np.datetime64 = NAT) -> pd.DataFrame:
         '''
         Returns a dataframe of round trip trades
         

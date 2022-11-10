@@ -14,7 +14,7 @@ from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, p
 from pyqstrat.account import Account
 from pyqstrat.pq_types import ContractGroup, Contract, Order, Trade, ReasonCode, MarketOrder, RoundTripTrade
 from pyqstrat.plot import TimeSeries, trade_sets_by_reason_code, Subplot, Plot, LinePlotAttributes, FilledLinePlotAttributes
-from pyqstrat.pq_utils import series_to_array, str2date, strtup2date, assert_
+from pyqstrat.pq_utils import series_to_array, assert_
 from types import SimpleNamespace
 import matplotlib as mpl
 from typing import Callable, Any, Union
@@ -55,6 +55,8 @@ DateRangeType = Union[tuple[str, str], tuple[np.datetime64, np.datetime64]]
 OrderTupType = tuple[RuleType, ContractGroup, dict[str, Any]]
 
 PlotPropertiesType = dict[str, dict[str, Any]]
+
+NAT = np.datetime64('NaT')
 
 
 def _get_time_series_list(timestamps: np.ndarray, 
@@ -319,8 +321,8 @@ class Strategy:
     def _generate_order_iterations(self, 
                                    rule_names: Sequence[str] | None = None, 
                                    contract_groups: Sequence[ContractGroup] | None = None, 
-                                   start_date: np.datetime64 | None = None, 
-                                   end_date: np.datetime64 | None = None) -> None:
+                                   start_date: np.datetime64 = NAT, 
+                                   end_date: np.datetime64 = NAT) -> None:
         '''
         >>> class MockStrat:
         ...    def __init__(self):
@@ -401,8 +403,8 @@ class Strategy:
     def run_rules(self, 
                   rule_names: Sequence[str] | None = None, 
                   contract_groups: Sequence[ContractGroup] | None = None, 
-                  start_date: np.datetime64 | None = None,
-                  end_date: np.datetime64 | None = None) -> None:
+                  start_date: np.datetime64 = NAT,
+                  end_date: np.datetime64 = NAT) -> None:
         '''
         Run trading rules.
         
@@ -412,7 +414,6 @@ class Strategy:
             start_date: Run rules starting from this date. Default None 
             end_date: Don't run rules after this date.  Default None
         '''
-        start_date, end_date = str2date(start_date), str2date(end_date)
         self._generate_order_iterations(rule_names, contract_groups, start_date, end_date)
         
         # Now we know which rules, contract groups need to be applied for each iteration, go through each iteration and apply them
@@ -486,8 +487,8 @@ class Strategy:
     def df_data(self, 
                 contract_groups: Sequence[ContractGroup] | None = None, 
                 add_pnl: bool = True, 
-                start_date: str | np.datetime64 | None = None, 
-                end_date: str | np.datetime64 | None = None) -> pd.DataFrame:
+                start_date: str | np.datetime64 = NAT, 
+                end_date: str | np.datetime64 = NAT) -> pd.DataFrame:
         '''
         Add indicators and signals to end of market data and return as a pandas dataframe.
         
@@ -497,13 +498,13 @@ class Strategy:
             start_date: string or numpy datetime64. Default None
             end_date: string or numpy datetime64: Default None
         '''
-        start_date, end_date = str2date(start_date), str2date(end_date)
+        _start_date, _end_date = np.datetime64(start_date), np.datetime64(end_date)
         if contract_groups is None: contract_groups = self.contract_groups
             
         timestamps = self.timestamps
         
-        if start_date: timestamps = timestamps[timestamps >= start_date]
-        if end_date: timestamps = timestamps[timestamps <= end_date]
+        if not np.isnat(_start_date): timestamps = timestamps[timestamps >= _start_date]
+        if not np.isnat(_end_date): timestamps = timestamps[timestamps <= _end_date]
             
         dfs = []
              
@@ -537,42 +538,38 @@ class Strategy:
     
     def trades(self, 
                contract_group: ContractGroup | None = None, 
-               start_date: np.datetime64 | None = None, 
-               end_date: np.datetime64 | None = None) -> Sequence[Trade]:
+               start_date: np.datetime64 = NAT, 
+               end_date: np.datetime64 = NAT) -> list[Trade]:
         '''Returns a list of trades with the given contract group and with trade date between (and including) start date 
             and end date if they are specified.
             If contract_group is None trades for all contract_groups are returned'''
-        start_date, end_date = str2date(start_date), str2date(end_date)
         return self.account.trades(contract_group, start_date, end_date)
     
     def roundtrip_trades(self,
                          contract_group: ContractGroup | None = None, 
-                         start_date: np.datetime64 | None = None, 
-                         end_date: np.datetime64 | None = None) -> Sequence[RoundTripTrade]:
+                         start_date: np.datetime64 = NAT, 
+                         end_date: np.datetime64 = NAT) -> list[RoundTripTrade]:
         '''Returns a list of trades with the given contract group and with trade date between (and including) start date 
             and end date if they are specified.
             If contract_group is None trades for all contract_groups are returned'''
-        start_date, end_date = str2date(start_date), str2date(end_date)
         return self.account.roundtrip_trades(contract_group, start_date, end_date)
     
     def df_trades(self, 
                   contract_group: ContractGroup | None = None, 
-                  start_date: np.datetime64 | None = None, 
-                  end_date: np.datetime64 | None = None) -> pd.DataFrame:
+                  start_date: np.datetime64 = NAT, 
+                  end_date: np.datetime64 = NAT) -> pd.DataFrame:
         '''Returns a dataframe with data from trades with the given contract group and with trade date between (and including)
             start date and end date
             if they are specified. If contract_group is None trades for all contract_groups are returned'''
-        start_date, end_date = str2date(start_date), str2date(end_date)
         return self.account.df_trades(contract_group, start_date, end_date)
     
     def df_roundtrip_trades(self, 
                             contract_group: ContractGroup | None = None, 
-                            start_date: np.datetime64 | None = None, 
-                            end_date: np.datetime64 | None = None) -> pd.DataFrame:
+                            start_date: np.datetime64 = NAT, 
+                            end_date: np.datetime64 = NAT) -> pd.DataFrame:
         '''Returns a dataframe of round trip trades with the given contract group and with trade date 
             between (and including) start date and end date if they are specified. If contract_group is None trades for all 
             contract_groups are returned'''
-        start_date, end_date = str2date(start_date), str2date(end_date)
         return self.account.df_roundtrip_trades(contract_group, start_date, end_date)
 
     def orders(self, 
@@ -598,12 +595,11 @@ class Strategy:
     
     def df_orders(self, 
                   contract_group: ContractGroup | None = None, 
-                  start_date: np.datetime64 | str | None = None, 
-                  end_date: np.datetime64 | str | None = None) -> pd.DataFrame:
+                  start_date: np.datetime64 | str = NAT, 
+                  end_date: np.datetime64 | str = NAT) -> pd.DataFrame:
         '''Returns a dataframe with data from orders with the given contract group and with order date between (and including) 
             start date and end date
             if they are specified. If contract_group is None orders for all contract_groups are returned'''
-        start_date, end_date = str2date(start_date), str2date(end_date)
         orders = self.orders(contract_group, start_date, end_date)
         order_records = [(order.contract.symbol if order.contract else '',
                           type(order).__name__, order.timestamp, order.qty, 
@@ -649,7 +645,7 @@ class Strategy:
              pnl_columns: Sequence[str] | None = None, 
              title: str | None = None, 
              figsize: tuple[int, int] = (20, 15), 
-             _date_range: DateRangeType | None = None, 
+             date_range: DateRangeType = (NAT, NAT),
              date_format: str | None = None, 
              sampling_frequency: str | None = None, 
              trade_marker_properties: PlotPropertiesType | None = None, 
@@ -676,7 +672,6 @@ class Strategy:
                 with different reason codes. By default we use the dictionary from the :obj:`ReasonCode` class
             hspace: Height (vertical) space between subplots.  Default is 0.15
         '''
-        date_range = strtup2date(_date_range)
         if contract_groups is None: contract_groups = self.contract_groups
         if isinstance(contract_groups, ContractGroup): contract_groups = [contract_groups]
         if pnl_columns is None: pnl_columns = ['equity']
@@ -741,10 +736,12 @@ class Strategy:
             if len(pnl_list): plot_list.append(pnl_subplot)
             
             if not len(plot_list): return
+            
+            _date_range = (np.datetime64(date_range[0]), np.datetime64(date_range[1]))
                 
             plot = Plot(plot_list, 
                         figsize=figsize, 
-                        date_range=date_range, 
+                        date_range=_date_range, 
                         date_format=date_format, 
                         sampling_frequency=sampling_frequency, 
                         title=title_full, 
