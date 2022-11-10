@@ -36,7 +36,7 @@ pyqstrat relies on numpy, scipy, matplotlib and pandas which in turn use Fortran
 
 Requirements:
 
-* Python_ version 3.7 or higher;
+* Python_ version 3.9 or higher;
 
 Documentation
 -------------
