@@ -125,7 +125,9 @@ class SurfacePlotAttributes(DisplayAttributes):
     marker_size: int = 50
     marker_color: str = 'red'
     interpolation: str = 'linear'
-    cmap: matplotlib.colors.Colormap = matplotlib.cm.RdBu_r                  
+    # cmap: matplotlib.colors.Colormap = field(default_factory=matplotlib.cm.RdBu_r) 
+    # cmap: matplotlib.colors.Colormap = matplotlib.cm.RdBu_r                  
+    cmap: matplotlib.colors.Colormap = 'RdBu_r'
         
 
 @dataclass
@@ -1006,7 +1008,8 @@ def test_plot() -> None:
                          xlabel='x', ylabel='y', height_ratio=0.2, title='XY Plot')
     
     z = x ** 2 + y ** 2
-    xyz_subplot = Subplot(XYZData('3d test', x, y, z, display_attributes=SurfacePlotAttributes()), 
+    surface_plot_attributes = SurfacePlotAttributes()
+    xyz_subplot = Subplot(XYZData('3d test', x, y, z, display_attributes=surface_plot_attributes), 
                           xlabel='x', ylabel='y', zlabel='z', height_ratio=0.3)
     
     xyz_contour = Subplot(XYZData('Contour test', x, y, z, display_attributes=ContourPlotAttributes()), 
