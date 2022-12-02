@@ -34,6 +34,7 @@ if __name__ == '__main__':
 
 
     extra_compile_args=[] if _windows else ['-std=c++11', '-Ofast']
+    cython_extra_compile_args=[] if _windows else ['-Wno-parentheses-equality', '-Wno-unreachable-code-fallthrough', '-Ofast']
         
     cpp_dir = 'pyqstrat/cpp'
 
@@ -54,9 +55,7 @@ if __name__ == '__main__':
     _compute_pnl_module = Extension('pyqstrat.compute_pnl',
                                     ['pyqstrat/compute_pnl.pyx'],
                                     include_dirs=np_include,
-                                    extra_compile_args=['-Wno-parentheses-equality',
-                                                        '-Wno-unreachable-code-fallthrough',
-                                                        '-Ofast'],
+                                    extra_compile_args=cython_extra_compile_args,
                                     define_macros=[('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')])
     compute_pnl_module = cythonize([_compute_pnl_module], compiler_directives={'language_level' : "3"})[0]
     
