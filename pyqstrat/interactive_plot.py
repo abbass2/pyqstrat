@@ -332,7 +332,7 @@ class LineGraphWithDetailDisplay:
         Draw the plot and also set it up so if you click on a point, we display the data used to compute that point.
         Args:
             line_data: The zvalue, plot data, and detail data for each line to draw. The plot data must have 
-                x as the first column and y as the second column
+            x as the first column and y as the second column
          Return:
             A list of widgets to draw.  In this case, a figure widget and a output widget which contains the detail display
         '''
@@ -481,12 +481,12 @@ class InteractivePlot:
             xcol: Column name to use as the x axis in the DataFrame
             ycol: Column name to use as the y axis in the DataFrame
             zcol: Column name to use for z-values. Each zvalue can be used for a different trace within this plot. For example, a column
-                called "option_type" could contain the values "American", "European", "Bermudan" and we could plot the data for each type
-                in a separate trace
+            called "option_type" could contain the values "American", "European", "Bermudan" and we could plot the data for each type
+            in a separate trace
             dimensions: The column names used for filter dimensions. For example, we may want to filter by days to expiration and put/call
-                The key the column name and the value is the initial value for that column. For example, in a 
-                dropdown for Put/Call we may want "Put" to be the initial value set in the dropdown.  Set to None if you 
-                don't care what initial value is chosen.
+            The key the column name and the value is the initial value for that column. For example, in a 
+            dropdown for Put/Call we may want "Put" to be the initial value set in the dropdown.  Set to None if you 
+            don't care what initial value is chosen.
         '''
         self.xlabel = xcol if xcol not in self.labels else self.labels[xcol]
         self.ylabel = ycol if ycol not in self.labels else self.labels[ycol]

@@ -28,9 +28,9 @@ def np_arrays_to_hdf5(data: dict[str, np.ndarray],
         key: group and or / subgroups to write to.  For example, "g1/g2" will write to the subgrp g2 within the grp g1
         dtypes: dict used to override datatype for a column.  For example, {"col1": "f4"} will write a 4 byte float array for col1
         as_utf_8: each column listed here will be saved with utf8 encoding. For all other strings, we will compute the max length
-            and store as a fixed length byte array with ascii encoding, i.e. a S[max length] datatype. This is much faster to read and process
+        and store as a fixed length byte array with ascii encoding, i.e. a S[max length] datatype. This is much faster to read and process
         compression_args: if you want to compress the hdf5 file. You can use the hdf5plugin module and arguments such as hdf5plugin.Blosc()
-        '''
+    '''
     if not len(data): return
     tmp_key = key + '_tmp'
     

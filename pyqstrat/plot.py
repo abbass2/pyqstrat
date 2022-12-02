@@ -79,7 +79,7 @@ class DisplayAttributes:
 @dataclass
 class BoxPlotAttributes(DisplayAttributes):
     '''
-    Attributes:
+    Parameters:
         proportional_widths: if set to True, the width each box in the boxplot will be proportional 
             to the number of items in its corresponding array
         show_means: Whether to display a marker where the mean is for each array
@@ -114,7 +114,7 @@ class ScatterPlotAttributes(DisplayAttributes):
 @dataclass
 class SurfacePlotAttributes(DisplayAttributes):
     '''
-    Attributes:
+    Parameters:
         marker: Adds a marker to each point in x, y, z to show the actual data used for interpolation.  
             You can set this to None to turn markers off.
         interpolation: Can be ‘linear’, ‘nearest’ or ‘cubic’ for plotting z points between the ones passed in.  

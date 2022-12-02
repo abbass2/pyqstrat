@@ -22,8 +22,8 @@ pyqstrat.pq\_types module
     :show-inheritance:
 
 
-       pyqstrat.pq\_io module
--------------------------
+pyqstrat.pq\_io module
+----------------------
 
 .. automodule:: pyqstrat.pq_io
     :members:
@@ -80,6 +80,7 @@ pyqstrat.plot module
     :undoc-members:
     :show-inheritance:
 
+
 pyqstrat.evaluator module
 -------------------------
 
@@ -102,26 +103,15 @@ pyqstrat.pyqstrat\_cpp module
 pyqstrat.pyqstrat\_io module
 -----------------------------
 
-.. automodule:: pyqstrat.pyqstrat_cpp
+.. automodule:: pyqstrat.pyqstrat_io
     :members:
     :undoc-members:
     :show-inheritance:
     :special-members: __call__, __init__
 
 
-pyqstrat.trade\_bars module
----------------------------
-
-.. automodule:: pyqstrat.trade_bars
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :special-members: __call__, __init__
-
-
-		      
 pyqstrat.interactive\_plot module
----------------------------
+---------------------------------
 
 .. automodule:: pyqstrat.interactive_plot
     :members:

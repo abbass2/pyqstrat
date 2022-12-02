@@ -234,10 +234,10 @@ def np_bucket(a: np.ndarray, buckets: list[Any], default_value=0, side='mid') ->
 
 
 def np_parse_array(s: str, dtype=float) -> np.ndarray:
-    """
+    '''
     Create a 1 or 2 d numpy array from a string that looks like:
     [[2. 5. 3. 0. 0.]
-     [3. 5. 0. 4. 3.]]
+    [3. 5. 0. 4. 3.]]
     or
     [2. 5. 3. 0. 8.]  
     
@@ -245,7 +245,7 @@ def np_parse_array(s: str, dtype=float) -> np.ndarray:
     >>> assert np.allclose(x, np.array([[2., 5., 3., 0., 0.], [3., 5., 0., 4., 3.]]))
     >>> x = np_parse_array('[3 4. 5]')
     >>> assert np.allclose(x, np.array([3, 4., 5]))
-    """
+    '''
     height = s.count(']') - 1
     for char in [']', '[', '\n']:
         s = s.replace(char, '')
