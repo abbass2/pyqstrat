@@ -40,8 +40,10 @@ for:
     - conda update -q conda
     # Useful for debugging any issues with conda
     - conda info -a
-    - conda create --channel conda-forge -q -n test-environment python=$PYTHON_VERSION pybind11 pytest pandas numpy matplotlib scipy ipython sortedcontainers libzip h5py statsmodels mypy flake8 plotly ipywidgets types-python-dateutil cython
+    - conda create --channel conda-forge -q -n test-environment python=$PYTHON_VERSION pybind11 pytest pandas numpy matplotlib scipy ipython sortedcontainers libzip h5py statsmodels mypy flake8 plotly ipywidgets types-python-dateutil
     - source activate test-environment
+    - pip3 install Cython==3.0.0a11
+    - conda list
     - CXX=g++-9 CC=g++-9 python setup.py build_ext --inplace
 
   test_script:
@@ -63,17 +65,15 @@ for:
     - echo %PATH%
     - conda config --set always_yes yes
     - conda info -a
-    - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% pybind11 pandas numpy matplotlib pytest ipython sortedcontainers libzip h5py statsmodels mypy flake8 plotly ipywidgets types-python-dateutil cython
+    - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% pybind11 pandas numpy matplotlib pytest ipython sortedcontainers libzip h5py statsmodels mypy flake8 plotly ipywidgets types-python-dateutil
+    - "%CONDA_ROOT%\\Scripts\\activate test-environment"    
+    - pip3 install Cython==3.0.0a11
     - conda list
+    - python setup.py build_ext --inplace
 
   test_script:
-    - "%CONDA_ROOT%\\Scripts\\activate test-environment"
-    - python -c "import sys; print(sys.version)"
-    - python -c "import sys; print(sys.executable)"
-    - python -c "import sys; print(sys.prefix)"
     - python --version
-    # - pip install scipy
-    - python setup.py build_ext --inplace
+    - python -c 'import pyqstrat'
     - python -m pytest pyqstrat
     - mypy --ignore-missing-imports pyqstrat/
     - flake8 --ignore W291,W293,W503,E701,E275 --max-line-length=160 pyqstrat/
