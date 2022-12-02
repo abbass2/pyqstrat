@@ -123,7 +123,7 @@ class ContractPNL:
             open_qtys, open_prices, realized_chg = calc_trade_pnl(
                 self.open_qtys, self.open_prices, 
                 np.array([trade.qty for trade in t_trades], dtype=int), 
-                np.array([trade.price for trade in t_trades]),
+                np.array([trade.price for trade in t_trades], dtype=float),
                 self.contract.multiplier)
             
             open_qty = np.sum(open_qtys)
