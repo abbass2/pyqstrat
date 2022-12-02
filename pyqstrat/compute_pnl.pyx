@@ -86,7 +86,7 @@ cpdef calc_trade_pnl(
     double[::1] open_prices, 
     long[::1] new_qtys, 
     double[::1] new_prices, 
-    double multiplier) except *:
+    double multiplier):
     
     cdef TradeVec trades = create(new_qtys, new_prices, 0)
     cdef TradeVec positions = create(open_qtys, open_prices, new_qtys.shape[0])
