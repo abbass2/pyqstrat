@@ -1,4 +1,5 @@
 import setuptools
+from Cython.Build import cythonize
 from distutils.core import setup, Extension
 import numpy as np
 import pybind11
@@ -50,6 +51,13 @@ if __name__ == '__main__':
                                library_dirs=library_dirs,
                                extra_compile_args=extra_compile_args)
 
+    _compute_pnl_module = Extension('pyqstrat.compute_pnl',
+                                    ['pyqstrat/compute_pnl.pyx'],
+                                    include_dirs=np_include,
+                                    extra_compile_args=['-Wno-parentheses-equality', '-Ofast'],
+                                    define_macros=[('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')])
+    compute_pnl_module = cythonize([_compute_pnl_module], compiler_directives={'language_level' : "3"})[0]
+    
     with open('version.txt', 'r') as f:
         version = f.read().strip()
 
@@ -61,7 +69,7 @@ if __name__ == '__main__':
         
     setup(name='pyqstrat',
           version=version,
-          ext_modules = [io_module, options_module],
+          ext_modules = [io_module, options_module, compute_pnl_module],
           author_email='abbasi.sal@gmail.com',
           url='http://github.com/abbass2/pyqstrat/',
           license='BSD',

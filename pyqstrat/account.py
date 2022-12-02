@@ -13,103 +13,9 @@ from pyqstrat.pq_utils import assert_
 from types import SimpleNamespace
 from typing import Any, Callable
 from collections.abc import Sequence
-# from pyqstrat.compute_pnl import calc_trade_pnl
+from pyqstrat.compute_pnl import calc_trade_pnl
 
 NAT = np.datetime64('NaT')
-
-
-def calc_trade_pn2(open_qtys: np.ndarray, 
-                   open_prices: np.ndarray, 
-                   new_qtys: np.ndarray, 
-                   new_prices: np.ndarray, 
-                   multiplier: float) -> tuple[np.ndarray, np.ndarray, float]:
-    # TODO: Cythonize this
-    
-    realized = 0.
-    
-    new_qtys = new_qtys.copy()
-    new_prices = new_prices.copy()
-
-    _open_prices = np.zeros(len(open_prices) + len(new_prices), dtype=float)
-    _open_prices[:len(open_prices)] = open_prices
-    
-    _open_qtys = np.zeros(len(open_qtys) + len(new_qtys), dtype=float)
-    _open_qtys[:len(open_qtys)] = open_qtys
-    
-    new_qty_indices = np.nonzero(new_qtys)[0]
-    open_qty_indices = np.zeros(len(_open_qtys), dtype=int)
-    nonzero_indices = np.nonzero(_open_qtys)[0]
-    open_qty_indices[:len(nonzero_indices)] = nonzero_indices 
-
-    i = 0                      # index into new_qty_indices to get idx of the new qty we are currently netting
-    o = len(nonzero_indices)  # virtual length of open_qty_indices
-    j = 0                      # index into open_qty_indices to get idx of the open qty we are currently netting
-    k = len(open_qtys)         # virtual length of _open_qtys
-    
-    # Try to net all new trades against existing non-netted trades.
-    # Append any remaining non-netted new trades to end of existing trades
-    while i < len(new_qty_indices):
-        # Always try to net first non-zero new trade against first non-zero existing trade
-        # FIFO acccounting
-        new_idx = new_qty_indices[i]
-        new_qty, new_price = new_qtys[new_idx], new_prices[new_idx]
-        
-        # print(f'i: {i} j: {j} k: {k} o: {o} oq: {_open_qtys} oqi: {open_qty_indices} op: {_open_prices} nq: {new_qtys} np: {new_prices}')
-        
-        if j < o:  # while we still have open positions to net against
-            open_idx = open_qty_indices[j]
-            open_qty, open_price = _open_qtys[open_idx], _open_prices[open_idx]
-            
-            if math.copysign(1, open_qty) == math.copysign(1, new_qty):
-                # Nothing to net against so add this trade to the array and wait for the next offsetting trade
-                
-                _open_qtys[k] = new_qty
-                _open_prices[k] = new_price
-                open_qty_indices[o] = k
-                k += 1
-                o += 1
-
-                new_qtys[new_idx] = 0
-                i += 1
-
-            elif abs(new_qty) > abs(open_qty):
-                # New trade has more qty than offsetting trade so:
-                # a. net against offsetting trade
-                # b. remove the offsetting trade
-                # c. reduce qty of new trade
-                open_qty, open_price = _open_qtys[open_idx], _open_prices[open_idx]
-                realized += open_qty * (new_price - open_price)
-                # print(f'open_qty: {open_qty} open_price: {open_price} open_idx: {open_idx} i: {i}
-                # j: {j} k: {k} l: {l} oq: {_open_qtys} oqi: {open_qty_indices} op: {_open_prices} nq: {new_qtys} np: {new_prices}')
-                _open_qtys[open_idx] = 0
-                j += 1
-
-                new_qtys[new_idx] += open_qty
-            else:
-                # New trade has less qty than offsetting trade so:
-                # a. net against offsetting trade
-                # b. remove new trade
-                # c. reduce qty of offsetting trade
-                realized += new_qty * (open_price - new_price)
-                new_qtys[new_idx] = 0
-                i += 1
-                _open_qtys[open_idx] += new_qty
-        else:
-            # Nothing to net against so add this trade to the open trades array and wait for the next offsetting trade
-            _open_qtys[k] = new_qty
-            _open_prices[k] = new_price
-            open_qty_indices[o] = k
-            k += 1
-            o += 1
-
-            new_qtys[new_idx] = 0
-            i += 1
-
-    mask = _open_qtys != 0
-    _open_qtys = _open_qtys[mask]
-    _open_prices = _open_prices[mask]
-       
-    return _open_qtys, _open_prices, realized * multiplier
 
 
 def leading_nan_to_zero(df: pd.DataFrame, columns: Sequence[str]) -> pd.DataFrame:
@@ -214,7 +120,7 @@ class ContractPNL:
                 
         for i, timestamp in enumerate(timestamps):
             t_trades = [trade for trade in trades if trade.timestamp == timestamp]
-            open_qtys, open_prices, realized_chg = calc_trade_pn2(
+            open_qtys, open_prices, realized_chg = calc_trade_pnl(
                 self.open_qtys, self.open_prices, 
                 np.array([trade.qty for trade in t_trades], dtype=int), 
                 np.array([trade.price for trade in t_trades]),
