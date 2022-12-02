@@ -54,7 +54,9 @@ if __name__ == '__main__':
     _compute_pnl_module = Extension('pyqstrat.compute_pnl',
                                     ['pyqstrat/compute_pnl.pyx'],
                                     include_dirs=np_include,
-                                    extra_compile_args=['-Wno-parentheses-equality', '-Ofast'],
+                                    extra_compile_args=['-Wno-parentheses-equality',
+                                                        '-Wno-unreachable-code-fallthrough',
+                                                        '-Ofast'],
                                     define_macros=[('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')])
     compute_pnl_module = cythonize([_compute_pnl_module], compiler_directives={'language_level' : "3"})[0]
     
