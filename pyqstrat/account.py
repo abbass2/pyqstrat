@@ -13,28 +13,16 @@ from pyqstrat.pq_utils import assert_
 from types import SimpleNamespace
 from typing import Any, Callable
 from collections.abc import Sequence
+# from pyqstrat.compute_pnl import calc_trade_pnl
 
 NAT = np.datetime64('NaT')
 
 
-def calc_trade_pnl(open_qtys: np.ndarray, 
+def calc_trade_pn2(open_qtys: np.ndarray, 
                    open_prices: np.ndarray, 
                    new_qtys: np.ndarray, 
                    new_prices: np.ndarray, 
-                   multiplier: float) -> tuple[np.ndarray, np.ndarray, float, float, float]:
-    '''
-    >>> print(calc_trade_pnl(
-    ...          open_qtys = np.array([], dtype = float), open_prices = np.array([], dtype = float), 
-    ...            new_qtys = np.array([-8, 9, -4]), new_prices = np.array([10, 11, 6]), multiplier = 100))
-    (array([-3.]), array([6.]), -3.0, 6.0, -1300.0)
-    >>> print(calc_trade_pnl(open_qtys = np.array([], dtype = float), open_prices = np.array([], dtype = float), new_qtys = np.array([3, 10, -5]), 
-    ...          new_prices = np.array([51, 50, 45]), multiplier = 100))
-    (array([8.]), array([50.]), 8.0, 50.0, -2800.0)
-    >>> print(calc_trade_pnl(open_qtys = np.array([]), open_prices = np.array([]), 
-    ...                new_qtys = np.array([-58, -5, -5, 6, -8, 5, 5, -5, 19, 7, 5, -5, 39]),
-    ...                new_prices = np.array([2080, 2075.25, 2070.75, 2076, 2066.75, 2069.25, 2074.75, 2069.75, 2087.25, 2097.25, 2106, 2088.25, 2085.25]),
-    ...                multiplier = 50))
-    (array([], dtype=float64), array([], dtype=float64), 0.0, 0, -33762.5)    '''
+                   multiplier: float) -> tuple[np.ndarray, np.ndarray, float]:
     # TODO: Cythonize this
     
     realized = 0.
@@ -120,13 +108,8 @@ def calc_trade_pnl(open_qtys: np.ndarray,
     mask = _open_qtys != 0
     _open_qtys = _open_qtys[mask]
     _open_prices = _open_prices[mask]
-    open_qty = np.sum(_open_qtys)
-    if math.isclose(open_qty, 0):
-        weighted_avg_price = 0
-    else:
-        weighted_avg_price = np.sum(_open_qtys * _open_prices) / open_qty
-        
-    return _open_qtys, _open_prices, open_qty, weighted_avg_price, realized * multiplier
+       
+    return _open_qtys, _open_prices, realized * multiplier
 
 
 def leading_nan_to_zero(df: pd.DataFrame, columns: Sequence[str]) -> pd.DataFrame:
@@ -231,11 +214,18 @@ class ContractPNL:
                 
         for i, timestamp in enumerate(timestamps):
             t_trades = [trade for trade in trades if trade.timestamp == timestamp]
-            open_qtys, open_prices, open_qty, weighted_avg_price, realized_chg = calc_trade_pnl(
+            open_qtys, open_prices, realized_chg = calc_trade_pn2(
                 self.open_qtys, self.open_prices, 
-                np.array([trade.qty for trade in t_trades]), 
+                np.array([trade.qty for trade in t_trades], dtype=int), 
                 np.array([trade.price for trade in t_trades]),
                 self.contract.multiplier)
+            
+            open_qty = np.sum(open_qtys)
+            if open_qty == 0:
+                weighted_avg_price = 0
+            else:
+                weighted_avg_price = np.sum(open_qtys * open_prices) / open_qty
+                
             self.open_qtys = open_qtys
             self.open_prices = open_prices
             position_chg = sum([trade.qty for trade in t_trades])
