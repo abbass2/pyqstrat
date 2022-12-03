@@ -10,8 +10,8 @@ source:
   sha256: c3d7aa7bd9389c6648e3a658786f474637aa022e0a6bbeaf3f96012144836a86
 
 build:
-  skip: true  # [py<37]
-  script: {{ PYTHON }} -m pip install . -vv
+  skip: true  # [py<39]
+  script: pip3 install Cython>=3.0.0a11; {{ PYTHON }} -m pip install . -vv;
   number: 0
 
 requirements:

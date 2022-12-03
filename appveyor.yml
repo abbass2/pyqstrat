@@ -42,7 +42,7 @@ for:
     - conda info -a
     - conda create --channel conda-forge -q -n test-environment python=$PYTHON_VERSION pybind11 pytest pandas numpy matplotlib scipy ipython sortedcontainers libzip h5py statsmodels mypy flake8 plotly ipywidgets types-python-dateutil
     - source activate test-environment
-    - pip3 install Cython==3.0.0a11
+    - pip3 install Cython>=3.0.0a11
     - conda list
     - CXX=g++-9 CC=g++-9 python setup.py build_ext --inplace
 
@@ -67,7 +67,7 @@ for:
     - conda info -a
     - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% pybind11 pandas numpy matplotlib pytest ipython sortedcontainers libzip h5py statsmodels mypy flake8 plotly ipywidgets types-python-dateutil
     - "%CONDA_ROOT%\\Scripts\\activate test-environment"    
-    - pip3 install Cython==3.0.0a11
+    - pip3 install Cython>=3.0.0a11
     - conda list
     - python setup.py build_ext --inplace
 
