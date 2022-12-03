@@ -7,7 +7,7 @@
 
 # $$_end_markdown
 # $$_code
-# $$_ %load_ext Cython
+# $$_ %load_ext cython
 # $$_end_code
 # $$_code
 # $$_ %%cython --force --compile-args=-Wno-parentheses-equality
