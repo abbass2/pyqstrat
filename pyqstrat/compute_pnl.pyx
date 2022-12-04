@@ -15,12 +15,10 @@
 # distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 cimport cython
 cimport numpy as np
-import numpy as np
-import math
-from cython.cimports.libc import abs as cabs
 from libc.stdlib cimport malloc, free
 from cython.operator cimport dereference as deref
-
+import numpy as np
+import math
 
 cdef long sign(long val):
     return (0 < val) - (val < 0)
@@ -71,8 +69,8 @@ cdef double net_trade(Trade& trade, Trade& position):
     cdef long abs_tqty
     cdef long abs_pqty
     cdef long txn_qty
-    abs_tqty = cabs(trade.qty)
-    abs_pqty = cabs(position.qty)
+    abs_tqty = trade.qty if trade.qty >= 0 else -trade.qty
+    abs_pqty = position.qty if position.qty >= 0 else -position.qty
     txn_qty = trade.qty if abs_tqty <= abs_pqty else -position.qty
     cdef double realized = txn_qty * (position.price - trade.price)
     position.qty += txn_qty
