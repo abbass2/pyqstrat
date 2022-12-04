@@ -1,4 +1,4 @@
-global-include *.txt *.cpp *.hpp *.h *.py *.html *.csv
+global-include *.txt *.cpp *.hpp *.h *.py *.html *.csv *.pyx
 
 include pytest.ini
 recursive-include pyqstrat *.gz
