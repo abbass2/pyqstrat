@@ -40,7 +40,7 @@ for:
     - conda update -q conda
     # Useful for debugging any issues with conda
     - conda info -a
-    - conda create --channel conda-forge -q -n test-environment python=$PYTHON_VERSION pybind11 pytest pandas numpy matplotlib scipy ipython sortedcontainers libzip h5py statsmodels mypy flake8 plotly ipywidgets types-python-dateutil
+    - conda create --channel conda-forge -q -n test-environment python=$PYTHON_VERSION pybind11 pytest pandas numpy matplotlib scipy ipython sortedcontainers libzip h5py statsmodels mypy flake8 plotly ipywidgets python-dateutil cython
     - source activate test-environment
     - pip3 install Cython>=3.0.0a11
     - conda list
@@ -65,7 +65,7 @@ for:
     - echo %PATH%
     - conda config --set always_yes yes
     - conda info -a
-    - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% pybind11 pandas numpy matplotlib pytest ipython sortedcontainers libzip h5py statsmodels mypy flake8 plotly ipywidgets types-python-dateutil
+    - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% pybind11 pandas numpy matplotlib pytest ipython sortedcontainers libzip h5py statsmodels mypy flake8 plotly ipywidgets python-dateutil cython
     - "%CONDA_ROOT%\\Scripts\\activate test-environment"    
     - pip3 install Cython>=3.0.0a11
     - conda list
