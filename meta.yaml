@@ -11,7 +11,7 @@ source:
 
 build:
   skip: true  # [py<39]
-  script: pip3 install Cython>=3.0.0a11; {{ PYTHON }} -m pip install . -vv;
+  script: pip3 install Cython>=3.0.0a11; {{ PYTHON }} -m pip install . -vv
   number: 0
 
 requirements:
