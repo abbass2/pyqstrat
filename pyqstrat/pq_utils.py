@@ -13,6 +13,7 @@ import sys
 import tempfile
 import datetime
 import pathlib
+import yaml
 import numpy as np
 import logging
 import pandas as pd
@@ -705,6 +706,29 @@ def get_paths(base_path: str | None = None) -> Paths:
     paths = Paths(base_path)
     paths.create()
     return paths
+
+
+def get_config() -> dict[str, Any]:
+    '''
+    Load config data from yaml file and returns it as a dict.
+    This first loads values from a config file called pyqstrat.yml in
+    your home directory. Next it looks for a file called pyqstrat.yml in your local working directory.
+    If found, it overrides any values in the config data from any data it finds in this file.
+    '''
+    home = pathlib.Path.home()
+    assert_(home.is_dir(), 'home dir not found')
+    config_file_global = home / 'pyqstrat.yml'
+    assert_(config_file_global.is_file(), f'{config_file_global} not found')
+    with open(config_file_global, 'r') as f:
+        config_data = yaml.safe_load(f)
+    wd = pathlib.Path.cwd()
+    config_file_local = wd / 'pyqstrat.yml'
+    # override values with data from local yml file if present
+    if config_file_local.is_file():
+        with open(config_file_local, 'r') as f:
+            config_data_local = yaml.safe_load(f)
+        config_data.update(config_data_local)
+    return config_data
 
 
 if __name__ == "__main__":
