@@ -13,7 +13,6 @@ import sys
 import tempfile
 import datetime
 import pathlib
-import yaml
 import numpy as np
 import logging
 import pandas as pd
@@ -715,6 +714,7 @@ def get_config() -> dict[str, Any]:
     your home directory. Next it looks for a file called pyqstrat.yml in your local working directory.
     If found, it overrides any values in the config data from any data it finds in this file.
     '''
+    import yaml
     home = pathlib.Path.home()
     assert_(home.is_dir(), 'home dir not found')
     config_file_global = home / 'pyqstrat.yml'
