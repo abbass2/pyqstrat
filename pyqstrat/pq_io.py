@@ -68,7 +68,7 @@ def np_arrays_to_hdf5(data: dict[str, np.ndarray],
         grp.attrs['type'] = 'dataframe'
         grp.attrs['timestamp'] = str(datetime.datetime.now())
         grp.attrs['rows'] = len(array)
-        grp.attrs['columns'] = ','.join([tup[0] for tup in data])
+        grp.attrs['columns'] = ','.join([colname for colname in data.keys()])
         grp.attrs['utf8_cols'] = ','.join(as_utf8)
 
         if key in f: 
