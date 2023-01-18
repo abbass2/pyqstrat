@@ -124,7 +124,7 @@ class Strategy:
         self.rule_names: list[str] = []
         self.rules: dict[str, RuleType] = {}
         self.position_filters: dict[str, str | None] = {}
-        self.rule_signals: dict[str, tuple[str, Sequence]] = {}
+        self.rule_signals: dict[str, tuple[str, np.ndarray | list]] = {}
         self.market_sims: list[MarketSimulatorType] = []
         self._trades: list[Trade] = []
         # a list of all orders created used for display
@@ -188,7 +188,7 @@ class Strategy:
                  name: str, 
                  rule_function: RuleType, 
                  signal_name: str, 
-                 sig_true_values: Sequence | None = None, 
+                 sig_true_values: np.ndarray | list | None = None, 
                  position_filter: str | None = None) -> None:
         '''Add a trading rule.  Trading rules are guaranteed to run in the order in which you add them.  For example, if you set trade_lag to 0,
                and want to exit positions and re-enter new ones in the same bar, make sure you add the exit rule before you add the entry rule to the 
@@ -207,8 +207,7 @@ class Strategy:
         
         if sig_true_values is None: sig_true_values = [True]
             
-        if name in self.rule_names:
-            raise Exception(f'Rule {name} already exists')
+        assert_(name not in self.rule_names, f'rule {name} already exists')
         # Rules should be run in order
         self.rule_names.append(name)
         self.rule_signals[name] = (signal_name, sig_true_values)

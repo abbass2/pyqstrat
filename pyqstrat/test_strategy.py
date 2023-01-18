@@ -82,7 +82,7 @@ def test_strategy() -> None:
         signal_value = signal[i]
         risk_percent = 0.1
 
-        orders = []
+        orders: list[pq.Order] = []
         
         symbol = contract_group.name
         contract = contract_group.get_contract(symbol)
@@ -107,7 +107,7 @@ def test_strategy() -> None:
         curr_pos = account.position(contract_group, timestamp)
         pq.assert_(not math.isclose(curr_pos, 0))
         signal_value = signal[i]
-        orders = []
+        orders: list[pq.Order] = []
         symbol = contract_group.name
         contract = contract_group.get_contract(symbol)
         if contract is None: contract = pq.Contract.create(symbol, contract_group=contract_group)
@@ -260,6 +260,7 @@ def test_strategy_2() -> None:
     strategy.add_market_sim(market_simulator)
     strategy.run()
     
+
 if __name__ == '__main__':
     test_strategy()
     test_strategy_2()
