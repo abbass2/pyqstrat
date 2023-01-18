@@ -17,7 +17,7 @@ from pyqstrat.plot import TimeSeries, trade_sets_by_reason_code, Subplot, Plot, 
 from pyqstrat.pq_utils import series_to_array, assert_
 from types import SimpleNamespace
 import matplotlib as mpl
-from typing import Callable, Any, Union
+from typing import Callable, Any, Union, Sequence
 
 StrategyContextType = SimpleNamespace
 
@@ -40,7 +40,7 @@ RuleType = Callable[
     list[Order]]
 
 MarketSimulatorType = Callable[
-    [list[Order], 
+    [Sequence[Order], 
      int, 
      np.ndarray, 
      dict[ContractGroup, SimpleNamespace], 
@@ -84,7 +84,7 @@ def _get_time_series_list(timestamps: np.ndarray,
 class Strategy:
     def __init__(self, 
                  timestamps: np.ndarray,
-                 contract_groups: list[ContractGroup],
+                 contract_groups: Sequence[ContractGroup],
                  price_function: PriceFunctionType,
                  starting_equity: float = 1.0e6, 
                  pnl_calc_time: int = 15 * 60 + 1,
@@ -124,7 +124,7 @@ class Strategy:
         self.rule_names: list[str] = []
         self.rules: dict[str, RuleType] = {}
         self.position_filters: dict[str, str | None] = {}
-        self.rule_signals: dict[str, tuple[str, np.ndarray | list]] = {}
+        self.rule_signals: dict[str, tuple[str, Sequence[Any]]] = {}
         self.market_sims: list[MarketSimulatorType] = []
         self._trades: list[Trade] = []
         # a list of all orders created used for display
@@ -141,8 +141,8 @@ class Strategy:
     def add_indicator(self, 
                       name: str, 
                       indicator: IndicatorType, 
-                      contract_groups: list[ContractGroup] | None = None, 
-                      depends_on: list[str] | None = None) -> None:
+                      contract_groups: Sequence[ContractGroup] | None = None, 
+                      depends_on: Sequence[str] | None = None) -> None:
         '''
         Args:
             name: Name of the indicator
@@ -164,9 +164,9 @@ class Strategy:
     def add_signal(self,
                    name: str,
                    signal_function: SignalType,
-                   contract_groups: list[ContractGroup] | None = None,
-                   depends_on_indicators: list[str] | None = None,
-                   depends_on_signals: list[str] | None = None) -> None:
+                   contract_groups: Sequence[ContractGroup] | None = None,
+                   depends_on_indicators: Sequence[str] | None = None,
+                   depends_on_signals: Sequence[str] | None = None) -> None:
         '''
         Args:
             name (str): Name of the signal
@@ -188,7 +188,7 @@ class Strategy:
                  name: str, 
                  rule_function: RuleType, 
                  signal_name: str, 
-                 sig_true_values: np.ndarray | list | None = None, 
+                 sig_true_values: Sequence[Any] | None = None, 
                  position_filter: str | None = None) -> None:
         '''Add a trading rule.  Trading rules are guaranteed to run in the order in which you add them.  For example, if you set trade_lag to 0,
                and want to exit positions and re-enter new ones in the same bar, make sure you add the exit rule before you add the entry rule to the 
@@ -221,8 +221,8 @@ class Strategy:
         self.market_sims.append(market_sim_function)
         
     def run_indicators(self, 
-                       indicator_names: list[str] | None = None, 
-                       contract_groups: list[ContractGroup] | None = None, 
+                       indicator_names: Sequence[str] | None = None, 
+                       contract_groups: Sequence[ContractGroup] | None = None, 
                        clear_all: bool = False) -> None:
         '''Calculate values of the indicators specified and store them.
         
@@ -270,8 +270,8 @@ class Strategy:
                 setattr(cgroup_ind_namespace, indicator_name, series_to_array(indicator_values))
                 
     def run_signals(self, 
-                    signal_names: list[str] | None = None, 
-                    contract_groups: list[ContractGroup] | None = None, 
+                    signal_names: Sequence[str] | None = None, 
+                    contract_groups: Sequence[ContractGroup] | None = None, 
                     clear_all: bool = False) -> None:
         '''Calculate values of the signals specified and store them.
         
@@ -318,8 +318,8 @@ class Strategy:
                 setattr(self.signal_values[cgroup], signal_name, series_to_array(signal_output))
 
     def _generate_order_iterations(self, 
-                                   rule_names: list[str] | None = None, 
-                                   contract_groups: list[ContractGroup] | None = None, 
+                                   rule_names: Sequence[str] | None = None, 
+                                   contract_groups: Sequence[ContractGroup] | None = None, 
                                    start_date: np.datetime64 = NAT, 
                                    end_date: np.datetime64 = NAT) -> None:
         '''
@@ -400,8 +400,8 @@ class Strategy:
         self.orders_iter = orders_iter
     
     def run_rules(self, 
-                  rule_names: list[str] | None = None, 
-                  contract_groups: list[ContractGroup] | None = None, 
+                  rule_names: Sequence[str] | None = None, 
+                  contract_groups: Sequence[ContractGroup] | None = None, 
                   start_date: np.datetime64 = NAT,
                   end_date: np.datetime64 = NAT) -> None:
         '''
@@ -480,7 +480,7 @@ class Strategy:
         self._open_orders[i] = [order for order in open_orders if order.status != 'filled']
             
     def df_data(self, 
-                contract_groups: list[ContractGroup] | None = None, 
+                contract_groups: Sequence[ContractGroup] | None = None, 
                 add_pnl: bool = True, 
                 start_date: str | np.datetime64 = NAT, 
                 end_date: str | np.datetime64 = NAT) -> pd.DataFrame:
@@ -629,15 +629,15 @@ class Strategy:
         return pnl
     
     def plot(self, 
-             contract_groups: list[ContractGroup] | None = None, 
-             primary_indicators: list[str] | None = None,
-             primary_indicators_dual_axis: list[str] | None = None,
-             secondary_indicators: list[str] | None = None,
-             secondary_indicators_dual_axis: list[str] | None = None,
+             contract_groups: Sequence[ContractGroup] | None = None, 
+             primary_indicators: Sequence[str] | None = None,
+             primary_indicators_dual_axis: Sequence[str] | None = None,
+             secondary_indicators: Sequence[str] | None = None,
+             secondary_indicators_dual_axis: Sequence[str] | None = None,
              indicator_properties: PlotPropertiesType | None = None,
-             signals: list[str] | None = None,
+             signals: Sequence[str] | None = None,
              signal_properties: PlotPropertiesType | None = None, 
-             pnl_columns: list[str] | None = None, 
+             pnl_columns: Sequence[str] | None = None, 
              title: str | None = None, 
              figsize: tuple[int, int] = (20, 15), 
              date_range: DateRangeType = (NAT, NAT),

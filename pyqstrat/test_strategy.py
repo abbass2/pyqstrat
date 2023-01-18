@@ -16,6 +16,7 @@ import pyqstrat as pq
 import math
 import os
 from types import SimpleNamespace
+from typing import Sequence
 
 _logger = pq.get_child_logger(__name__)
 
@@ -117,7 +118,7 @@ def test_strategy() -> None:
             orders.append(pq.MarketOrder(contract, timestamp, order_qty, reason_code=reason_code))
         return orders
 
-    def market_simulator(orders: list[pq.Order],
+    def market_simulator(orders: Sequence[pq.Order],
                          i: int,
                          timestamps: np.ndarray,
                          indicators: dict[pq.ContractGroup, SimpleNamespace],
@@ -220,7 +221,7 @@ def test_strategy_2() -> None:
         _logger.info(order)
         return [order]
             
-    def market_simulator(orders: list[pq.Order],
+    def market_simulator(orders: Sequence[pq.Order],
                          i: int,
                          timestamps: np.ndarray,
                          indicators: dict[pq.ContractGroup, SimpleNamespace],
