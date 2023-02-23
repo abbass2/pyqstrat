@@ -200,9 +200,10 @@ class Strategy:
             signal_name: The strategy will call the trading rule function when the signal with this name matches sig_true_values
             sig_true_values: If the signal value at a bar is equal to one of these values, 
                 the Strategy will call the trading rule function.  Default [TRUE]
-            position_filter: Can be "zero", "nonzero" or None.  Zero rules are only triggered when the corresponding contract positions are 0
-                Nonzero rules are only triggered when the corresponding contract positions are non-zero.  
-                If not set, we don't look at position before triggering the rule. Default None
+            position_filter: Can be "zero", "nonzero", "positive", "negative" or None.  
+                Rules are only triggered when the corresponding contract positions fit the criteria.
+                For example, a positive rule is only triggered when the current position for that contract is > 0
+                If not set, we don't look at the position before triggering the rule. Default None
         '''
         
         if sig_true_values is None: sig_true_values = [True]
@@ -213,7 +214,7 @@ class Strategy:
         self.rule_signals[name] = (signal_name, sig_true_values)
         self.rules[name] = rule_function
         if position_filter is not None:
-            assert_(position_filter in ['zero', 'nonzero'])
+            assert_(position_filter in ['zero', 'nonzero', 'positive', 'negative'])
         self.position_filters[name] = position_filter
         
     def add_market_sim(self, market_sim_function: MarketSimulatorType) -> None:
@@ -454,6 +455,9 @@ class Strategy:
                 curr_pos = self.account.position(contract_group, self.timestamps[idx])
                 if position_filter == 'zero' and not math.isclose(curr_pos, 0): return []
                 if position_filter == 'nonzero' and math.isclose(curr_pos, 0): return []
+                if position_filter == 'positive' and math.isclose(curr_pos, 0) or curr_pos < 0: return []
+                if position_filter == 'negative' and math.isclose(curr_pos, 0) or curr_pos > 0: return []
+                
             orders = rule_function(contract_group, idx, self.timestamps, indicator_values, signal_values, self.account,
                                    self.strategy_context)
         except Exception as e:
