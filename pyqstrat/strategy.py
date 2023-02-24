@@ -455,8 +455,8 @@ class Strategy:
                 curr_pos = self.account.position(contract_group, self.timestamps[idx])
                 if position_filter == 'zero' and not math.isclose(curr_pos, 0): return []
                 if position_filter == 'nonzero' and math.isclose(curr_pos, 0): return []
-                if position_filter == 'positive' and math.isclose(curr_pos, 0) or curr_pos < 0: return []
-                if position_filter == 'negative' and math.isclose(curr_pos, 0) or curr_pos > 0: return []
+                if position_filter == 'positive' and (curr_pos < 0 or math.isclose(curr_pos, 0)): return []
+                if position_filter == 'negative' and (curr_pos > 0 or math.isclose(curr_pos, 0)): return []
                 
             orders = rule_function(contract_group, idx, self.timestamps, indicator_values, signal_values, self.account,
                                    self.strategy_context)
