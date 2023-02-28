@@ -109,6 +109,7 @@ class Strategy:
                 If not set, the __init__ function will create an empty member strategy_context object that you can access.
         '''
         self.name = 'main'  # Set by portfolio when running multiple strategies
+        assert_(np.all(np.diff(timestamps.astype(int)) > 0), f'timestamps must be monotonically increasing: {timestamps[:100]} ...')
         self.timestamps = timestamps
         assert_(len(contract_groups) > 0 and isinstance(contract_groups[0], ContractGroup))
         self.contract_groups = contract_groups

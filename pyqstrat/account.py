@@ -330,6 +330,7 @@ class Account:
         
         self.contracts: set[Contract] = set()
         self._trades: list[Trade] = []
+        self._trades_for_date: dict[tuple[str, np.datetime64], list[Trade]] = defaultdict(list)
         self._pnl = SortedDict()
         self.symbol_pnls_by_contract_group: dict[str, list[ContractPNL]] = defaultdict(list)
         
@@ -359,6 +360,9 @@ class Account:
         for contract, contract_trades in trades_by_contract.items():
             contract_trades.sort(key=lambda x: x.timestamp)  # type: ignore
             self.symbol_pnls[contract.symbol]._add_trades(contract_trades)
+            
+        for trade in trades:
+            self._trades_for_date[(contract.symbol, trade.timestamp.astype('M8[D]'))].append(trade)
             
         self._trades += trades
         
@@ -420,6 +424,11 @@ class Account:
             self.calc(timestamp)
             pnl = self._pnl[timestamp]
         return self.starting_equity + pnl
+    
+    def get_trades_for_date(self, symbol: str, date: np.datetime64) -> list[Trade]:
+        ret = self._trades_for_date.get((symbol, date))
+        if ret is None: return []
+        return ret
     
     def trades(self,
                contract_group: ContractGroup | None = None, 
