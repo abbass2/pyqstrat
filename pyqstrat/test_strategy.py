@@ -43,7 +43,6 @@ def test_strategy() -> None:
 
     timestamps = ko_prices.timestamp.values
     
-    
     ratio = ko_prices.c / pep_prices.c
     
     def zscore_indicator(contract_group: pq.ContractGroup, 
