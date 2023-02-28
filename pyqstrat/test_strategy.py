@@ -38,10 +38,11 @@ def test_strategy() -> None:
     
     end_time = '2019-01-30 12:00'
     
-    ko_prices = ko_prices.query(f'timestamp <= "{end_time}"')
-    pep_prices = pep_prices.query(f'timestamp <= "{end_time}"')
+    ko_prices = ko_prices.query(f'timestamp <= "{end_time}"').sort_values(by='timestamp')
+    pep_prices = pep_prices.query(f'timestamp <= "{end_time}"').sort_values(by='timestamp')
 
     timestamps = ko_prices.timestamp.values
+    
     
     ratio = ko_prices.c / pep_prices.c
     
