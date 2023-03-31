@@ -22,7 +22,7 @@ build: false
 
 environment:
   PYTHON_ARCH: "64"
-  PYTHON_VERSION: "3.9"
+  PYTHON_VERSION: "3.10"
 
 
 for:

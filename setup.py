@@ -74,7 +74,7 @@ if __name__ == '__main__':
           author_email='abbasi.sal@gmail.com',
           url='http://github.com/abbass2/pyqstrat/',
           license='BSD',
-          python_requires='>=3.9',
+          python_requires='>=3.10',
           install_requires=requirements,
           description='fast / extensible library for backtesting quantitative strategies',
           long_description=long_description,
@@ -90,7 +90,7 @@ if __name__ == '__main__':
               'Topic :: Software Development :: Libraries :: Python Modules',
               'Topic :: Software Development :: Libraries :: Application Frameworks',
               'Topic :: Office/Business :: Financial :: Investment',
-              'Programming Language :: Python :: 3.9',
+              'Programming Language :: Python :: 3.10',
               'Programming Language :: Python :: 3 :: Only',
           ],
           zip_safe = False)
