@@ -12,12 +12,14 @@ import math
 
 from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, plot_return_metrics
 from pyqstrat.account import Account
-from pyqstrat.pq_types import ContractGroup, Contract, Order, Trade, RoundTripTrade
+from pyqstrat.pq_types import ContractGroup, Contract, Order, Trade, RoundTripTrade, TimeInForce, OrderStatus
 from pyqstrat.plot import TimeSeries, trade_sets_by_reason_code, Subplot, Plot, LinePlotAttributes, FilledLinePlotAttributes
 from pyqstrat.pq_utils import series_to_array, assert_
 from types import SimpleNamespace
 import matplotlib as mpl
 from typing import Callable, Any, Union, Sequence
+from pyqstrat.pq_utils import get_child_logger
+
 
 StrategyContextType = SimpleNamespace
 
@@ -36,6 +38,7 @@ RuleType = Callable[
      SimpleNamespace, 
      np.ndarray, 
      Account, 
+     Sequence[Order],
      StrategyContextType],
     list[Order]]
 
@@ -56,6 +59,8 @@ OrderTupType = tuple[RuleType, ContractGroup, dict[str, Any]]
 PlotPropertiesType = dict[str, dict[str, Any]]
 
 NAT = np.datetime64('NaT')
+
+_logger = get_child_logger(__name__)
 
 
 def _get_time_series_list(timestamps: np.ndarray, 
@@ -132,7 +137,7 @@ class Strategy:
         self._trades: list[Trade] = []
         # a list of all orders created used for display
         self._orders: list[Order] = []
-        self._open_orders: dict[int, list[Order]] = defaultdict(list)
+        self._current_orders: list[Order] = []
         self.indicator_deps: dict[str, list[str]] = {}
         self.indicator_cgroups: dict[str, list[ContractGroup]] = {}
         self.indicator_values: dict[ContractGroup, SimpleNamespace] = defaultdict(types.SimpleNamespace)
@@ -428,22 +433,38 @@ class Strategy:
             self.account.calc(self.timestamps[-1])
         
     def _run_iteration(self, i: int) -> None:
-        
+        # first execute open orders so that positions get updated before running rules
+        # If the lag is 0, then run rules one by one, and after each rule, run market sim to generate trades and update
+        # positions. For example, if we have a rule to exit a position and enter a new one, we should make sure 
+        # positions are updated after the first rule before running the second rule.  If the lag is not 0, 
+        # run all rules and collect the orders, we don't need to run market sim after each rule
         self._sim_market(i)
-        # Treat all orders as IOC, i.e. if the order was not executed, then its cancelled.
-        self._open_orders[i] = []
         
         rules = self.orders_iter[i]
         
-        for (rule_function, contract_group, params) in rules:
+        for j, (rule_function, contract_group, params) in enumerate(rules):
             orders = self._get_orders(i, rule_function, contract_group, params)
             self._orders += orders
-            self._open_orders[i + self.trade_lag] += orders
-            # If the lag is 0, then run rules one by one, and after each rule, run market sim to generate trades and update
-            # positions. For example, if we have a rule to exit a position and enter a new one, we should make sure 
-            # positions are updated after the first rule before running the second rule.  If the lag is not 0, 
-            # run all rules and collect the orders, we don't need to run market sim after each rule
-            if self.trade_lag == 0: self._sim_market(i)
+            self._current_orders += orders
+            # _logger.info(f'current_orders: {self._current_orders}')
+            
+            if self.trade_lag == 0 and j < len(rules) - 1:
+                # we don't need to do this for the last rule function 
+                # since the sim_market at the beginning of this function will take care of it
+                # in the next iteration
+                self._sim_market(i)
+            else:
+                self._update_current_orders()
+                
+    def _update_current_orders(self) -> None:
+        '''
+        Remove any orders that are not open
+        '''
+        # _logger.info(f'before update: {self._current_orders}')
+        if any([not order.is_open() for order in self._current_orders]):
+            self._current_orders = [order for order in self._current_orders if order.is_open()]
+        # _logger.info(f'after update: {self._current_orders}')
+
             
     def run(self) -> None:
         self.run_indicators()
@@ -451,9 +472,13 @@ class Strategy:
         self.run_rules()
         
     def _get_orders(self, idx: int, rule_function: RuleType, contract_group: ContractGroup, params: dict[str, Any]) -> list[Order]:
+        # _logger.info(f'in _get_orders: {idx}')
+
         try:
             indicator_values, signal_values, rule_name = params['indicator_values'], params['signal_values'], params['rule_name']
             position_filter = self.position_filters[rule_name]
+            # _logger.info(f'before pos filters')
+
             if position_filter is not None:
                 curr_pos = self.account.position(contract_group, self.timestamps[idx])
                 if position_filter == 'zero' and not math.isclose(curr_pos, 0): return []
@@ -462,29 +487,48 @@ class Strategy:
                 if position_filter == 'negative' and (curr_pos > 0 or math.isclose(curr_pos, 0)): return []
                 
             orders = rule_function(contract_group, idx, self.timestamps, indicator_values, signal_values, self.account,
-                                   self.strategy_context)
+                                   self._current_orders, self.strategy_context)
+            # _logger.info(f'got orders: {orders}')
         except Exception as e:
             raise type(e)(
                 f'Exception: {str(e)} at rule: {type(rule_function)} contract_group: {contract_group} index: {idx}'
             ).with_traceback(sys.exc_info()[2])
         return orders
-        
+            
     def _sim_market(self, i: int) -> None:
         '''
         Go through all open orders and run market simulators to generate a list of trades and return any orders that were not filled.
         '''
-        open_orders = self._open_orders.get(i)
-        if open_orders is None or len(open_orders) == 0: return
+        for order in self._current_orders:
+            idx = np.searchsorted(self.timestamps, order.timestamp)
+            assert_(idx >= 0 and idx < len(self.timestamps) and idx <= i, f'{i} {idx} {len(self.timestamps)} {order.timestamp}')
+            # _logger.info(f'{idx} {i} {self.trade_lag}')
             
+            if (i - idx) < self.trade_lag: continue
+            if (i - idx) > self.trade_lag:
+                if order.time_in_force == TimeInForce.FOK:
+                    # _logger.info('cancelling a')
+                    order.status = OrderStatus.CANCELLED
+                    continue
+            # i - idx == self.trade_lag
+            if order.status == OrderStatus.CANCEL_REQUESTED:
+                # _logger.info('cancelling')
+                order.status = OrderStatus.CANCELLED
+                
         for market_sim_function in self.market_sims:
             try:
-                trades = market_sim_function(open_orders, i, self.timestamps, self.indicator_values, self.signal_values, self.strategy_context)
+                self._update_current_orders()
+                trades = market_sim_function(self._current_orders, i, 
+                                             self.timestamps, 
+                                             self.indicator_values, 
+                                             self.signal_values, 
+                                             self.strategy_context)
                 if len(trades): self.account.add_trades(trades)
                 self._trades += trades
             except Exception as e:
                 raise type(e)(f'Exception: {str(e)} at index: {i} function: {market_sim_function}').with_traceback(sys.exc_info()[2])
-            
-        self._open_orders[i] = [order for order in open_orders if order.status != 'filled']
+                
+        self._update_current_orders()
             
     def df_data(self, 
                 contract_groups: Sequence[ContractGroup] | None = None, 
@@ -628,7 +672,6 @@ class Strategy:
             sampling_frequency: Downsampling frequency.  Default is None.  See pandas frequency strings for possible values
         '''
         pnl = self.df_pnl(contract_group)[['timestamp', 'net_pnl', 'equity']]
-
         pnl.equity = pnl.equity.ffill()
         pnl = pnl.set_index('timestamp').resample(sampling_frequency).last().reset_index()
         pnl = pnl.dropna(subset=['equity'])

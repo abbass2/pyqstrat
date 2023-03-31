@@ -77,13 +77,14 @@ def test_strategy() -> None:
                         indicators: SimpleNamespace,
                         signal: np.ndarray,
                         account: pq.Account,
+                        orders: Sequence[pq.Order],
                         strategy_context: pq.StrategyContextType) -> list[pq.Order]:
         timestamp = timestamps[i]
         pq.assert_(math.isclose(account.position(contract_group, timestamp), 0))
         signal_value = signal[i]
         risk_percent = 0.1
 
-        orders: list[pq.Order] = []
+        _orders: list[pq.Order] = []
         
         symbol = contract_group.name
         contract = contract_group.get_contract(symbol)
@@ -94,8 +95,11 @@ def test_strategy() -> None:
         _logger.info(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp}'
                      f' risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
         reason_code = pq.ReasonCode.ENTER_LONG if order_qty > 0 else pq.ReasonCode.ENTER_SHORT
-        orders.append(pq.MarketOrder(contract, timestamp, order_qty, reason_code=reason_code))
-        return orders
+        _orders.append(pq.MarketOrder(contract=contract, 
+                                      timestamp=timestamp, 
+                                      qty=order_qty, 
+                                      reason_code=reason_code))
+        return _orders
             
     def pair_exit_rule(contract_group: pq.ContractGroup,
                        i: int,
@@ -103,20 +107,25 @@ def test_strategy() -> None:
                        indicators: SimpleNamespace,
                        signal: np.ndarray,
                        account: pq.Account,
+                       orders: Sequence[pq.Order],
                        strategy_context: pq.StrategyContextType) -> list[pq.Order]:
         timestamp = timestamps[i]
         curr_pos = account.position(contract_group, timestamp)
         pq.assert_(not math.isclose(curr_pos, 0))
         signal_value = signal[i]
-        orders: list[pq.Order] = []
+        _orders: list[pq.Order] = []
         symbol = contract_group.name
         contract = contract_group.get_contract(symbol)
         if contract is None: contract = pq.Contract.create(symbol, contract_group=contract_group)
         if (curr_pos > 0 and signal_value == -1) or (curr_pos < 0 and signal_value == 1):
             order_qty = -curr_pos
             reason_code = pq.ReasonCode.EXIT_LONG if order_qty < 0 else pq.ReasonCode.EXIT_SHORT
-            orders.append(pq.MarketOrder(contract, timestamp, order_qty, reason_code=reason_code))
-        return orders
+            _orders.append(pq.MarketOrder(
+                contract=contract, 
+                timestamp=timestamp, 
+                qty=order_qty, 
+                reason_code=reason_code))
+        return _orders
 
     def market_simulator(orders: Sequence[pq.Order],
                          i: int,
@@ -214,10 +223,15 @@ def test_strategy_2() -> None:
                   indicators: SimpleNamespace,
                   signal: np.ndarray,
                   account: pq.Account,
+                  orders: Sequence[pq.Order],
                   strategy_context: pq.StrategyContextType) -> list[pq.Order]:
         _logger.info(f'called: {contract_group}')
         contract = contract_group.get_contract(contract_group.name)
-        order = pq.MarketOrder(contract, timestamps[i], 10, reason_code='ENTER')
+        order = pq.MarketOrder(
+            contract=contract, 
+            timestamp=timestamps[i], 
+            qty=10, 
+            reason_code='ENTER')
         _logger.info(order)
         return [order]
             
@@ -263,6 +277,194 @@ def test_strategy_2() -> None:
     
 
 if __name__ == '__main__':
-    test_strategy()
+    # test_strategy()
     test_strategy_2()
+# $$_end_code
+# $$_code
+    try:
+        # If we are running from unit tests
+        ko_file_path = os.path.dirname(os.path.realpath(__file__)) + '/notebooks/support/coke_15_min_prices.csv.gz'
+        pep_file_path = os.path.dirname(os.path.realpath(__file__)) + '/notebooks/support/pepsi_15_min_prices.csv.gz'
+    except NameError:
+        ko_file_path = 'notebooks/support/coke_15_min_prices.csv.gz'
+        pep_file_path = 'notebooks/support/pepsi_15_min_prices.csv.gz'
+
+    ko_prices = pd.read_csv(ko_file_path)
+    pep_prices = pd.read_csv(pep_file_path)
+
+    ko_prices['timestamp'] = pd.to_datetime(ko_prices.date)
+    pep_prices['timestamp'] = pd.to_datetime(pep_prices.date)
+    
+    end_time = '2019-01-30 12:00'
+    
+    ko_prices = ko_prices.query(f'timestamp <= "{end_time}"').sort_values(by='timestamp')
+    pep_prices = pep_prices.query(f'timestamp <= "{end_time}"').sort_values(by='timestamp')
+
+    timestamps = ko_prices.timestamp.values.astype('M8[m]')
+    
+    ratio = ko_prices.c / pep_prices.c
+    
+    def zscore_indicator(contract_group: pq.ContractGroup, 
+                         timestamps: np.ndarray, 
+                         indicators: SimpleNamespace,
+                         strategy_context: pq.StrategyContextType) -> np.ndarray:  # simple moving average
+        ratio = indicators.ratio
+        r = pd.Series(ratio).rolling(window=130)
+        mean = r.mean()
+        std = r.std(ddof=0)
+        zscore = (ratio - mean) / std
+        zscore = np.nan_to_num(zscore)
+        return zscore
+    
+    def pair_strategy_signal(contract_group: pq.ContractGroup,
+                             timestamps: np.ndarray,
+                             indicators: SimpleNamespace, 
+                             parent_signals: SimpleNamespace,
+                             strategy_context: pq.StrategyContextType) -> np.ndarray: 
+        # We don't need any indicators since the zscore is already part of the market data
+        zscore = indicators.zscore
+        signal = np.where(zscore > 1, 2, 0)
+        signal = np.where(zscore < -1, -2, signal)
+        signal = np.where((zscore > 0.5) & (zscore < 1), 1, signal)
+        signal = np.where((zscore < -0.5) & (zscore > -1), -1, signal)
+        if contract_group.name == 'PEP': signal = -1. * signal
+        return signal
+    
+    def pair_entry_rule(contract_group: pq.ContractGroup,
+                        i: int,
+                        timestamps: np.ndarray,
+                        indicators: SimpleNamespace,
+                        signal: np.ndarray,
+                        account: pq.Account,
+                        orders: Sequence[pq.Order],
+                        strategy_context: pq.StrategyContextType) -> list[pq.Order]:
+        timestamp = timestamps[i]
+        pq.assert_(math.isclose(account.position(contract_group, timestamp), 0))
+        signal_value = signal[i]
+        risk_percent = 0.1
+
+        _orders: list[pq.Order] = []
+        
+        symbol = contract_group.name
+        contract = contract_group.get_contract(symbol)
+        if contract is None: contract = pq.Contract.create(symbol, contract_group=contract_group)
+        
+        curr_equity = account.equity(timestamp)
+        order_qty = np.round(curr_equity * risk_percent / indicators.c[i] * np.sign(signal_value))
+        _logger.info(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp}'
+                     f' risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
+        reason_code = pq.ReasonCode.ENTER_LONG if order_qty > 0 else pq.ReasonCode.ENTER_SHORT
+        _orders.append(pq.MarketOrder(contract=contract, 
+                                      timestamp=timestamp, 
+                                      qty=order_qty, 
+                                      reason_code=reason_code))
+        return _orders
+            
+    def pair_exit_rule(contract_group: pq.ContractGroup,
+                       i: int,
+                       timestamps: np.ndarray,
+                       indicators: SimpleNamespace,
+                       signal: np.ndarray,
+                       account: pq.Account,
+                       orders: Sequence[pq.Order],
+                       strategy_context: pq.StrategyContextType) -> list[pq.Order]:
+        timestamp = timestamps[i]
+        curr_pos = account.position(contract_group, timestamp)
+        pq.assert_(not math.isclose(curr_pos, 0))
+        signal_value = signal[i]
+        _orders: list[pq.Order] = []
+        symbol = contract_group.name
+        contract = contract_group.get_contract(symbol)
+        if contract is None: contract = pq.Contract.create(symbol, contract_group=contract_group)
+        if (curr_pos > 0 and signal_value == -1) or (curr_pos < 0 and signal_value == 1):
+            order_qty = -curr_pos
+            reason_code = pq.ReasonCode.EXIT_LONG if order_qty < 0 else pq.ReasonCode.EXIT_SHORT
+            _orders.append(pq.MarketOrder(
+                contract=contract, 
+                timestamp=timestamp, 
+                qty=order_qty, 
+                reason_code=reason_code))
+        return _orders
+
+    def market_simulator(orders: Sequence[pq.Order],
+                         i: int,
+                         timestamps: np.ndarray,
+                         indicators: dict[pq.ContractGroup, SimpleNamespace],
+                         signals: dict[pq.ContractGroup, SimpleNamespace],
+                         strategy_context: pq.StrategyContextType) -> list[pq.Trade]:
+        _logger.info(f'called: {orders}')
+        trades = []
+
+        timestamp = timestamps[i]
+
+        for order in orders:
+            trade_price = np.nan
+            
+            assert order.contract is not None
+            cgroup = order.contract.contract_group
+            ind = indicators[cgroup]
+            
+            o, h, l = ind.o[i], ind.h[i], ind.l[i]  # noqa: E741  # l is ambiguous
+
+            pq.assert_(isinstance(order, pq.MarketOrder), f'Unexpected order type: {order}')
+            trade_price = 0.5 * (o + h) if order.qty > 0 else 0.5 * (o + l)
+
+            if np.isnan(trade_price): continue
+
+            trade = pq.Trade(order.contract, order, timestamp, order.qty, trade_price, commission=0, fee=0)
+            order.status = 'filled'
+            _logger.info(f'trade: {trade}')
+
+            trades.append(trade)
+
+        return trades
+    
+    def get_price(contract: pq.Contract, 
+                  timestamps: np.ndarray, 
+                  i: int, 
+                  strategy_context: pq.StrategyContextType) -> float:
+        if contract.symbol == 'KO':
+            return strategy_context.ko_price[i]
+        elif contract.symbol == 'PEP':
+            return strategy_context.pep_price[i]
+        raise Exception(f'Unknown contract: {contract}')
+
+    pq.Contract.clear()
+    pq.ContractGroup.clear()
+        
+    ko_contract_group = pq.ContractGroup.create('KO')
+    pep_contract_group = pq.ContractGroup.create('PEP')
+
+    strategy_context = SimpleNamespace(ko_price=ko_prices.c.values, pep_price=pep_prices.c.values)
+
+    strategy = pq.Strategy(timestamps, [ko_contract_group, pep_contract_group], get_price, trade_lag=1, strategy_context=strategy_context)
+    for tup in [(ko_contract_group, ko_prices), (pep_contract_group, pep_prices)]:
+        for column in ['o', 'h', 'l', 'c']:
+            strategy.add_indicator(column, tup[1][column], contract_groups=[tup[0]])
+    strategy.add_indicator('ratio', ratio)
+    strategy.add_indicator('zscore', zscore_indicator, depends_on=['ratio'])
+
+    strategy.add_signal('pair_strategy_signal', pair_strategy_signal, depends_on_indicators=['zscore'])
+
+    # ask pqstrat to call our trading rule when the signal has one of the values [-2, -1, 1, 2]
+    strategy.add_rule('pair_entry_rule', pair_entry_rule, 
+                      signal_name='pair_strategy_signal', sig_true_values=[-2, 2], position_filter='zero')
+    
+    strategy.add_rule('pair_exit_rule', pair_exit_rule, 
+                      signal_name='pair_strategy_signal', sig_true_values=[-1, 1], position_filter='nonzero')
+    
+    strategy.add_market_sim(market_simulator)
+    
+    strategy.run_indicators()
+    strategy.run_signals()
+    strategy.run_rules()
+
+    metrics = strategy.evaluate_returns(plot=False, display_summary=False, return_metrics=True)
+    assert metrics is not None
+    assert round(metrics['gmean'], 6) == -0.062878
+    assert round(metrics['sharpe'], 4) == -9.7079  # -7.2709)
+    assert round(metrics['mdd_pct'], 6) == 0.002574  # -0.002841)
+
+
+
 # $$_end_code
