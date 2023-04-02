@@ -200,10 +200,11 @@ class OrderStatus(Enum):
     '''
     Enum for order status
     '''
-    OPEN = 'open'
-    FILLED = 'filled'
-    CANCEL_REQUESTED = 'cancel_requested'
-    CANCELLED = 'cancelled'
+    OPEN = 1
+    PARTIALLY_FILLED = 2
+    FILLED = 3
+    CANCEL_REQUESTED = 4
+    CANCELLED = 5
     
 
 class ReasonCode:
@@ -234,6 +235,7 @@ class ReasonCode:
 class TimeInForce(Enum):
     FOK = 1  # Fill or Kill
     GTC = 2  # Good till Cancelled
+    DAY = 3  # Cancel at EOD
 
 
 @dataclass(kw_only=True)
@@ -258,13 +260,25 @@ class Order:
     status: OrderStatus = OrderStatus.OPEN
         
     def is_open(self) -> bool:
-        return self.status in [OrderStatus.OPEN, OrderStatus.CANCEL_REQUESTED]
+        return self.status in [OrderStatus.OPEN, OrderStatus.CANCEL_REQUESTED, OrderStatus.PARTIALLY_FILLED]
     
     def request_cancel(self) -> None:
         self.status = OrderStatus.CANCEL_REQUESTED
         
-    def fill(self) -> None:
-        self.status = OrderStatus.FILLED
+    def fill(self, fill_qty: float = math.nan) -> None:
+        assert_(self.status in [OrderStatus.OPEN, OrderStatus.PARTIALLY_FILLED], 
+                f'cannot fill an order in status: {self.status}')
+        if math.isnan(fill_qty): fill_qty = self.qty
+        assert_(self.qty * fill_qty >= 0, f'order qty: {self.qty} cannot be opposite sign of {fill_qty}')
+        assert_(abs(fill_qty) <= abs(self.qty), f'cannot fill qty: {fill_qty} larger than order qty: {self.qty}')
+        self.qty -= fill_qty
+        if math.isclose(self.qty, 0):
+            self.status = OrderStatus.FILLED
+        else:
+            self.status = OrderStatus.PARTIALLY_FILLED
+        
+    def cancel(self) -> None:
+        self.status = OrderStatus.CANCELLED
         
 
 @dataclass(kw_only=True)
@@ -278,7 +292,7 @@ class MarketOrder(Order):
         return f'{self.contract.symbol} {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty}' + (
             '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + (
             '' if not self.properties.__dict__ else f' {self.properties}') + (
-            f' {self.status.value}')
+            f' {self.status}')
             
 
 @dataclass(kw_only=True)
@@ -295,7 +309,7 @@ class LimitOrder(Order):
         return f'{symbol} {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} lmt_prc: {self.limit_price}' + (
             '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + (
             '' if not self.properties.__dict__ else f' {self.properties}') + (
-            f' {self.status.value}')
+            f' {self.status}')
 
 
 @dataclass(kw_only=True)
@@ -313,7 +327,7 @@ class RollOrder(Order):
         symbol = self.contract.symbol if self.contract else ''
         return f'{symbol} {timestamp:%Y-%m-%d %H:%M:%S} close_qty: {self.close_qty} reopen_qty: {self.reopen_qty}' + (
             '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + '' if not self.properties.__dict__ else f' {self.properties}' + (
-            f' {self.status.value}')
+            f' {self.status}')
             
 
 @dataclass(kw_only=True)
@@ -338,7 +352,7 @@ class StopLimitOrder(Order):
         symbol = self.contract.symbol if self.contract else ''
         return f'{symbol} {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} trigger_prc: {self.trigger_price} limit_prc: {self.limit_price}' + (
             '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + ('' if not self.properties.__dict__ else f' {self.properties}') + (
-            f' {self.status.value}')
+            f' {self.status}')
             
 
 class Trade:

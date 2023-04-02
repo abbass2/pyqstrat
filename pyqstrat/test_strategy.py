@@ -152,7 +152,7 @@ def test_strategy() -> None:
             if np.isnan(trade_price): continue
 
             trade = pq.Trade(order.contract, order, timestamp, order.qty, trade_price, commission=0, fee=0)
-            order.status = 'filled'
+            order.fill()
             _logger.info(f'trade: {trade}')
 
             trades.append(trade)
@@ -412,7 +412,7 @@ if __name__ == '__main__':
             if np.isnan(trade_price): continue
 
             trade = pq.Trade(order.contract, order, timestamp, order.qty, trade_price, commission=0, fee=0)
-            order.status = 'filled'
+            order.fill()
             _logger.info(f'trade: {trade}')
 
             trades.append(trade)

@@ -92,7 +92,7 @@ class Strategy:
                  contract_groups: Sequence[ContractGroup],
                  price_function: PriceFunctionType,
                  starting_equity: float = 1.0e6, 
-                 pnl_calc_time: int = 15 * 60 + 1,
+                 pnl_calc_time: int = 16 * 60 + 1,
                  trade_lag: int = 0,
                  run_final_calc: bool = True, 
                  strategy_context: StrategyContextType | None = None) -> None:
@@ -448,7 +448,7 @@ class Strategy:
             self._current_orders += orders
             # _logger.info(f'current_orders: {self._current_orders}')
             
-            if self.trade_lag == 0 and j < len(rules) - 1:
+            if self.trade_lag == 0:
                 # we don't need to do this for the last rule function 
                 # since the sim_market at the beginning of this function will take care of it
                 # in the next iteration
@@ -504,16 +504,22 @@ class Strategy:
             assert_(idx >= 0 and idx < len(self.timestamps) and idx <= i, f'{i} {idx} {len(self.timestamps)} {order.timestamp}')
             # _logger.info(f'{idx} {i} {self.trade_lag}')
             
-            if (i - idx) < self.trade_lag: continue
+            if (i - idx) < self.trade_lag:
+                continue
             if (i - idx) > self.trade_lag:
                 if order.time_in_force == TimeInForce.FOK:
                     # _logger.info('cancelling a')
-                    order.status = OrderStatus.CANCELLED
+                    order.cancel()
                     continue
             # i - idx == self.trade_lag
             if order.status == OrderStatus.CANCEL_REQUESTED:
                 # _logger.info('cancelling')
-                order.status = OrderStatus.CANCELLED
+                order.cancel()
+                
+            if order.time_in_force == TimeInForce.DAY:
+                if self.timestamps[i].astype('M8[D]') > order.timestamp.astype('M8[D]'):
+                    order.cancel()
+                
                 
         for market_sim_function in self.market_sims:
             try:

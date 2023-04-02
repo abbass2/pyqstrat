@@ -11,5 +11,5 @@ ipywidgets>=7.5
 plotly>=4.10
 types-python-dateutil>=0.1
 cython
-
+pyyaml
 

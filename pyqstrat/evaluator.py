@@ -429,6 +429,7 @@ def handle_non_finite_returns(timestamps: np.ndarray,
 def compute_return_metrics(timestamps: np.ndarray,
                            rets: np.ndarray,
                            starting_equity: float,
+                           periods_per_year: int = 0,
                            leading_non_finite_to_zeros: bool = False, 
                            subsequent_non_finite_to_zeros: bool = True) -> Evaluator:
     '''
@@ -466,8 +467,13 @@ def compute_return_metrics(timestamps: np.ndarray,
     
     timestamps, rets = handle_non_finite_returns(timestamps, rets, leading_non_finite_to_zeros, subsequent_non_finite_to_zeros)
 
-    ev = Evaluator({'timestamps': timestamps, 'returns': rets, 'starting_equity': starting_equity})
-    ev.add_metric('periods_per_year', compute_periods_per_year, dependencies=['timestamps'])
+    starting_metrics = {'timestamps': timestamps, 'returns': rets, 'starting_equity': starting_equity}
+    assert_(periods_per_year >= 0, f'periods_per_year: {periods_per_year} cannot be negative')
+    if periods_per_year > 0:
+        starting_metrics['periods_per_year'] = periods_per_year
+    ev = Evaluator(starting_metrics)
+    if periods_per_year == 0:
+        ev.add_metric('periods_per_year', compute_periods_per_year, dependencies=['timestamps'])
     ev.add_metric('amean', compute_amean, dependencies=['returns', 'periods_per_year'])
     ev.add_metric('std', compute_std, dependencies=['returns'])
     ev.add_metric('up_periods', lambda returns: len(returns[returns > 0]), dependencies=['returns'])

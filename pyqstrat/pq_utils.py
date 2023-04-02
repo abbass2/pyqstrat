@@ -217,7 +217,7 @@ def np_bucket(a: np.ndarray, buckets: list[Any], default_value=0, side='mid') ->
     >>> assert np.alltrue(np_bucket(a, buckets, default_value=25, side='right') == np.array([4,  8, 25,  4,  8, 12,  4])) 
     >>> assert(np.alltrue(np_bucket(a, buckets) == np.array([4,  4, 12,  4,  8, 12,  4])))
     '''
-    assert side in ['mid', 'left', 'right'], f'unknown side: {side}'
+    assert_(side in ['mid', 'left', 'right'], f'unknown side: {side}')
     if side == 'mid':
         b = [0.5 * (buckets[i + 1] + buckets[i]) for i in range(len(buckets) - 1)]
         conditions = [(a < e) for e in b]
@@ -324,7 +324,7 @@ def percentile_of_score(a: np.ndarray) -> np.ndarray | None:
     >>> percentiles = percentile_of_score(a)
     >>> assert(all(np.isclose(np.array([ 75.,  50.,   0.,  25., 100.]), percentiles)))
     '''
-    assert isinstance(a, np.ndarray), f'expected numpy array, got: {a}'
+    assert_(isinstance(a, np.ndarray), f'expected numpy array, got: {a}')
     if not len(a): return None
     return np.argsort(np.argsort(a)) * 100. / (len(a) - 1)
 
@@ -449,14 +449,23 @@ def infer_frequency(timestamps: np.ndarray) -> float:
     Args:
         timestamps: A numpy array of monotonically increasing datetime64
     >>> timestamps = np.array(['2018-01-01 11:00:00', '2018-01-01 11:15:00', '2018-01-01 11:30:00', '2018-01-01 11:35:00'], dtype = 'M8[ns]')
+    >>> infer_frequency(timestamps)
+    Traceback (most recent call last):
+    ...
+    PQException: could not infer frequency from timestamps...
+    >>> timestamps = np.array(['2018-01-01 11:00', '2018-01-01 11:15', '2018-01-01 11:30', '2018-01-01 11:35', '2018-01-01 11:50'], dtype = 'M8[ns]')
     >>> print(round(infer_frequency(timestamps), 8))
     0.01041667
     '''
-    if isinstance(timestamps, pd.Series): timestamps = timestamps.values
-    assert (monotonically_increasing(timestamps))
+    assert_(monotonically_increasing(timestamps))
+    assert_(len(timestamps) > 0, f'cannot infer frequency from empty timestamps array')
+    if len(timestamps) == 1: return 1.
     numeric_dates = date_2_num(timestamps)
     diff_dates = np.round(np.diff(numeric_dates), 8)
     (values, counts) = np.unique(diff_dates, return_counts=True)
+    max_i = np.argmax(counts)
+    assert_(len(counts) > 0 and counts[max_i] / np.sum(counts) >= 0.75, 
+            f'could not infer frequency from timestamps: {timestamps}')
     return values[np.argmax(counts)]
 
 
