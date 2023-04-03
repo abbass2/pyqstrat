@@ -681,7 +681,9 @@ class Strategy:
         pnl.equity = pnl.equity.ffill()
         pnl = pnl.set_index('timestamp').resample(sampling_frequency).last().reset_index()
         pnl = pnl.dropna(subset=['equity'])
-        pnl['ret'] = pnl.equity.pct_change()
+        ret = pnl.equity.pct_change().values
+        ret[0] = pnl.equity.values[0] / self.account.starting_equity - 1
+        pnl['ret'] = ret
         return pnl
     
     def plot(self, 
