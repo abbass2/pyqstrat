@@ -201,8 +201,8 @@ def test_strategy() -> None:
 
     metrics = strategy.evaluate_returns(plot=False, display_summary=False, return_metrics=True)
     assert metrics is not None
-    assert round(metrics['gmean'], 6) == -0.062878
-    assert round(metrics['sharpe'], 4) == -9.7079  # -7.2709)
+    assert round(metrics['gmean'], 6) == -0.057329
+    assert round(metrics['sharpe'], 4) == -8.8903  # -7.2709)
     assert round(metrics['mdd_pct'], 6) == 0.002574  # -0.002841)
 
 
@@ -214,7 +214,6 @@ def test_strategy_2() -> None:
                     indicators: SimpleNamespace, 
                     parent_signals: SimpleNamespace,
                     strategy_context: pq.StrategyContextType) -> np.ndarray: 
-        _logger.info(f'called: {contract_group}')
         return np.full(len(timestamps), True)
     
     def test_rule(contract_group: pq.ContractGroup,
@@ -225,7 +224,6 @@ def test_strategy_2() -> None:
                   account: pq.Account,
                   orders: Sequence[pq.Order],
                   strategy_context: pq.StrategyContextType) -> list[pq.Order]:
-        _logger.info(f'called: {contract_group}')
         contract = contract_group.get_contract(contract_group.name)
         order = pq.MarketOrder(
             contract=contract, 
@@ -277,7 +275,7 @@ def test_strategy_2() -> None:
     
 
 if __name__ == '__main__':
-    # test_strategy()
+    test_strategy()
     test_strategy_2()
 # $$_end_code
 # $$_code
@@ -392,7 +390,6 @@ if __name__ == '__main__':
                          indicators: dict[pq.ContractGroup, SimpleNamespace],
                          signals: dict[pq.ContractGroup, SimpleNamespace],
                          strategy_context: pq.StrategyContextType) -> list[pq.Trade]:
-        _logger.info(f'called: {orders}')
         trades = []
 
         timestamp = timestamps[i]
@@ -461,8 +458,8 @@ if __name__ == '__main__':
 
     metrics = strategy.evaluate_returns(plot=False, display_summary=False, return_metrics=True)
     assert metrics is not None
-    assert round(metrics['gmean'], 6) == -0.062878
-    assert round(metrics['sharpe'], 4) == -9.7079  # -7.2709)
+    assert round(metrics['gmean'], 6) == -0.057329
+    assert round(metrics['sharpe'], 4) == -8.8903  # -7.2709)
     assert round(metrics['mdd_pct'], 6) == 0.002574  # -0.002841)
 
 

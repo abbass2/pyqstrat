@@ -8,6 +8,7 @@ try:
 except (ImportError, ValueError):
     mpl.use('Agg')  # Support running in headless mode
 import matplotlib.pyplot as plt
+import math
 import os
 import sys
 import tempfile
@@ -444,29 +445,42 @@ def monotonically_increasing(array: np.ndarray) -> bool:
     return ret
 
 
+def try_frequency(timestamps: np.ndarray, period: str, threshold: float) -> float:
+    diff_dates = np.diff(timestamps.astype(f'M8[{period}]')) / np.timedelta64(1, period)
+    (values, counts) = np.unique(diff_dates, return_counts=True)
+    max_i = np.argmax(counts)
+    if math.isclose(values[max_i], 0.) or counts[max_i] / np.sum(counts) < threshold:
+        return np.nan
+    if period == 'M':
+        fraction_of_day = 30.
+    else:
+        fraction_of_day = float(np.timedelta64(1, period) / np.timedelta64(1, 'D'))
+    return values[max_i] * fraction_of_day
+
+
 def infer_frequency(timestamps: np.ndarray) -> float:
     '''Returns most common frequency of date differences as a fraction of days
     Args:
         timestamps: A numpy array of monotonically increasing datetime64
-    >>> timestamps = np.array(['2018-01-01 11:00:00', '2018-01-01 11:15:00', '2018-01-01 11:30:00', '2018-01-01 11:35:00'], dtype = 'M8[ns]')
-    >>> infer_frequency(timestamps)
+    >>> timestamps = np.array(['2018-01-01 11:00:00', '2018-01-01 11:15', '2018-01-01 11:30', '2018-01-01 11:35'], dtype = 'M8[ns]')
+    >>> infer_frequency(timestamps)  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
-    ...
+     ...
     PQException: could not infer frequency from timestamps...
     >>> timestamps = np.array(['2018-01-01 11:00', '2018-01-01 11:15', '2018-01-01 11:30', '2018-01-01 11:35', '2018-01-01 11:50'], dtype = 'M8[ns]')
     >>> print(round(infer_frequency(timestamps), 8))
     0.01041667
+    >>> timestamps = np.array(['2015-01-01', '2015-03-01', '2015-05-01', '2015-07-01', '2015-09-01'], dtype='M8[D]')
+    >>> assert math.isclose(infer_frequency(timestamps), 60)
     '''
     assert_(monotonically_increasing(timestamps))
-    assert_(len(timestamps) > 0, f'cannot infer frequency from empty timestamps array')
-    if len(timestamps) == 1: return 1.
-    numeric_dates = date_2_num(timestamps)
-    diff_dates = np.round(np.diff(numeric_dates), 8)
-    (values, counts) = np.unique(diff_dates, return_counts=True)
-    max_i = np.argmax(counts)
-    assert_(len(counts) > 0 and counts[max_i] / np.sum(counts) >= 0.75, 
-            f'could not infer frequency from timestamps: {timestamps}')
-    return values[np.argmax(counts)]
+    assert_(len(timestamps) > 0, 'cannot infer frequency from empty timestamps array')
+    threshold = 0.75
+    for period in ['D', 'M', 'm', 's']:
+        ret = try_frequency(timestamps, period, threshold)
+        if math.isfinite(ret): return ret
+    assert_(False, f'could not infer frequency from timestamps: {timestamps}')
+    return math.nan  # will never execute but keeps mypy happy
 
 
 def series_to_array(series: pd.Series) -> np.ndarray:

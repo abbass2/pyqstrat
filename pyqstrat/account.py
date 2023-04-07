@@ -66,9 +66,9 @@ class ContractPNL:
     ...    return idx + 10.1
 
     >>> contract_pnl = ContractPNL(aapl_contract, timestamps, get_price, SimpleNamespace()) 
-    >>> trade_5 = Trade(aapl_contract, MarketOrder(aapl_contract, timestamps[1], 20), timestamps[2], 10, 16.2)
-    >>> trade_6 = Trade(aapl_contract, MarketOrder(aapl_contract, timestamps[1], -20), timestamps[2], -10, 16.5)
-    >>> trade_7 = Trade(aapl_contract, MarketOrder(aapl_contract, timestamps[1], -20), timestamps[2], -10, 16.5)
+    >>> trade_5 = Trade(aapl_contract, MarketOrder(contract=aapl_contract, timestamp=timestamps[1], qty=20), timestamps[2], 10, 16.2)
+    >>> trade_6 = Trade(aapl_contract, MarketOrder(contract=aapl_contract, timestamp=timestamps[1], qty=-20), timestamps[2], -10, 16.5)
+    >>> trade_7 = Trade(aapl_contract, MarketOrder(contract=aapl_contract, timestamp=timestamps[1], qty=-20), timestamps[2], -10, 16.5)
     >>> contract_pnl._add_trades([trade_5, trade_6])
     >>> contract_pnl._add_trades([trade_7])
     >>> df = contract_pnl.df()
@@ -605,13 +605,13 @@ def test_account():
                            '2018-01-02 09:00', 
                            '2018-01-05 13:35',
                            '2018-01-05 13:36'], dtype='M8[m]')
-    trade_1 = Trade(ibm_contract, MarketOrder(ibm_contract, np.datetime64('2018-01-01 09:00'), 10), 
+    trade_1 = Trade(ibm_contract, MarketOrder(contract=ibm_contract, timestamp=np.datetime64('2018-01-01 09:00'), qty=10), 
                     np.datetime64('2018-01-02 08:00'), 10, 10.1, commission=0.01)
-    trade_2 = Trade(ibm_contract, MarketOrder(ibm_contract, np.datetime64('2018-01-01 09:00'), -20),
+    trade_2 = Trade(ibm_contract, MarketOrder(contract=ibm_contract, timestamp=np.datetime64('2018-01-01 09:00'), qty=-20),
                     np.datetime64('2018-01-02 09:00'), -20, 15.1, commission=0.02)
-    trade_3 = Trade(msft_contract, MarketOrder(msft_contract, timestamps[1], 15), timestamps[1], 20, 13.2, commission=0.04)
-    trade_4 = Trade(msft_contract, MarketOrder(msft_contract, timestamps[2], 20), timestamps[2], 20, 16.2, commission=0.05)
-    trade_5 = Trade(msft_contract, MarketOrder(msft_contract, timestamps[2], 5), timestamps[2], 5, 16.21, commission=0.03)
+    trade_3 = Trade(msft_contract, MarketOrder(contract=msft_contract, timestamp=timestamps[1], qty=15), timestamps[1], 20, 13.2, commission=0.04)
+    trade_4 = Trade(msft_contract, MarketOrder(contract=msft_contract, timestamp=timestamps[2], qty=20), timestamps[2], 20, 16.2, commission=0.05)
+    trade_5 = Trade(msft_contract, MarketOrder(contract=msft_contract, timestamp=timestamps[2], qty=5), timestamps[2], 5, 16.21, commission=0.03)
 
     account = Account([ibm_cg, msft_cg], timestamps, get_close_price, None)
     account.add_trades([trade_1, trade_2, trade_3, trade_4, trade_5])

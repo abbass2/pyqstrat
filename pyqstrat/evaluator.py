@@ -23,10 +23,10 @@ def compute_periods_per_year(timestamps: np.ndarray) -> float:
     Args:
         timestamps: a numpy array of datetime64's
         
-    >>> compute_periods_per_year(np.array(['2018-01-01', '2018-01-02', '2018-01-03', '2018-01-09'], dtype='M8[D]'))
+    >>> compute_periods_per_year(np.array(['2018-01-01', '2018-01-02', '2018-01-03', '2018-01-09', '2018-01-10'], dtype='M8[D]'))
     252.0
     >>> round(compute_periods_per_year(np.array(['2018-01-01 10:00', '2018-01-01 10:05', '2018-01-01 10:10'], dtype='M8[m]')), 2)
-    72576.05
+    72576.0
     """
     if not len(timestamps): return np.nan
     freq = infer_frequency(timestamps)
@@ -59,7 +59,7 @@ def compute_num_periods(timestamps: np.ndarray, periods_per_year: float) -> floa
         timestamps (np.ndarray of np.datetime64): a numpy array of returns, can contain nans
         periods_per_year: number of periods between first and last return
          
-    >>> assert(compute_num_periods(np.array(['2015-01-01', '2015-03-01', '2015-05-01'], dtype='M8[D]'), 6) == 2)
+    >>> assert(compute_num_periods(np.array(['2015-01-01', '2015-03-01', '2015-05-01', '2015-07-01'], dtype='M8[D]'), 6) == 3)
     '''
     if not len(timestamps): return np.nan
     assert_(monotonically_increasing(timestamps))
@@ -110,9 +110,9 @@ def compute_sortino(returns: np.ndarray, amean: float, periods_per_year: float) 
     0.133631
     '''
     if not len(returns) or not np.isfinite(amean) or periods_per_year <= 0: return np.nan
-    returns = np.where((~np.isfinite(returns)), 0.0, returns)
+    # returns = np.where((~np.isfinite(returns)), 0.0, returns)
     normalized_rets = np.where(returns > 0.0, 0.0, returns)
-    sortino_denom = np.std(normalized_rets)
+    sortino_denom = np.nanstd(normalized_rets)
     sortino = np.nan if sortino_denom == 0 else amean / (sortino_denom * np.sqrt(periods_per_year))
     return sortino
 
@@ -450,13 +450,13 @@ def compute_return_metrics(timestamps: np.ndarray,
         If needed, you can add your own metrics to this object based on the values of existing metrics and recompute the Evaluator.
         Otherwise, you can just use the output of the evaluator using the metrics function.
         
-    >>> timestamps = np.array(['2015-01-01', '2015-03-01', '2015-05-01', '2015-09-01'], dtype='M8[D]')
+    >>> timestamps = np.array(['2015-01-01', '2015-03-01', '2015-05-01', '2015-07-01'], dtype='M8[D]')
     >>> rets = np.array([0.01, 0.02, np.nan, -0.015])
     >>> starting_equity = 1.e6
     >>> ev = compute_return_metrics(timestamps, rets, starting_equity)
     >>> metrics = ev.metrics()
-    >>> assert(round(metrics['gmean'], 6) == 0.021061)
-    >>> assert(round(metrics['sharpe'], 6) == 0.599382)
+    >>> assert(round(metrics['gmean'], 6) == 0.03122)
+    >>> assert(round(metrics['sharpe'], 6) == 0.594366)
     >>> assert(all(metrics['returns_3yr'] == np.array([0.01, 0.02, 0, -0.015])))
     '''
     assert_(starting_equity > 0.)
