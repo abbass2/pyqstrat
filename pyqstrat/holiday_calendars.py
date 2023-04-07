@@ -58,16 +58,18 @@ def _normalize_datetime(val: DateTimeType) -> tuple[np.datetime64, np.timedelta6
         val: The datetime to normalize.  Can be an array or a single datetime as a string, pandas timestamp, numpy datetime 
             or python date or datetime
     
-    >>> print(_normalize_datetime(pd.Timestamp('2016-05-01 3:55:00')))
-    (numpy.datetime64('2016-05-01'), numpy.timedelta64(14100000000000,'ns'))
-    >>> print(_normalize_datetime('2016-05-01'))
-    (numpy.datetime64('2016-05-01'), numpy.timedelta64(0,'D'))
+    >>> date, td = _normalize_datetime(pd.Timestamp('2016-05-01 3:55:00'))
+    >>> assert date == np.datetime64('2016-05-01') and td == np.timedelta64(14100000000000,'ns')
+    >>> date, td = _normalize_datetime('2016-05-01')
+    >>> assert date == np.datetime64('2016-05-01') and td == np.timedelta64(0, 'D')
     >>> x = pd.DataFrame({'x' : [np.datetime64('2015-01-01 05:00:00'), np.datetime64('2015-02-01 06:00:00')]})
-    >>> print(_normalize_datetime(x.x))
-    (array(['2015-01-01', '2015-02-01'], dtype='datetime64[D]'), array([18000000000000, 21600000000000], dtype='timedelta64[ns]'))
+    >>> dates, tds = _normalize_datetime(x.x)
+    >>> assert (all(dates == np.array(['2015-01-01', '2015-02-01'], dtype='datetime64[D]'))
+    ...    and all(tds == np.array([18000000000000, 21600000000000], dtype='timedelta64[ns]')))
     >>> x = pd.DataFrame({'x' : [1, 2]}, index = [np.datetime64('2015-01-01 05:00:00'), np.datetime64('2015-02-01 06:00:00')])
-    >>> print(_normalize_datetime(x.index))
-    (array(['2015-01-01', '2015-02-01'], dtype='datetime64[D]'), array([18000000000000, 21600000000000], dtype='timedelta64[ns]'))
+    >>> dates, tds = _normalize_datetime(x.index)
+    >>> assert (all(dates == np.array(['2015-01-01', '2015-02-01'], dtype='datetime64[D]'))
+    ...    and all(tds == np.array([18000000000000, 21600000000000], dtype='timedelta64[ns]')))
     '''
     if isinstance(val, pd.Timestamp): 
         dtime = val.to_datetime64()
