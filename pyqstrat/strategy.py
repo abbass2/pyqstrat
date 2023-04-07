@@ -501,7 +501,8 @@ class Strategy:
         '''
         for order in self._current_orders:
             idx = np.searchsorted(self.timestamps, order.timestamp)
-            assert_(idx >= 0 and idx < len(self.timestamps) and idx <= i, f'{i} {idx} {len(self.timestamps)} {order.timestamp}')
+            assert_(bool(idx >= 0 and idx < len(self.timestamps) and idx <= i), 
+                    f'{i} {idx} {len(self.timestamps)} {order.timestamp}')
             # _logger.info(f'{idx} {i} {self.trade_lag}')
             
             if (i - idx) < self.trade_lag:
