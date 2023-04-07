@@ -36,7 +36,7 @@ def bollinger_band_signal(contract_group, timestamps, indicators, parent_signals
     signal = np.where((l < sma) & (signal == 0), -1, signal) # price crossed below simple moving avg but not below lower band
     return signal
 
-def bollinger_band_trading_rule(contract_group, i, timestamps, indicators, signal, account, strategy_context):
+def bollinger_band_trading_rule(contract_group, i, timestamps, indicators, signal, account, current_orders, strategy_context):
     timestamp = timestamps[i]
     curr_pos = account.position(contract_group, timestamp)
     signal_value = signal[i]
@@ -54,13 +54,13 @@ def bollinger_band_trading_rule(contract_group, i, timestamps, indicators, signa
             order_qty = np.round(curr_equity * risk_percent / close_price * np.sign(signal_value))
             trigger_price = close_price
             reason_code = pq.ReasonCode.ENTER_LONG if order_qty > 0 else pq.ReasonCode.ENTER_SHORT
-            return [pq.StopLimitOrder(contract, timestamp, order_qty, trigger_price, reason_code = reason_code)]
+            return [pq.StopLimitOrder(contract=contract, timestamp=timestamp, qty=order_qty, trigger_price=trigger_price, reason_code=reason_code)]
         
     else: # We have a current position, so check if we should exit
         if (curr_pos > 0 and signal_value == -1) or (curr_pos < 0 and signal_value == 1):
             order_qty = -curr_pos
             reason_code = pq.ReasonCode.EXIT_LONG if order_qty < 0 else pq.ReasonCode.EXIT_SHORT
-            return [pq.MarketOrder(contract, timestamp, order_qty, reason_code = reason_code)]
+            return [pq.MarketOrder(contract=contract, timestamp=timestamp, qty=order_qty, reason_code=reason_code)]
     return []
 
 def market_simulator(orders, i, timestamps, indicators, signals, strategy_context):
