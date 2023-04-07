@@ -464,7 +464,6 @@ class Strategy:
         if any([not order.is_open() for order in self._current_orders]):
             self._current_orders = [order for order in self._current_orders if order.is_open()]
         # _logger.info(f'after update: {self._current_orders}')
-
             
     def run(self) -> None:
         self.run_indicators()
@@ -520,7 +519,6 @@ class Strategy:
             if order.time_in_force == TimeInForce.DAY:
                 if self.timestamps[i].astype('M8[D]') > order.timestamp.astype('M8[D]'):
                     order.cancel()
-                
                 
         for market_sim_function in self.market_sims:
             try:
