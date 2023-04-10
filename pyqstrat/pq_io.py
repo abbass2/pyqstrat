@@ -134,20 +134,62 @@ def hdf5_to_df(filename: str, key: str) -> pd.DataFrame:
     return pd.DataFrame(array_dict)
 
 
-def hdf5_repack(inp_filename: str, out_filename: str) -> None:
+def hdf5_repack(in_filename: str, out_filename: str) -> None:
     '''
     Copy groups from input filename to output filename.
     Serves the same purpose as the h5repack command line tool, i.e. 
     discards empty space in the input file so the output file may be smaller
     '''
-    with h5py.File(inp_filename, 'r') as inpf:
-        num_items = len(list(inpf.keys()))
+    with h5py.File(in_filename, 'r') as inf:
+        num_items = len(list(inf.keys()))
         with h5py.File(out_filename + '.tmp', 'w') as outf:
-            for i, name in enumerate(inpf):
+            for i, name in enumerate(inf):
                 _logger.info(f'copying {name} {i} of {num_items}')
-                inpf.copy(inpf[name], outf)
+                # recursively copies subgroups and datasets
+                inf.copy(inf[name], outf)
     os.rename(out_filename + '.tmp', out_filename)
+    
 
+def hdf5_copy(in_filename: str, in_key: str, out_filename: str, out_key: str, skip_if_exists: bool = True) -> None:
+    '''
+    Recursively copy groups from input filename to output filename.
+    Args:
+        skip_if_exists: if set, we will skip any groups in the output that already exist.
+        Otherwise we replace them.
+    >>> tempdir = get_temp_dir()
+    >>> in_filename = tempdir + '/temp_in.hdf5'
+    >>> out_filename = tempdir + '/temp_out.hdf5'
+    >>> for filename in [in_filename, out_filename]:
+    ...    if os.path.exists(filename): os.remove(filename)
+    >>> key = "test_g/test_subg"
+    >>> with h5py.File(in_filename, 'w') as f:
+    ...    g = f.create_group(key)
+    ...    ds = g.create_dataset('a', data = np.array([5, 3, 2.]))
+    >>> hdf5_copy(in_filename, key, out_filename, key)
+    >>> with h5py.File(out_filename, 'r') as f:
+    ...    assert_(key in f)
+    >>> hdf5_copy(in_filename, key, out_filename, key)
+    >>> with h5py.File(out_filename, 'r') as f:
+    ...    assert_(key in f)
+    >>> hdf5_copy(in_filename, key, out_filename, key, False)
+    >>> with h5py.File(out_filename, 'r') as f:
+    ...    assert_(key in f)
+    
+    '''
+    with h5py.File(in_filename, 'r') as inf:
+        assert_(in_key in inf, f'could not find {in_key} in {in_filename}')
+        with h5py.File(out_filename, 'a') as outf:
+            _logger.info(f'copying {in_key}')
+            if out_key in outf:
+                if skip_if_exists:
+                    _logger.info(f'{out_key} already exists in {out_filename}, skipping')
+                    return
+                _logger.info(f'replacing {out_key} in {out_filename}')
+                del outf[out_key]
+            if out_key + '_tmp' in outf:
+                del outf[out_key + '_tmp']
+            inf.copy(inf[in_key], outf, out_key + '_tmp')
+            outf.move(out_key + '_tmp', out_key)
 
 def test_hdf5_to_df():
     size = int(100)
@@ -184,4 +226,6 @@ def test_hdf5_to_df():
 
 if __name__ == '__main__':
     test_hdf5_to_df()
+    import doctest
+    doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
 # $$_end_code
