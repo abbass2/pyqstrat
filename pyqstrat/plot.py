@@ -2,7 +2,7 @@
 # $$_code
 # $$_ %%checkall
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import collections
 import collections.abc
 import math
@@ -136,7 +136,7 @@ class ContourPlotAttributes(DisplayAttributes):
     marker_size: int = 50
     marker_color: str = 'red'
     interpolation: str = 'linear'
-    cmap: matplotlib.colors.Colormap = matplotlib.cm.RdBu_r
+    cmap: matplotlib.colors.Colormap = field(default_factory=lambda: matplotlib.cm.RdBu_r)
     min_level: float = math.nan
     max_level: float = math.nan
 
