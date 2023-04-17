@@ -7,7 +7,7 @@ import numpy as np
 import types
 import math
 import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import SimpleNamespace
 from typing import Any
 from enum import Enum
@@ -256,7 +256,7 @@ class Order:
     qty: float = math.nan
     reason_code: str = ReasonCode.NONE
     time_in_force: TimeInForce = TimeInForce.FOK
-    properties: SimpleNamespace = SimpleNamespace()
+    properties: SimpleNamespace = field(default_factory=SimpleNamespace)
     status: OrderStatus = OrderStatus.OPEN
         
     def is_open(self) -> bool:
