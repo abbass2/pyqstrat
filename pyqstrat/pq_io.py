@@ -194,6 +194,7 @@ def hdf5_copy(in_filename: str, in_key: str, out_filename: str, out_key: str | N
                 del outf[out_key]
             outf.copy(inf[in_key], outf, out_key + '_tmp')
             outf.move(out_key + '_tmp', out_key)
+            outf.flush()
 
 
 def test_hdf5_to_df():
