@@ -88,7 +88,9 @@ def hdf5_to_np_arrays(filename: str, key: str) -> dict[str, np.ndarray]:
         '''
     ret: dict[str, np.ndarray] = {}
     with h5py.File(filename, 'r') as f:
-        assert_(key in f, f'{key} not found in {filename}')
+        if key not in f:
+            _logger.info(f'{key} not found in {filename}')
+            return dict()
         grp = f[key]
         assert_('type' in grp.attrs and grp.attrs['type'] == 'dataframe', f'{key} not a dataframe')
         columns = grp.attrs['columns'].split(',')
@@ -130,6 +132,7 @@ def hdf5_to_df(filename: str, key: str) -> pd.DataFrame:
     Read a pandas dataframe previously written out using df_to_hdf5 or np_arrays_to_hdf5
     '''
     arrays = hdf5_to_np_arrays(filename, key)
+    if not len(arrays): return pd.DataFrame()
     array_dict = {name: array for name, array in arrays.items()}
     return pd.DataFrame(array_dict)
 
@@ -150,7 +153,7 @@ def hdf5_repack(in_filename: str, out_filename: str) -> None:
     os.rename(out_filename + '.tmp', out_filename)
     
 
-def hdf5_copy(in_filename: str, in_key: str, out_filename: str, out_key: str, skip_if_exists: bool = True) -> None:
+def hdf5_copy(in_filename: str, in_key: str, out_filename: str, out_key: str | None = None, skip_if_exists: bool = True) -> None:
     '''
     Recursively copy groups from input filename to output filename.
     Args:
@@ -176,19 +179,20 @@ def hdf5_copy(in_filename: str, in_key: str, out_filename: str, out_key: str, sk
     ...    assert_(key in f)
     
     '''
+    if out_key is None: out_key = in_key
     with h5py.File(in_filename, 'r') as inf:
         assert_(in_key in inf, f'could not find {in_key} in {in_filename}')
         with h5py.File(out_filename, 'a') as outf:
-            _logger.info(f'copying {in_key}')
-            if out_key in outf:
-                if skip_if_exists:
-                    _logger.info(f'{out_key} already exists in {out_filename}, skipping')
-                    return
-                _logger.info(f'replacing {out_key} in {out_filename}')
-                del outf[out_key]
             if out_key + '_tmp' in outf:
                 del outf[out_key + '_tmp']
-            inf.copy(inf[in_key], outf, out_key + '_tmp')
+            # _logger.info(f'copying {in_key}')
+            if out_key in outf:
+                if skip_if_exists:
+                    # _logger.info(f'{out_key} already exists in {out_filename}, skipping')
+                    return
+                # _logger.info(f'replacing {out_key} in {out_filename}')
+                del outf[out_key]
+            outf.copy(inf[in_key], outf, out_key + '_tmp')
             outf.move(out_key + '_tmp', out_key)
 
 
