@@ -243,6 +243,7 @@ def _get_calc_timestamps(timestamps: np.ndarray, pnl_calc_time: int) -> np.ndarr
     return np.unique(timestamps[calc_indices])
 
 
+# =======
 def _net_trade(stack: deque, trade: Trade) -> RoundTripTrade | None:
     if not len(stack) or np.sign(trade.qty) == np.sign(stack[0].qty):
         stack.append(trade)
@@ -250,7 +251,9 @@ def _net_trade(stack: deque, trade: Trade) -> RoundTripTrade | None:
     
     entry = stack[0]
     qty = min(abs(entry.qty), abs(trade.qty)) * np.sign(entry.qty)
-    pnl = qty * (trade.price - entry.price) * entry.contract.multiplier - trade.commission - entry.commission - trade.fee - entry.fee
+    entry_fraction = abs(qty / entry.qty)
+    exit_fraction = abs(qty / trade.qty)
+    pnl = qty * (trade.price - entry.price) * entry.contract.multiplier - trade.commission * exit_fraction - entry.commission * entry_fraction
     entry_reason_code = entry.order.reason_code if entry.order else ''
     exit_reason_code = trade.order.reason_code if trade.order else ''
     rt = RoundTripTrade(entry.contract, 
@@ -259,12 +262,14 @@ def _net_trade(stack: deque, trade: Trade) -> RoundTripTrade | None:
                         qty, 
                         entry.price, trade.price, 
                         entry_reason_code, exit_reason_code,
-                        entry.commission, trade.commission,
+                        entry.commission * entry_fraction, trade.commission * exit_fraction,
                         entry.properties, trade.properties,
                         pnl)
     resid = entry.qty - qty
     entry.qty -= qty
+    entry.commission *= (1 - entry_fraction)
     trade.qty += qty
+    trade.commission *= (1 - exit_fraction)
     if resid == 0:
         stack.popleft()
     return rt
@@ -285,22 +290,105 @@ def _roundtrip_trades(trades: list[Trade],
     ...    trades.append(Trade(contract, order, timestamp, qty, prices[i]))
     >>> rts = _roundtrip_trades(trades, 'AAPL')
     >>> assert [(rt.qty, rt.entry_price, rt.exit_price, rt.net_pnl) for rt in rts] == [
-    ...    (50, 9, 10, 50.0), (50, 9, 11, 100.0), (20, 8, 11, 60.0), (-10, 11, 12, -10.0)]
+    ...    (50, 9, 10, 50.0), (50, 9, 11, 100.0), (20, 8, 11, 60.0), (-10, 11, 12, -10.0), (-40, 11, np.nan, 0.0)]
     '''
-    rts: list[RoundTripTrade] = []
+    rtt: list[RoundTripTrade] = []
     stacks: dict[str, deque] = defaultdict(deque)
-
-    for _trade in trades:
+    _trades = copy.deepcopy(trades)
+    
+    # Keep track of index
+    for i, trade in enumerate(_trades):
+        trade.properties.index = i
+        
+    for _trade in _trades:
         trade = copy.deepcopy(_trade)
         while True:
             rt = _net_trade(stacks[trade.contract.symbol], trade)
             if rt is None: break
-            rts.append(rt)
+            rtt.append(rt)
             if trade.qty == 0: break
-
-    return [rt for rt in rts if (np.isnat(start_date) or rt.entry_timestamp >= start_date) and (
-        np.isnat(end_date) or rt.exit_timestamp <= end_date) and (
+                
+    open_trades = [trade for trades in stacks.values() for trade in trades]
+        
+    open_rtt = [RoundTripTrade(open_trade.contract,
+                               open_trade.order, None, 
+                               open_trade.timestamp, np.datetime64('NaT'),
+                               open_trade.qty,
+                               open_trade.price, np.nan, 
+                               open_trade.order.reason_code, None,
+                               open_trade.commission, np.nan,
+                               open_trade.properties, None,
+                               0.) for open_trade in open_trades]
+    rtt = rtt + open_rtt
+    rtt.sort(key=lambda rt: rt.entry_properties.index)
+    for i, rt in enumerate(rtt):
+        rt.entry_properties.entry_index = rt.entry_properties.index
+        rt.entry_properties.index = i
+        
+    rtt = [rt for rt in rtt if (np.isnat(start_date) or rt.entry_timestamp >= start_date) and (
+        np.isnat(end_date) or np.isnat(rt.exit_timestamp) or rt.exit_timestamp <= end_date) and (
         contract_group is None or rt.contract.contract_group == contract_group)]
+    return rtt
+
+
+# def _net_trade(stack: deque, trade: Trade) -> RoundTripTrade | None:
+#     if not len(stack) or np.sign(trade.qty) == np.sign(stack[0].qty):
+#         stack.append(trade)
+#         return None
+    
+#     entry = stack[0]
+#     qty = min(abs(entry.qty), abs(trade.qty)) * np.sign(entry.qty)
+#     pnl = qty * (trade.price - entry.price) * entry.contract.multiplier - trade.commission - entry.commission - trade.fee - entry.fee
+#     entry_reason_code = entry.order.reason_code if entry.order else ''
+#     exit_reason_code = trade.order.reason_code if trade.order else ''
+#     rt = RoundTripTrade(entry.contract, 
+#                         entry.order, trade.order, 
+#                         entry.timestamp, trade.timestamp,
+#                         qty, 
+#                         entry.price, trade.price, 
+#                         entry_reason_code, exit_reason_code,
+#                         entry.commission, trade.commission,
+#                         entry.properties, trade.properties,
+#                         pnl)
+#     resid = entry.qty - qty
+#     entry.qty -= qty
+#     trade.qty += qty
+#     if resid == 0:
+#         stack.popleft()
+#     return rt
+
+
+# def _roundtrip_trades(trades: list[Trade],
+#                       contract_group: ContractGroup | None = None, 
+#                       start_date: np.datetime64 = NAT, 
+#                       end_date: np.datetime64 = NAT) -> list[RoundTripTrade]:
+#     '''
+#     >>> qtys = [100, -50, 20, -120, 10]
+#     >>> prices = [9, 10, 8, 11, 12]                    
+#     >>> trades = []
+#     >>> contract = SimpleNamespace(symbol='AAPL', contract_group='AAPL', multiplier=1)
+#     >>> order = SimpleNamespace(reason_code='DUMMY')
+#     >>> for i, qty in enumerate(qtys):
+#     ...    timestamp = np.datetime64('2022-11-05 08:00') + np.timedelta64(i, 'm')
+#     ...    trades.append(Trade(contract, order, timestamp, qty, prices[i]))
+#     >>> rts = _roundtrip_trades(trades, 'AAPL')
+#     >>> assert [(rt.qty, rt.entry_price, rt.exit_price, rt.net_pnl) for rt in rts] == [
+#     ...    (50, 9, 10, 50.0), (50, 9, 11, 100.0), (20, 8, 11, 60.0), (-10, 11, 12, -10.0)]
+#     '''
+#     rts: list[RoundTripTrade] = []
+#     stacks: dict[str, deque] = defaultdict(deque)
+
+#     for _trade in trades:
+#         trade = copy.deepcopy(_trade)
+#         while True:
+#             rt = _net_trade(stacks[trade.contract.symbol], trade)
+#             if rt is None: break
+#             rts.append(rt)
+#             if trade.qty == 0: break
+
+#     return [rt for rt in rts if (np.isnat(start_date) or rt.entry_timestamp >= start_date) and (
+#         np.isnat(end_date) or rt.exit_timestamp <= end_date) and (
+#         contract_group is None or rt.contract.contract_group == contract_group)]
 
 
 class Account:

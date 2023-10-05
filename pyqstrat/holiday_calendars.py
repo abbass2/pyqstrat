@@ -205,8 +205,8 @@ class Calendar:
         >>> warnings.filterwarnings(action = 'ignore', category = pd.errors.PerformanceWarning)
         >>> dates2 = dates + increments * dates.freq
         >>> df = pd.DataFrame({'x': dates, 'y' : dates2})
-        >>> df.iloc[4]['x'] = np.nan
-        >>> df.iloc[6]['y'] = np.nan
+        >>> df.iloc[4]['x'] = np.datetime64('NaT')
+        >>> df.iloc[6]['y'] = np.datetime64('NaT')
         >>> nyse = Calendar.get_calendar(Calendar.NYSE)
         >>> np.set_printoptions(formatter = {'float' : lambda x : f'{x:.1f}'})  # After numpy 1.13 positive floats don't have a leading space for sign
         >>> print(nyse.num_trading_days(df.x, df.y))
