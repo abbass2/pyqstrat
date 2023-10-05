@@ -217,11 +217,16 @@ class Calendar:
         # np.busday_count does not like nat dates
         if iterable:
             assert_(isinstance(s_tmp, Iterable))
-            ret = np.full(len(s_tmp), np.nan)  # type: ignore
-            mask = ~(np.isnat(s_tmp) | np.isnat(e_tmp))
-            count = np.busday_count(s_tmp[mask], e_tmp[mask], busdaycal=self.bus_day_cal)  # type: ignore
-            ret[mask] = count
-            return ret
+            # ret = np.full(len(s_tmp), np.nan)  # type: ignore
+            # mask = ~(np.isnat(s_tmp) | np.isnat(e_tmp))
+            mask = (np.isnat(s_tmp) | np.isnat(e_tmp))
+            s_tmp[mask] = np.datetime64('1900-01-01')  # type: ignore
+            e_tmp[mask] = np.datetime64('2100-01-01')  # type: ignore
+            count = np.busday_count(s_tmp, e_tmp, busdaycal=self.bus_day_cal)  # type: ignore
+            count = np.where(count == 51541, np.nan, count)
+            # count = np.busday_count(s_tmp[mask], e_tmp[mask], busdaycal=self.bus_day_cal)  # type: ignore
+            # ret[mask] = count
+            return count
         else:
             if np.isnat(s_tmp) or np.isnat(s_tmp): return np.nan
             count = np.busday_count(s_tmp, e_tmp, busdaycal=self.bus_day_cal)  # type: ignore
