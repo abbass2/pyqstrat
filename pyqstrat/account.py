@@ -250,7 +250,7 @@ def _net_trade(stack: deque, trade: Trade) -> RoundTripTrade | None:
     
     entry = stack[0]
     qty = min(abs(entry.qty), abs(trade.qty)) * np.sign(entry.qty)
-    pnl = qty * (trade.price - entry.price) * entry.contract.multiplier - trade.commission - entry.commission
+    pnl = qty * (trade.price - entry.price) * entry.contract.multiplier - trade.commission - entry.commission - trade.fee - entry.fee
     entry_reason_code = entry.order.reason_code if entry.order else ''
     exit_reason_code = trade.order.reason_code if trade.order else ''
     rt = RoundTripTrade(entry.contract, 
