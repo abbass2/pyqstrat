@@ -311,13 +311,19 @@ def _roundtrip_trades(trades: list[Trade],
     open_trades = [trade for trades in stacks.values() for trade in trades]
         
     open_rtt = [RoundTripTrade(open_trade.contract,
-                               open_trade.order, None, 
-                               open_trade.timestamp, np.datetime64('NaT'),
+                               open_trade.order, 
+                               None,
+                               open_trade.timestamp, 
+                               np.datetime64('NaT'),
                                open_trade.qty,
-                               open_trade.price, np.nan, 
-                               open_trade.order.reason_code, None,
-                               open_trade.commission, np.nan,
-                               open_trade.properties, None,
+                               open_trade.price, 
+                               np.nan, 
+                               open_trade.order.reason_code, 
+                               None,
+                               open_trade.commission, 
+                               np.nan,
+                               open_trade.properties, 
+                               SimpleNamespace(),
                                0.) for open_trade in open_trades]
     rtt = rtt + open_rtt
     rtt.sort(key=lambda rt: rt.entry_properties.index)

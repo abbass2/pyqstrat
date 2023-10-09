@@ -73,7 +73,7 @@ def set_ipython_defaults(jupyter_multiple_display=True) -> None:
     get_ipython().run_line_magic('matplotlib', 'inline')  # type: ignore # noqa: 89  
     
     if jupyter_multiple_display:
-        InteractiveShell.ast_node_interactivity = 'all'
+        InteractiveShell.ast_node_interactivity = 'all'  # type: ignore # not sure why this is needed
     
 
 def set_defaults(df_float_sf: int = 9, 

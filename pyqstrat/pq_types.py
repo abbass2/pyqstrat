@@ -418,7 +418,7 @@ class Trade:
 class RoundTripTrade:
     contract: Contract
     entry_order: Order
-    exit_order: Order
+    exit_order: Order | None
     entry_timestamp: np.datetime64
     exit_timestamp: np.datetime64
     qty: int
@@ -428,9 +428,9 @@ class RoundTripTrade:
     exit_reason: str | None
     entry_commission: float
     exit_commission: float
-    entry_properties: SimpleNamespace | None
-    exit_properties: SimpleNamespace | None
-    net_pnl: float
+    entry_properties: SimpleNamespace = SimpleNamespace()
+    exit_properties: SimpleNamespace = SimpleNamespace()
+    net_pnl: float = np.nan
     
     
 if __name__ == "__main__":

@@ -103,7 +103,7 @@ class VWAPMarketSimulator:
             if not isinstance(order, VWAPOrder): continue
             cg = order.contract.contract_group
             inds = indicators.get(cg)
-            assert_(inds, f'indicators not found for contract group: {cg} {timestamp} {i}')
+            assert_(inds is not None, f'indicators not found for contract group: {cg} {timestamp} {i}')
             price_ind = getattr(inds, self.price_indicator)  # type: ignore
             assert_(price_ind is not None, f'indicator: {self.price_indicator} not found for contract group: {cg} {timestamp} {i}')
             volume_ind = getattr(inds, self.volume_indicator)  # type: ignore
@@ -246,7 +246,8 @@ class ClosePositionExitRule:
                 exit_price_est += self.limit_increment
             else:
                 exit_price_est -= self.limit_increment
-            return LimitOrder(contract, timestamp, -qty, exit_price_est, self.reason_code)
+            limit_order = LimitOrder(contract=contract, timestamp=timestamp, qty=-qty, limit_price=exit_price_est, reason_code=self.reason_code)
+            return [limit_order]
         order = MarketOrder(contract=contract, 
                             timestamp=timestamp, 
                             qty=-qty, 
@@ -273,7 +274,7 @@ class IndicatorSignal:
 @dataclass
 class StrategyBuilder:
     def __init__(self, data: pd.DataFrame | None = None) -> None:
-        if data is not None: assert_(len(data), 'data cannot be empty')
+        if data is not None: assert_(len(data) > 0, 'data cannot be empty')
         self.data: pd.DataFrame = data
         self.contract_groups: list[ContractGroup] = []
         self.price_function: PriceFunctionType | None = None
@@ -361,22 +362,22 @@ class StrategyBuilder:
         self.rules.append((column_name, rule_function, sig_name, None, position_filter))
 
     def __call__(self) -> Strategy:
-        assert_(len(self.contract_groups), 'contract_groups cannot be empty')
-        assert_(self.price_function, 'price function must be set')
+        assert_(len(self.contract_groups) > 0, 'contract_groups cannot be empty')
+        assert_(self.price_function is not None, 'price function must be set')
         if self.timestamps is None:
             assert_(self.data is not None, 'data cannot be None if timestamps is not set')
         _timestamps = self.data['timestamp'].values if self.timestamps is None else self.timestamps
         
         strat = Strategy(_timestamps, 
                          self.contract_groups, 
-                         self.price_function, 
+                         self.price_function,  # type: ignore
                          self.starting_equity, 
                          self.pnl_calc_time, 
                          self.trade_lag, 
                          self.run_final_calc, 
                          self.strategy_context)
         
-        assert_(self.rules is not None and len(self.rules), 'rules cannot be empty or None')
+        assert_(self.rules is not None and len(self.rules) > 0, 'rules cannot be empty or None')
         for name, indicator, contract_groups, depends_on in self.indicators:
             strat.add_indicator(name, indicator, contract_groups, depends_on)
              
@@ -387,9 +388,10 @@ class StrategyBuilder:
             strat.add_rule(name, rule_function, signal_name, sig_true_values, position_filter)
         
         if not len(self.market_sims):
-            strat.add_market_sim(SimpleMarketSimulator(self.price_function))
+            strat.add_market_sim(SimpleMarketSimulator(self.price_function))  # type: ignore
         else:
-            [strat.add_market_sim(market_sim) for market_sim in self.market_sims]
+            for market_sim in self.market_sims:
+                strat.add_market_sim(market_sim)
             
         return strat
     
