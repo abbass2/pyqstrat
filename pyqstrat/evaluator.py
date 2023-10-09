@@ -340,7 +340,7 @@ class Evaluator:
             initial_metrics: a dictionary of string name -> metric.  metric can be any object including a scalar, 
                 an array or a tuple
         """
-        assert_(type(initial_metrics) == dict)
+        assert_(isinstance(initial_metrics, dict))
         self.metric_values: dict[str, Any] = initial_metrics.copy()
         self._metrics: dict[str, tuple[Callable, Sequence[str]]] = {}
         
@@ -460,8 +460,8 @@ def compute_return_metrics(timestamps: np.ndarray,
     >>> assert(all(metrics['returns_3yr'] == np.array([0.01, 0.02, 0, -0.015])))
     '''
     assert_(starting_equity > 0.)
-    assert_(type(rets) == np.ndarray and rets.dtype == np.float64)
-    assert_(type(timestamps) == np.ndarray and np.issubdtype(timestamps.dtype, np.datetime64) and monotonically_increasing(timestamps))
+    assert_(isinstance(rets, np.ndarray) and rets.dtype == np.float64)
+    assert_(isinstance(timestamps, np.ndarray) and np.issubdtype(timestamps.dtype, np.datetime64) and monotonically_increasing(timestamps))
     non_nan_rets = rets[np.isfinite(rets)]
     assert_(np.all(non_nan_rets > -1), f'found returns < -1: {non_nan_rets[non_nan_rets <= -1]}')  # type: ignore
     

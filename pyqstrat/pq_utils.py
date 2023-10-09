@@ -485,7 +485,7 @@ def infer_frequency(timestamps: np.ndarray) -> float:
 
 def series_to_array(series: pd.Series) -> np.ndarray:
     '''Convert a pandas series to a numpy array.  If the object is not a pandas Series return it back unchanged'''
-    if type(series) == pd.Series: return series.values
+    if isinstance(series, pd.Series): return series.values
     return series
 
 
