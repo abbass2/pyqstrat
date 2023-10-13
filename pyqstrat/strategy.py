@@ -806,7 +806,9 @@ class Strategy:
                          display_summary: bool = True, 
                          float_precision: int = 4, 
                          return_metrics: bool = False) -> dict[str, Any] | None:
-        '''Returns a dictionary of common return metrics.
+        '''Computes return metrics and does one or more of the following.
+        You can set plot, display_summary and return_metrics arguments to print them, plot them, or return them
+        respectively
         
         Args:
             contract_group (:obj:`ContractGroup`, optional): Contract group to evaluate or None (default) for all contract groups
