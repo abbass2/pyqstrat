@@ -9,6 +9,7 @@ sortedcontainers>=2.0.5
 h5py>=2.9
 ipywidgets>=7.5
 plotly>=4.10
+pandas_market_calendars
 types-python-dateutil>=0.1
 cython
 pyyaml

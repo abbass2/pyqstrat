@@ -60,7 +60,7 @@ def get_future_code(month: int) -> str:
 
 class EminiFuture:
     
-    calendar = Calendar.get_calendar(Calendar.NYSE)
+    calendar = Calendar.get_calendar('NYSE')
 
     @staticmethod
     def get_current_symbol(curr_date: datetime.date) -> str:
@@ -128,7 +128,7 @@ class EminiFuture:
 
 class EminiOption:
     
-    calendar = Calendar.get_calendar(Calendar.NYSE)
+    calendar = Calendar.get_calendar('NYSE')
 
     @staticmethod
     def decode_symbol(name: str) -> tuple[weekday, int, int, int]:
