@@ -10,7 +10,7 @@ import itertools
 import concurrent
 import concurrent.futures
 import multiprocessing as mp
-from pyqstrat.pq_utils import has_display, get_child_logger
+from pyqstrat.pq_utils import get_child_logger
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -190,7 +190,6 @@ class Optimizer:
         if len(self.experiments) == 0: 
             _logger.warning('No experiments found')
             return go.Figure()
-        if not has_display(): return go.Figure()
 
         # Get rid of nans
         experiments = [experiment for experiment in self.experiments if experiment.valid()]
@@ -286,7 +285,6 @@ class Optimizer:
         if len(self.experiments) == 0:
             _logger.warning('No experiments found')
             return
-        if not has_display(): return go.Figure()
 
         # Get rid of nans
         experiments = [experiment for experiment in self.experiments if experiment.valid()]

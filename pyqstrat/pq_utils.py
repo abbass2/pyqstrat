@@ -15,25 +15,9 @@ from typing import Any, Callable
 
 
 SEC_PER_DAY = 3600 * 24
-_HAS_DISPLAY = None
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 LOG_FORMAT = '[%(asctime)s.%(msecs)03d %(funcName)s] %(message)s'
-
-
-def has_display() -> bool:
-    '''
-    If we are running in unit test mode or on a server, then don't try to draw graphs, etc.
-    '''
-    global _HAS_DISPLAY
-    if _HAS_DISPLAY is not None: return _HAS_DISPLAY
-    
-    _HAS_DISPLAY = True
-    try:
-        plt.figure()
-    except tkinter.TclError:
-        _HAS_DISPLAY = False
-    return _HAS_DISPLAY
 
 
 def shift_np(array: np.ndarray, n: int, fill_value: Any = None) -> np.ndarray:
@@ -89,8 +73,6 @@ def set_defaults(df_float_sf: int = 9,
     if df_display_max_columns is not None: pd.options.display.max_columns = df_display_max_columns
     if np_seterr is not None: np.seterr(np_seterr)  # type: ignore
     pd.options.mode.chained_assignment = None  # Turn off bogus 'view' warnings from pandas when modifying dataframes
-    # Display all cell outputs
-    plt.rcParams.update({'figure.max_open_warning': 100})  # For unit tests, avoid warning when opening more than 20 figures
     if in_ipython():
         set_ipython_defaults(jupyter_multiple_display)
     
