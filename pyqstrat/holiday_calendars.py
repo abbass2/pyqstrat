@@ -127,39 +127,22 @@ def _normalize(start: DateTimeType,
     return s, e  # type: ignore
 
 
-# def read_holidays(calendar_name: str, dirname: str | None = None) -> np.ndarray:
-#     '''
-#     Reads a csv with a holidays column containing holidays (not including weekends)
-#     '''
-    
-#     curr_frame: FrameType = inspect.currentframe()  # type: ignore  # wants Optional[FrameType]
-#     if dirname is None: dirname = os.path.dirname(os.path.abspath(inspect.getfile(curr_frame)))
-#     if '/ipykernel_' in dirname: dirname = os.getcwd()  # sometimes we get jupyter cache dir
-    
-#     if not os.path.isdir(dirname + '/refdata'):
-#         if os.path.isdir(dirname + '/../refdata'):
-#             dirname = dirname + '/../'
-#         else:
-#             raise Exception(f'path {dirname}/refdata and {dirname}/../refdata do not exist')
-#     df = pd.read_csv(f'{dirname}/refdata/holiday_calendars/{calendar_name}.csv')
-#     holidays = pd.to_datetime(df.holidays, format='%Y-%m-%d').values.astype('M8[D]')
-#     return holidays
-
-def read_holidays(calendar_name: str) -> np.ndarray:
-    cal = mcal.get_calendar(calendar_name)
-    holidays = cal.holidays()
-    return np.array([hol for hol in holidays.holidays])
-    
-
 class Calendar:
     
-    def __init__(self, holidays: np.ndarray) -> None:
+    _bus_day_calendars: dict[str, np.busdaycalendar] = {}
+    
+    def __init__(self, calendar_name: str) -> None:
         '''
-        Do not use this function directly.  Use Calendar.get_calendar instead
+        Create a calendar object
         Args:
-            holidays (np.array of datetime64[D]): holidays for this calendar, excluding weekends
+            calendar_name (str): name of calendar as defined in the pandas_market_calendars package
         '''
-        self.bus_day_cal = np.busdaycalendar(holidays=holidays)
+        if calendar_name not in Calendar._bus_day_calendars:
+            cal = mcal.get_calendar(calendar_name)
+            holidays = cal.holidays()
+            _holidays = np.array([hol for hol in holidays.holidays])
+            Calendar._bus_day_calendars[calendar_name] = np.busdaycalendar(holidays=_holidays)
+        self.bus_day_cal = Calendar._bus_day_calendars[calendar_name]
         
     def is_trading_day(self, dates: DateTimeType) -> bool | np.ndarray:
         '''
@@ -171,12 +154,12 @@ class Calendar:
             Whether this date is a trading day
         
         >>> import datetime
-        >>> eurex = Calendar.get_calendar('EUREX')
+        >>> eurex = Calendar('EUREX')
         >>> eurex.is_trading_day('2016-12-25')
         False
         >>> eurex.is_trading_day(datetime.date(2016, 12, 22))
         True
-        >>> nyse = Calendar.get_calendar('NYSE')
+        >>> nyse = Calendar('NYSE')
         >>> nyse.is_trading_day('2017-04-01') # Weekend
         False
         >>> nyse.is_trading_day(np.arange('2017-04-01', '2017-04-09', dtype = np.datetime64)) # doctest:+ELLIPSIS
@@ -197,7 +180,7 @@ class Calendar:
         '''
         Count the number of trading days between two date series including those two dates
         
-        >>> eurex = Calendar.get_calendar('EUREX')
+        >>> eurex = Calendar('EUREX')
         >>> eurex.num_trading_days('2009-01-01', '2011-12-31')
         766.0
         >>> dates = np.arange(np.datetime64('2013-01-01'),np.datetime64('2013-01-09'), np.timedelta64(1, 'D'))
@@ -209,7 +192,7 @@ class Calendar:
         >>> dates[4] = np.datetime64('NaT')
         >>> dates2[6] = np.datetime64('NaT')
         >>> df = pd.DataFrame({'x': dates, 'y' : dates2})
-        >>> nyse = Calendar.get_calendar('NYSE')
+        >>> nyse = Calendar('NYSE')
         >>> np.set_printoptions(formatter = {'float' : lambda x : f'{x:.1f}'})  # After numpy 1.13 positive floats don't have a leading space for sign
         >>> print(nyse.num_trading_days(df.x, df.y))
         [3.0 0.0 1.0 5.0 nan 8.0 nan 20.0]
@@ -241,7 +224,7 @@ class Calendar:
         '''
         Get back a list of numpy dates that are trading days between the start and end
         
-        >>> nyse = Calendar.get_calendar('NYSE')
+        >>> nyse = Calendar('NYSE')
         >>> nyse.get_trading_days('2005-01-01', '2005-01-08')
         array(['2005-01-03', '2005-01-04', '2005-01-05', '2005-01-06', '2005-01-07'], dtype='datetime64[D]')
         >>> nyse.get_trading_days(datetime.date(2005, 1, 1), datetime.date(2005, 2, 1))
@@ -267,7 +250,7 @@ class Calendar:
     
     def third_friday_of_month(self, month: int, year: int, roll: str = 'backward') -> np.datetime64:
         '''
-        >>> nyse = Calendar.get_calendar('NYSE')
+        >>> nyse = Calendar('NYSE')
         >>> nyse.third_friday_of_month(3, 2017)
         numpy.datetime64('2017-03-17')
         '''
@@ -307,7 +290,7 @@ class Calendar:
         Return:
             The datetime num_days trading days after start
             
-        >>> calendar = Calendar.get_calendar('NYSE')
+        >>> calendar = Calendar('NYSE')
         >>> calendar.add_trading_days(datetime.date(2015, 12, 24), 1)
         numpy.datetime64('2015-12-28')
         >>> calendar.add_trading_days(np.datetime64('2017-04-15'), 0, roll = 'preceding') # 4/14/2017 is a Friday and a holiday
@@ -328,22 +311,6 @@ class Calendar:
         out = out + time_delta  # for some reason += does not work correctly here.
         return out
         
-    @staticmethod
-    def get_calendar(exchange_name: str) -> 'Calendar':
-        '''
-        Get a calendar object for the given exchange:
-        
-        Args:
-            exchange_name: The exchange for which you want a calendar.  'NYSE', Calendar.EUREX are predefined.
-            If you want to add a new calendar, use the add_calendar class level function
-        
-        Return:
-            The calendar object
-        '''
-        
-        holidays = read_holidays(exchange_name)
-        return Calendar(holidays)
-    
 
 def get_date_from_weekday(weekday: int, year: int, month: int, week: int) -> np.datetime64:
     '''
