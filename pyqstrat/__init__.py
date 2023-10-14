@@ -9,7 +9,6 @@ from pyqstrat.account import *
 from pyqstrat.strategy import *
 from pyqstrat.portfolio import *
 from pyqstrat.optimize import *
-from pyqstrat.plot import *
 from pyqstrat.interactive_plot import *
 from pyqstrat.evaluator import *
 from pyqstrat.pyqstrat_cpp import *
