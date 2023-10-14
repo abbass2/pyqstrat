@@ -68,8 +68,6 @@ for:
     - "%CONDA_ROOT%\\Scripts\\activate test-environment"    
     - conda list
     - python setup.py build_ext --inplace
-    - python -c 'import os\nprint(os.environ["DISPLAY"])'
-':0.0'
 
   test_script:
     - python --version
