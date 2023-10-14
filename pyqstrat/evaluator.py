@@ -593,7 +593,7 @@ def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, show=Tru
                   x1=mdd_date, 
                   annotation_text="max dd", 
                   annotation_position="top left",
-                  annotation=dict(font_size=20),
+                  annotation=dict(font_size=15),
                   fillcolor="red", 
                   opacity=0.25, 
                   line_width=0)
