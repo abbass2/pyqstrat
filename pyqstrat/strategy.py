@@ -9,14 +9,12 @@ import sys
 from collections import defaultdict
 from pprint import pformat
 import math
-
+import plotly.graph_objects as go
 from pyqstrat.evaluator import compute_return_metrics, display_return_metrics, plot_return_metrics
 from pyqstrat.account import Account
 from pyqstrat.pq_types import ContractGroup, Contract, Order, Trade, RoundTripTrade, TimeInForce, OrderStatus
-from pyqstrat.plot import TimeSeries, trade_sets_by_reason_code, Subplot, Plot, LinePlotAttributes, FilledLinePlotAttributes
 from pyqstrat.pq_utils import series_to_array, assert_
 from types import SimpleNamespace
-import matplotlib as mpl
 from typing import Callable, Any, Union, Sequence
 from pyqstrat.pq_utils import get_child_logger
 
@@ -61,29 +59,6 @@ PlotPropertiesType = dict[str, dict[str, Any]]
 NAT = np.datetime64('NaT')
 
 _logger = get_child_logger(__name__)
-
-
-def _get_time_series_list(timestamps: np.ndarray, 
-                          names: list[str], 
-                          values: SimpleNamespace, 
-                          properties: PlotPropertiesType | None) -> list[TimeSeries]:
-    '''
-    For plotting, create a list of TimeSeries objects from the arrays in the values object
-    '''
-    ts_list = []
-    for name in names:
-        line_type: str | None = None
-        color: str | None = None
-        if properties is not None and name in properties:
-            if 'line_type' in properties[name]: line_type = properties[name]['line_type']
-            if 'color' in properties[name]: color = properties[name]['color']
-        y = getattr(values, name)
-        if not len(y): continue
-        if y.dtype.type in [np.str_, np.object_, np.datetime64]: continue
-        attrib = LinePlotAttributes(line_type=line_type, color=color)
-        ts = TimeSeries(name, timestamps, y, display_attributes=attrib)
-        ts_list.append(ts)
-    return ts_list
 
 
 class Strategy:
@@ -684,122 +659,7 @@ class Strategy:
         ret[0] = pnl.equity.values[0] / self.account.starting_equity - 1
         pnl['ret'] = ret
         return pnl
-    
-    def plot(self, 
-             contract_groups: Sequence[ContractGroup] | None = None, 
-             primary_indicators: Sequence[str] | None = None,
-             primary_indicators_dual_axis: Sequence[str] | None = None,
-             secondary_indicators: Sequence[str] | None = None,
-             secondary_indicators_dual_axis: Sequence[str] | None = None,
-             indicator_properties: PlotPropertiesType | None = None,
-             signals: Sequence[str] | None = None,
-             signal_properties: PlotPropertiesType | None = None, 
-             pnl_columns: Sequence[str] | None = None, 
-             title: str | None = None, 
-             figsize: tuple[int, int] = (20, 15), 
-             date_range: DateRangeType = (NAT, NAT),
-             date_format: str | None = None, 
-             sampling_frequency: str | None = None, 
-             trade_marker_properties: PlotPropertiesType | None = None, 
-             hspace: float = 0.15) -> None:
-        
-        '''
-        Plot indicators, signals, trades, position, pnl
-        
-        Args:
-            contract_groups: Contract groups to plot or None (default) for all contract groups. 
-            primary indicators: list of indicators to plot in the main indicator section. Default None (plot everything)
-            primary indicators: list of indicators to plot in the secondary indicator section. Default None (don't plot anything)
-            indicator_properties: If set, we use the line color, line type indicated for the given indicators
-            signals: Signals to plot.  Default None (plot everything).
-            plot_equity: If set, we plot the equity curve.  Default is True
-            title: Title of plot. Default None
-            figsize: Figure size.  Default (20, 15)
-            date_range: Used to restrict the date range of the graph. Default None
-            date_format: Date format for tick labels on x axis.  If set to None (default), will be selected based on date range. 
-                See matplotlib date format strings
-            sampling_frequency: Downsampling frequency.  The graph may get too busy if you have too many bars of data, 
-                so you may want to downsample before plotting.  See pandas frequency strings for possible values. Default None.
-            trade_marker_properties: A dictionary of order reason code -> marker shape, marker size, marker color for plotting trades
-                with different reason codes. By default we use the dictionary from the :obj:`ReasonCode` class
-            hspace: Height (vertical) space between subplots.  Default is 0.15
-        '''
-        if contract_groups is None: contract_groups = self.contract_groups
-        if isinstance(contract_groups, ContractGroup): contract_groups = [contract_groups]
-        if pnl_columns is None: pnl_columns = ['equity']
-        
-        for contract_group in contract_groups:
-            primary_indicator_names = [ind_name for ind_name in self.indicator_values[contract_group].__dict__
-                                       if hasattr(self.indicator_values[contract_group], ind_name)]
-            if primary_indicators:
-                primary_indicator_names = list(set(primary_indicator_names).intersection(primary_indicators))
-            secondary_indicator_names: list[str] = []
-            if secondary_indicators:
-                secondary_indicator_names = list(secondary_indicators)
-            signal_names = [sig_name for sig_name in self.signals.keys() if hasattr(self.signal_values[contract_group], sig_name)]
-            if signals:
-                signal_names = list(set(signal_names).intersection(signals))
                 
-            primary_indicator_list = _get_time_series_list(self.timestamps, primary_indicator_names, 
-                                                           self.indicator_values[contract_group], indicator_properties)
-            secondary_indicator_list = _get_time_series_list(self.timestamps, secondary_indicator_names, 
-                                                             self.indicator_values[contract_group], indicator_properties)
-            signal_list = _get_time_series_list(self.timestamps, signal_names, self.signal_values[contract_group], signal_properties)
-            df_pnl_ = self.df_pnl(contract_group)
-            pnl_list = [TimeSeries(pnl_column, 
-                                   timestamps=df_pnl_.timestamp.values, 
-                                   values=df_pnl_[pnl_column].values) for pnl_column in pnl_columns]
-            
-            trades = [trade for trade in self._trades if trade.order.contract and trade.order.contract.contract_group == contract_group]
-            if trade_marker_properties:
-                trade_sets = trade_sets_by_reason_code(trades, trade_marker_properties, remove_missing_properties=True)
-            else:
-                trade_sets = trade_sets_by_reason_code(trades)
-                
-            primary_indicator_subplot = Subplot(
-                primary_indicator_list + trade_sets,  # type: ignore # mypy does not allow adding heterogeneous lists
-                secondary_y=primary_indicators_dual_axis,
-                height_ratio=0.5, 
-                ylabel='Primary Indicators')
-            
-            if len(secondary_indicator_list):
-                secondary_indicator_subplot = Subplot(secondary_indicator_list, 
-                                                      secondary_y=secondary_indicators_dual_axis,
-                                                      height_ratio=0.5, 
-                                                      ylabel='Secondary Indicators')
-            signal_subplot = Subplot(signal_list, ylabel='Signals', height_ratio=0.167)
-            pnl_subplot = Subplot(pnl_list, ylabel='Equity', height_ratio=0.167, log_y=True, y_tick_format='${x:,.0f}')
-            position = df_pnl_.position.values
-            disp_attribs = FilledLinePlotAttributes()
-            pos_subplot = Subplot(
-                [TimeSeries('position', timestamps=df_pnl_.timestamp, values=position, display_attributes=disp_attribs)], 
-                ylabel='Position', height_ratio=0.167)
-            
-            title_full = title
-            if len(contract_groups) > 1:
-                if title is None: title = ''
-                title_full = f'{title} {contract_group.name}'
-                
-            plot_list = []
-            if len(primary_indicator_list): plot_list.append(primary_indicator_subplot)
-            if len(secondary_indicator_list): plot_list.append(secondary_indicator_subplot)
-            if len(signal_list): plot_list.append(signal_subplot)
-            if len(position): plot_list.append(pos_subplot)
-            if len(pnl_list): plot_list.append(pnl_subplot)
-            
-            if not len(plot_list): return
-            
-            _date_range = (np.datetime64(date_range[0]), np.datetime64(date_range[1]))
-                
-            plot = Plot(plot_list, 
-                        figsize=figsize, 
-                        date_range=_date_range, 
-                        date_format=date_format, 
-                        sampling_frequency=sampling_frequency, 
-                        title=title_full, 
-                        hspace=hspace)
-            plot.draw()
-            
     def evaluate_returns(self, 
                          contract_group: ContractGroup | None = None, 
                          plot: bool = True, 
@@ -826,7 +686,7 @@ class Strategy:
             return ev.metrics()
         return None
     
-    def plot_returns(self, contract_group: ContractGroup | None = None) -> tuple[mpl.figure.Figure, mpl.axes.Axes] | None:
+    def plot_returns(self, contract_group: ContractGroup | None = None) -> go.Figure:
         '''Display plots of equity, drawdowns and returns for the given contract group or for all contract groups if contract_group 
             is None (default)'''
         if contract_group is None:
