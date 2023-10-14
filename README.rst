@@ -26,9 +26,9 @@ Using this framework, you can:
 
 Installation
 ------------
-I would strongly recommend installing anaconda and creating an anaconda environment. I personally prefer miniconda which runs much faster than the original anaconda.  See https://github.com/conda-forge/miniforge for installation instructions.
+I would strongly recommend installing mamba and creating a mamba environment. See https://github.com/conda-forge/miniforge for installation instructions.
 
-pyqstrat relies on numpy, scipy, matplotlib and pandas which in turn use Fortran and C code that needs to be compiled.
+pyqstrat relies on numpy, scipy and pandas which in turn use Fortran and C code that needs to be compiled. pyqstrat also includes C++ code that will need to be compiled
 
 ::
 
@@ -50,26 +50,7 @@ The best way to get started is to go through this Jupyter notebook: `Building St
 Discussion
 ----------
 
-The `pyqstrat user group <https://groups.io/g/pyqstrat>`_ is the group used for pyqstrat discussions.
-
-
-Acknowledgements
-----------------
-
-Before building this, I looked at the following.  Although I ended up not using them, they are definitely worth looking at.
-
-`R quantstrat library <https://github.com/braverock/quantstrat>`_
-
-`Python backtrader project <https://www.backtrader.com>`_
-
-
-Some of the ideas I use in this framework come from the following books
-
-`Trading Systems: A New Approach to System Development and Portfolio Optimisation - Tomasini, Emilio and Jaekle, Urban <https://www.amazon.com/gp/product/1905641796/ref=oh_aui_search_detailpage?ie=UTF8&psc=1>`_
-
-`Machine Trading - Chan, Ernie <https://www.amazon.com/gp/product/1119219604>`_
-
-`Algorithmic Trading: Winning Strategies and Their Rationale - Chan, Ernie <https://www.amazon.com/gp/product/1118460146>`_
+The `pyqstrat user group <https://groups.io/g/pyqstrat>`_ is the group used for pyqstrat discussions. You can also add code issues via github
 
 
 Disclaimer
@@ -79,7 +60,7 @@ The software is provided on the conditions of the simplified BSD license.
 
 .. _Python: http://www.python.org
 
-.. |PyVersion| image:: https://img.shields.io/badge/python-3.7+-blue.svg
+.. |PyVersion| image:: https://img.shields.io/badge/python-3.10+-blue.svg
    :alt:
 
 .. |Status| image:: https://img.shields.io/badge/status-beta-green.svg

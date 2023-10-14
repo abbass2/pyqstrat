@@ -40,7 +40,7 @@ for:
     - conda update -q conda
     # Useful for debugging any issues with conda
     - conda info -a
-    - conda create -c conda-forge -q -n test-environment python=$PYTHON_VERSION pybind11 pytest pandas pandas_market_calendars numpy matplotlib=3.7 scipy ipython sortedcontainers libzip h5py statsmodels mypy flake8 plotly ipywidgets python-dateutil types-python-dateutil cython pyyaml
+    - conda create -c conda-forge -q -n test-environment python=$PYTHON_VERSION pybind11 pytest pandas pandas_market_calendars numpy scipy ipython sortedcontainers libzip h5py statsmodels mypy flake8 plotly ipywidgets python-dateutil types-python-dateutil cython pyyaml
     - source activate test-environment
     - conda list
     - CXX=g++-9 CC=g++-9 python setup.py build_ext --inplace
@@ -64,7 +64,7 @@ for:
     - echo %PATH%
     - conda config --set always_yes yes
     - conda info -a
-    - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% pybind11 pandas pandas_market_calendars numpy matplotlib=3.7 pytest ipython sortedcontainers libzip h5py statsmodels mypy flake8 plotly ipywidgets python-dateutil types-python-dateutil cython pyyaml
+    - conda create -c conda-forge -q -n test-environment python=%PYTHON_VERSION% pybind11 pandas pandas_market_calendars numpy pytest ipython sortedcontainers libzip h5py statsmodels mypy flake8 plotly ipywidgets python-dateutil types-python-dateutil cython pyyaml
     - "%CONDA_ROOT%\\Scripts\\activate test-environment"    
     - conda list
     - python setup.py build_ext --inplace
