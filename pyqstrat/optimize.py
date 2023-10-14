@@ -161,6 +161,7 @@ class Optimizer:
                 x: str, 
                 y: str, 
                 z: str = 'all', 
+                markers: bool = True,
                 filter_func: Callable[[pd.DataFrame], pd.DataFrame] | None = None,
                 height: int = 1000,
                 width: int = 0,
@@ -178,15 +179,12 @@ class Optimizer:
               "cost" 
               The name of another cost variable corresponding to the output from the cost function
               "all", which creates a subplot for cost plus all other costs
+            markers: If set, we show actual datapoints on the graph
             filter_func: A function that can be used to reduce the dataset before plotting.
                 For example, you may want to filter on a dimension beyond x, y, z to pick a single value
                 from that dimension
-            plot_type: surface or contour (default surface)
-            figsize: Figure size
-            interpolation: Can be ‘linear’, ‘nearest’ or ‘cubic’ for plotting z points between the ones passed in.  See scipy.interpolate.griddata for details
-            cmap: Colormap to use (default viridis).  See matplotlib colormap for details
-            marker: Adds a marker to each point in x, y, z to show the actual data used for interpolation.  You can set this to None to turn markers off.
-            hspace: Vertical space between subplots
+             marker: Adds a marker to each point in x, y, z to show the actual data used for interpolation.  You can set this to None to turn markers off.
+            vertical_spacing: Vertical space between subplots
          """
         
         if len(self.experiments) == 0: 
@@ -230,7 +228,6 @@ class Optimizer:
         df = _df.set_index(['x', 'y']).reindex(itertools.product(x, y)).reset_index()
 
         metrics = np.unique([metric[0] for metric in zvalues])
-        markers = False
         _z = np.full((len(metrics), len(x), len(y)), np.nan)
 
         for i, metric in enumerate(metrics):

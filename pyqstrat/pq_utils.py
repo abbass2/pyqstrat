@@ -2,12 +2,6 @@
 # $$_code
 # $$_ %%checkall
 from __future__ import annotations
-import matplotlib as mpl
-try:
-    import tkinter
-except (ImportError, ValueError):
-    mpl.use('Agg')  # Support running in headless mode
-import matplotlib.pyplot as plt
 import math
 import os
 import sys
@@ -70,7 +64,6 @@ def shift_np(array: np.ndarray, n: int, fill_value: Any = None) -> np.ndarray:
 
 def set_ipython_defaults(jupyter_multiple_display=True) -> None:
     from IPython.core.interactiveshell import InteractiveShell
-    get_ipython().run_line_magic('matplotlib', 'inline')  # type: ignore # noqa: 89  
     
     if jupyter_multiple_display:
         InteractiveShell.ast_node_interactivity = 'all'  # type: ignore # not sure why this is needed
@@ -80,7 +73,6 @@ def set_defaults(df_float_sf: int = 9,
                  df_display_max_rows: int = 200, 
                  df_display_max_columns: int = 99,
                  np_seterr: str = 'raise',
-                 mpl_figsize: tuple[int, int] = (8, 6),
                  jupyter_multiple_display=True) -> None:
     '''
     Set some display defaults to make it easier to view dataframes and graphs.
@@ -90,13 +82,11 @@ def set_defaults(df_float_sf: int = 9,
         df_display_max_rows: Number of rows to display for pandas dataframes when you print them (default 200).  Set to None to use pandas defaults
         df_display_max_columns: Number of columns to display for pandas dataframes when you print them (default 99).  Set to None to use pandas defaults
         np_seterr: Error mode for numpy warnings.  See numpy seterr function for details.  Set to None to use numpy defaults
-        mpl_figsize: Default figure size to use when displaying matplotlib plots (default 8,6).  Set to None to use defaults
         jupyter_multiple_display: If set, and you have multiple outputs in a Jupyter cell, output will contain all of them. Default True
     '''
     if df_float_sf is not None: pd.options.display.float_format = ('{:.' + str(df_float_sf) + 'g}').format
     if df_display_max_rows is not None: pd.options.display.max_rows = df_display_max_rows
     if df_display_max_columns is not None: pd.options.display.max_columns = df_display_max_columns
-    if mpl_figsize is not None: mpl.rcParams['figure.figsize'] = mpl_figsize
     if np_seterr is not None: np.seterr(np_seterr)  # type: ignore
     pd.options.mode.chained_assignment = None  # Turn off bogus 'view' warnings from pandas when modifying dataframes
     # Display all cell outputs
@@ -328,11 +318,6 @@ def percentile_of_score(a: np.ndarray) -> np.ndarray | None:
     assert_(isinstance(a, np.ndarray), f'expected numpy array, got: {a}')
     if not len(a): return None
     return np.argsort(np.argsort(a)) * 100. / (len(a) - 1)
-
-
-def date_2_num(d: np.datetime64 | np.ndarray) -> int | np.ndarray:
-    from matplotlib.dates import date2num
-    return date2num(d)
 
 
 def resample_vwap(df: pd.DataFrame, sampling_frequency: str) -> np.ndarray | None:
