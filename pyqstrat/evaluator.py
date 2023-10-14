@@ -8,9 +8,8 @@ import statsmodels as sm
 import statsmodels.api as smapi
 import math
 from pyqstrat.pq_utils import monotonically_increasing, infer_frequency, assert_
-from pyqstrat.plot import TimeSeries, DateLine, Subplot, HorizontalLine, BucketedValues, Plot, LinePlotAttributes
-import matplotlib as mpl
-import matplotlib.figure as mpl_fig
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from typing import Any, Callable
 from collections.abc import Sequence
 
@@ -567,45 +566,67 @@ def display_return_metrics(metrics: dict[str, Any], float_precision: int = 3, sh
     return df
 
 
-def plot_return_metrics(metrics: dict[str, Any], 
-                        title: str | None = None, 
-                        disp_attribs: LinePlotAttributes | None = None,
-                        drawdown_lines: bool = True, 
-                        zero_line: bool = True,
-                        show_date_gaps: bool = True) -> tuple[mpl_fig.Figure, mpl.axes.Axes] | None:
+def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, show=True) -> go.Figure:
     '''
     Plot equity, rolling drawdowns and and a boxplot of annual returns given the output of compute_return_metrics.
+    
+    Args:
+        metrics: dict of metrics produced by compute_return_metrics
+        title: title of the plot
+        height: height of the plot
+        show: whether to show the plot or just return it
     '''
     timestamps = metrics['timestamps']
     equity = metrics['equity']
-    equity = TimeSeries('equity', timestamps=timestamps, values=equity, display_attributes=disp_attribs)
     mdd_date, mdd_start = metrics['mdd_start'], metrics['mdd_date']
     mdd_date_3yr, mdd_start_3yr = metrics['mdd_start_3yr'], metrics['mdd_date_3yr']
-    
-    if drawdown_lines:
-        date_lines = [DateLine(name='max dd', date=mdd_start, color='red'),
-                      DateLine(date=mdd_date, color='red'),
-                      DateLine(name='3y dd', date=mdd_start_3yr, color='orange'),
-                      DateLine(date=mdd_date_3yr, color='orange')]
-    else:
-        date_lines = []
-        
-    horizontal_lines = [HorizontalLine(metrics['starting_equity'], color='black')] if zero_line else []
-    equity_subplot = Subplot(equity, ylabel='Equity', height_ratio=0.6, log_y=True, y_tick_format='${x:,.0f}', 
-                             date_lines=date_lines, horizontal_lines=horizontal_lines)     
-
-    rolling_dd = TimeSeries('drawdowns', timestamps=metrics['rolling_dd'][0], values=metrics['rolling_dd'][1],
-                            display_attributes=disp_attribs)
-    horizontal_lines = [HorizontalLine(y=0, color='black')] if zero_line else []
-    dd_subplot = Subplot(rolling_dd, ylabel='Drawdowns', height_ratio=0.2, date_lines=date_lines, horizontal_lines=horizontal_lines)
     years = metrics['bucketed_returns'][0]
     ann_rets = metrics['bucketed_returns'][1]
-    ann_ret = BucketedValues('annual returns', bucket_names=years, bucket_values=ann_rets)
-    ann_ret_subplot = Subplot(ann_ret, ylabel='Annual Returns', height_ratio=0.2, horizontal_lines=horizontal_lines)
-    
-    plt = Plot([equity_subplot, dd_subplot, ann_ret_subplot], title=title, show_date_gaps=show_date_gaps)
-    return plt.draw()
- 
+
+    fig = make_subplots(rows=3, cols=1)
+    fig.update_layout(title=title)
+
+    equity_trc = go.Scatter(x=timestamps, y=equity, mode='lines')
+    fig.add_trace(equity_trc, row=1, col=1)
+
+    fig.add_vrect(x0=mdd_start, 
+                  x1=mdd_date, 
+                  annotation_text="max dd", 
+                  annotation_position="top left",
+                  annotation=dict(font_size=20),
+                  fillcolor="red", 
+                  opacity=0.25, 
+                  line_width=0)
+
+    fig.add_hline(y=metrics['starting_equity'], opacity=0.25)
+
+    dd_trc = go.Scatter(x=metrics['rolling_dd'][0], y=metrics['rolling_dd'][1], mode='lines')
+    fig.add_trace(dd_trc, row=2, col=1)
+
+    fig.add_vrect(x0=mdd_start, x1=mdd_date, fillcolor="red", opacity=0.25, line_width=0, row=2, col=1)
+
+    if mdd_start_3yr != mdd_start and mdd_date_3yr != mdd_date:
+        fig.add_vrect(x0=mdd_start_3yr, 
+                      x1=mdd_date_3yr, 
+                      fillcolor='#FF851B', 
+                      opacity=0.25, 
+                      line_width=0, 
+                      row=2, 
+                      col=1)
+
+    for i, year in enumerate(years):
+        fig.add_trace(go.Box(y=ann_rets[i], marker_color='gray', line_color='gray', name=year), row=3, col=1)
+    all_rets = np.concatenate(ann_rets)
+    fig.add_trace(go.Box(y=all_rets, marker_color='blue', line_color='blue', name='All'), row=3, col=1)
+    fig.update_traces(boxpoints='all', jitter=0.1, row=3, col=1)
+
+    fig.update_yaxes(title_text="Equity", row=1, col=1)
+    fig.update_yaxes(title_text="Drawdown", row=2, col=1)
+    fig.update_yaxes(title_text="Return", row=3, col=1)
+    fig.update_layout(showlegend=False, height=height)
+    if show: fig.show()
+    return fig
+
 
 def test_evaluator() -> None:
     from datetime import datetime, timedelta
@@ -616,7 +637,7 @@ def test_evaluator() -> None:
     
     ev = compute_return_metrics(timestamps, rets, starting_equity)
     display_return_metrics(ev.metrics())
-    plot_return_metrics(ev.metrics(), zero_line=False)
+    plot_return_metrics(ev.metrics())
     
     assert_(round(ev.metric('sharpe'), 6) == 2.932954)
     assert_(round(ev.metric('sortino'), 6) == 5.690878)
