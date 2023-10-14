@@ -515,7 +515,7 @@ def compute_return_metrics(timestamps: np.ndarray,
     return ev
 
 
-def display_return_metrics(metrics: dict[str, Any], float_precision: int = 3, show=True) -> pd.DataFrame:
+def display_return_metrics(metrics: dict[str, Any], float_precision: int = 3, show=False) -> pd.DataFrame:
     '''
     Creates a dataframe making it convenient to view the output of the metrics obtained using the compute_return_metrics function.
     
@@ -566,7 +566,7 @@ def display_return_metrics(metrics: dict[str, Any], float_precision: int = 3, sh
     return df
 
 
-def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, width=0, show=True) -> go.Figure:
+def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, width=0, show=False) -> go.Figure:
     '''
     Plot equity, rolling drawdowns and and a boxplot of annual returns given the output of compute_return_metrics.
     

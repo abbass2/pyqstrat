@@ -168,7 +168,7 @@ class Optimizer:
                 xlim: tuple[float, float] | None = None,
                 ylim: tuple[float, float] | None = None, 
                 vertical_spacing: float = 0.05,
-                show: bool = True) -> go.Figure:
+                show: bool = False) -> go.Figure:
         
         """Creates a 3D plot of the optimization output for plotting 2 parameters and costs.
         
@@ -271,7 +271,7 @@ class Optimizer:
                 marker_mode: str = 'lines+markers', 
                 height: int = 1000,
                 width: int = 0,
-                show: bool = True) -> go.Figure:
+                show: bool = False) -> go.Figure:
         """Creates a 2D plot of the optimization output for plotting 1 parameter and costs
         
         Args:
