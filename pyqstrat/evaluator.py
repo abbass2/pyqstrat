@@ -11,6 +11,7 @@ from pyqstrat.pq_utils import monotonically_increasing, infer_frequency, assert_
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from typing import Any, Callable
+import os
 from collections.abc import Sequence
 
 
@@ -515,7 +516,7 @@ def compute_return_metrics(timestamps: np.ndarray,
     return ev
 
 
-def display_return_metrics(metrics: dict[str, Any], float_precision: int = 3, show=False) -> pd.DataFrame:
+def display_return_metrics(metrics: dict[str, Any], float_precision: int = 3, show=True) -> pd.DataFrame:
     '''
     Creates a dataframe making it convenient to view the output of the metrics obtained using the compute_return_metrics function.
     
@@ -560,13 +561,13 @@ def display_return_metrics(metrics: dict[str, Any], float_precision: int = 3, sh
         df.insert(0, metric_name, metric_value)
     df = df[cols]
     
-    if show:
+    if show and 'TEST_FLAG' not in os.environ:
         display(df)
     
     return df
 
 
-def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, width=0, show=False) -> go.Figure:
+def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, width=0, show=True) -> go.Figure:
     '''
     Plot equity, rolling drawdowns and and a boxplot of annual returns given the output of compute_return_metrics.
     
@@ -621,12 +622,12 @@ def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, width=0,
     fig.add_trace(go.Box(y=all_rets, marker_color='blue', line_color='blue', name='All'), row=3, col=1)
     fig.update_traces(boxpoints='all', jitter=0.1, row=3, col=1)
 
-    fig.update_yaxes(title_text="Equity", row=1, col=1)
+    fig.update_yaxes(title_text="Equity", type="log", row=1, col=1)
     fig.update_yaxes(title_text="Drawdown", row=2, col=1)
     fig.update_yaxes(title_text="Return", row=3, col=1)
     fig.update_layout(showlegend=False, height=height)
     if width > 0: fig.update_layout(width=width)
-    if show: fig.show()
+    if show and 'TEST_FLAG' not in os.environ: fig.show()
     return fig
 
 

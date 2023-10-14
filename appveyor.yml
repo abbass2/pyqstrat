@@ -1,6 +1,6 @@
 image:
-  - Visual Studio 2017
   - Ubuntu
+  - Visual Studio 2017
 
 matrix:
   # Finish when first job fails
@@ -48,7 +48,7 @@ for:
   test_script:
     - which python
     - python -c 'import pyqstrat'
-    - python -m pytest pyqstrat
+    - TEST_FLAG=1 python -m pytest pyqstrat
     - mypy --ignore-missing-imports pyqstrat/
     - flake8 --ignore W291,W293,W503,E402,E701,E275,E741 --max-line-length=160 pyqstrat/
   
@@ -72,6 +72,7 @@ for:
   test_script:
     - python --version
     - python -c "import pyqstrat"
+    - set "TEST_FLAG=1"
     - python -m pytest pyqstrat
     - mypy --ignore-missing-imports pyqstrat/
     - flake8 --ignore W291,W293,W503,E701,E275,E741 --max-line-length=160 pyqstrat/

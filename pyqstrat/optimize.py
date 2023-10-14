@@ -168,7 +168,7 @@ class Optimizer:
                 xlim: tuple[float, float] | None = None,
                 ylim: tuple[float, float] | None = None, 
                 vertical_spacing: float = 0.05,
-                show: bool = False) -> go.Figure:
+                show: bool = True) -> go.Figure:
         
         """Creates a 3D plot of the optimization output for plotting 2 parameters and costs.
         
@@ -261,7 +261,7 @@ class Optimizer:
             fig.add_trace(trace, row=row, col=1)
 
         fig.update_layout(showlegend=False)
-        if show: fig.show()
+        if show and 'TEST_FLAG' not in os.environ: fig.show()
         return fig
 
     def plot_2d(self, 
@@ -271,7 +271,7 @@ class Optimizer:
                 marker_mode: str = 'lines+markers', 
                 height: int = 1000,
                 width: int = 0,
-                show: bool = False) -> go.Figure:
+                show: bool = True) -> go.Figure:
         """Creates a 2D plot of the optimization output for plotting 1 parameter and costs
         
         Args:
@@ -319,7 +319,7 @@ class Optimizer:
 
         fig.update_layout(height=height, title=title, showlegend=False)
 
-        if show: fig.show()
+        if show and 'TEST_FLAG' not in os.environ: fig.show()
         return fig
 
 
