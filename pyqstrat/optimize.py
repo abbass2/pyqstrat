@@ -6,13 +6,18 @@ import numpy as np
 import pandas as pd
 import os
 import sys
+import itertools
 import concurrent
 import concurrent.futures
 import multiprocessing as mp
-from pyqstrat.pq_utils import has_display
-from pyqstrat.plot import Plot, Subplot, XYData, XYZData, SurfacePlotAttributes, LinePlotAttributes, ContourPlotAttributes
+from pyqstrat.pq_utils import has_display, get_child_logger
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
 from typing import Any, Callable, Generator
 from collections.abc import Sequence
+
+_logger = get_child_logger(__name__)
 
 
 def flatten_keys(experiments: Sequence[Any]) -> list[str]:
@@ -157,16 +162,12 @@ class Optimizer:
                 y: str, 
                 z: str = 'all', 
                 filter_func: Callable[[pd.DataFrame], pd.DataFrame] | None = None,
-                plot_type: str = 'surface', 
-                figsize: tuple[float, float] = (15, 15), 
-                interpolation: str = 'linear', 
-                cmap: str = 'viridis',
-                marker: str = 'X', 
-                marker_size: int = 50,
-                marker_color: str = 'r',
+                height: int = 1000,
+                width: int = 0,
                 xlim: tuple[float, float] | None = None,
                 ylim: tuple[float, float] | None = None, 
-                hspace: float | None = None) -> None:
+                vertical_spacing: float = 0.05,
+                show: bool = True) -> go.Figure:
         
         """Creates a 3D plot of the optimization output for plotting 2 parameters and costs.
         
@@ -189,24 +190,24 @@ class Optimizer:
          """
         
         if len(self.experiments) == 0: 
-            print('No experiments found')
-            return
-        if not has_display(): return
+            _logger.warning('No experiments found')
+            return go.Figure()
+        if not has_display(): return go.Figure()
 
-        # Get rid of nans since matplotlib does not like them
+        # Get rid of nans
         experiments = [experiment for experiment in self.experiments if experiment.valid()]
         if filter_func: experiments = filter_func(experiments)
         if not len(experiments):
-            print('No valid experiments found')
-            return
-        
+            _logger.warning('No valid experiments found')
+            return go.Figure()
+
         if xlim:
             experiments = [experiment for experiment in experiments if experiment.suggestion[x] >= xlim[0] and experiment.suggestion[x] <= xlim[1]]
         if ylim:
             experiments = [experiment for experiment in experiments if experiment.suggestion[y] >= ylim[0] and experiment.suggestion[y] <= ylim[1]]
 
-        xvalues = [experiment.suggestion[x] for experiment in experiments]
-        yvalues = [experiment.suggestion[y] for experiment in experiments]
+        xvalues = np.array([experiment.suggestion[x] for experiment in experiments])
+        yvalues = np.array([experiment.suggestion[y] for experiment in experiments])
         zvalues = []
 
         if z == 'all':
@@ -219,41 +220,62 @@ class Optimizer:
             zvalues.append(('cost', np.array([experiment.cost for experiment in experiments])))
         else:
             zvalues.append((z, np.array([experiment.other_costs[z] for experiment in experiments])))
-            
-        title: str | None
-        disp: ContourPlotAttributes | SurfacePlotAttributes
-            
-        subplots = []
-        for tup in zvalues:
-            name = tup[0]
-            zarray = tup[1]
-            if plot_type == 'contour':
-                zlabel = None
-                title = name
-                disp = ContourPlotAttributes(marker_size=marker_size, marker_color=marker_color, interpolation=interpolation)
-            else:
-                zlabel = name
-                title = None
-                disp = SurfacePlotAttributes(
-                    marker=marker, marker_size=marker_size, marker_color=marker_color, interpolation=interpolation)
-            
-            subplots.append(Subplot(
-                data_list=[
-                    XYZData(name, xvalues, yvalues, zarray, display_attributes=disp)],
-                title=title, xlabel=x, ylabel=y, zlabel=zlabel, xlim=xlim, ylim=ylim))
-        plot = Plot(subplots, figsize=figsize, title='Optimizer 2D Test', hspace=hspace)
-        plot.draw()
-        
+
+        cols: dict[str, np.ndarray] = dict(x=xvalues, y=yvalues)
+        for metric, _z in zvalues:
+            cols[metric] = _z
+        _df = pd.DataFrame(cols).sort_values(by=['x', 'y'])
+        x = np.unique(_df.x.values)
+        y = np.unique(_df.y.values)
+        df = _df.set_index(['x', 'y']).reindex(itertools.product(x, y)).reset_index()
+
+        metrics = np.unique([metric[0] for metric in zvalues])
+        markers = False
+        _z = np.full((len(metrics), len(x), len(y)), np.nan)
+
+        for i, metric in enumerate(metrics):
+            _z[i, :, :] = df[metric].values.reshape((len(x), len(y)))
+
+        fig = make_subplots(rows=len(metrics), cols=1, subplot_titles=metrics, shared_xaxes=True, vertical_spacing=vertical_spacing)
+        fig.update_layout(height=height)
+
+        num_metrics = len(metrics)
+        colorbar_height = 1 / (num_metrics + 1)
+
+        for i, metric in enumerate(metrics):
+            zmatrix = _z[i]
+            row = i + 1
+            zero = 0 - np.nanmin(zmatrix) / (np.nanmax(zmatrix) - np.nanmin(zmatrix))
+            colorscale = [
+                [0, 'rgba(237, 100, 90, 0.85)'],   
+                [zero, 'white'],  
+                [1, 'rgba(17, 165, 21, 0.85)']]  
+            colorbar_y = 1 - (i + 1) * colorbar_height
+            trace = go.Contour(x=x, 
+                               y=y, 
+                               z=zmatrix, 
+                               name=metric, 
+                               colorscale=colorscale, 
+                               colorbar=dict(len=colorbar_height, y=colorbar_y),
+                               connectgaps=True,
+                               contours=dict(showlabels=True, labelfont=dict(color='white')))
+            if markers:
+                scatter = go.Scatter(x=df.x, y=df.y, marker=dict(color=df[metric].values), mode='markers')
+                fig.add_trace(scatter, row=row, col=1)
+            fig.add_trace(trace, row=row, col=1)
+
+        fig.update_layout(showlegend=False)
+        if show: fig.show()
+        return fig
+
     def plot_2d(self, 
                 x: str, 
                 y: str = 'all',
-                plot_type: str = 'line', 
-                figsize: tuple[float, float] = (15, 8),
-                marker: str = 'X', 
-                marker_size: int = 50, 
-                marker_color: str = 'r', 
-                xlim: tuple[float, float] | None = None, 
-                hspace: float | None = None) -> None:
+                title: str = '',
+                marker_mode: str = 'lines+markers', 
+                height: int = 1000,
+                width: int = 0,
+                show: bool = True) -> go.Figure:
         """Creates a 2D plot of the optimization output for plotting 1 parameter and costs
         
         Args:
@@ -262,18 +284,15 @@ class Optimizer:
               "cost" 
               The name of another cost variable corresponding to the output from the cost function
               "all", which creates a subplot for cost plus all other costs
-            plot_type: line or scatter (default line)
-            figsize: Figure size
-            marker: Adds a marker to each point in x, y to show the actual data used for interpolation.  You can set this to None to turn markers off.
-            hspace: Vertical space between subplots
+            marker_mode: see plotly mode.  Set to 'lines' to turn markers off
          """
-        if len(self.experiments) == 0: return
-        if not has_display(): return
+        if len(self.experiments) == 0:
+            _logger.warning('No experiments found')
+            return
+        if not has_display(): return go.Figure()
 
-        # Get rid of nans since matplotlib does not like them
+        # Get rid of nans
         experiments = [experiment for experiment in self.experiments if experiment.valid()]
-        if xlim:
-            experiments = [experiment for experiment in experiments if experiment.suggestion[x] >= xlim[0] and experiment.suggestion[x] <= xlim[1]]
 
         xvalues = [experiment.suggestion[x] for experiment in experiments]
         yvalues = []
@@ -287,27 +306,29 @@ class Optimizer:
             yvalues.append(('cost', np.array([experiment.cost for experiment in experiments])))
         else:
             yvalues.append((y, np.array([experiment.other_costs[y] for experiment in experiments])))
-            
+
         xarray = np.array(xvalues)
         x_sort_indices = np.argsort(xarray)
         xarray = xarray[x_sort_indices]
-        subplots = []
-        for tup in yvalues:
+        fig = make_subplots(rows=len(yvalues), cols=1)
+
+        for i, tup in enumerate(yvalues):
             name = tup[0]
             yarray = tup[1]
             yarray = yarray[x_sort_indices]
-            
-            disp = LinePlotAttributes(marker=marker, marker_size=marker_size, marker_color=marker_color)
-            
-            subplots.append(
-                Subplot(data_list=[XYData(name, xarray, yarray, display_attributes=disp)], xlabel=x, ylabel=name, xlim=xlim))
-            
-        plot = Plot(subplots, figsize=figsize, title='Optimizer 1D Test')
-        plot.draw()
-        
+            trace = go.Scatter(name=name, x=xarray, y=yarray, mode=marker_mode)
+            row = i + 1
+            fig.add_trace(trace, row=row, col=1)
+            fig.update_xaxes(title_text=x, row=row, col=1)
+            fig.update_yaxes(title_text=name, row=row, col=1)
+
+        fig.update_layout(height=height, title=title, showlegend=False)
+
+        if show: fig.show()
+        return fig
+
+
 # Functions used in unit testing
-
-
 def _generator_1d() -> Generator[dict[str, Any], tuple[float, dict[str, float]], None]:
     for x in np.arange(0, np.pi * 2, 0.1):
         _ = (yield {'x': x})
@@ -338,11 +359,11 @@ def test_optimize():
 
     optimizer_1d = Optimizer('test', _generator_1d(), _cost_func_1d, max_processes=max_processes)
     optimizer_1d.run(raise_on_error=True)
-    optimizer_1d.plot_2d(x='x', plot_type='line', marker='o', marker_color='blue')
+    optimizer_1d.plot_2d(x='x', marker_mode='lines+markers', title='Optimizer 1D Test')
     
     optimizer_2d = Optimizer('test', _generator_2d(), _cost_func_2d, max_processes=max_processes)
     optimizer_2d.run()
-    optimizer_2d.plot_3d(x='x', y='y', plot_type='contour')
+    optimizer_2d.plot_3d(x='x', y='y')
             
 
 if __name__ == "__main__":

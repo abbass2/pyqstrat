@@ -566,7 +566,7 @@ def display_return_metrics(metrics: dict[str, Any], float_precision: int = 3, sh
     return df
 
 
-def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, show=True) -> go.Figure:
+def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, width=0, show=True) -> go.Figure:
     '''
     Plot equity, rolling drawdowns and and a boxplot of annual returns given the output of compute_return_metrics.
     
@@ -574,6 +574,7 @@ def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, show=Tru
         metrics: dict of metrics produced by compute_return_metrics
         title: title of the plot
         height: height of the plot
+        width: width of the plot. If set to 0, lets plotly select the width
         show: whether to show the plot or just return it
     '''
     timestamps = metrics['timestamps']
@@ -624,6 +625,7 @@ def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, show=Tru
     fig.update_yaxes(title_text="Drawdown", row=2, col=1)
     fig.update_yaxes(title_text="Return", row=3, col=1)
     fig.update_layout(showlegend=False, height=height)
+    if width > 0: fig.update_layout(width=width)
     if show: fig.show()
     return fig
 
