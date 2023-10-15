@@ -3,48 +3,89 @@
 # # Strategy Builder
 # 
 # ## Purpose
-# Simplifies creation of simpler strategies by removing the need for a lot of boilerplate code
+# Makes it easier to build simpler strategies by removing the need for a lot of boilerplate code
 # $$_end_markdown
 # $$_code
 # $$_ %%checkall
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass
-import math
 from types import SimpleNamespace
 from typing import Sequence, Any
-from pyqstrat.account import Account
 from pyqstrat.strategy import Strategy
-from pyqstrat.pq_types import Contract, ContractGroup, Trade, Order
-from pyqstrat.pq_types import MarketOrder, LimitOrder, TimeInForce, ReasonCode
+from pyqstrat.pq_types import Contract, ContractGroup
 from pyqstrat.strategy import PriceFunctionType, StrategyContextType, MarketSimulatorType
 from pyqstrat.strategy import RuleType, IndicatorType, SignalType
+from pyqstrat.strategy_components import VectorSignal, SimpleMarketSimulator
 from pyqstrat.pq_utils import assert_, get_child_logger
 
 
 _logger = get_child_logger(__name__)
 
+
 @dataclass
 class StrategyBuilder:
+    '''
+    A helper class that makes it easier to build simpler strategies by removing the need for a lot of boilerplate code.
+    The __call__ member function returns a Strategy built by this class that can then be run and evaluated.
+    Args:
+        data: A pandas dataframe containing columns for timestamps, indicators and signals
+        timestamps: The ''heartbeat'' of the strategy. A vector of each relevant time for this strategy 
+        timestamp_unit: Corresponds to bar length. Follows numpy datetime64 datatype strings.
+            For example if you have daily bars, use M8[D] and if you have minute bars use M8[m]
+        contract_groups: Each contract has to be a part of a contract group for PNL aggregation, etc. This class builds
+            a contract group for each contract that is supplied to it, so this is only needed if you want to group contracts
+        price_function: A function of type PriceFunctionType that we use to get market prices by contract name and timestamp
+        pnl_calc_time: Since pnl is reported on a daily basis, this indicates the time (in minutes) for computing that PNL.
+            For example, if you want to compute PNL at 4:01 pm each day, use 16 * 60 + 1
+        starting_equity: Equity to start the backtest with
+        trade_lag: How long it takes for an order to get to the market (in bars). If you are using input data from 2:33:44 pm
+            it may take you less than one second to generate the order and send it to the market. In this case, assuming you 
+            have 1 second bars, set the trade lag to 1. Market simulator get orders this many bars after the order is generated
+            by trading rules. Trade lag of 0 can be used for daily orders, when you want to relax the assumption that
+            it takes finite time to generate an order and send it to the market
+        strategy_context: Properties that are passed into all user defined functions such as rule functions, signal functions.
+            For example, you may want to set a property that indicates commission per trade instead of
+            hardcoding it into a market simulator.
+        indicators: Indicators are numeric vectors used to generate trading signals. For example, we may create an indicator 
+            that has the overnight gap (difference between yesterday's closing price and this morning's open price)
+        signals: Signals are boolean vectors used to determine whether or not we should run rules. For example, we may
+            want to run an entry rule if the indicator above is more than 1% of last night's closing price. In this case
+            the signal value for the corresponding time bar would be set to True
+        rules: Rules are functions that take indicators and signals as inputs and generate orders as outputs at each time bar.
+            Depending on the logic in each rule, it decides sizing, what kind of order to generate (limit, market, etc.) 
+            and how many (or zero) orders to generate.
+        market_sims: Market simulators simulate the execution of orders and generation of trades. The market sims are called
+            in order so two market simulators should not successfully process the same order
+    '''
+    data: pd.DataFrame
+    timestamps: np.ndarray | None
+    timestamp_unit: np.dtype  # by default use minutes, unless set_timestamps is called
+    contract_groups: list[ContractGroup]
+    price_function: PriceFunctionType | None
+    pnl_calc_time: int
+    starting_equity: float
+    trade_lag: int
+    strategy_context: SimpleNamespace
+    indicators: list[tuple[str, IndicatorType, Sequence[ContractGroup] | None, Sequence[str] | None]]
+    signals: list[tuple[str, SignalType, Sequence[ContractGroup] | None, Sequence[str] | None, Sequence[str] | None]]
+    rules: list[tuple[str, RuleType, str, Sequence[Any] | None, str | None]]
+    market_sims: list[MarketSimulatorType]
     
     def __init__(self, data: pd.DataFrame | None = None) -> None:
         if data is not None: assert_(len(data) > 0, 'data cannot be empty')
-        self.data: pd.DataFrame = data
-        self.contract_groups: list[ContractGroup] = []
-        self.price_function: PriceFunctionType | None = None
-        self.timestamps: np.ndarray | None = None
-        self.timestamp_unit: np.dtype = np.dtype('M8[m]')  # by default use minutes, unless set_timestamps is called
-        self.pnl_calc_time: int = 16 * 60 + 1
-        self.starting_equity: float = 1.0e6
-        self.trade_lag: int = 1
-        self.run_final_calc: bool = True
-        self.strategy_context: SimpleNamespace = SimpleNamespace()
-        self.indicators: list[tuple[
-            str, IndicatorType, Sequence[ContractGroup] | None, Sequence[str] | None]] = []
-        self.signals: list[tuple[
-            str, SignalType, Sequence[ContractGroup] | None, Sequence[str] | None, Sequence[str] | None]] = []
-        self.rules: list[tuple[str, RuleType, str, Sequence[Any] | None, str | None]] = []
-        self.market_sims: list[MarketSimulatorType] = []
+        self.data = data
+        self.timestamps = None
+        self.timestamp_unit = np.dtype('M8[m]')
+        self.contract_groups = []
+        self.pnl_calc_time = 16 * 60 + 1
+        self.starting_equity = 1.0e6
+        self.trade_lag = True
+        self.strategy_context = SimpleNamespace()
+        self.indicators = []
+        self.signals = []
+        self.rules = []
+        self.market_sims = []
         
         Contract.clear()
         ContractGroup.clear()
@@ -61,9 +102,6 @@ class StrategyBuilder:
         
     def set_trade_lag(self, trade_lag: int) -> None:
         self.trade_lag = trade_lag
-        
-    def set_run_final_calc(self, run_final_calc: bool) -> None:
-        self.run_final_calc = run_final_calc
         
     def set_strategy_context(self, context: StrategyContextType) -> None:
         self.strategy_context = context
@@ -97,7 +135,7 @@ class StrategyBuilder:
     def add_rule(self,
                  name: str, 
                  rule_function: RuleType, 
-                 signal_name: str, 
+                 signal_name: str,
                  sig_true_values: Sequence[Any] | None = None, 
                  position_filter: str | None = None) -> None:
         self.rules.append((name, rule_function, signal_name, sig_true_values, position_filter))
@@ -105,18 +143,26 @@ class StrategyBuilder:
     def add_market_sim(self, market_sim_function: MarketSimulatorType) -> None:
         self.market_sims.append(market_sim_function)
         
-    def add_vector_rule(self,
+    def add_series_rule(self,
                         column_name: str, 
                         rule_function: RuleType,
                         position_filter: str) -> None:
+        '''
+        Helper function that makes it easier to create a signal by using a boolean column from 
+        the dataframe passed in the constructor to this class
+        '''
         assert_(self.data is not None, 'data cannot be None when adding rule by name')
         assert_(column_name in self.data.columns, f'{column_name} not found in data: {self.data.columns}')
-        ind_name, sig_name = f'{column_name}_ind', f'{column_name}_sig'
-        self.indicators.append((ind_name, self.data[column_name].values, None, None))
-        self.signals.append((sig_name, VectorSignal(ind_name), None, [ind_name], None))
-        self.rules.append((column_name, rule_function, sig_name, None, position_filter))
+        dtype = self.data[column_name].dtype
+        assert_(dtype == np.dtype('bool'), f'{column_name} expected to be boolean, got {dtype} instead')
+        sig_name, rule_name = f'{column_name}_sig', f'{column_name}_rule'
+        self.signals.append((sig_name, VectorSignal(self.data[column_name].values), None, [], None))
+        self.rules.append((rule_name, rule_function, sig_name, None, position_filter))
 
     def __call__(self) -> Strategy:
+        '''
+        Generates a strategy object that we can then run and evaluate
+        '''
         assert_(len(self.contract_groups) > 0, 'contract_groups cannot be empty')
         assert_(self.price_function is not None, 'price function must be set')
         if self.timestamps is None:
@@ -129,7 +175,7 @@ class StrategyBuilder:
                          self.starting_equity, 
                          self.pnl_calc_time, 
                          self.trade_lag, 
-                         self.run_final_calc, 
+                         True, 
                          self.strategy_context)
         
         assert_(self.rules is not None and len(self.rules) > 0, 'rules cannot be empty or None')
@@ -149,5 +195,4 @@ class StrategyBuilder:
                 strat.add_market_sim(market_sim)
             
         return strat
-
 # $$_end_code
