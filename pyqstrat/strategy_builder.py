@@ -7,7 +7,6 @@
 # $$_end_markdown
 # $$_code
 # $$_ %%checkall
-from __future__ import annotations
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass
@@ -25,254 +24,9 @@ from pyqstrat.pq_utils import assert_, get_child_logger
 
 _logger = get_child_logger(__name__)
 
-
-@dataclass
-class PriceFuncDict:
-    price_dict: dict[str, dict[np.datetime64, float]]
-        
-    def __init__(self, price_dict: dict[str, dict[np.datetime64, float]]) -> None:
-        self.price_dict = price_dict
-        
-    def __call__(self, contract: Contract, timestamps: np.ndarray, i: int, context: StrategyContextType) -> float:
-        assert_(contract.symbol in self.price_dict, f'{contract.symbol} not found in price_dict: {self.price_dict.keys()}')
-        ret = self.price_dict[contract.symbol].get(timestamps[i])
-        if ret is None: return math.nan
-        return ret
-    
-    
-@dataclass
-class SimpleMarketSimulator:
-    slippage: float
-    price_func: PriceFunctionType
-        
-    def __init__(self,
-                 price_func: PriceFunctionType,
-                 slippage_per_trade: float = 0.,) -> None:
-        self.price_func = price_func
-        self.slippage = slippage_per_trade
-    
-    def __call__(self,
-                 orders: Sequence[Order],
-                 i: int, 
-                 timestamps: np.ndarray, 
-                 indicators: dict[ContractGroup, SimpleNamespace],
-                 signals: dict[ContractGroup, SimpleNamespace],
-                 strategy_context: SimpleNamespace) -> list[Trade]:
-        '''TODO: code for limit orders and stop orders'''
-        trades = []
-        timestamp = timestamps[i]
-        # _logger.info(f'got: {orders}')
-        for order in orders:
-            if isinstance(order, VWAPOrder): continue
-            slippage = self.slippage
-            if order.qty < 0:
-                slippage = -slippage
-            raw_price = self.price_func(order.contract, timestamps, i, strategy_context)
-            price = raw_price + slippage
-            trade = Trade(order.contract, order, timestamp, order.qty, price)
-            _logger.info(f'Trade: {i} {timestamp.astype("M8[m]")} {trade}')
-            order.fill()
-            trades.append(trade)
-        return trades
-    
-
-@dataclass    
-class VWAPMarketSimulator:
-    price_indicator: str
-    volume_indicator: str
-    backup_price_indicator: str | None
-
-    def __init__(self,
-                 price_indicator: str,
-                 volume_indicator: str,
-                 backup_price_indicator: str | None = None) -> None:
-        self.price_indicator = price_indicator
-        self.volume_indicator = volume_indicator
-        self.backup_price_indicator = backup_price_indicator
-    
-    def __call__(self,
-                 orders: Sequence[Order], 
-                 i: int, 
-                 timestamps: np.ndarray, 
-                 indicators: dict[ContractGroup, SimpleNamespace],
-                 signals: dict[ContractGroup, SimpleNamespace],
-                 strategy_context: SimpleNamespace) -> list[Trade]:
-        trades = []
-        timestamp = timestamps[i]
-        for order in orders:
-            if not isinstance(order, VWAPOrder): continue
-            cg = order.contract.contract_group
-            inds = indicators.get(cg)
-            assert_(inds is not None, f'indicators not found for contract group: {cg} {timestamp} {i}')
-            price_ind = getattr(inds, self.price_indicator)  # type: ignore
-            assert_(price_ind is not None, f'indicator: {self.price_indicator} not found for contract group: {cg} {timestamp} {i}')
-            volume_ind = getattr(inds, self.volume_indicator)  # type: ignore
-            assert_(volume_ind is not None, f'indicator: {self.volume_indicator} not found for contract group: {cg} {timestamp} {i}')
-            end_order = False
-            if math.isfinite(order.vwap_stop) and (
-                    (order.qty >= 0 and price_ind[i] <= order.vwap_stop) or (order.qty < 0 and price_ind[i] >= order.vwap_stop)):
-                end_order = True
-            if not end_order and timestamp < order.vwap_end_time and i != len(timestamps) - 1 \
-                    and not timestamps[i + 1].astype('M8[D]') > timestamps[i].astype('M8[D]'):
-                continue
-            if end_order:
-                mask = (timestamps >= order.timestamp) & (timestamps <= timestamp) & (price_ind > 0) & (volume_ind > 0)
-            else:
-                mask = (timestamps >= order.timestamp) & (timestamps <= order.vwap_end_time) & (price_ind > 0) & (volume_ind > 0)
-            amt = price_ind[mask] * volume_ind[mask]
-            if not len(amt):
-                if order.qty <= 0: continue
-                _logger.info(f'using backup price for {cg} {timestamp} {i} qty: {order.qty} {order}')
-                assert_(self.backup_price_indicator is not None, 
-                        f'backup price indicator not found and no vwap found for: {cg} {timestamp} {i}')
-                _backup_price_ind = getattr(inds, self.backup_price_indicator)  # type: ignore
-                assert_(_backup_price_ind is not None, f'backup price indicator not found for: {cg} {timestamp} {i}')
-                vwap = _backup_price_ind[i]
-            else:
-                vwap = np.sum(amt) / np.sum(volume_ind[mask])
-            assert_(vwap >= 0)
-            fill_qty = order.qty
-            if end_order:
-                fill_fraction = (timestamp - order.timestamp) / (order.vwap_end_time - order.timestamp)
-                fill_fraction = min(fill_fraction, 1)
-                fill_qty = np.fix(order.qty * fill_fraction)
-                _logger.info(f'{i} {timestamp} {order.timestamp} {order.vwap_end_time} {fill_fraction} qty: {fill_qty}')
-            order.fill(fill_qty)
-            order.cancel()
-            trade = Trade(order.contract, order, timestamp, fill_qty, vwap)
-            _logger.info(f'Trade: {i} {timestamp.astype("M8[m]")} {trade}')
-            trades.append(trade)
-        return trades
-
-
-@dataclass
-class FiniteRiskEntryRule:
-    reason_code: str
-    price_func: PriceFunctionType
-    long: bool
-    percent_of_equity: float
-    stop_price_ind: str | None
-    min_price_diff: float
-    single_entry_per_day: bool
-        
-    def __init__(self, 
-                 reason_code: str, 
-                 price_func: PriceFunctionType,
-                 long: bool = True,
-                 percent_of_equity: float = 0.1,
-                 stop_price_ind: str | None = None,
-                 min_price_diff: float = 0,
-                 single_entry_per_day: bool = False) -> None:
-        self.reason_code = reason_code
-        self.price_func = price_func
-        self.long = long
-        self.percent_of_equity = percent_of_equity
-        self.stop_price_ind = stop_price_ind
-        self.min_price_diff = min_price_diff
-        self.single_entry_per_day = single_entry_per_day
-        
-    def __call__(self,
-                 contract_group: ContractGroup,
-                 i: int,
-                 timestamps: np.ndarray,
-                 indicator_values: SimpleNamespace,
-                 signal_values: SimpleNamespace,
-                 account: Account,
-                 current_orders: Sequence[Order],
-                 strategy_context: StrategyContextType) -> list[Order]:
-        timestamp = timestamps[i]
-        if self.single_entry_per_day:
-            date = timestamp.astype('M8[D]')
-            trades = account.get_trades_for_date(contract_group.name, date)
-            if len(trades): return []
-
-        contract = contract_group.get_contract(contract_group.name)
-        entry_price_est = self.price_func(contract, timestamps, i, strategy_context)
-        if math.isnan(entry_price_est): return []
-        
-        if self.stop_price_ind:
-            _stop_price_ind = getattr(indicator_values, self.stop_price_ind)
-            stop_price = _stop_price_ind[i]
-        else:
-            stop_price = 0.
-
-        if self.long and (entry_price_est - stop_price) < self.min_price_diff: return []
-        if not self.long and (stop_price - entry_price_est) < self.min_price_diff: return []
-        
-        curr_equity = account.equity(timestamp)
-        risk_amount = self.percent_of_equity * curr_equity
-        _order_qty = risk_amount / (entry_price_est - stop_price)
-        order_qty = math.floor(_order_qty) if _order_qty > 0 else math.ceil(_order_qty)
-        if math.isclose(order_qty, 0.): return []
-        order = MarketOrder(contract=contract, 
-                            timestamp=timestamp, 
-                            qty=order_qty,
-                            reason_code=self.reason_code)
-        return [order]
-    
-
-@dataclass
-class ClosePositionExitRule:
-    reason_code: str
-    price_func: PriceFunctionType
-        
-    def __init__(self, 
-                 reason_code: str, 
-                 price_func: PriceFunctionType,
-                 limit_increment: float = math.nan) -> None:
-        self.reason_code = reason_code
-        self.price_func = price_func
-        assert_(math.isnan(limit_increment) or limit_increment >= 0, 
-                f'limit_increment: {limit_increment} cannot be negative')
-        self.limit_increment = limit_increment
-        
-    def __call__(self,
-                 contract_group: ContractGroup,
-                 i: int,
-                 timestamps: np.ndarray,
-                 indicator_values: SimpleNamespace,
-                 signal_values: SimpleNamespace,
-                 account: Account,
-                 current_orders: Sequence[Order],
-                 strategy_context: StrategyContextType) -> list[Order]:
-        timestamp = timestamps[i]
-        positions = account.positions(contract_group, timestamp)
-        assert len(positions) == 1, f'expected 1 positions, got: {positions}'
-        (contract, qty) = positions[0]
-        if math.isfinite(self.limit_increment):
-            contract = contract_group.get_contract(contract_group.name)
-            exit_price_est = self.price_func(contract, timestamps, i, strategy_context)
-            if qty >= 0:
-                exit_price_est += self.limit_increment
-            else:
-                exit_price_est -= self.limit_increment
-            limit_order = LimitOrder(contract=contract, timestamp=timestamp, qty=-qty, limit_price=exit_price_est, reason_code=self.reason_code)
-            return [limit_order]
-        order = MarketOrder(contract=contract, 
-                            timestamp=timestamp, 
-                            qty=-qty, 
-                            reason_code=self.reason_code)
-        # _logger.info(f'{i} {timestamp} {order}')
-        return [order]
-
-
-@dataclass
-class IndicatorSignal:
-    def __init__(self, ind_name) -> None:
-        self.ind_name = ind_name
-
-    def __call__(self,
-                 contract_group: ContractGroup, 
-                 timestamps: np.ndarray, 
-                 indicator_values: SimpleNamespace,
-                 parent_values: SimpleNamespace,
-                 context: StrategyContextType) -> np.ndarray:
-        sig_values: np.ndarray = getattr(indicator_values, self.ind_name)
-        return sig_values
-
-
 @dataclass
 class StrategyBuilder:
+    
     def __init__(self, data: pd.DataFrame | None = None) -> None:
         if data is not None: assert_(len(data) > 0, 'data cannot be empty')
         self.data: pd.DataFrame = data
@@ -282,7 +36,7 @@ class StrategyBuilder:
         self.timestamp_unit: np.dtype = np.dtype('M8[m]')  # by default use minutes, unless set_timestamps is called
         self.pnl_calc_time: int = 16 * 60 + 1
         self.starting_equity: float = 1.0e6
-        self.trade_lag: int = 0
+        self.trade_lag: int = 1
         self.run_final_calc: bool = True
         self.strategy_context: SimpleNamespace = SimpleNamespace()
         self.indicators: list[tuple[
@@ -351,15 +105,15 @@ class StrategyBuilder:
     def add_market_sim(self, market_sim_function: MarketSimulatorType) -> None:
         self.market_sims.append(market_sim_function)
         
-    def add_indicator_rule(self,
-                           column_name: str, 
-                           rule_function: RuleType,
-                           position_filter: str) -> None:
+    def add_vector_rule(self,
+                        column_name: str, 
+                        rule_function: RuleType,
+                        position_filter: str) -> None:
         assert_(self.data is not None, 'data cannot be None when adding rule by name')
         assert_(column_name in self.data.columns, f'{column_name} not found in data: {self.data.columns}')
         ind_name, sig_name = f'{column_name}_ind', f'{column_name}_sig'
         self.indicators.append((ind_name, self.data[column_name].values, None, None))
-        self.signals.append((sig_name, IndicatorSignal(ind_name), None, [ind_name], None))
+        self.signals.append((sig_name, VectorSignal(ind_name), None, [ind_name], None))
         self.rules.append((column_name, rule_function, sig_name, None, position_filter))
 
     def __call__(self) -> Strategy:
@@ -395,130 +149,5 @@ class StrategyBuilder:
                 strat.add_market_sim(market_sim)
             
         return strat
-    
 
-@dataclass(kw_only=True)
-class VWAPOrder(Order):
-    vwap_stop: float = math.nan
-    vwap_end_time: np.datetime64
-        
-    def __repr__(self):
-        timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
-        return (f'{self.contract.symbol} {timestamp:%Y-%m-%d %H:%M:%S} '
-                f'limit: {self.vwap_stop:.3f} end: {self.vwap_end_time} qty: {self.qty}'
-                + ('' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}')
-                + ('' if not self.properties.__dict__ else f' {self.properties}')
-                + f' {self.status}')
-    
-    
-@dataclass
-class VWAPEntryRule:
-    reason_code: str
-    vwap_minutes: int
-    price_func: PriceFunctionType
-    long: bool
-    percent_of_equity: float
-    stop_price_ind: str | None
-    min_price_diff: float
-    single_entry_per_day: bool
-        
-    def __init__(self, 
-                 reason_code: str,
-                 vwap_minutes: int,
-                 price_func: PriceFunctionType,
-                 long: bool = True,
-                 percent_of_equity: float = 0.1,
-                 stop_price_ind: str | None = None,
-                 min_price_diff: float = 0,
-                 single_entry_per_day: bool = False) -> None:
-        self.reason_code = reason_code
-        self.price_func = price_func
-        self.long = long
-        self.vwap_minutes = vwap_minutes
-        self.percent_of_equity = percent_of_equity
-        self.stop_price_ind = stop_price_ind
-        self.min_price_diff = min_price_diff
-        self.single_entry_per_day = single_entry_per_day
-        
-    def __call__(self,
-                 contract_group: ContractGroup,
-                 i: int,
-                 timestamps: np.ndarray,
-                 indicator_values: SimpleNamespace,
-                 signal_values: SimpleNamespace,
-                 account: Account,
-                 current_orders: Sequence[Order],
-                 strategy_context: StrategyContextType) -> list[Order]:
-        timestamp = timestamps[i]
-        if self.single_entry_per_day:
-            date = timestamp.astype('M8[D]')
-            trades = account.get_trades_for_date(contract_group.name, date)
-            if len(trades): return []
-            
-        for order in current_orders:
-            if order.contract.contract_group == contract_group and order.is_open(): return []
-
-        contract = contract_group.get_contract(contract_group.name)
-        entry_price_est = self.price_func(contract, timestamps, i, strategy_context)
-        if math.isnan(entry_price_est): return []
-        
-        if self.stop_price_ind:
-            _stop_price_ind = getattr(indicator_values, self.stop_price_ind)
-            stop_price = _stop_price_ind[i]
-            if self.long and (entry_price_est - stop_price) < self.min_price_diff: return []
-            if not self.long and (stop_price - entry_price_est) < self.min_price_diff: return []
-        else:
-            stop_price = math.nan
-        
-        curr_equity = account.equity(timestamp)
-        risk_amount = self.percent_of_equity * curr_equity
-        _order_qty = risk_amount / (entry_price_est - stop_price)
-        order_qty = math.floor(_order_qty) if _order_qty > 0 else math.ceil(_order_qty)
-        if math.isclose(order_qty, 0.): return []
-        vwap_end_time = timestamp + np.timedelta64(self.vwap_minutes, 'm')
-        order = VWAPOrder(contract=contract, 
-                          timestamp=timestamp, 
-                          vwap_stop=stop_price,
-                          vwap_end_time=vwap_end_time, 
-                          qty=order_qty, 
-                          time_in_force=TimeInForce.GTC,
-                          reason_code=self.reason_code)
-        return [order]
-    
-
-@dataclass
-class VWAPCloseRule:
-    vwap_minutes: int
-    reason_code: str
-        
-    def __init__(self, 
-                 vwap_minutes: int,
-                 reason_code: str) -> None:
-        self.vwap_minutes = vwap_minutes
-        self.reason_code = reason_code
-        
-    def __call__(self,
-                 contract_group: ContractGroup,
-                 i: int,
-                 timestamps: np.ndarray,
-                 indicator_values: SimpleNamespace,
-                 signal_values: SimpleNamespace,
-                 account: Account,
-                 current_orders: Sequence[Order],
-                 strategy_context: StrategyContextType) -> list[Order]:
-        timestamp = timestamps[i]
-        for order in current_orders:
-            if order.contract.contract_group == contract_group and order.is_open(): return []
-        positions = account.positions(contract_group, timestamp)
-        assert len(positions) == 1, f'expected 1 positions, got: {positions}'
-        (contract, qty) = positions[0]
-        vwap_end_time = timestamp + np.timedelta64(self.vwap_minutes, 'm')
-        order = VWAPOrder(contract=contract, 
-                          timestamp=timestamp, 
-                          vwap_end_time=vwap_end_time, 
-                          qty=-qty, 
-                          time_in_force=TimeInForce.GTC,
-                          reason_code=self.reason_code)
-        # _logger.info(f'order: {order}')
-        return [order]
 # $$_end_code
