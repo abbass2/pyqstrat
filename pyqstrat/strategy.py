@@ -665,7 +665,7 @@ class Strategy:
                          plot: bool = True, 
                          display_summary: bool = True, 
                          float_precision: int = 4, 
-                         return_metrics: bool = False) -> dict[str, Any] | None:
+                         return_metrics: bool = True) -> dict[str, Any] | None:
         '''Computes return metrics and does one or more of the following.
         You can set plot, display_summary and return_metrics arguments to print them, plot them, or return them
         respectively

@@ -7,6 +7,7 @@ from pyqstrat.holiday_calendars import *
 from pyqstrat.markets import *
 from pyqstrat.account import * 
 from pyqstrat.strategy import *
+from pyqstrat.strategy_builder import *
 from pyqstrat.portfolio import *
 from pyqstrat.optimize import *
 from pyqstrat.interactive_plot import *

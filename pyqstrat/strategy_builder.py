@@ -279,6 +279,7 @@ class StrategyBuilder:
         self.contract_groups: list[ContractGroup] = []
         self.price_function: PriceFunctionType | None = None
         self.timestamps: np.ndarray | None = None
+        self.timestamp_unit: np.dtype = np.dtype('M8[m]')  # by default use minutes, unless set_timestamps is called
         self.pnl_calc_time: int = 16 * 60 + 1
         self.starting_equity: float = 1.0e6
         self.trade_lag: int = 0
@@ -366,7 +367,7 @@ class StrategyBuilder:
         assert_(self.price_function is not None, 'price function must be set')
         if self.timestamps is None:
             assert_(self.data is not None, 'data cannot be None if timestamps is not set')
-        _timestamps = self.data['timestamp'].values if self.timestamps is None else self.timestamps
+        _timestamps = self.data['timestamp'].values.astype(self.timestamp_unit) if self.timestamps is None else self.timestamps
         
         strat = Strategy(_timestamps, 
                          self.contract_groups, 

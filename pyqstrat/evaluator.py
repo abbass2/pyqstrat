@@ -567,7 +567,7 @@ def display_return_metrics(metrics: dict[str, Any], float_precision: int = 3, sh
     return df
 
 
-def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, width=0, show=True) -> go.Figure:
+def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, width=0, show_points=True, show=True) -> go.Figure:
     '''
     Plot equity, rolling drawdowns and and a boxplot of annual returns given the output of compute_return_metrics.
     
@@ -580,8 +580,9 @@ def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, width=0,
     '''
     timestamps = metrics['timestamps']
     equity = metrics['equity']
-    mdd_date, mdd_start = metrics['mdd_start'], metrics['mdd_date']
-    mdd_date_3yr, mdd_start_3yr = metrics['mdd_start_3yr'], metrics['mdd_date_3yr']
+    ts_type = np.dtype('M8[m]')
+    mdd_date, mdd_start = metrics['mdd_date'].astype(ts_type), metrics['mdd_start'].astype(ts_type)
+    mdd_date_3yr, mdd_start_3yr = metrics['mdd_date_3yr'].astype(ts_type), metrics['mdd_start_3yr'].astype(ts_type)
     years = metrics['bucketed_returns'][0]
     ann_rets = metrics['bucketed_returns'][1]
 
@@ -591,6 +592,7 @@ def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, width=0,
     equity_trc = go.Scatter(x=timestamps, y=equity, mode='lines')
     fig.add_trace(equity_trc, row=1, col=1)
 
+    print(mdd_start, mdd_date)
     fig.add_vrect(x0=mdd_start, 
                   x1=mdd_date, 
                   annotation_text="max dd", 
@@ -617,10 +619,11 @@ def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, width=0,
                       col=1)
 
     for i, year in enumerate(years):
-        fig.add_trace(go.Box(y=ann_rets[i], marker_color='gray', line_color='gray', name=year), row=3, col=1)
+        fig.add_trace(go.Box(x=ann_rets[i], boxmean=True, marker_color='gray', line_color='gray', name=year), row=3, col=1)
     all_rets = np.concatenate(ann_rets)
-    fig.add_trace(go.Box(y=all_rets, marker_color='blue', line_color='blue', name='All'), row=3, col=1)
-    fig.update_traces(boxpoints='all', jitter=0.1, row=3, col=1)
+    fig.add_trace(go.Box(x=all_rets, boxmean=True, marker_color='blue', line_color='blue', name='All'), row=3, col=1)
+    if show_points:
+        fig.update_traces(boxpoints='all', jitter=0.1, row=3, col=1)
 
     fig.update_yaxes(title_text="Equity", type="log", row=1, col=1)
     fig.update_yaxes(title_text="Drawdown", row=2, col=1)
