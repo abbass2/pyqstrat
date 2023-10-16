@@ -355,7 +355,7 @@ class FiniteRiskEntryRule:
             Used to calculate order qty so that if we get stopped out, we don't lose 
             more than this amount. Of course if price gaps up or down rather than moving smoothly,
             we may lose more.
-        stop_price_ind: 
+        stop_price_ind: An indicator containing the stop price so we exit the order when this is breached
             
     '''
     reason_code: str
