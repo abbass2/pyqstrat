@@ -263,7 +263,7 @@ def test_strategy_2() -> None:
     strategy = pq.Strategy(timestamps, cgs, get_price, trade_lag=1)
     for cg in cgs:
         _prices = df.set_index('timestamp').reindex(timestamps)
-        strategy.add_indicator('price', _prices.price.values, [cg])
+        strategy.add_indicator('price', pq.VectorIndicator(_prices.price.values), [cg])
     strategy.add_signal('test_sig', test_signal, cgs, ['price'])
     strategy.add_rule('test_rule', test_rule, signal_name='test_sig')
 

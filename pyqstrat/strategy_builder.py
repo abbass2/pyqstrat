@@ -16,7 +16,7 @@ from pyqstrat.strategy import Strategy
 from pyqstrat.pq_types import Contract, ContractGroup
 from pyqstrat.strategy import PriceFunctionType, StrategyContextType, MarketSimulatorType
 from pyqstrat.strategy import RuleType, IndicatorType, SignalType
-from pyqstrat.strategy_components import VectorSignal, SimpleMarketSimulator
+from pyqstrat.strategy_components import VectorSignal, VectorIndicator, SimpleMarketSimulator
 from pyqstrat.pq_utils import assert_, get_child_logger
 
 
@@ -123,6 +123,10 @@ class StrategyBuilder:
                       contract_groups: Sequence[ContractGroup] | None = None, 
                       depends_on: Sequence[str] | None = None) -> None:
         self.indicators.append((name, indicator, contract_groups, depends_on))
+        
+    def add_series_indicator(self, name: str, column_name: str) -> None:
+        assert_(column_name in self.data.columns, f'{column_name} not found in data')
+        self.add_indicator(name, VectorIndicator(self.data[column_name].values))
         
     def add_signal(self,
                    name: str,

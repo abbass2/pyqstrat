@@ -129,7 +129,6 @@ class Strategy:
             name: Name of the indicator
             indicator:  A function that takes strategy timestamps and other indicators and returns a numpy array
               containing indicator values.  The return array must have the same length as the timestamps object.
-              Can also be a numpy array or a pandas Series in which case we just store the values.
             contract_groups: Contract groups that this indicator applies to.  If not set, it applies to all contract groups. Default None.
             depends_on: Names of other indicators that we need to compute this indicator. Default None.
         '''
@@ -240,10 +239,7 @@ class Strategy:
                 for parent_name in parent_names:
                     setattr(parent_values, parent_name, getattr(cgroup_ind_namespace, parent_name))
                     
-                if isinstance(indicator_function, np.ndarray) or isinstance(indicator_function, pd.Series):
-                    indicator_values = indicator_function
-                else:
-                    indicator_values = indicator_function(cgroup, self.timestamps, parent_values, self.strategy_context)
+                indicator_values = indicator_function(cgroup, self.timestamps, parent_values, self.strategy_context)
 
                 setattr(cgroup_ind_namespace, indicator_name, series_to_array(indicator_values))
                 
