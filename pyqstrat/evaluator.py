@@ -29,7 +29,10 @@ def compute_periods_per_year(timestamps: np.ndarray) -> float:
     72576.0
     """
     if not len(timestamps): return np.nan
-    freq = infer_frequency(timestamps)
+    try:
+        freq = infer_frequency(timestamps)
+    except PQException as ex:
+        raise PQException(f'could not compute periods per year, you may need to set it yourself: {ex}')
     if freq == 31: return 12
     return 252. / freq if freq != 0 else np.nan
 

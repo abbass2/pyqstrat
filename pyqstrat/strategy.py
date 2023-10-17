@@ -662,22 +662,25 @@ class Strategy:
                 
     def evaluate_returns(self, 
                          contract_group: ContractGroup | None = None, 
+                         periods_per_year: int = 0,
                          plot: bool = True, 
                          display_summary: bool = True, 
                          float_precision: int = 4, 
                          return_metrics: bool = True) -> dict[str, Any] | None:
-        '''Computes return metrics and does one or more of the following.
-        You can set plot, display_summary and return_metrics arguments to print them, plot them, or return them
-        respectively
+        '''Computes return metrics and does or more of plotting, displaying or returning them.
         
         Args:
             contract_group (:obj:`ContractGroup`, optional): Contract group to evaluate or None (default) for all contract groups
+            periods_per_year (int): If set to 0, we try to infer the frequency from the timestamps in the returns
+                sometimes this is not possible, for example if you have daily returns with random gaps in the days
+                In that case, you should set this value yourself. Use 252 if returns are on a daily frequency
             plot (bool): If set to True, display plots of equity, drawdowns and returns.  Default False
             float_precision (float, optional): Number of significant figures to show in returns.  Default 4
             return_metrics (bool, optional): If set, we return the computed metrics as a dictionary
         '''
         returns = self.df_returns(contract_group)
-        ev = compute_return_metrics(returns.timestamp.values, returns.ret.values, self.account.starting_equity)
+        ev = compute_return_metrics(returns.timestamp.values, returns.ret.values, 
+                                    self.account.starting_equity, periods_per_year=periods_per_year)
         if display_summary:
             display_return_metrics(ev.metrics(), float_precision=float_precision)
         if plot: 
