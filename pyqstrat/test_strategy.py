@@ -21,29 +21,26 @@ from typing import Sequence
 _logger = pq.get_child_logger(__name__)
 
 
-def test_strategy() -> None:
+def text_strategy() -> None:
     try:
         # If we are running from unit tests
-        ko_file_path = os.path.dirname(os.path.realpath(__file__)) + '/notebooks/support/coke_15_min_prices.csv.gz'
-        pep_file_path = os.path.dirname(os.path.realpath(__file__)) + '/notebooks/support/pepsi_15_min_prices.csv.gz'
+        aapl_file_path = os.path.dirname(os.path.realpath(__file__)) + '/notebooks/support/AAPL.csv.gz'
+        ibm_file_path = os.path.dirname(os.path.realpath(__file__)) + '/notebooks/support/IBM.csv.gz'
     except NameError:
-        ko_file_path = 'notebooks/support/coke_15_min_prices.csv.gz'
-        pep_file_path = 'notebooks/support/pepsi_15_min_prices.csv.gz'
+        aapl_file_path = 'notebooks/support/AAPL.csv.gz'
+        ibm_file_path = 'notebooks/support/IBM.csv.gz'
 
-    ko_prices = pd.read_csv(ko_file_path)
-    pep_prices = pd.read_csv(pep_file_path)
+    aapl_prices = pd.read_csv(aapl_file_path)
+    ibm_prices = pd.read_csv(ibm_file_path)
 
-    ko_prices['timestamp'] = pd.to_datetime(ko_prices.date)
-    pep_prices['timestamp'] = pd.to_datetime(pep_prices.date)
+#     end_time = '2019-01-30 12:00'
     
-    end_time = '2019-01-30 12:00'
-    
-    ko_prices = ko_prices.query(f'timestamp <= "{end_time}"').sort_values(by='timestamp')
-    pep_prices = pep_prices.query(f'timestamp <= "{end_time}"').sort_values(by='timestamp')
+#     aapl_prices = aapl_prices.query(f'timestamp <= "{end_time}"').sort_values(by='timestamp')
+#     ibm_prices = ibm_prices.query(f'timestamp <= "{end_time}"').sort_values(by='timestamp')
 
-    timestamps = ko_prices.timestamp.values.astype('M8[m]')
+    timestamps = aapl_prices.timestamp.values.astype('M8[m]')
     
-    ratio = ko_prices.c / pep_prices.c
+    ratio = aapl_prices.c / ibm_prices.c
     
     def zscore_indicator(contract_group: pq.ContractGroup, 
                          timestamps: np.ndarray, 
@@ -68,7 +65,7 @@ def test_strategy() -> None:
         signal = np.where(zscore < -1, -2, signal)
         signal = np.where((zscore > 0.5) & (zscore < 1), 1, signal)
         signal = np.where((zscore < -0.5) & (zscore > -1), -1, signal)
-        if contract_group.name == 'PEP': signal = -1. * signal
+        if contract_group.name == 'ibm': signal = -1. * signal
         return signal
     
     def pair_entry_rule(contract_group: pq.ContractGroup,
@@ -164,21 +161,21 @@ def test_strategy() -> None:
                   i: int, 
                   strategy_context: pq.StrategyContextType) -> float:
         if contract.symbol == 'KO':
-            return strategy_context.ko_price[i]
-        elif contract.symbol == 'PEP':
-            return strategy_context.pep_price[i]
+            return strategy_context.aapl_price[i]
+        elif contract.symbol == 'ibm':
+            return strategy_context.ibm_price[i]
         raise Exception(f'Unknown contract: {contract}')
 
     pq.Contract.clear()
     pq.ContractGroup.clear()
         
-    ko_contract_group = pq.ContractGroup.create('KO')
-    pep_contract_group = pq.ContractGroup.create('PEP')
+    aapl_contract_group = pq.ContractGroup.create('KO')
+    ibm_contract_group = pq.ContractGroup.create('ibm')
 
-    strategy_context = SimpleNamespace(ko_price=ko_prices.c.values, pep_price=pep_prices.c.values)
+    strategy_context = SimpleNamespace(aapl_price=aapl_prices.c.values, ibm_price=ibm_prices.c.values)
 
-    strategy = pq.Strategy(timestamps, [ko_contract_group, pep_contract_group], get_price, trade_lag=1, strategy_context=strategy_context)
-    for tup in [(ko_contract_group, ko_prices), (pep_contract_group, pep_prices)]:
+    strategy = pq.Strategy(timestamps, [aapl_contract_group, ibm_contract_group], get_price, trade_lag=1, strategy_context=strategy_context)
+    for tup in [(aapl_contract_group, aapl_prices), (ibm_contract_group, ibm_prices)]:
         for column in ['o', 'h', 'l', 'c']:
             strategy.add_indicator(column, tup[1][column], contract_groups=[tup[0]])
     strategy.add_indicator('ratio', ratio)
@@ -275,6 +272,6 @@ def test_strategy_2() -> None:
     
 
 if __name__ == '__main__':
-    test_strategy()
+    # test_strategy()
     test_strategy_2()
 # $$_end_code

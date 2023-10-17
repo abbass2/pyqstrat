@@ -10,7 +10,7 @@ import itertools
 import concurrent
 import concurrent.futures
 import multiprocessing as mp
-from pyqstrat.pq_utils import get_child_logger
+from pyqstrat.pq_utils import get_child_logger, has_display
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -261,7 +261,7 @@ class Optimizer:
             fig.add_trace(trace, row=row, col=1)
 
         fig.update_layout(showlegend=False)
-        if show and 'TEST_FLAG' not in os.environ: fig.show()
+        if show and has_display(): fig.show()
         return fig
 
     def plot_2d(self, 
@@ -319,7 +319,7 @@ class Optimizer:
 
         fig.update_layout(height=height, title=title, showlegend=False)
 
-        if show and 'TEST_FLAG' not in os.environ: fig.show()
+        if show and has_display(): fig.show()
         return fig
 
 

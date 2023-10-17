@@ -20,6 +20,14 @@ DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 LOG_FORMAT = '[%(asctime)s.%(msecs)03d %(funcName)s] %(message)s'
 
 
+def has_display() -> bool:
+    '''
+    Useful for running on a headless machine such as a remote server
+    so we don't try to show graphs etc during unit tests
+    '''
+    return 'NO_DISPLAY' not in os.environ
+
+
 def shift_np(array: np.ndarray, n: int, fill_value: Any = None) -> np.ndarray:
     '''
     Similar to pandas.Series.shift but works on numpy arrays.

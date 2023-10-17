@@ -23,9 +23,7 @@ StrategyContextType = SimpleNamespace
 
 PriceFunctionType = Callable[[Contract, np.ndarray, int, StrategyContextType], float]
 
-IndicatorType = Union[np.ndarray, 
-                      pd.Series,
-                      Callable[[ContractGroup, np.ndarray, SimpleNamespace, StrategyContextType], np.ndarray]]
+IndicatorType = Callable[[ContractGroup, np.ndarray, SimpleNamespace, StrategyContextType], np.ndarray]
 
 SignalType = Callable[[ContractGroup, np.ndarray, SimpleNamespace, SimpleNamespace, StrategyContextType], np.ndarray]
 
@@ -138,10 +136,6 @@ class Strategy:
         self.indicators[name] = indicator
         self.indicator_deps[name] = [] if depends_on is None else list(depends_on)
         if contract_groups is None: contract_groups = self.contract_groups
-        if isinstance(indicator, np.ndarray) or isinstance(indicator, pd.Series):
-            indicator_values = series_to_array(indicator)
-            for contract_group in contract_groups:
-                setattr(self.indicator_values[contract_group], name, indicator_values)
         self.indicator_cgroups[name] = list(contract_groups)
         
     def add_signal(self,
@@ -705,8 +699,9 @@ class Strategy:
     
 
 if __name__ == "__main__":
-    from test_strategy import test_strategy, test_strategy_2
-    test_strategy()
+    # from test_strategy import test_strategy, test_strategy_2
+    # test_strategy()
+    from test_strategy import test_strategy_2
     test_strategy_2()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)

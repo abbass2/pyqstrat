@@ -7,11 +7,10 @@ import numpy as np
 import statsmodels as sm
 import statsmodels.api as smapi
 import math
-from pyqstrat.pq_utils import monotonically_increasing, infer_frequency, assert_
+from pyqstrat.pq_utils import monotonically_increasing, infer_frequency, assert_, PQException, has_display
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from typing import Any, Callable
-import os
 from collections.abc import Sequence
 
 
@@ -32,7 +31,8 @@ def compute_periods_per_year(timestamps: np.ndarray) -> float:
     try:
         freq = infer_frequency(timestamps)
     except PQException as ex:
-        raise PQException(f'could not compute periods per year, you may need to set it yourself: {ex}')
+        raise PQException(f'could not compute periods per year from unevenly spaced timestamps'
+                          f', you may need to set it yourself: {ex}')
     if freq == 31: return 12
     return 252. / freq if freq != 0 else np.nan
 
@@ -564,8 +564,7 @@ def display_return_metrics(metrics: dict[str, Any], float_precision: int = 3, sh
         df.insert(0, metric_name, metric_value)
     df = df[cols]
     
-    if show and 'TEST_FLAG' not in os.environ:
-        display(df)
+    if show and has_display(): display(df)
     
     return df
 
@@ -633,7 +632,7 @@ def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, width=0,
     fig.update_yaxes(title_text="Return", row=3, col=1)
     fig.update_layout(showlegend=False, height=height)
     if width > 0: fig.update_layout(width=width)
-    if show and 'TEST_FLAG' not in os.environ: fig.show()
+    if show and has_display(): fig.show()
     return fig
 
 

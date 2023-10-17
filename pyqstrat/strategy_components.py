@@ -23,16 +23,31 @@ _logger = get_child_logger(__name__)
 
 
 @dataclass
+class VectorIndicator:
+    '''
+    An indicator created from a vector
+    Args:
+        vector: Vector with indicator values. Must be the same length as strategy timestamps 
+    '''
+    vector: np.ndarray
+       
+    def __call__(self,
+                 contract_group: ContractGroup, 
+                 timestamps: np.ndarray, 
+                 indicator_values: SimpleNamespace,
+                 context: StrategyContextType) -> np.ndarray:
+        return self.vector
+
+
+@dataclass
 class VectorSignal:
     '''
     A signal created from a vector that has boolean values
-    col_name: Column name corresponding to the column in the dataframe.  
+    Args:
+        vector: Vector with indicator values. Must be the same length as strategy timestamps 
     '''
     vector: np.ndarray
     
-    def __init__(self, vector: np.ndarray) -> None:
-        self.vector = vector
-
     def __call__(self,
                  contract_group: ContractGroup, 
                  timestamps: np.ndarray, 
