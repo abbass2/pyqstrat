@@ -695,9 +695,8 @@ class Strategy:
     
 
 if __name__ == "__main__":
-    # from test_strategy import test_strategy, test_strategy_2
-    # test_strategy()
-    from test_strategy import test_strategy_2
+    from test_strategy import test_strategy, test_strategy_2
+    test_strategy()
     test_strategy_2()
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
