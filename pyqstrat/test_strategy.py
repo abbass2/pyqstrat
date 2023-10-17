@@ -21,7 +21,7 @@ from typing import Sequence
 _logger = pq.get_child_logger(__name__)
 
 
-def text_strategy() -> None:
+def test_strategy() -> None:
     try:
         # If we are running from unit tests
         aapl_file_path = os.path.dirname(os.path.realpath(__file__)) + '/notebooks/support/AAPL.csv.gz'
@@ -33,15 +33,15 @@ def text_strategy() -> None:
     aapl_prices = pd.read_csv(aapl_file_path)
     ibm_prices = pd.read_csv(ibm_file_path)
 
-#     end_time = '2019-01-30 12:00'
-    
-#     aapl_prices = aapl_prices.query(f'timestamp <= "{end_time}"').sort_values(by='timestamp')
-#     ibm_prices = ibm_prices.query(f'timestamp <= "{end_time}"').sort_values(by='timestamp')
+    end_time = '2023-01-05 12:00'
+
+    aapl_prices = aapl_prices.query(f'timestamp <= "{end_time}"').sort_values(by='timestamp')
+    ibm_prices = ibm_prices.query(f'timestamp <= "{end_time}"').sort_values(by='timestamp')
 
     timestamps = aapl_prices.timestamp.values.astype('M8[m]')
-    
+
     ratio = aapl_prices.c / ibm_prices.c
-    
+
     def zscore_indicator(contract_group: pq.ContractGroup, 
                          timestamps: np.ndarray, 
                          indicators: SimpleNamespace,
@@ -53,7 +53,7 @@ def text_strategy() -> None:
         zscore = (ratio - mean) / std
         zscore = np.nan_to_num(zscore)
         return zscore
-    
+
     def pair_strategy_signal(contract_group: pq.ContractGroup,
                              timestamps: np.ndarray,
                              indicators: SimpleNamespace, 
@@ -67,7 +67,7 @@ def text_strategy() -> None:
         signal = np.where((zscore < -0.5) & (zscore > -1), -1, signal)
         if contract_group.name == 'ibm': signal = -1. * signal
         return signal
-    
+
     def pair_entry_rule(contract_group: pq.ContractGroup,
                         i: int,
                         timestamps: np.ndarray,
@@ -82,11 +82,11 @@ def text_strategy() -> None:
         risk_percent = 0.1
 
         _orders: list[pq.Order] = []
-        
+
         symbol = contract_group.name
         contract = contract_group.get_contract(symbol)
         if contract is None: contract = pq.Contract.create(symbol, contract_group=contract_group)
-        
+
         curr_equity = account.equity(timestamp)
         order_qty = np.round(curr_equity * risk_percent / indicators.c[i] * np.sign(signal_value))
         _logger.info(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp}'
@@ -97,7 +97,7 @@ def text_strategy() -> None:
                                       qty=order_qty, 
                                       reason_code=reason_code))
         return _orders
-            
+
     def pair_exit_rule(contract_group: pq.ContractGroup,
                        i: int,
                        timestamps: np.ndarray,
@@ -136,11 +136,11 @@ def text_strategy() -> None:
 
         for order in orders:
             trade_price = np.nan
-            
+
             assert order.contract is not None
             cgroup = order.contract.contract_group
             ind = indicators[cgroup]
-            
+
             o, h, l = ind.o[i], ind.h[i], ind.l[i]  # noqa: E741  # l is ambiguous
 
             pq.assert_(isinstance(order, pq.MarketOrder), f'Unexpected order type: {order}')
@@ -155,7 +155,7 @@ def text_strategy() -> None:
             trades.append(trade)
 
         return trades
-    
+
     def get_price(contract: pq.Contract, 
                   timestamps: np.ndarray, 
                   i: int, 
@@ -168,7 +168,7 @@ def text_strategy() -> None:
 
     pq.Contract.clear()
     pq.ContractGroup.clear()
-        
+
     aapl_contract_group = pq.ContractGroup.create('KO')
     ibm_contract_group = pq.ContractGroup.create('ibm')
 
@@ -177,8 +177,8 @@ def text_strategy() -> None:
     strategy = pq.Strategy(timestamps, [aapl_contract_group, ibm_contract_group], get_price, trade_lag=1, strategy_context=strategy_context)
     for tup in [(aapl_contract_group, aapl_prices), (ibm_contract_group, ibm_prices)]:
         for column in ['o', 'h', 'l', 'c']:
-            strategy.add_indicator(column, tup[1][column], contract_groups=[tup[0]])
-    strategy.add_indicator('ratio', ratio)
+            strategy.add_indicator(column, pq.VectorIndicator(tup[1][column].values), contract_groups=[tup[0]])
+    strategy.add_indicator('ratio', pq.VectorIndicator(ratio.values))
     strategy.add_indicator('zscore', zscore_indicator, depends_on=['ratio'])
 
     strategy.add_signal('pair_strategy_signal', pair_strategy_signal, depends_on_indicators=['zscore'])
@@ -186,21 +186,21 @@ def text_strategy() -> None:
     # ask pqstrat to call our trading rule when the signal has one of the values [-2, -1, 1, 2]
     strategy.add_rule('pair_entry_rule', pair_entry_rule, 
                       signal_name='pair_strategy_signal', sig_true_values=[-2, 2], position_filter='zero')
-    
+
     strategy.add_rule('pair_exit_rule', pair_exit_rule, 
                       signal_name='pair_strategy_signal', sig_true_values=[-1, 1], position_filter='nonzero')
-    
+
     strategy.add_market_sim(market_simulator)
-    
+
     strategy.run_indicators()
     strategy.run_signals()
     strategy.run_rules()
 
     metrics = strategy.evaluate_returns(plot=False, display_summary=False, return_metrics=True)
     assert metrics is not None
-    assert round(metrics['gmean'], 6) == -0.057329
-    assert round(metrics['sharpe'], 4) == -8.8903  # -7.2709)
-    assert round(metrics['mdd_pct'], 6) == 0.002574  # -0.002841)
+    assert math.isclose(metrics['gmean'], 9.35949, abs_tol=1e-4)
+    assert math.isclose(metrics['sharpe'], 3.46639, abs_tol=1e-4)
+    assert math.isclose(metrics['mdd_pct'], 0.001466, abs_tol=1e-6)
 
 
 def test_strategy_2() -> None:
@@ -272,6 +272,6 @@ def test_strategy_2() -> None:
     
 
 if __name__ == '__main__':
-    # test_strategy()
+    test_strategy()
     test_strategy_2()
 # $$_end_code
