@@ -11,7 +11,7 @@ import pandas as pd
 from dataclasses import dataclass
 import math
 from types import SimpleNamespace
-from typing import Sequence
+from typing import Sequence, Callable
 from pyqstrat.account import Account
 from pyqstrat.pq_types import Contract, ContractGroup, Trade, Order
 from pyqstrat.pq_types import MarketOrder, LimitOrder, TimeInForce, ReasonCode
@@ -30,7 +30,7 @@ class VectorIndicator:
         vector: Vector with indicator values. Must be the same length as strategy timestamps 
     '''
     vector: np.ndarray
-       
+        
     def __call__(self,
                  contract_group: ContractGroup, 
                  timestamps: np.ndarray, 
@@ -119,6 +119,72 @@ class SimpleMarketSimulator:
             order.fill()
             trades.append(trade)
         return trades
+    
+
+@dataclass
+class PercentOfEquityTradingRule:
+    '''
+    A rule that trades a percentage of equity.
+    Args:
+        reason_code: Reason for entering the order, used for display
+        equity_percent: Percentage of equity used to size order
+        long: Whether We want to go long or short
+        limit_increment: If not nan, we add or subtract this number from current market price (if selling or buying respectively)
+            and create a limit order. If nan, we create market orders
+        price_func: The function we use to get intraday prices
+        direction_func: A function that takes a contract rule and self.long and returns 1 or -1. Useful for trading a basket 
+            where going long the basket may mean, for example, going long equity A and B and short equity C
+    '''
+    
+    reason_code: str
+    equity_percent: float = 0.1  # use 10% of equity by default
+    long: bool = True
+    limit_increment: float = math.nan
+    price_func: PriceFunctionType = None
+    direction_func: Callable[[ContractGroup, bool], int] | None = None
+        
+    def __call__(self,
+                 contract_group: ContractGroup,
+                 i: int,
+                 timestamps: np.ndarray,
+                 indicator_values: SimpleNamespace,
+                 signal_values: SimpleNamespace,
+                 account: Account,
+                 current_orders: Sequence[Order],
+                 strategy_context: StrategyContextType) -> list[Order]:
+        
+        timestamp = timestamps[i]
+            
+        contract = contract_group.get_contract(contract_group.name)
+        entry_price_est = self.price_func(contract, timestamps, i, strategy_context)
+        if math.isnan(entry_price_est): return []
+        
+        curr_equity = account.equity(timestamp)
+        risk_amount = self.equity_percent * curr_equity
+        _order_qty = risk_amount / entry_price_est
+        if self.direction_func:
+            _order_qty *= self.direction_func(contract_group, self.long)
+        elif not self.long:
+            _order_qty *= -1
+            
+        order_qty = math.floor(_order_qty) if _order_qty > 0 else math.ceil(_order_qty)
+        if math.isclose(order_qty, 0.): return []
+        if math.isfinite(self.limit_increment):
+            contract = contract_group.get_contract(contract_group.name)
+            entry_price_est = self.price_func(contract, timestamps, i, strategy_context)
+            if order_qty >= 0:
+                entry_price_est -= self.limit_increment
+            else:
+                entry_price_est -= self.limit_increment
+            limit_order = LimitOrder(contract=contract, 
+                                     timestamp=timestamp, 
+                                     qty=order_qty, 
+                                     limit_price=entry_price_est, 
+                                     reason_code=self.reason_code)
+            return [limit_order]
+        
+        market_order = MarketOrder(contract=contract, timestamp=timestamp, qty=order_qty, reason_code=self.reason_code)
+        return [market_order]
 
     
 @dataclass(kw_only=True)
@@ -444,7 +510,8 @@ class ClosePositionExitRule:
     Args:
         reason_code: the reason for closing out used for display purposes
         price_func: the function this rule uses to get market prices
-        limit_increment: 
+        limit_increment: if not nan, we add or subtract this number from current market price (if selling or buying respectively)
+            and create a limit order
     '''
     reason_code: str
     price_func: PriceFunctionType

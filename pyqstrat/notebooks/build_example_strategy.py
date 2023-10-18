@@ -2,7 +2,7 @@ import pandas as pd
 import pyqstrat as pq
 import numpy as np
 
-def build_example_strategy() -> pq.Strategy:
+def build_example_strategy(stop_pct: float=0.005, ret_threshold: float=0) -> pq.Strategy:
     # read 1 minute price bars
     aapl = pd.read_csv('support/aapl.csv.gz')[['timestamp', 'c']]
     aapl.timestamp = pd.to_datetime(aapl.timestamp)
@@ -10,11 +10,11 @@ def build_example_strategy() -> pq.Strategy:
     aapl['date'] = aapl.timestamp.values.astype('M8[D]') 
     # compute overnight return
     aapl['overnight_ret'] = np.where(aapl.date > aapl.date.shift(1), aapl.c / aapl.c.shift(1) - 1, np.nan)
-    aapl['overnight_ret_negative'] = (aapl.overnight_ret < 0)  # whether overnight return is negative
+    aapl['overnight_ret_negative'] = (aapl.overnight_ret < ret_threshold)  # whether overnight return is below threshold
     # mark points just before EOD. We enter a marker order at these points so we have one bar to get filled
     aapl['eod'] = np.where(aapl.date.shift(-2) > aapl.date, True, False)   
     # if the price drops by 1% after we enter in the morning take our loss and get out
-    aapl['stop_price'] = np.where(np.isfinite(aapl.overnight_ret), aapl.c * 0.995, np.nan) 
+    aapl['stop_price'] = np.where(np.isfinite(aapl.overnight_ret), aapl.c * (1 - stop_pct), np.nan) 
     aapl['stop_price'] = aapl.stop_price.fillna(method='ffill')  # fill in the stop price for the rest of the day
     aapl['stop'] = np.where(aapl.c < aapl.stop_price, True, False)  # whether we should exit because we are stopped out
 

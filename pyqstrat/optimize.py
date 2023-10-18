@@ -222,15 +222,15 @@ class Optimizer:
         for metric, _z in zvalues:
             cols[metric] = _z
         _df = pd.DataFrame(cols).sort_values(by=['x', 'y'])
-        x = np.unique(_df.x.values)
-        y = np.unique(_df.y.values)
-        df = _df.set_index(['x', 'y']).reindex(itertools.product(x, y)).reset_index()
+        _x = np.unique(_df.x.values)
+        _y = np.unique(_df.y.values)
+        df = _df.set_index(['x', 'y']).reindex(itertools.product(_x, _y)).reset_index()
 
         metrics = np.unique([metric[0] for metric in zvalues])
-        _z = np.full((len(metrics), len(x), len(y)), np.nan)
+        _z = np.full((len(metrics), len(_x), len(_y)), np.nan)
 
         for i, metric in enumerate(metrics):
-            _z[i, :, :] = df[metric].values.reshape((len(x), len(y)))
+            _z[i, :, :] = df[metric].values.reshape((len(_x), len(_y)))
 
         fig = make_subplots(rows=len(metrics), cols=1, subplot_titles=metrics, shared_xaxes=True, vertical_spacing=vertical_spacing)
         fig.update_layout(height=height)
@@ -241,24 +241,39 @@ class Optimizer:
         for i, metric in enumerate(metrics):
             zmatrix = _z[i]
             row = i + 1
-            zero = 0 - np.nanmin(zmatrix) / (np.nanmax(zmatrix) - np.nanmin(zmatrix))
-            colorscale = [
-                [0, 'rgba(237, 100, 90, 0.85)'],   
-                [zero, 'white'],  
-                [1, 'rgba(17, 165, 21, 0.85)']]  
+            min_z = np.nanmin(zmatrix)
+            max_z = np.nanmax(zmatrix)
+               
+            zero: float = np.nan
+            if np.sign(min_z) != np.sign(max_z):
+                print(max_z, min_z)
+                zero = (0 - min_z) / (max_z - min_z)
+                colorscale = [(0, 'rgba(237, 100, 90, 0.85)'),
+                              (zero, 'white'),
+                              (1, 'rgba(17, 165, 21, 0.85)')]
+            elif min_z <= 0:  # both min and max are negative
+                colorscale = [(0, 'rgba(237, 100, 90, 0.85)'),
+                              (1, 'white')]
+            else:  # both min and max are positive
+                colorscale = [(0, 'white'),
+                              (1, 'rgba(17, 165, 21, 0.85)')]
+                
             colorbar_y = 1 - (i + 1) * colorbar_height
-            trace = go.Contour(x=x, 
-                               y=y, 
+            trace = go.Contour(x=_x, 
+                               y=_y, 
                                z=zmatrix, 
                                name=metric, 
                                colorscale=colorscale, 
                                colorbar=dict(len=colorbar_height, y=colorbar_y),
                                connectgaps=True,
                                contours=dict(showlabels=True, labelfont=dict(color='white')))
-            if markers:
-                scatter = go.Scatter(x=df.x, y=df.y, marker=dict(color=df[metric].values), mode='markers')
-                fig.add_trace(scatter, row=row, col=1)
+            fig.update_xaxes(title_text=x, row=row, col=1)
+            fig.update_yaxes(title_text=y, row=row, col=1)
             fig.add_trace(trace, row=row, col=1)
+
+            if markers:
+                scatter = go.Scatter(x=df.x.values, y=df.y.values, marker=dict(color=df[metric].values), mode='markers')
+                fig.add_trace(scatter, row=row, col=1)
 
         fig.update_layout(showlegend=False)
         if show and has_display(): fig.show()
