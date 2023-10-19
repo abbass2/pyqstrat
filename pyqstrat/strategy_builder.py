@@ -106,10 +106,11 @@ class StrategyBuilder:
     def set_strategy_context(self, context: StrategyContextType) -> None:
         self.strategy_context = context
         
-    def add_contract(self, symbol: str) -> None:
+    def add_contract(self, symbol: str) -> Contract:
         cg = ContractGroup.create(symbol)
-        Contract.create(symbol, cg)
+        contract = Contract.create(symbol, cg)
         self.contract_groups.append(cg)
+        return contract
         
     def set_price_function(self, price_function: PriceFunctionType) -> None:
         self.price_function = price_function
@@ -134,6 +135,7 @@ class StrategyBuilder:
                    contract_groups: Sequence[ContractGroup] | None = None,
                    depends_on_indicators: Sequence[str] | None = None,
                    depends_on_signals: Sequence[str] | None = None) -> None:
+        # import pdb; pdb.set_trace()
         self.signals.append((name, signal_function, contract_groups, depends_on_indicators, depends_on_signals))
         
     def add_rule(self,
@@ -150,7 +152,9 @@ class StrategyBuilder:
     def add_series_rule(self,
                         column_name: str, 
                         rule_function: RuleType,
-                        position_filter: str) -> None:
+                        position_filter: str = '',
+                        name: str = '',
+                        contract_groups: list[ContractGroup] | None = None) -> None:
         '''
         Helper function that makes it easier to create a signal by using a boolean column from 
         the dataframe passed in the constructor to this class
@@ -159,8 +163,9 @@ class StrategyBuilder:
         assert_(column_name in self.data.columns, f'{column_name} not found in data: {self.data.columns}')
         dtype = self.data[column_name].dtype
         assert_(dtype == np.dtype('bool'), f'{column_name} expected to be boolean, got {dtype} instead')
-        sig_name, rule_name = f'{column_name}_sig', f'{column_name}_rule'
-        self.signals.append((sig_name, VectorSignal(self.data[column_name].values), None, [], None))
+        if len(name) == 0: name = column_name
+        sig_name, rule_name = f'{name}_sig', f'{name}_rule'
+        self.signals.append((sig_name, VectorSignal(self.data[column_name].values), contract_groups, None, None))
         self.rules.append((rule_name, rule_function, sig_name, None, position_filter))
 
     def __call__(self) -> Strategy:
