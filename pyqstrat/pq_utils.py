@@ -64,8 +64,7 @@ def set_ipython_defaults(jupyter_multiple_display=True) -> None:
 def set_defaults(df_float_sf: int = 9, 
                  df_display_max_rows: int = 200, 
                  df_display_max_columns: int = 99,
-                 np_seterr: str = 'raise',
-                 jupyter_multiple_display=True) -> None:
+                 np_seterr: str = 'raise') -> None:
     '''
     Set some display defaults to make it easier to view dataframes and graphs.
     
@@ -81,8 +80,6 @@ def set_defaults(df_float_sf: int = 9,
     if df_display_max_columns is not None: pd.options.display.max_columns = df_display_max_columns
     if np_seterr is not None: np.seterr(np_seterr)  # type: ignore
     pd.options.mode.chained_assignment = None  # Turn off bogus 'view' warnings from pandas when modifying dataframes
-    if in_ipython():
-        set_ipython_defaults(jupyter_multiple_display)
     
 
 def str2date(s: np.datetime64 | str | None) -> np.datetime64:

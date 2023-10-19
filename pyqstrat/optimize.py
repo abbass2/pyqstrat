@@ -261,7 +261,7 @@ class Optimizer:
             colorbar_y = 1 - (i + 1) * colorbar_height
             trace = go.Contour(x=_x, 
                                y=_y, 
-                               z=zmatrix, 
+                               z=zmatrix.T, 
                                name=metric, 
                                colorscale=colorscale, 
                                colorbar=dict(len=colorbar_height, y=colorbar_y),
@@ -269,13 +269,17 @@ class Optimizer:
                                contours=dict(showlabels=True, labelfont=dict(color='white')))
             fig.update_xaxes(title_text=x, row=row, col=1)
             fig.update_yaxes(title_text=y, row=row, col=1)
+            fig.update_xaxes(range=[np.min(_x), np.max(_x)], row=row, col=1)
+            fig.update_yaxes(range=[np.min(_y), np.max(_y)], row=row, col=1)
+
             fig.add_trace(trace, row=row, col=1)
 
             if markers:
-                scatter = go.Scatter(x=df.x.values, y=df.y.values, marker=dict(color=df[metric].values), mode='markers')
+                scatter = go.Scatter(x=df.x, y=df.y, mode='markers', marker=dict(color='black'))
                 fig.add_trace(scatter, row=row, col=1)
 
         fig.update_layout(showlegend=False)
+
         if show and has_display(): fig.show()
         return fig
 
