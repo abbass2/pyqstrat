@@ -191,7 +191,7 @@ class SimpleMarketSimulator:
             if np.isnan(raw_price): continue
             price = raw_price + slippage
             trade = Trade(order.contract, order, timestamp, order.qty, price)
-            _logger.info(f'Trade: {i} {timestamp.astype("M8[m]")} {trade}')
+            _logger.info(f'Trade: {timestamp.astype("M8[m]")} {trade}')
             order.fill()
             trades.append(trade)
         return trades
@@ -491,7 +491,7 @@ class VWAPMarketSimulator:
                 fill_fraction = (timestamp - order.timestamp) / (order.vwap_end_time - order.timestamp)
                 fill_fraction = min(fill_fraction, 1)
                 fill_qty = np.fix(order.qty * fill_fraction)
-                _logger.info(f'{i} {timestamp} {order.timestamp} {order.vwap_end_time} {fill_fraction} qty: {fill_qty}')
+                _logger.info(f'{timestamp} {order.timestamp} {order.vwap_end_time} {fill_fraction} qty: {fill_qty}')
             order.fill(fill_qty)
             order.cancel()
             trade = Trade(order.contract, order, timestamp, fill_qty, vwap)

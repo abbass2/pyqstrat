@@ -191,7 +191,8 @@ class Strategy:
         self.rule_signals[name] = (signal_name, sig_true_values)
         self.rules[name] = rule_function
         if position_filter is not None:
-            assert_(position_filter in ['zero', 'nonzero', 'positive', 'negative'])
+            assert_(position_filter in ['zero', 'nonzero', 'positive', 'negative', ''])
+        if position_filter == '': position_filter = None
         self.position_filters[name] = position_filter
         
     def add_market_sim(self, market_sim_function: MarketSimulatorType) -> None:
