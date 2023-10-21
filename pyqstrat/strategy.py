@@ -182,6 +182,7 @@ class Strategy:
                 If not set, we don't look at the position before triggering the rule. Default None
         '''
         
+        # import pdb; pdb.set_trace()
         if sig_true_values is None: sig_true_values = [True]
             
         assert_(name not in self.rule_names, f'rule {name} already exists')
@@ -342,6 +343,8 @@ class Strategy:
         
         # list of lists, i -> list of order tuple
         orders_iter: list[list[OrderTupType]] = [[] for x in range(num_timestamps)]
+            
+        # import pdb; pdb.set_trace()
 
         for rule_name in rule_names:
             rule_function = self.rules[rule_name]

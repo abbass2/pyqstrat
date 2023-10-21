@@ -126,11 +126,25 @@ def remove_dups(lst: list[Any], key_func: Callable[[Any], Any] | None = None) ->
     return new_list
 
 
-def np_get_index(array: np.ndarray, value: Any) -> int:
+def np_indexof(array: np.ndarray, value: Any) -> int:
     '''Get index of a value in a numpy array.  Returns -1 if the value does not exist.'''
     x = np.where(array == value)
     if len(x[0]): return x[0][0]
     return -1
+
+
+def np_indexof_sorted(array: np.ndarray, value: Any) -> int:
+    '''
+    Get index of a value in a sorted numpy array.  Returns -1 if the value does not exist
+    a = np.array([1, 2, 3, 4])
+    assert(np_indexof_sorted(a, 3) == 2)
+    assert(np.indexof_sorted(a, 8) == -1)
+    assert(np.indexof_sorted(a, 0) == -1)
+    '''
+    idx = np.searchsorted(array, value)
+    if idx == array.size: return -1
+    if array[idx] != value: return -1
+    return idx
 
 
 def np_find_closest(a: np.ndarray, v: Any) -> int | np.ndarray:

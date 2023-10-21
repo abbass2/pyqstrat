@@ -61,7 +61,7 @@ class StrategyBuilder:
     data: pd.DataFrame
     timestamps: np.ndarray | None
     timestamp_unit: np.dtype  # by default use minutes, unless set_timestamps is called
-    contract_groups: list[ContractGroup]
+    contract_groups: dict[str, ContractGroup]
     price_function: PriceFunctionType | None
     pnl_calc_time: int
     starting_equity: float
@@ -77,7 +77,7 @@ class StrategyBuilder:
         self.data = data
         self.timestamps = None
         self.timestamp_unit = np.dtype('M8[m]')
-        self.contract_groups = []
+        self.contract_groups = {}
         self.pnl_calc_time = 16 * 60 + 1
         self.starting_equity = 1.0e6
         self.trade_lag = True
@@ -107,16 +107,25 @@ class StrategyBuilder:
         self.strategy_context = context
         
     def add_contract(self, symbol: str) -> Contract:
-        cg = ContractGroup.create(symbol)
+        cg = self.get_or_create_contract_group(symbol)
         contract = Contract.create(symbol, cg)
-        self.contract_groups.append(cg)
         return contract
         
     def set_price_function(self, price_function: PriceFunctionType) -> None:
         self.price_function = price_function
         
+    def get_or_create_contract_group(self, symbol) -> ContractGroup:
+        if symbol in self.contract_groups:
+            return self.contract_groups[symbol]
+        else:
+            contract_group = ContractGroup.create(symbol)
+            self.contract_groups[symbol] = contract_group
+            return contract_group
+        
     def add_contract_group(self, contract_group: ContractGroup) -> None:
-        self.contract_groups.append(contract_group)
+        if contract_group.name in self.contract_groups:
+            return
+        self.contract_groups[contract_group.name] = contract_group
     
     def add_indicator(self, 
                       name: str, 
@@ -177,9 +186,10 @@ class StrategyBuilder:
         if self.timestamps is None:
             assert_(self.data is not None, 'data cannot be None if timestamps is not set')
         _timestamps = self.data['timestamp'].values.astype(self.timestamp_unit) if self.timestamps is None else self.timestamps
+        _contract_groups = list(self.contract_groups.values())
         
         strat = Strategy(_timestamps, 
-                         self.contract_groups, 
+                         _contract_groups, 
                          self.price_function,  # type: ignore
                          self.starting_equity, 
                          self.pnl_calc_time, 

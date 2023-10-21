@@ -8,6 +8,7 @@
 # $$_ %%checkall
 import numpy as np
 import pandas as pd
+import pyqstrat as pq
 from dataclasses import dataclass
 import math
 from types import SimpleNamespace
@@ -16,7 +17,7 @@ from pyqstrat.account import Account
 from pyqstrat.pq_types import Contract, ContractGroup, Trade, Order
 from pyqstrat.pq_types import MarketOrder, LimitOrder, TimeInForce, ReasonCode
 from pyqstrat.strategy import PriceFunctionType, StrategyContextType
-from pyqstrat.pq_utils import assert_, get_child_logger
+from pyqstrat.pq_utils import assert_, get_child_logger, np_indexof_sorted
 
 
 _logger = get_child_logger(__name__)
@@ -56,11 +57,80 @@ class VectorSignal:
                  context: StrategyContextType) -> np.ndarray:
         return self.vector
 
+    
+def get_contract_price_from_dict(price_dict: dict[str, dict[np.datetime64, float]], 
+                                 contract: pq.Contract,
+                                 timestamp: np.datetime64) -> float:               
+    assert_(contract.symbol in price_dict, f'{contract.symbol} not found in price_dict')
+    ret = price_dict[contract.symbol].get(timestamp)
+    if ret is None: return math.nan
+    return ret
 
+
+def get_contract_price_from_array_dict(price_dict: dict[str, tuple[np.ndarray, np.ndarray]], 
+                                       contract: pq.Contract, 
+                                       timestamp: np.datetime64) -> float:
+    tup: tuple[np.ndarray, np.ndarray] | None = price_dict.get(contract.symbol)
+    assert_(tup is not None, f'{contract.symbol} not found in price_dict')
+    _timestamps: np.ndarray = tup[0]  # type: ignore
+    idx = np_indexof_sorted(_timestamps, timestamp)
+    if idx == -1: return math.nan
+    return tup[1][idx]  # type: ignore
+    
+
+@dataclass
+class PriceFuncArrayDict:
+    '''
+    A function object with a signature of PriceFunctionType and takes a dictionary of 
+        contract name -> tuple of sorted timestamps and prices
+    >>> timestamps = np.arange(np.datetime64('2023-01-01'), np.datetime64('2023-01-04'))
+    >>> price_dict = {'AAPL': (timestamps, [8, 9, 10]), 'IBM': (timestamps, [20, 21, 22])}
+    >>> pricefunc = PriceFuncArrayDict(price_dict)
+    >>> pq.Contract.clear()
+    >>> pq.ContractGroup.clear()
+    >>> cg = pq.ContractGroup.create('AAPL')
+    >>> aapl = pq.Contract.create('AAPL', contract_group=cg)
+    >>> assert(pricefunc(aapl, timestamps, 2, None) == 10)
+    >>> ibm = pq.Contract.create('IBM', contract_group=cg)
+    >>> basket = pq.Contract.create('AAPL_IBM', cg, components=[(aapl, 1), (ibm, -1)])
+    >>> assert(pricefunc(basket, timestamps, 1, None) == -12)
+    '''
+    price_dict: dict[str, tuple[np.ndarray, np.ndarray]]
+        
+    def __init__(self, price_dict: dict[str, tuple[np.ndarray, np.ndarray]]) -> None:
+        self.price_dict = price_dict
+        
+    def __call__(self, contract: Contract, timestamps: np.ndarray, i: int, context: StrategyContextType) -> float:
+        price: float = 0.
+        timestamp = timestamps[i]
+        if contract.is_basket():
+            for _contract, ratio in contract.components:
+                price += get_contract_price_from_array_dict(self.price_dict, _contract, timestamp) * ratio
+        else:
+            price = get_contract_price_from_array_dict(self.price_dict, contract, timestamp)
+        return price
+    
+    
 @dataclass
 class PriceFuncDict:
     '''
     A function object with a signature of PriceFunctionType and takes a dictionary of contract name -> timestamp -> price
+    >>> timestamps = np.arange(np.datetime64('2023-01-01'), np.datetime64('2023-01-04'))
+    >>> aapl_prices = [8, 9, 10]
+    >>> ibm_prices = [20, 21, 22]
+    >>> price_dict = {'AAPL': {}, 'IBM': {}} 
+    >>> for i, timestamp in enumerate(timestamps):
+    ...    price_dict['AAPL'][timestamp] = aapl_prices[i]
+    ...    price_dict['IBM'][timestamp] = ibm_prices[i]
+    >>> pricefunc = PriceFuncDict(price_dict)
+    >>> pq.Contract.clear()
+    >>> pq.ContractGroup.clear()
+    >>> cg = pq.ContractGroup.create('AAPL')
+    >>> aapl = pq.Contract.create('AAPL', contract_group=cg)
+    >>> assert(pricefunc(aapl, timestamps, 2, None) == 10)
+    >>> ibm = pq.Contract.create('IBM', contract_group=cg)
+    >>> basket = pq.Contract.create('AAPL_IBM', cg, components=[(aapl, 1), (ibm, -1)])
+    >>> assert(pricefunc(basket, timestamps, 1, None) == -12)
     '''
     price_dict: dict[str, dict[np.datetime64, float]]
         
@@ -68,12 +138,16 @@ class PriceFuncDict:
         self.price_dict = price_dict
         
     def __call__(self, contract: Contract, timestamps: np.ndarray, i: int, context: StrategyContextType) -> float:
-        assert_(contract.symbol in self.price_dict, f'{contract.symbol} not found in price_dict: {self.price_dict.keys()}')
-        ret = self.price_dict[contract.symbol].get(timestamps[i])
-        if ret is None: return math.nan
-        return ret
+        timestamp = timestamps[i]
+        price: float = 0.
+        if contract.is_basket():
+            for _contract, ratio in contract.components:
+                price += get_contract_price_from_dict(self.price_dict, _contract, timestamp) * ratio
+        else:
+            price = get_contract_price_from_dict(self.price_dict, contract, timestamp)
+        return price
     
-    
+
 @dataclass
 class SimpleMarketSimulator:
     '''
@@ -109,10 +183,12 @@ class SimpleMarketSimulator:
         # _logger.info(f'got: {orders}')
         for order in orders:
             if isinstance(order, VWAPOrder): continue
+            if order.contract.is_basket(): continue
             slippage = self.slippage
             if order.qty < 0:
                 slippage = -slippage
             raw_price = self.price_func(order.contract, timestamps, i, strategy_context)
+            if np.isnan(raw_price): continue
             price = raw_price + slippage
             trade = Trade(order.contract, order, timestamp, order.qty, price)
             _logger.info(f'Trade: {i} {timestamp.astype("M8[m]")} {trade}')
@@ -419,7 +495,7 @@ class VWAPMarketSimulator:
             order.fill(fill_qty)
             order.cancel()
             trade = Trade(order.contract, order, timestamp, fill_qty, vwap)
-            _logger.info(f'Trade: {i} {timestamp.astype("M8[m]")} {trade}')
+            _logger.info(f'Trade: {timestamp.astype("M8[m]")} {trade} {i}')
             trades.append(trade)
         return trades
 
@@ -437,7 +513,6 @@ class FiniteRiskEntryRule:
             more than this amount. Of course if price gaps up or down rather than moving smoothly,
             we may lose more.
         stop_price_ind: An indicator containing the stop price so we exit the order when this is breached
-            
     '''
     reason_code: str
     price_func: PriceFunctionType
@@ -512,6 +587,7 @@ class ClosePositionExitRule:
         price_func: the function this rule uses to get market prices
         limit_increment: if not nan, we add or subtract this number from current market price (if selling or buying respectively)
             and create a limit order
+        log_orders: if set, we use the python logger to log each order as it is generated
     '''
     reason_code: str
     price_func: PriceFunctionType
@@ -520,12 +596,14 @@ class ClosePositionExitRule:
     def __init__(self, 
                  reason_code: str, 
                  price_func: PriceFunctionType,
-                 limit_increment: float = math.nan) -> None:
+                 limit_increment: float = math.nan,
+                 log_orders: bool = True) -> None:
         self.reason_code = reason_code
         self.price_func = price_func
         assert_(math.isnan(limit_increment) or limit_increment >= 0, 
                 f'limit_increment: {limit_increment} cannot be negative')
         self.limit_increment = limit_increment
+        self.log_orders = log_orders
         
     def __call__(self,
                  contract_group: ContractGroup,
@@ -538,21 +616,25 @@ class ClosePositionExitRule:
                  strategy_context: StrategyContextType) -> list[Order]:
         timestamp = timestamps[i]
         positions = account.positions(contract_group, timestamp)
-        assert len(positions) == 1, f'expected 1 positions, got: {positions}'
-        (contract, qty) = positions[0]
-        if math.isfinite(self.limit_increment):
-            contract = contract_group.get_contract(contract_group.name)
-            exit_price_est = self.price_func(contract, timestamps, i, strategy_context)
-            if qty >= 0:
-                exit_price_est += self.limit_increment
-            else:
-                exit_price_est -= self.limit_increment
-            limit_order = LimitOrder(contract=contract, timestamp=timestamp, qty=-qty, limit_price=exit_price_est, reason_code=self.reason_code)
-            return [limit_order]
-        order = MarketOrder(contract=contract, 
-                            timestamp=timestamp, 
-                            qty=-qty, 
-                            reason_code=self.reason_code)
-        # _logger.info(f'{i} {timestamp} {order}')
-        return [order]
+        # assert len(positions) == 1, f'expected 1 positions, got: {positions}'
+        orders: list[Order] = []
+        for (contract, qty) in positions:
+            if math.isfinite(self.limit_increment):
+                exit_price_est = self.price_func(contract, timestamps, i, strategy_context)
+                if qty >= 0:
+                    exit_price_est += self.limit_increment
+                else:
+                    exit_price_est -= self.limit_increment
+                limit_order = LimitOrder(contract=contract, timestamp=timestamp, qty=-qty, limit_price=exit_price_est, reason_code=self.reason_code)
+                orders.append(limit_order)
+                continue
+            order = MarketOrder(contract=contract, timestamp=timestamp, qty=-qty, reason_code=self.reason_code)
+            orders.append(order)
+        if self.log_orders: _logger.info(f'ORDER: {timestamp} {order}')
+        return orders
+    
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS)
 # $$_end_code

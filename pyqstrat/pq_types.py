@@ -61,6 +61,7 @@ class Contract:
     symbol: str
     expiry: np.datetime64 | None
     multiplier: float
+    components: list[tuple[Contract, float]]
     properties: SimpleNamespace
     contract_group: ContractGroup
         
@@ -70,7 +71,9 @@ class Contract:
     @staticmethod
     def create(symbol: str, 
                contract_group: ContractGroup, 
-               expiry: np.datetime64 | datetime.datetime | None = None, multiplier: float = 1., 
+               expiry: np.datetime64 | datetime.datetime | None = None, 
+               multiplier: float = 1., 
+               components: list[tuple[Contract, float]] | None = None,
                properties: SimpleNamespace | None = None) -> 'Contract':
         '''
         Args:
@@ -105,6 +108,9 @@ class Contract:
         contract.expiry = expiry
         contract.multiplier = multiplier
         
+        if components is None: components = []
+        contract.components = components
+        
         if properties is None:
             properties = types.SimpleNamespace()
         contract.properties = properties
@@ -112,6 +118,9 @@ class Contract:
         contract_group.add_contract(contract)
         contract.contract_group = contract_group
         return contract
+    
+    def is_basket(self) -> bool:
+        return len(self.components) > 0
     
     @staticmethod
     def clear() -> None:
@@ -252,7 +261,7 @@ class Order:
         status: Status of the order, "open", "filled", etc. Default "open"
     '''
     contract: Contract
-    timestamp: np.datetime64
+    timestamp: np.datetime64 = np.datetime64()
     qty: float = math.nan
     reason_code: str = ReasonCode.NONE
     time_in_force: TimeInForce = TimeInForce.FOK
