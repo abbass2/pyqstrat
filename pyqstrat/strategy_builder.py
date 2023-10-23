@@ -87,9 +87,6 @@ class StrategyBuilder:
         self.rules = []
         self.market_sims = []
         
-        Contract.clear()
-        ContractGroup.clear()
-
     def set_timestamps(self, timestamps: np.ndarray) -> None:
         assert_(np.issubdtype(timestamps.dtype, np.datetime64), f'timestamps must be np.datetime64: {timestamps}')
         self.timestamps = timestamps
@@ -107,24 +104,13 @@ class StrategyBuilder:
         self.strategy_context = context
         
     def add_contract(self, symbol: str) -> Contract:
-        cg = self.get_or_create_contract_group(symbol)
-        contract = Contract.create(symbol, cg)
+        contract = Contract.create(symbol)
         return contract
         
     def set_price_function(self, price_function: PriceFunctionType) -> None:
         self.price_function = price_function
         
-    def get_or_create_contract_group(self, symbol) -> ContractGroup:
-        if symbol in self.contract_groups:
-            return self.contract_groups[symbol]
-        else:
-            contract_group = ContractGroup.create(symbol)
-            self.contract_groups[symbol] = contract_group
-            return contract_group
-        
     def add_contract_group(self, contract_group: ContractGroup) -> None:
-        if contract_group.name in self.contract_groups:
-            return
         self.contract_groups[contract_group.name] = contract_group
     
     def add_indicator(self, 

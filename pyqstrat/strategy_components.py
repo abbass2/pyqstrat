@@ -7,15 +7,14 @@
 # $$_code
 # $$_ %%checkall
 import numpy as np
-import pandas as pd
 import pyqstrat as pq
 from dataclasses import dataclass
 import math
 from types import SimpleNamespace
 from typing import Sequence, Callable
 from pyqstrat.account import Account
-from pyqstrat.pq_types import Contract, ContractGroup, Trade, Order
-from pyqstrat.pq_types import MarketOrder, LimitOrder, TimeInForce, ReasonCode
+from pyqstrat.pq_types import Contract, ContractGroup, Trade, Order, VWAPOrder
+from pyqstrat.pq_types import MarketOrder, LimitOrder, TimeInForce
 from pyqstrat.strategy import PriceFunctionType, StrategyContextType
 from pyqstrat.pq_utils import assert_, get_child_logger, np_indexof_sorted
 
@@ -86,13 +85,11 @@ class PriceFuncArrayDict:
     >>> timestamps = np.arange(np.datetime64('2023-01-01'), np.datetime64('2023-01-04'))
     >>> price_dict = {'AAPL': (timestamps, [8, 9, 10]), 'IBM': (timestamps, [20, 21, 22])}
     >>> pricefunc = PriceFuncArrayDict(price_dict)
-    >>> pq.Contract.clear()
-    >>> pq.ContractGroup.clear()
-    >>> cg = pq.ContractGroup.create('AAPL')
-    >>> aapl = pq.Contract.create('AAPL', contract_group=cg)
+    >>> pq.Contract.clear_cache()
+    >>> aapl = pq.Contract.create('AAPL')
     >>> assert(pricefunc(aapl, timestamps, 2, None) == 10)
-    >>> ibm = pq.Contract.create('IBM', contract_group=cg)
-    >>> basket = pq.Contract.create('AAPL_IBM', cg, components=[(aapl, 1), (ibm, -1)])
+    >>> ibm = pq.Contract.create('IBM')
+    >>> basket = pq.Contract.create('AAPL_IBM', components=[(aapl, 1), (ibm, -1)])
     >>> assert(pricefunc(basket, timestamps, 1, None) == -12)
     '''
     price_dict: dict[str, tuple[np.ndarray, np.ndarray]]
@@ -123,13 +120,11 @@ class PriceFuncDict:
     ...    price_dict['AAPL'][timestamp] = aapl_prices[i]
     ...    price_dict['IBM'][timestamp] = ibm_prices[i]
     >>> pricefunc = PriceFuncDict(price_dict)
-    >>> pq.Contract.clear()
-    >>> pq.ContractGroup.clear()
-    >>> cg = pq.ContractGroup.create('AAPL')
-    >>> aapl = pq.Contract.create('AAPL', contract_group=cg)
+    >>> pq.Contract.clear_cache()
+    >>> aapl = pq.Contract.create('AAPL')
     >>> assert(pricefunc(aapl, timestamps, 2, None) == 10)
-    >>> ibm = pq.Contract.create('IBM', contract_group=cg)
-    >>> basket = pq.Contract.create('AAPL_IBM', cg, components=[(aapl, 1), (ibm, -1)])
+    >>> ibm = pq.Contract.create('IBM')
+    >>> basket = pq.Contract.create('AAPL_IBM', components=[(aapl, 1), (ibm, -1)])
     >>> assert(pricefunc(basket, timestamps, 1, None) == -12)
     '''
     price_dict: dict[str, dict[np.datetime64, float]]
@@ -153,22 +148,40 @@ class SimpleMarketSimulator:
     '''
     A function object with a signature of MarketSimulatorType.
     It can take into account slippage and commission
+    >>> pq.ContractGroup.clear_cache()
+    >>> pq.Contract.clear_cache()
+    >>> put_symbol, call_symbol = 'SPX-P-3500-2023-01-19', 'SPX-C-4000-2023-01-19'
+    >>> put_contract = pq.Contract.create(put_symbol)
+    >>> call_contract = pq.Contract.create(call_symbol)
+    >>> basket = pq.Contract.create('test_contract')
+    >>> basket.components = [(put_contract, -1), (call_contract, 1)]
+    >>> timestamp = np.datetime64('2023-01-03 14:35')
+    >>> price_func = pq.PriceFuncDict({put_symbol: {timestamp: 4.8}, call_symbol: {timestamp: 3.5}})
+    >>> order = pq.MarketOrder(contract=basket, timestamp=timestamp, qty=10, reason_code='TEST')
+    >>> sim = SimpleMarketSimulator(price_func=price_func, slippage_per_trade=0)
+    >>> out = sim([order], 0, np.array([timestamp]), {}, {}, SimpleNamespace())
+    >>> assert(len(out) == 1)
+    >>> assert(math.isclose(out[0].price, -1.3))
+    >>> assert(out[0].qty == 10)    
     '''
-    slippage: float
     price_func: PriceFunctionType
+    slippage: float
+    commission: float
         
     def __init__(self,
                  price_func: PriceFunctionType,
-                 slippage_per_trade: float = 0.,) -> None:
+                 slippage_per_trade: float = 0.,
+                 commission_per_trade: float = 0) -> None:
         '''
         Args:
             price_func: A function that we use to get the price to execute at
             slippage_per_trade: Slippage in local currency. Meant to simulate the difference
             between bid/ask mid and execution price 
+            commission_per_trade: Fee paid to broker per trade
         '''
-    
-        self.price_func = price_func
-        self.slippage = slippage_per_trade
+        self.price_func: pq.PriceFunctionType = price_func
+        self.slippage: float = slippage_per_trade
+        self.commission: float = commission_per_trade
     
     def __call__(self,
                  orders: Sequence[Order],
@@ -182,16 +195,28 @@ class SimpleMarketSimulator:
         timestamp = timestamps[i]
         # _logger.info(f'got: {orders}')
         for order in orders:
-            if isinstance(order, VWAPOrder): continue
-            if order.contract.is_basket(): continue
-            slippage = self.slippage
-            if order.qty < 0:
-                slippage = -slippage
-            raw_price = self.price_func(order.contract, timestamps, i, strategy_context)
+            if not isinstance(order, pq.MarketOrder) and not isinstance(order, pq.LimitOrder): continue
+            contract = order.contract
+            if not contract.is_basket(): 
+                raw_price = self.price_func(contract, timestamps, i, strategy_context)
+            else:
+                raw_price = 0.
+                for (_contract, ratio) in contract.components:
+                    raw_price += self.price_func(_contract, timestamps, i, strategy_context) * ratio
+                    if np.isnan(raw_price):
+                        break
             if np.isnan(raw_price): continue
+            slippage = self.slippage * order.qty
+            if order.qty < 0: slippage = -slippage
             price = raw_price + slippage
-            trade = Trade(order.contract, order, timestamp, order.qty, price)
-            _logger.info(f'Trade: {timestamp.astype("M8[m]")} {trade}')
+            if isinstance(order, pq.LimitOrder) and np.isfinite(order.limit_price):
+                if ((abs(order.qty > 0) and order.limit_price > price) 
+                        or (abs(order.qty < 0) and order.limit_price < price)):
+                    continue
+            commission = self.commission * order.qty
+            if order.qty < 0: commission = -commission
+            trade = Trade(order.contract, order, timestamp, order.qty, price, self.commission)
+            _logger.info(f'TRADE: {timestamp.astype("M8[m]")} {trade}')
             order.fill()
             trades.append(trade)
         return trades
@@ -261,31 +286,8 @@ class PercentOfEquityTradingRule:
         
         market_order = MarketOrder(contract=contract, timestamp=timestamp, qty=order_qty, reason_code=self.reason_code)
         return [market_order]
+   
 
-    
-@dataclass(kw_only=True)
-class VWAPOrder(Order):
-    '''
-    An order type to trade at VWAP. A vwap order executes at VWAP from the point it is sent to the market
-    till the vwap end time specified in the order.
-
-    Args:
-        vwap_stop: limit price. If market price <= vwap_stop for buys or market price
-        >= vwap_stop for sells, the order is executed at that point.
-        vwap_end_time: We want to execute at VWAP computed from now to this time
-    '''
-    vwap_stop: float = math.nan
-    vwap_end_time: np.datetime64
-        
-    def __repr__(self):
-        timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
-        return (f'{self.contract.symbol} {timestamp:%Y-%m-%d %H:%M:%S} '
-                f'limit: {self.vwap_stop:.3f} end: {self.vwap_end_time} qty: {self.qty}'
-                + ('' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}')
-                + ('' if not self.properties.__dict__ else f' {self.properties}')
-                + f' {self.status}')
-    
-    
 @dataclass
 class VWAPEntryRule:
     '''

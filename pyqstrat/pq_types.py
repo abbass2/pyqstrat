@@ -9,69 +9,85 @@ import math
 import datetime
 from dataclasses import dataclass, field
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, ClassVar
 from enum import Enum
-from pyqstrat.pq_utils import assert_
+from pyqstrat.pq_utils import assert_, get_child_logger
+
+_logger = get_child_logger(__name__)
 
 
+@dataclass
 class ContractGroup:
     '''A way to group contracts for figuring out which indicators, rules and signals to apply to a contract and for PNL reporting'''
 
-    _group_names: set[str] = set()
+    _instances: ClassVar[dict[str, ContractGroup]] = {}
     name: str
-    contracts: set[Contract]
-    contracts_by_symbol: dict[str, Contract]
+    contracts: dict[str, Contract]
+        
+    def __init__(self, name) -> None:
+        self.name = name
+        self.contracts = {}
+            
+    @staticmethod
+    def get(name: str) -> ContractGroup:
+        '''
+        Create a contract group if it does not exist, or returns an existing one
+         Args:
+            name: Name of the group
+        '''
+        if name not in ContractGroup._instances:
+            cg = ContractGroup(name)
+            ContractGroup._instances[name] = cg
+            return cg
+        return ContractGroup._instances[name]
     
     @staticmethod
-    def clear() -> None:
-        '''
-        When running Python interactively you may create a ContractGroup with a given name multiple times because you don't restart Python 
-        therefore global variables are not cleared.  This function clears global ContractGroups
-        '''
-        ContractGroup._group_names = set()
-        
-    @staticmethod
-    def create(name) -> ContractGroup:
-        '''
-         Args:
-            name (str): Name of the group
-        '''
-        if name in ContractGroup._group_names:
-            raise Exception(f'Contract group: {name} already exists')
-        ContractGroup._group_names.add(name)
-        contract_group = ContractGroup()
-        contract_group.name = name
-        contract_group.contracts = set()
-        contract_group.contracts_by_symbol = {}
-        return contract_group
-        
+    def exists(name: str) -> bool:
+        return name in ContractGroup._instances
+    
     def add_contract(self, contract):
-        self.contracts.add(contract)
-        self.contracts_by_symbol[contract.symbol] = contract
+        if contract.symbol not in self.contracts:
+            self.contracts[contract.symbol] = contract
         
-    def get_contract(self, symbol):
-        return self.contracts_by_symbol.get(symbol)
+    def get_contract(self, symbol: str) -> Contract | None:
+        return self.contracts.get(symbol)
         
-    def __repr__(self):
+    def get_contracts(self) -> list[Contract]:
+        return list(self.contracts.values())
+    
+    @staticmethod
+    def clear_cache() -> None:
+        ContractGroup.contracts = {}
+        ContractGroup.contracts = {}
+        
+    def __repr__(self) -> str:
         return self.name
 
 
+DEFAULT_CG = ContractGroup.get('DEFAULT')
+
+
+def _format(obj: SimpleNamespace | None) -> str:
+    if obj is None: return ''
+    if len(obj.__dict__) == 0: return ''
+    return str(obj)
+
+
+@dataclass
 class Contract:
-    _symbol_names: set[str] = set()
+    _instances: ClassVar[dict[str, Contract]] = {}
     symbol: str
+    contract_group: ContractGroup
     expiry: np.datetime64 | None
     multiplier: float
     components: list[tuple[Contract, float]]
     properties: SimpleNamespace
-    contract_group: ContractGroup
-        
-    contracts_by_symbol: dict[str, Contract]
 
     '''A contract such as a stock, option or a future that can be traded'''
     @staticmethod
     def create(symbol: str, 
-               contract_group: ContractGroup, 
-               expiry: np.datetime64 | datetime.datetime | None = None, 
+               contract_group: ContractGroup | None = None, 
+               expiry: np.datetime64 | None = None, 
                multiplier: float = 1., 
                components: list[tuple[Contract, float]] | None = None,
                properties: SimpleNamespace | None = None) -> 'Contract':
@@ -79,9 +95,9 @@ class Contract:
         Args:
             symbol: A unique string reprenting this contract. e.g IBM or ESH9
             contract_group: We sometimes need to group contracts for calculating PNL, for example, you may have a strategy
-                which has 3 legs, a long option, a short option and a future or equity used to hedge delta.  In this case, you will be trading
-                different symbols over time as options and futures expire, but you may want to track PNL for each leg using a contract group for each leg.
-                So you could create contract groups 'Long Option', 'Short Option' and 'Hedge' and assign contracts to these.
+                which has options and a future or equity used to hedge delta.  In this case, you will be trading
+                different symbols over time as options and futures expire, but you may want to track PNL for each leg using
+                a contract group for each leg. So you could create contract groups 'OPTIONS' and one for 'HEDGES'
             expiry: In the case of a future or option, the date and time when the 
                 contract expires.  For equities and other non expiring contracts, set this to None.  Default None.
             multiplier: If the market price convention is per unit, and the unit is not the same as contract size, 
@@ -91,50 +107,43 @@ class Contract:
                 For example, you may want to store option strike.  Default None
         '''
         assert_(isinstance(symbol, str) and len(symbol) > 0)
-        if symbol in Contract._symbol_names:
-            raise Exception(f'Contract with symbol: {symbol} already exists')
-        Contract._symbol_names.add(symbol)
-
+        if contract_group is None: contract_group = DEFAULT_CG
+        assert_(symbol not in Contract._instances, f'Contract with symbol: {symbol} already exists')
         assert_(multiplier > 0)
-
-        contract = Contract()
-        contract.symbol = symbol
-        
-        assert_(expiry is None or isinstance(expiry, datetime.datetime) or isinstance(expiry, np.datetime64))
-        
-        if expiry is not None and isinstance(expiry, datetime.datetime):
-            expiry = np.datetime64(expiry)
-            
-        contract.expiry = expiry
-        contract.multiplier = multiplier
-        
         if components is None: components = []
-        contract.components = components
-        
-        if properties is None:
-            properties = types.SimpleNamespace()
-        contract.properties = properties
-        
+        if properties is None: properties = types.SimpleNamespace()
+        contract = Contract(symbol, contract_group, expiry, multiplier, components, properties)
         contract_group.add_contract(contract)
         contract.contract_group = contract_group
+        Contract._instances[symbol] = contract
         return contract
     
     def is_basket(self) -> bool:
         return len(self.components) > 0
     
     @staticmethod
-    def clear() -> None:
+    def exists(name) -> bool:
+        return name in Contract._instances
+    
+    @staticmethod
+    def get(name) -> Contract | None:
         '''
-        When running Python interactively you may create a Contract with a given symbol multiple times because you don't restart Python 
-        therefore global variables are not cleared.  This function clears global Contracts
+        Returns an existing contrat or none if it does not exist
         '''
-        Contract._symbol_names = set()
+        return Contract._instances.get(name)
+    
+    @staticmethod
+    def clear_cache() -> None:
+        '''
+        Remove our cache of contract groups
+        '''
+        Contract._instances = dict()
         
     def __repr__(self) -> str:
         return f'{self.symbol}' + (f' {self.multiplier}' if self.multiplier != 1 else '') + (
             f' expiry: {self.expiry.astype(datetime.datetime):%Y-%m-%d %H:%M:%S}' if self.expiry is not None else '') + (
             f' group: {self.contract_group.name}' if self.contract_group else '') + (
-            f' {self.properties.__dict__}' if self.properties.__dict__ else '')
+            f' {_format(self.properties)}')
     
 
 @dataclass
@@ -157,7 +166,7 @@ class Price:
     ask_size: int
     valid: bool = True
     properties: SimpleNamespace | None = None
-        
+
     @staticmethod
     def invalid() -> Price:
         return Price(datetime.datetime(datetime.MINYEAR, 1, 1),
@@ -216,30 +225,6 @@ class OrderStatus(Enum):
     CANCELLED = 5
     
 
-class ReasonCode:
-    '''A class containing constants for predefined order reason codes. Prefer these predefined reason codes if they suit
-    the reason you are creating your order.  Otherwise, use your own string.
-    '''
-    ENTER_LONG = 'enter long'
-    ENTER_SHORT = 'enter short'
-    EXIT_LONG = 'exit long'
-    EXIT_SHORT = 'exit short'
-    BACKTEST_END = 'backtest end'
-    ROLL_FUTURE = 'roll future'
-    NONE = 'none'
-    
-    # Used for plotting trades
-    MARKER_PROPERTIES = {
-        ENTER_LONG: {'symbol': 'P', 'color': 'blue', 'size': 50},
-        ENTER_SHORT: {'symbol': 'P', 'color': 'red', 'size': 50},
-        EXIT_LONG: {'symbol': 'X', 'color': 'blue', 'size': 50},
-        EXIT_SHORT: {'symbol': 'X', 'color': 'red', 'size': 50},
-        ROLL_FUTURE: {'symbol': '>', 'color': 'green', 'size': 50},
-        BACKTEST_END: {'symbol': '*', 'color': 'green', 'size': 50},
-        NONE: {'symbol': 'o', 'color': 'green', 'size': 50}
-    }
-    
-
 # class syntax
 class TimeInForce(Enum):
     FOK = 1  # Fill or Kill
@@ -254,16 +239,14 @@ class Order:
         contract: The contract this order is for
         timestamp: Time the order was placed
         qty:  Number of contracts or shares.  Use a negative quantity for sell orders
-        reason_code: The reason this order was created.
-            Prefer a predefined constant from the ReasonCode class if it matches your reason for creating this order.
-            Default None
+        reason_code: The reason this order was created. Default ''
         properties: Any order specific data we want to store.  Default None
         status: Status of the order, "open", "filled", etc. Default "open"
     '''
     contract: Contract
     timestamp: np.datetime64 = np.datetime64()
     qty: float = math.nan
-    reason_code: str = ReasonCode.NONE
+    reason_code: str = ''
     time_in_force: TimeInForce = TimeInForce.FOK
     properties: SimpleNamespace = field(default_factory=SimpleNamespace)
     status: OrderStatus = OrderStatus.OPEN
@@ -298,10 +281,8 @@ class MarketOrder(Order):
             
     def __repr__(self):
         timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
-        return f'{self.contract.symbol} {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty}' + (
-            '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + (
-            '' if not self.properties.__dict__ else f' {self.properties}') + (
-            f' {self.status}')
+        return (f'{self.contract.symbol} {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} {self.reason_code}'
+                f' {_format(self.properties)} {self.status}')
             
 
 @dataclass(kw_only=True)
@@ -315,10 +296,8 @@ class LimitOrder(Order):
     def __repr__(self) -> str:
         timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
         symbol = self.contract.symbol if self.contract else ''
-        return f'{symbol} {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} lmt_prc: {self.limit_price}' + (
-            '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + (
-            '' if not self.properties.__dict__ else f' {self.properties}') + (
-            f' {self.status}')
+        return (f'{symbol} {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} lmt_prc: {self.limit_price}'
+                f' {self.reason_code} {_format(self.properties)} {self.status}')
 
 
 @dataclass(kw_only=True)
@@ -334,9 +313,8 @@ class RollOrder(Order):
     def __repr__(self) -> str:
         timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
         symbol = self.contract.symbol if self.contract else ''
-        return f'{symbol} {timestamp:%Y-%m-%d %H:%M:%S} close_qty: {self.close_qty} reopen_qty: {self.reopen_qty}' + (
-            '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + '' if not self.properties.__dict__ else f' {self.properties}' + (
-            f' {self.status}')
+        return (f'{symbol} {timestamp:%Y-%m-%d %H:%M:%S} close_qty: {self.close_qty} reopen_qty: {self.reopen_qty}'
+                f' {self.reason_code} {_format(self.properties)} {self.status}')
             
 
 @dataclass(kw_only=True)
@@ -359,9 +337,29 @@ class StopLimitOrder(Order):
     def __repr__(self) -> str:
         timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
         symbol = self.contract.symbol if self.contract else ''
-        return f'{symbol} {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} trigger_prc: {self.trigger_price} limit_prc: {self.limit_price}' + (
-            '' if self.reason_code == ReasonCode.NONE else f' {self.reason_code}') + ('' if not self.properties.__dict__ else f' {self.properties}') + (
-            f' {self.status}')
+        return (f'{symbol} {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} trigger_prc: {self.trigger_price} limit_prc: {self.limit_price}'
+                f' {self.reason_code} {_format(self.properties)} {self.status}')
+    
+    
+@dataclass(kw_only=True)
+class VWAPOrder(Order):
+    '''
+    An order type to trade at VWAP. A vwap order executes at VWAP from the point it is sent to the market
+    till the vwap end time specified in the order.
+
+    Args:
+        vwap_stop: limit price. If market price <= vwap_stop for buys or market price
+        >= vwap_stop for sells, the order is executed at that point.
+        vwap_end_time: We want to execute at VWAP computed from now to this time
+    '''
+    vwap_stop: float = math.nan
+    vwap_end_time: np.datetime64
+        
+    def __repr__(self):
+        timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
+        return (f'{self.contract.symbol} {timestamp:%Y-%m-%d %H:%M:%S} '
+                f'limit: {self.vwap_stop:.3f} end: {self.vwap_end_time} qty: {self.qty}'
+                f' {self.reason_code} {self.propeties} {self.status}')
             
 
 class Trade:
@@ -407,20 +405,18 @@ class Trade:
         
     def __repr__(self) -> str:
         '''
-        >>> Contract.clear()
-        >>> ContractGroup.clear()
-        >>> contract = Contract.create('IBM', contract_group = ContractGroup.create('IBM'))
+        >>> Contract.clear_cache()
+        >>> ContractGroup.clear_cache()
+        >>> contract = Contract.create('IBM', contract_group=ContractGroup.get('IBM'))
         >>> order = MarketOrder(contract=contract, timestamp=np.datetime64('2019-01-01T14:59'), qty=100)
         >>> print(Trade(contract, order, np.datetime64('2019-01-01 15:00'), 100, 10.2130000, 0.01))
         IBM 2019-01-01 15:00:00 qty: 100 prc: 10.213 fee: 0.01 order: IBM 2019-01-01 14:59:00 qty: 100 OrderStatus.OPEN
         '''
         timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
-        fee = f' fee: {self.fee:.6g}' if self.fee else ''
-        commission = f' commission: {self.commission:.6g}' if self.commission else ''
-        return f'{self.contract.symbol}' + (
-            f' {self.contract.properties.__dict__}' if self.contract.properties.__dict__ else '') + (
-            f' {timestamp:%Y-%m-%d %H:%M:%S} qty: {self.qty} prc: {self.price:.6g}{fee}{commission} order: {self.order}') + (
-            f' {self.properties.__dict__}' if self.properties.__dict__ else '')
+        fee = f'fee: {self.fee:.6g}' if self.fee else ''
+        commission = f'commission: {self.commission:.6g}' if self.commission else ''
+        return (f'{self.contract.symbol} {_format(self.contract.properties)} {timestamp:%Y-%m-%d %H:%M:%S}'
+                f' qty: {self.qty} prc: {self.price:.6g} {fee} {commission} order: {self.order} {_format(self.properties)}')
     
 
 @dataclass

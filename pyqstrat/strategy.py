@@ -101,7 +101,7 @@ class Strategy:
         self.run_final_calc = run_final_calc
         self.indicators: dict[str, IndicatorType] = {}
         self.signals: dict[str, SignalType] = {}
-        self.signal_values: dict[ContractGroup, SimpleNamespace] = defaultdict(types.SimpleNamespace)
+        self.signal_values: dict[str, SimpleNamespace] = defaultdict(types.SimpleNamespace)
         self.rule_names: list[str] = []
         self.rules: dict[str, RuleType] = {}
         self.position_filters: dict[str, str | None] = {}
@@ -113,7 +113,7 @@ class Strategy:
         self._current_orders: list[Order] = []
         self.indicator_deps: dict[str, list[str]] = {}
         self.indicator_cgroups: dict[str, list[ContractGroup]] = {}
-        self.indicator_values: dict[ContractGroup, SimpleNamespace] = defaultdict(types.SimpleNamespace)
+        self.indicator_values: dict[str, SimpleNamespace] = defaultdict(types.SimpleNamespace)
         self.signal_indicator_deps: dict[str, list[str]] = {}
         self.signal_deps: dict[str, list[str]] = {}
         self.signal_cgroups: dict[str, list[ContractGroup]] = {}
@@ -218,22 +218,24 @@ class Strategy:
             
         ind_names = []
             
+        cg_names = set([cg.name for cg in contract_groups])
         for ind_name, cgroup_list in self.indicator_cgroups.items():
-            if len(set(contract_groups).intersection(cgroup_list)): ind_names.append(ind_name)
+            cg_list_names = set([cg.name for cg in cgroup_list])
+            if len(cg_names.intersection(cg_list_names)): ind_names.append(ind_name)
                 
         indicator_names = list(set(ind_names).intersection(indicator_names))
          
         for cgroup in contract_groups:
-            cgroup_ind_namespace = self.indicator_values[cgroup]
+            cgroup_ind_namespace = self.indicator_values[cgroup.name]
             for indicator_name in indicator_names:
                 # First run all parents
                 parent_names = self.indicator_deps[indicator_name]
                 for parent_name in parent_names:
-                    if cgroup in self.indicator_values and hasattr(cgroup_ind_namespace, parent_name): continue
+                    if cgroup.name in self.indicator_values and hasattr(cgroup_ind_namespace, parent_name): continue
                     self.run_indicators([parent_name], [cgroup])
                     
                 # Now run the actual indicator
-                if cgroup in self.indicator_values and hasattr(cgroup_ind_namespace, indicator_name): continue
+                if cgroup.name in self.indicator_values and hasattr(cgroup_ind_namespace, indicator_name): continue
                 indicator_function = self.indicators[indicator_name]
                      
                 parent_values = types.SimpleNamespace()
@@ -262,36 +264,38 @@ class Strategy:
         if clear_all: self.signal_values = defaultdict(types.SimpleNamespace)
             
         sig_names = []
-        
+
+        # import pdb; pdb.set_trace()
+        cg_names = set([cg.name for cg in contract_groups])
         for sig_name, cgroup_list in self.signal_cgroups.items():
-            if len(set(contract_groups).intersection(cgroup_list)): 
-                sig_names.append(sig_name)
+            cg_list_names = set([cg.name for cg in cgroup_list])
+            if len(cg_names.intersection(cg_list_names)): sig_names.append(sig_name)
                 
         signal_names = list(set(sig_names).intersection(signal_names))
         
         for cgroup in contract_groups:
             for signal_name in signal_names:
-                if cgroup not in self.signal_cgroups[signal_name]: continue
+                if cgroup.name not in [cg.name for cg in self.signal_cgroups[signal_name]]: continue
                 # First run all parent signals
                 parent_names = self.signal_deps[signal_name]
                 for parent_name in parent_names:
-                    if cgroup in self.signal_values and hasattr(self.signal_values[cgroup], parent_name): continue
+                    if cgroup.name in self.signal_values and hasattr(self.signal_values[cgroup.name], parent_name): continue
                     self.run_signals([parent_name], [cgroup])
                 # Now run the actual signal
-                if cgroup in self.signal_values and hasattr(self.signal_values[cgroup], signal_name): continue
+                if cgroup.name in self.signal_values and hasattr(self.signal_values[cgroup.name], signal_name): continue
                 signal_function = self.signals[signal_name]
                 parent_values = types.SimpleNamespace()
                 for parent_name in parent_names:
-                    sig_vals = getattr(self.signal_values[cgroup], parent_name)
+                    sig_vals = getattr(self.signal_values[cgroup.name], parent_name)
                     setattr(parent_values, parent_name, sig_vals)
                     
                 # Get indicators needed for this signal
                 indicator_values = types.SimpleNamespace()
                 for indicator_name in self.signal_indicator_deps[signal_name]:
-                    setattr(indicator_values, indicator_name, getattr(self.indicator_values[cgroup], indicator_name))
+                    setattr(indicator_values, indicator_name, getattr(self.indicator_values[cgroup.name], indicator_name))
                     
                 signal_output = signal_function(cgroup, self.timestamps, indicator_values, parent_values, self.strategy_context)
-                setattr(self.signal_values[cgroup], signal_name, series_to_array(signal_output))
+                setattr(self.signal_values[cgroup.name], signal_name, series_to_array(signal_output))
 
     def _generate_order_iterations(self, 
                                    rule_names: Sequence[str] | None = None, 
@@ -305,15 +309,15 @@ class Strategy:
         ...        self.trade_lag = 0
         ...        self.account = self
         ...        self.rules = {'rule_a': rule_a, 'rule_b': rule_b}
-        ...        self.market_sims = {ibm: market_sim_ibm, aapl: market_sim_aapl}
+        ...        self.market_sims = {'ibm': market_sim_ibm, 'aapl': market_sim_aapl}
         ...        self.rule_signals = {'rule_a': ('sig_a', [1]), 'rule_b': ('sig_b', [1, -1])}
-        ...        self.signal_values = {ibm: types.SimpleNamespace(sig_a=np.array([0., 1., 1.]), 
+        ...        self.signal_values = {'IBM': types.SimpleNamespace(sig_a=np.array([0., 1., 1.]), 
         ...                                                   sig_b = np.array([0., 0., 0.]) ),
-        ...                               aapl: types.SimpleNamespace(sig_a=np.array([0., 0., 0.]), 
+        ...                               'AAPL': types.SimpleNamespace(sig_a=np.array([0., 0., 0.]), 
         ...                                                    sig_b=np.array([0., -1., -1])
         ...                                                   )}
         ...        self.signal_cgroups = {'sig_a': [ibm, aapl], 'sig_b': [ibm, aapl]}
-        ...        self.indicator_values = {ibm: types.SimpleNamespace(), aapl: types.SimpleNamespace()}
+        ...        self.indicator_values = {'IBM': types.SimpleNamespace(), 'AAPL': types.SimpleNamespace()}
         >>>
         >>> def market_sim_aapl(): pass
         >>> def market_sim_ibm(): pass
@@ -321,9 +325,9 @@ class Strategy:
         >>> def rule_b(): pass
         >>> timestamps = np.array(['2018-01-01', '2018-01-02', '2018-01-03'], dtype = 'M8[D]')
         >>> rule_names = ['rule_a', 'rule_b']
-        >>> ContractGroup.clear()
-        >>> ibm = ContractGroup.create('IBM')
-        >>> aapl = ContractGroup.create('AAPL')
+        >>> ContractGroup.clear_cache()
+        >>> ibm = ContractGroup.get('IBM')
+        >>> aapl = ContractGroup.get('AAPL')
         >>> contract_groups = [ibm, aapl]
         >>> start_date = np.datetime64('2018-01-01')
         >>> end_date = np.datetime64('2018-02-05')
@@ -351,10 +355,11 @@ class Strategy:
             rule_function = self.rules[rule_name]
             for cgroup in contract_groups:
                 signal_name, sig_true_values = self.rule_signals[rule_name]
-                if cgroup not in self.signal_cgroups[signal_name]:
+                if cgroup.name not in [cg.name for cg in self.signal_cgroups[signal_name]]:
                     # We don't need to call this rule for this contract group
                     continue
-                sig_values = getattr(self.signal_values[cgroup], signal_name)
+                assert_(cgroup.name in self.signal_values, f'missing {cgroup.name} in signal_values')
+                sig_values = getattr(self.signal_values[cgroup.name], signal_name)
                 timestamps = self.timestamps
 
                 null_value = False if sig_values.dtype == np.dtype('bool') else np.nan
@@ -371,7 +376,7 @@ class Strategy:
                 
                 # Don't run rules on last index since we cannot fill any orders
                 if len(indices) and indices[-1] == len(sig_values) - 1 and self.trade_lag > 0: indices = indices[:-1] 
-                indicator_values = self.indicator_values[cgroup]
+                indicator_values = self.indicator_values[cgroup.name]
                 iteration_params = {'indicator_values': indicator_values, 'signal_values': sig_values, 'rule_name': rule_name}
                 for idx in indices: orders_iter[idx].append((rule_function, cgroup, iteration_params))
 
@@ -391,6 +396,7 @@ class Strategy:
             start_date: Run rules starting from this date. Default None 
             end_date: Don't run rules after this date.  Default None
         '''
+        #import pdb; pdb.set_trace()
         self._generate_order_iterations(rule_names, contract_groups, start_date, end_date)
         
         # Now we know which rules, contract groups need to be applied for each iteration, go through each iteration and apply them
@@ -443,6 +449,7 @@ class Strategy:
         # _logger.info(f'in _get_orders: {idx}')
 
         try:
+            # import pdb; pdb.set_trace()
             indicator_values, signal_values, rule_name = params['indicator_values'], params['signal_values'], params['rule_name']
             position_filter = self.position_filters[rule_name]
             # _logger.info(f'before pos filters')
@@ -491,8 +498,11 @@ class Strategy:
                 
         for market_sim_function in self.market_sims:
             try:
+                # import pdb; pdb.set_trace();
                 self._update_current_orders()
-                trades = market_sim_function(self._current_orders, i, 
+                
+                trades = market_sim_function(self._current_orders, 
+                                             i, 
                                              self.timestamps, 
                                              self.indicator_values, 
                                              self.signal_values, 
@@ -646,6 +656,7 @@ class Strategy:
             sampling_frequency: Downsampling frequency.  Default is None.  See pandas frequency strings for possible values
         '''
         pnl = self.df_pnl(contract_group)[['timestamp', 'net_pnl', 'equity']]
+        _logger.info(pnl)
         pnl.equity = pnl.equity.ffill()
         pnl = pnl.set_index('timestamp').resample(sampling_frequency).last().reset_index()
         pnl = pnl.dropna(subset=['equity'])

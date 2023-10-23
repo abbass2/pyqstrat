@@ -56,10 +56,8 @@ def find_index_before(sorted_dict: SortedDict, key: Any) -> int:
 class ContractPNL:
     '''Computes pnl for a single contract over time given trades and market data
     >>> from pyqstrat.pq_types import MarketOrder
-    >>> ContractGroup.clear()
-    >>> Contract.clear()
-    >>> aapl_cg = ContractGroup.create('AAPL')
-    >>> aapl_contract = Contract.create('AAPL', contract_group=aapl_cg)
+    >>> Contract.clear_cache()
+    >>> aapl_contract = Contract.create('AAPL')
     >>> timestamps = np.arange(np.datetime64('2018-01-01'), np.datetime64('2018-01-04'))
     >>> def get_price(contract, timestamps, idx, strategy_context):
     ...    assert contract.symbol == 'AAPL', f'unknown contract: {contract}'
@@ -239,7 +237,7 @@ def _get_calc_timestamps(timestamps: np.ndarray, pnl_calc_time: int) -> np.ndarr
     time_delta = np.timedelta64(pnl_calc_time, 'm')
     calc_timestamps = np.unique(timestamps.astype('M8[D]')) + time_delta
     calc_indices = np.searchsorted(timestamps, calc_timestamps, side='left') - 1
-    if calc_indices[0] == -1: calc_indices[0] = 0
+    if calc_indices[0] == -1: calc_indices = calc_indices[1:]
     return np.unique(timestamps[calc_indices])
 
 
@@ -337,66 +335,6 @@ def _roundtrip_trades(trades: list[Trade],
     return rtt
 
 
-# def _net_trade(stack: deque, trade: Trade) -> RoundTripTrade | None:
-#     if not len(stack) or np.sign(trade.qty) == np.sign(stack[0].qty):
-#         stack.append(trade)
-#         return None
-    
-#     entry = stack[0]
-#     qty = min(abs(entry.qty), abs(trade.qty)) * np.sign(entry.qty)
-#     pnl = qty * (trade.price - entry.price) * entry.contract.multiplier - trade.commission - entry.commission - trade.fee - entry.fee
-#     entry_reason_code = entry.order.reason_code if entry.order else ''
-#     exit_reason_code = trade.order.reason_code if trade.order else ''
-#     rt = RoundTripTrade(entry.contract, 
-#                         entry.order, trade.order, 
-#                         entry.timestamp, trade.timestamp,
-#                         qty, 
-#                         entry.price, trade.price, 
-#                         entry_reason_code, exit_reason_code,
-#                         entry.commission, trade.commission,
-#                         entry.properties, trade.properties,
-#                         pnl)
-#     resid = entry.qty - qty
-#     entry.qty -= qty
-#     trade.qty += qty
-#     if resid == 0:
-#         stack.popleft()
-#     return rt
-
-
-# def _roundtrip_trades(trades: list[Trade],
-#                       contract_group: ContractGroup | None = None, 
-#                       start_date: np.datetime64 = NAT, 
-#                       end_date: np.datetime64 = NAT) -> list[RoundTripTrade]:
-#     '''
-#     >>> qtys = [100, -50, 20, -120, 10]
-#     >>> prices = [9, 10, 8, 11, 12]                    
-#     >>> trades = []
-#     >>> contract = SimpleNamespace(symbol='AAPL', contract_group='AAPL', multiplier=1)
-#     >>> order = SimpleNamespace(reason_code='DUMMY')
-#     >>> for i, qty in enumerate(qtys):
-#     ...    timestamp = np.datetime64('2022-11-05 08:00') + np.timedelta64(i, 'm')
-#     ...    trades.append(Trade(contract, order, timestamp, qty, prices[i]))
-#     >>> rts = _roundtrip_trades(trades, 'AAPL')
-#     >>> assert [(rt.qty, rt.entry_price, rt.exit_price, rt.net_pnl) for rt in rts] == [
-#     ...    (50, 9, 10, 50.0), (50, 9, 11, 100.0), (20, 8, 11, 60.0), (-10, 11, 12, -10.0)]
-#     '''
-#     rts: list[RoundTripTrade] = []
-#     stacks: dict[str, deque] = defaultdict(deque)
-
-#     for _trade in trades:
-#         trade = copy.deepcopy(_trade)
-#         while True:
-#             rt = _net_trade(stacks[trade.contract.symbol], trade)
-#             if rt is None: break
-#             rts.append(rt)
-#             if trade.qty == 0: break
-
-#     return [rt for rt in rts if (np.isnat(start_date) or rt.entry_timestamp >= start_date) and (
-#         np.isnat(end_date) or rt.exit_timestamp <= end_date) and (
-#         contract_group is None or rt.contract.contract_group == contract_group)]
-
-
 class Account:
     '''An Account calculates pnl for a set of contracts'''
     def __init__(self, 
@@ -422,7 +360,7 @@ class Account:
         self.timestamps = timestamps
         self.calc_timestamps = _get_calc_timestamps(timestamps, pnl_calc_time)
         
-        self.contracts: set[Contract] = set()
+        self.contracts: dict[str, Contract] = {}
         self._trades: list[Trade] = []
         self._trades_for_date: dict[tuple[str, np.datetime64], list[Trade]] = defaultdict(list)
         self._pnl = SortedDict()
@@ -431,7 +369,7 @@ class Account:
         self.symbol_pnls: dict[str, ContractPNL] = {}
         
     def symbols(self) -> list[str]:
-        return [contract.symbol for contract in self.contracts]
+        return list(self.contracts.keys())
         
     def _add_contract(self, contract: Contract, timestamp: np.datetime64) -> None:
         if contract.symbol in self.symbol_pnls: 
@@ -440,20 +378,20 @@ class Account:
         self.symbol_pnls[contract.symbol] = contract_pnl
         # For fast lookup in position function
         self.symbol_pnls_by_contract_group[contract.contract_group.name].append(contract_pnl)
-        self.contracts.add(contract)
+        self.contracts[contract.symbol] = contract
         
     def add_trades(self, trades: Sequence[Trade]) -> None:
         trades = sorted(trades, key=lambda x: getattr(x, 'timestamp'))
         # Break up trades by contract so we can add them in a batch
-        trades_by_contract: dict[Contract, list[Trade]] = defaultdict(list)
+        trades_by_contract: dict[str, list[Trade]] = defaultdict(list)
         for trade in trades:
             contract = trade.contract
-            if contract not in self.contracts: self._add_contract(contract, trade.timestamp)
-            trades_by_contract[contract].append(trade)
+            if contract.symbol not in self.contracts: self._add_contract(contract, trade.timestamp)
+            trades_by_contract[contract.symbol].append(trade)
             
-        for contract, contract_trades in trades_by_contract.items():
+        for symbol, contract_trades in trades_by_contract.items():
             contract_trades.sort(key=lambda x: x.timestamp)  # type: ignore
-            self.symbol_pnls[contract.symbol]._add_trades(contract_trades)
+            self.symbol_pnls[symbol]._add_trades(contract_trades)
             
         for trade in trades:
             self._trades_for_date[(contract.symbol, trade.timestamp.astype('M8[D]'))].append(trade)
@@ -543,7 +481,7 @@ class Account:
             If symbol is None trades for all symbols are returned'''
         return _roundtrip_trades(self._trades.copy(), contract_group, start_date, end_date)
 
-    def df_pnl(self, contract_groups: ContractGroup | Sequence[ContractGroup] | None = None) -> pd.DataFrame:
+    def df_pnl(self, contract_groups: Sequence[ContractGroup] | None = None) -> pd.DataFrame:
         '''
         Returns a dataframe with P&L columns broken down by contract group and symbol
         
@@ -551,14 +489,12 @@ class Account:
             contract_group: Return PNL for this contract group.  If None (default), include all contract groups
         '''
         if contract_groups is None: 
-            contract_groups = list(set([contract.contract_group for contract in self.contracts]))
-
-        if isinstance(contract_groups, ContractGroup): contract_groups = [contract_groups]
+            contract_groups = list(set([contract.contract_group.name for contract in self.contracts.values()]))
 
         dfs = []
-        for contract_group in contract_groups:
-            for contract in contract_group.contracts:
-                symbol = contract.symbol
+        for name in contract_groups:
+            contract_group = ContractGroup.get(name)
+            for symbol, contract in contract_group.contracts.items():
                 if symbol not in self.symbol_pnls: continue
                 df = self.symbol_pnls[symbol].df()
                 if len(df) > 1:
@@ -590,14 +526,17 @@ class Account:
             symbol_pnls = list(self.symbol_pnls.values())
 
         timestamps = self.calc_timestamps
+        prev_date = self.calc_timestamps[0] - np.timedelta64(1, 'D')
+        timestamps = np.insert(timestamps, 0, prev_date)
         position = np.full(len(timestamps), 0., dtype=float)
         realized = np.full(len(timestamps), 0., dtype=float)
         unrealized = np.full(len(timestamps), 0., dtype=float)
         fee = np.full(len(timestamps), 0., dtype=float)
         commission = np.full(len(timestamps), 0., dtype=float)
         net_pnl = np.full(len(timestamps), 0., dtype=float)
-
-        for i, timestamp in enumerate(timestamps):
+        
+        for i in range(1, len(timestamps)):
+            timestamp = timestamps[i]
             for symbol_pnl in symbol_pnls:
                 _position, _price, _realized, _unrealized, _fee, _commission, _net_pnl = symbol_pnl.pnl(timestamp)
                 if math.isfinite(_position): position[i] += _position
@@ -686,10 +625,10 @@ def test_account():
             raise Exception(f'unknown contract: {contract}')
         return price
 
-    ContractGroup.clear()
-    Contract.clear()
-    ibm_cg = ContractGroup.create('IBM')
-    msft_cg = ContractGroup.create('MSFT')
+    ContractGroup.clear_cache()
+    Contract.clear_cache()
+    ibm_cg = ContractGroup.get('IBM')
+    msft_cg = ContractGroup.get('MSFT')
 
     ibm_contract = Contract.create('IBM', contract_group=ibm_cg)
     msft_contract = Contract.create('MSFT', contract_group=msft_cg)
@@ -715,7 +654,7 @@ def test_account():
     assert_(len(account.df_pnl()) == 6)
     assert_(np.allclose(np.array([9.99, 61.96, 79.97, 109.33, 69.97, 154.33]), account.df_pnl().net_pnl.values, rtol=0))
     assert_(np.allclose(np.array([10, 20, -10, 45, -10, 45]), account.df_pnl().position.values, rtol=0))
-    assert_(np.allclose(np.array([1000000., 1000189.3, 1000224.3]), account.df_account_pnl().equity.values, rtol=0))
+    assert_(np.allclose(np.array([1000000., 1000000., 1000189.3, 1000224.3]), account.df_account_pnl().equity.values, rtol=0))
 
 
 if __name__ == "__main__":
