@@ -32,7 +32,7 @@ RuleType = Callable[
      int, 
      np.ndarray, 
      SimpleNamespace, 
-     np.ndarray, 
+     np.ndarray,
      Account, 
      Sequence[Order],
      StrategyContextType],
@@ -42,8 +42,8 @@ MarketSimulatorType = Callable[
     [Sequence[Order], 
      int, 
      np.ndarray, 
-     dict[ContractGroup, SimpleNamespace], 
-     dict[ContractGroup, SimpleNamespace], 
+     dict[str, SimpleNamespace], 
+     dict[str, SimpleNamespace], 
      SimpleNamespace],
     list[Trade]]
 
@@ -265,7 +265,6 @@ class Strategy:
             
         sig_names = []
 
-        # import pdb; pdb.set_trace()
         cg_names = set([cg.name for cg in contract_groups])
         for sig_name, cgroup_list in self.signal_cgroups.items():
             cg_list_names = set([cg.name for cg in cgroup_list])
@@ -349,8 +348,6 @@ class Strategy:
         # list of lists, i -> list of order tuple
         orders_iter: list[list[OrderTupType]] = [[] for x in range(num_timestamps)]
             
-        # import pdb; pdb.set_trace()
-
         for rule_name in rule_names:
             rule_function = self.rules[rule_name]
             for cgroup in contract_groups:
@@ -396,7 +393,6 @@ class Strategy:
             start_date: Run rules starting from this date. Default None 
             end_date: Don't run rules after this date.  Default None
         '''
-        #import pdb; pdb.set_trace()
         self._generate_order_iterations(rule_names, contract_groups, start_date, end_date)
         
         # Now we know which rules, contract groups need to be applied for each iteration, go through each iteration and apply them
@@ -446,13 +442,9 @@ class Strategy:
         self.run_rules()
         
     def _get_orders(self, idx: int, rule_function: RuleType, contract_group: ContractGroup, params: dict[str, Any]) -> list[Order]:
-        # _logger.info(f'in _get_orders: {idx}')
-
         try:
-            # import pdb; pdb.set_trace()
             indicator_values, signal_values, rule_name = params['indicator_values'], params['signal_values'], params['rule_name']
             position_filter = self.position_filters[rule_name]
-            # _logger.info(f'before pos filters')
 
             if position_filter is not None:
                 curr_pos = self.account.position(contract_group, self.timestamps[idx])
@@ -463,7 +455,6 @@ class Strategy:
                 
             orders = rule_function(contract_group, idx, self.timestamps, indicator_values, signal_values, self.account,
                                    self._current_orders, self.strategy_context)
-            # _logger.info(f'got orders: {orders}')
         except Exception as e:
             raise type(e)(
                 f'Exception: {str(e)} at rule: {type(rule_function)} contract_group: {contract_group} index: {idx}'
@@ -543,7 +534,7 @@ class Strategy:
             if add_pnl: 
                 df_pnl = self.df_pnl(contract_group)
                 
-            indicator_values = self.indicator_values[contract_group]
+            indicator_values = self.indicator_values[contract_group.name]
             
             for k in sorted(indicator_values.__dict__):
                 name = k
@@ -551,7 +542,7 @@ class Strategy:
                 if name in df.columns: name = name + '.ind'
                 df.insert(len(df.columns), name, getattr(indicator_values, k))
 
-            signal_values = self.signal_values[contract_group]
+            signal_values = self.signal_values[contract_group.name]
 
             for k in sorted(signal_values.__dict__):
                 name = k

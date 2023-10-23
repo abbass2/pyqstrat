@@ -238,10 +238,10 @@ class PercentOfEquityTradingRule:
     '''
     
     reason_code: str
+    price_func: PriceFunctionType
     equity_percent: float = 0.1  # use 10% of equity by default
     long: bool = True
     limit_increment: float = math.nan
-    price_func: PriceFunctionType = None
     direction_func: Callable[[ContractGroup, bool], int] | None = None
         
     def __call__(self,
@@ -249,7 +249,7 @@ class PercentOfEquityTradingRule:
                  i: int,
                  timestamps: np.ndarray,
                  indicator_values: SimpleNamespace,
-                 signal_values: SimpleNamespace,
+                 signal_values: np.ndarray,
                  account: Account,
                  current_orders: Sequence[Order],
                  strategy_context: StrategyContextType) -> list[Order]:
@@ -257,13 +257,15 @@ class PercentOfEquityTradingRule:
         timestamp = timestamps[i]
             
         contract = contract_group.get_contract(contract_group.name)
+        assert_(contract is not None, 'contract was None')
+        assert contract is not None  # keep mypy happy
         entry_price_est = self.price_func(contract, timestamps, i, strategy_context)
         if math.isnan(entry_price_est): return []
         
         curr_equity = account.equity(timestamp)
         risk_amount = self.equity_percent * curr_equity
         _order_qty = risk_amount / entry_price_est
-        if self.direction_func:
+        if self.direction_func is not None:
             _order_qty *= self.direction_func(contract_group, self.long)
         elif not self.long:
             _order_qty *= -1
@@ -272,19 +274,21 @@ class PercentOfEquityTradingRule:
         if math.isclose(order_qty, 0.): return []
         if math.isfinite(self.limit_increment):
             contract = contract_group.get_contract(contract_group.name)
+            assert_(contract is not None, 'contract was None')
+            assert contract is not None  # keep mypy happy
             entry_price_est = self.price_func(contract, timestamps, i, strategy_context)
             if order_qty >= 0:
                 entry_price_est -= self.limit_increment
             else:
                 entry_price_est -= self.limit_increment
-            limit_order = LimitOrder(contract=contract, 
+            limit_order = LimitOrder(contract=contract,
                                      timestamp=timestamp, 
                                      qty=order_qty, 
                                      limit_price=entry_price_est, 
                                      reason_code=self.reason_code)
             return [limit_order]
         
-        market_order = MarketOrder(contract=contract, timestamp=timestamp, qty=order_qty, reason_code=self.reason_code)
+        market_order = MarketOrder(contract=contract, timestamp=timestamp, qty=order_qty, reason_code=self.reason_code)  # type: ignore
         return [market_order]
    
 
@@ -335,7 +339,7 @@ class VWAPEntryRule:
                  i: int,
                  timestamps: np.ndarray,
                  indicator_values: SimpleNamespace,
-                 signal_values: SimpleNamespace,
+                 signal_values: np.ndarray,
                  account: Account,
                  current_orders: Sequence[Order],
                  strategy_context: StrategyContextType) -> list[Order]:
@@ -349,6 +353,8 @@ class VWAPEntryRule:
             if order.contract.contract_group == contract_group and order.is_open(): return []
 
         contract = contract_group.get_contract(contract_group.name)
+        assert_(contract is not None, 'contract was None')
+        assert contract is not None  # keep mypy happy
         entry_price_est = self.price_func(contract, timestamps, i, strategy_context)
         if math.isnan(entry_price_est): return []
         
@@ -366,7 +372,8 @@ class VWAPEntryRule:
         order_qty = math.floor(_order_qty) if _order_qty > 0 else math.ceil(_order_qty)
         if math.isclose(order_qty, 0.): return []
         vwap_end_time = timestamp + np.timedelta64(self.vwap_minutes, 'm')
-        order = VWAPOrder(contract=contract, 
+        assert contract is not None
+        order = VWAPOrder(contract=contract,
                           timestamp=timestamp, 
                           vwap_stop=stop_price,
                           vwap_end_time=vwap_end_time, 
@@ -398,7 +405,7 @@ class VWAPCloseRule:
                  i: int,
                  timestamps: np.ndarray,
                  indicator_values: SimpleNamespace,
-                 signal_values: SimpleNamespace,
+                 signal_values: np.ndarray,
                  account: Account,
                  current_orders: Sequence[Order],
                  strategy_context: StrategyContextType) -> list[Order]:
@@ -409,7 +416,7 @@ class VWAPCloseRule:
         assert len(positions) == 1, f'expected 1 positions, got: {positions}'
         (contract, qty) = positions[0]
         vwap_end_time = timestamp + np.timedelta64(self.vwap_minutes, 'm')
-        order = VWAPOrder(contract=contract, 
+        order = VWAPOrder(contract=contract,  # type: ignore
                           timestamp=timestamp, 
                           vwap_end_time=vwap_end_time, 
                           qty=-qty, 
@@ -545,7 +552,7 @@ class FiniteRiskEntryRule:
                  i: int,
                  timestamps: np.ndarray,
                  indicator_values: SimpleNamespace,
-                 signal_values: SimpleNamespace,
+                 signal_values: np.ndarray,
                  account: Account,
                  current_orders: Sequence[Order],
                  strategy_context: StrategyContextType) -> list[Order]:
@@ -556,7 +563,7 @@ class FiniteRiskEntryRule:
             if len(trades): return []
 
         contract = contract_group.get_contract(contract_group.name)
-        entry_price_est = self.price_func(contract, timestamps, i, strategy_context)
+        entry_price_est = self.price_func(contract, timestamps, i, strategy_context)  # type: ignore
         if math.isnan(entry_price_est): return []
         
         if self.stop_price_ind:
@@ -573,7 +580,8 @@ class FiniteRiskEntryRule:
         _order_qty = risk_amount / (entry_price_est - stop_price)
         order_qty = math.floor(_order_qty) if _order_qty > 0 else math.ceil(_order_qty)
         if math.isclose(order_qty, 0.): return []
-        order = MarketOrder(contract=contract, 
+        assert contract is not None
+        order = MarketOrder(contract=contract,  # type: ignore
                             timestamp=timestamp, 
                             qty=order_qty,
                             reason_code=self.reason_code)
@@ -612,7 +620,7 @@ class ClosePositionExitRule:
                  i: int,
                  timestamps: np.ndarray,
                  indicator_values: SimpleNamespace,
-                 signal_values: SimpleNamespace,
+                 signal_values: np.ndarray,
                  account: Account,
                  current_orders: Sequence[Order],
                  strategy_context: StrategyContextType) -> list[Order]:

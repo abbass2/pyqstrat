@@ -441,8 +441,7 @@ class Account:
         Returns all non-zero positions in a contract group
         '''
         positions = []
-        for contract in contract_group.contracts:
-            symbol = contract.symbol
+        for symbol, contract in contract_group.contracts.items():
             if symbol not in self.symbol_pnls: continue
             position = self.symbol_pnls[symbol].position(timestamp)
             if not math.isclose(position, 0): positions.append((contract, position))
@@ -481,7 +480,7 @@ class Account:
             If symbol is None trades for all symbols are returned'''
         return _roundtrip_trades(self._trades.copy(), contract_group, start_date, end_date)
 
-    def df_pnl(self, contract_groups: Sequence[ContractGroup] | None = None) -> pd.DataFrame:
+    def df_pnl(self, contract_groups: Sequence[str] | None = None) -> pd.DataFrame:
         '''
         Returns a dataframe with P&L columns broken down by contract group and symbol
         
@@ -520,7 +519,7 @@ class Account:
         '''
 
         if contract_group is not None:
-            symbols = [contract.symbol for contract in contract_group.contracts if contract.symbol in self.symbol_pnls]
+            symbols = list(contract_group.contracts.keys())
             symbol_pnls = [self.symbol_pnls[symbol] for symbol in symbols]
         else:
             symbol_pnls = list(self.symbol_pnls.values())
