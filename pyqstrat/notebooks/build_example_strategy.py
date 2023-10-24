@@ -5,7 +5,7 @@ import numpy as np
 
 def build_example_strategy(stop_pct: float = 0.005, ret_threshold: float = 0) -> pq.Strategy:
     # read 1 minute price bars
-    aapl = pd.read_csv('support/aapl.csv.gz')[['timestamp', 'c']]
+    aapl = pd.read_csv('data/aapl.csv.gz')[['timestamp', 'c']]
     aapl.timestamp = pd.to_datetime(aapl.timestamp)
     # the date corresponding to each 1minute timestamp
     aapl['date'] = aapl.timestamp.values.astype('M8[D]') 

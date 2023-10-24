@@ -24,11 +24,11 @@ _logger = pq.get_child_logger(__name__)
 def test_strategy() -> None:
     try:
         # If we are running from unit tests
-        aapl_file_path = os.path.dirname(os.path.realpath(__file__)) + '/notebooks/support/AAPL.csv.gz'
-        ibm_file_path = os.path.dirname(os.path.realpath(__file__)) + '/notebooks/support/IBM.csv.gz'
+        aapl_file_path = os.path.dirname(os.path.realpath(__file__)) + '/notebooks/data/AAPL.csv.gz'
+        ibm_file_path = os.path.dirname(os.path.realpath(__file__)) + '/notebooks/data/IBM.csv.gz'
     except NameError:
-        aapl_file_path = 'notebooks/support/AAPL.csv.gz'
-        ibm_file_path = 'notebooks/support/IBM.csv.gz'
+        aapl_file_path = 'notebooks/data/AAPL.csv.gz'
+        ibm_file_path = 'notebooks/data/IBM.csv.gz'
 
     aapl_prices = pd.read_csv(aapl_file_path)
     ibm_prices = pd.read_csv(ibm_file_path)
