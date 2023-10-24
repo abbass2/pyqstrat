@@ -11,7 +11,7 @@ import pyqstrat as pq
 from dataclasses import dataclass
 import math
 from types import SimpleNamespace
-from typing import Sequence, Callable
+from typing import Sequence
 from pyqstrat.account import Account
 from pyqstrat.pq_types import Contract, ContractGroup, Trade, Order, VWAPOrder
 from pyqstrat.pq_types import MarketOrder, LimitOrder, TimeInForce
@@ -233,8 +233,6 @@ class PercentOfEquityTradingRule:
         limit_increment: If not nan, we add or subtract this number from current market price (if selling or buying respectively)
             and create a limit order. If nan, we create market orders
         price_func: The function we use to get intraday prices
-        direction_func: A function that takes a contract rule and self.long and returns 1 or -1. Useful for trading a basket 
-            where going long the basket may mean, for example, going long equity A and B and short equity C
     '''
     
     reason_code: str
@@ -242,7 +240,6 @@ class PercentOfEquityTradingRule:
     equity_percent: float = 0.1  # use 10% of equity by default
     long: bool = True
     limit_increment: float = math.nan
-    direction_func: Callable[[ContractGroup, bool], int] | None = None
         
     def __call__(self,
                  contract_group: ContractGroup,
@@ -256,40 +253,37 @@ class PercentOfEquityTradingRule:
         
         timestamp = timestamps[i]
             
-        contract = contract_group.get_contract(contract_group.name)
-        assert_(contract is not None, 'contract was None')
-        assert contract is not None  # keep mypy happy
-        entry_price_est = self.price_func(contract, timestamps, i, strategy_context)
-        if math.isnan(entry_price_est): return []
-        
-        curr_equity = account.equity(timestamp)
-        risk_amount = self.equity_percent * curr_equity
-        _order_qty = risk_amount / entry_price_est
-        if self.direction_func is not None:
-            _order_qty *= self.direction_func(contract_group, self.long)
-        elif not self.long:
-            _order_qty *= -1
-            
-        order_qty = math.floor(_order_qty) if _order_qty > 0 else math.ceil(_order_qty)
-        if math.isclose(order_qty, 0.): return []
-        if math.isfinite(self.limit_increment):
-            contract = contract_group.get_contract(contract_group.name)
-            assert_(contract is not None, 'contract was None')
-            assert contract is not None  # keep mypy happy
+        contracts = contract_group.get_contracts()
+        orders: list[Order] = []
+        for contract in contracts:
             entry_price_est = self.price_func(contract, timestamps, i, strategy_context)
-            if order_qty >= 0:
-                entry_price_est -= self.limit_increment
+            if math.isnan(entry_price_est): return []
+
+            curr_equity = account.equity(timestamp)
+            risk_amount = self.equity_percent * curr_equity
+            order_qty = risk_amount / entry_price_est
+            order_qty /= len(contracts)  # divide up qty equally between all contracts
+            if not self.long: order_qty *= -1
+            order_qty = math.floor(order_qty) if order_qty > 0 else math.ceil(order_qty)
+            if math.isclose(order_qty, 0.): return []
+            
+            if math.isfinite(self.limit_increment):
+                entry_price_est = self.price_func(contract, timestamps, i, strategy_context)
+                entry_price_est -= np.sign(order_qty) * self.limit_increment
+                    
+                limit_order = LimitOrder(contract=contract,
+                                         timestamp=timestamp, 
+                                         qty=order_qty, 
+                                         limit_price=entry_price_est, 
+                                         reason_code=self.reason_code)
+                orders.append(limit_order)
             else:
-                entry_price_est -= self.limit_increment
-            limit_order = LimitOrder(contract=contract,
-                                     timestamp=timestamp, 
-                                     qty=order_qty, 
-                                     limit_price=entry_price_est, 
-                                     reason_code=self.reason_code)
-            return [limit_order]
-        
-        market_order = MarketOrder(contract=contract, timestamp=timestamp, qty=order_qty, reason_code=self.reason_code)  # type: ignore
-        return [market_order]
+                market_order = MarketOrder(contract=contract, 
+                                           timestamp=timestamp,
+                                           qty=order_qty, 
+                                           reason_code=self.reason_code) 
+                orders.append(market_order)
+        return orders
    
 
 @dataclass
@@ -352,34 +346,35 @@ class VWAPEntryRule:
         for order in current_orders:
             if order.contract.contract_group == contract_group and order.is_open(): return []
 
-        contract = contract_group.get_contract(contract_group.name)
-        assert_(contract is not None, 'contract was None')
-        assert contract is not None  # keep mypy happy
-        entry_price_est = self.price_func(contract, timestamps, i, strategy_context)
-        if math.isnan(entry_price_est): return []
-        
-        if self.stop_price_ind:
-            _stop_price_ind = getattr(indicator_values, self.stop_price_ind)
-            stop_price = _stop_price_ind[i]
-            if self.long and (entry_price_est - stop_price) < self.min_price_diff: return []
-            if not self.long and (stop_price - entry_price_est) < self.min_price_diff: return []
-        else:
-            stop_price = math.nan
-        
-        curr_equity = account.equity(timestamp)
-        risk_amount = self.percent_of_equity * curr_equity
-        _order_qty = risk_amount / (entry_price_est - stop_price)
-        order_qty = math.floor(_order_qty) if _order_qty > 0 else math.ceil(_order_qty)
-        if math.isclose(order_qty, 0.): return []
-        vwap_end_time = timestamp + np.timedelta64(self.vwap_minutes, 'm')
-        assert contract is not None
-        order = VWAPOrder(contract=contract,
-                          timestamp=timestamp, 
-                          vwap_stop=stop_price,
-                          vwap_end_time=vwap_end_time, 
-                          qty=order_qty, 
-                          time_in_force=TimeInForce.GTC,
-                          reason_code=self.reason_code)
+        orders: list[Order] = []
+        contracts = contract_group.get_contracts()
+        for contract in contracts:
+            entry_price_est = self.price_func(contract, timestamps, i, strategy_context)
+            if math.isnan(entry_price_est): return []
+
+            if self.stop_price_ind:
+                _stop_price_ind = getattr(indicator_values, self.stop_price_ind)
+                stop_price = _stop_price_ind[i]
+                if self.long and (entry_price_est - stop_price) < self.min_price_diff: return []
+                if not self.long and (stop_price - entry_price_est) < self.min_price_diff: return []
+            else:
+                stop_price = math.nan
+
+            curr_equity = account.equity(timestamp)
+            risk_amount = self.percent_of_equity * curr_equity
+            order_qty = risk_amount / (entry_price_est - stop_price)
+            order_qty /= len(contracts)  # divide up equity percentage equally
+            order_qty = math.floor(order_qty) if order_qty > 0 else math.ceil(order_qty)
+            if math.isclose(order_qty, 0.): return []
+            vwap_end_time = timestamp + np.timedelta64(self.vwap_minutes, 'm')
+            order = VWAPOrder(contract=contract,
+                              timestamp=timestamp, 
+                              vwap_stop=stop_price,
+                              vwap_end_time=vwap_end_time, 
+                              qty=order_qty, 
+                              time_in_force=TimeInForce.GTC,
+                              reason_code=self.reason_code)
+            orders.append(order)
         return [order]
     
     
@@ -413,16 +408,18 @@ class VWAPCloseRule:
         for order in current_orders:
             if order.contract.contract_group == contract_group and order.is_open(): return []
         positions = account.positions(contract_group, timestamp)
-        assert len(positions) == 1, f'expected 1 positions, got: {positions}'
-        (contract, qty) = positions[0]
-        vwap_end_time = timestamp + np.timedelta64(self.vwap_minutes, 'm')
-        order = VWAPOrder(contract=contract,  # type: ignore
-                          timestamp=timestamp, 
-                          vwap_end_time=vwap_end_time, 
-                          qty=-qty, 
-                          time_in_force=TimeInForce.GTC,
-                          reason_code=self.reason_code)
-        return [order]
+        orders: list[Order] = []
+        for (contract, qty) in positions:
+            # assert len(positions) == 1, f'expected 1 positions, got: {positions}'
+            vwap_end_time = timestamp + np.timedelta64(self.vwap_minutes, 'm')
+            order = VWAPOrder(contract=contract,  # type: ignore
+                              timestamp=timestamp, 
+                              vwap_end_time=vwap_end_time, 
+                              qty=-qty, 
+                              time_in_force=TimeInForce.GTC,
+                              reason_code=self.reason_code)
+            orders.append(order)
+        return orders
 
 
 @dataclass    
@@ -562,30 +559,33 @@ class FiniteRiskEntryRule:
             trades = account.get_trades_for_date(contract_group.name, date)
             if len(trades): return []
 
-        contract = contract_group.get_contract(contract_group.name)
-        entry_price_est = self.price_func(contract, timestamps, i, strategy_context)  # type: ignore
-        if math.isnan(entry_price_est): return []
-        
-        if self.stop_price_ind:
-            _stop_price_ind = getattr(indicator_values, self.stop_price_ind)
-            stop_price = _stop_price_ind[i]
-        else:
-            stop_price = 0.
+        contracts = contract_group.get_contracts()
+        orders: list[Order] = []
+        for contract in contracts:
+            entry_price_est = self.price_func(contract, timestamps, i, strategy_context)  # type: ignore
+            if math.isnan(entry_price_est): return []
 
-        if self.long and (entry_price_est - stop_price) < self.min_price_diff: return []
-        if not self.long and (stop_price - entry_price_est) < self.min_price_diff: return []
-        
-        curr_equity = account.equity(timestamp)
-        risk_amount = self.percent_of_equity * curr_equity
-        _order_qty = risk_amount / (entry_price_est - stop_price)
-        order_qty = math.floor(_order_qty) if _order_qty > 0 else math.ceil(_order_qty)
-        if math.isclose(order_qty, 0.): return []
-        assert contract is not None
-        order = MarketOrder(contract=contract,  # type: ignore
-                            timestamp=timestamp, 
-                            qty=order_qty,
-                            reason_code=self.reason_code)
-        return [order]
+            if self.stop_price_ind:
+                _stop_price_ind = getattr(indicator_values, self.stop_price_ind)
+                stop_price = _stop_price_ind[i]
+            else:
+                stop_price = 0.
+
+            if self.long and (entry_price_est - stop_price) < self.min_price_diff: return []
+            if not self.long and (stop_price - entry_price_est) < self.min_price_diff: return []
+
+            curr_equity = account.equity(timestamp)
+            risk_amount = self.percent_of_equity * curr_equity
+            order_qty = risk_amount / (entry_price_est - stop_price)
+            order_qty /= len(contracts)  # divide up equity equally
+            order_qty = math.floor(order_qty) if order_qty > 0 else math.ceil(order_qty)
+            if math.isclose(order_qty, 0.): return []
+            order = MarketOrder(contract=contract,  # type: ignore
+                                timestamp=timestamp, 
+                                qty=order_qty,
+                                reason_code=self.reason_code)
+            orders.append(order)
+        return orders
     
 
 @dataclass

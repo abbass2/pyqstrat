@@ -182,7 +182,6 @@ class Strategy:
                 If not set, we don't look at the position before triggering the rule. Default None
         '''
         
-        # import pdb; pdb.set_trace()
         if sig_true_values is None: sig_true_values = [True]
             
         assert_(name not in self.rule_names, f'rule {name} already exists')
@@ -210,7 +209,6 @@ class Strategy:
             contract_groups: Contract group to run this indicator for.  If None (default), we run it for all contract groups.
             clear_all: If set, clears all indicator values before running.  Default False.
         '''
-        
         if indicator_names is None: indicator_names = list(self.indicators.keys())
         if contract_groups is None: contract_groups = self.contract_groups
             
@@ -469,18 +467,14 @@ class Strategy:
             idx = np.searchsorted(self.timestamps, order.timestamp)
             assert_(bool(idx >= 0 and idx < len(self.timestamps) and idx <= i), 
                     f'{i} {idx} {len(self.timestamps)} {order.timestamp}')
-            # _logger.info(f'{idx} {i} {self.trade_lag}')
             
             if (i - idx) < self.trade_lag:
                 continue
             if (i - idx) > self.trade_lag:
                 if order.time_in_force == TimeInForce.FOK:
-                    # _logger.info('cancelling a')
                     order.cancel()
                     continue
-            # i - idx == self.trade_lag
             if order.status == OrderStatus.CANCEL_REQUESTED:
-                # _logger.info('cancelling')
                 order.cancel()
                 
             if order.time_in_force == TimeInForce.DAY:
@@ -489,7 +483,6 @@ class Strategy:
                 
         for market_sim_function in self.market_sims:
             try:
-                # import pdb; pdb.set_trace();
                 self._update_current_orders()
                 
                 trades = market_sim_function(self._current_orders, 
@@ -647,7 +640,6 @@ class Strategy:
             sampling_frequency: Downsampling frequency.  Default is None.  See pandas frequency strings for possible values
         '''
         pnl = self.df_pnl(contract_group)[['timestamp', 'net_pnl', 'equity']]
-        _logger.info(pnl)
         pnl.equity = pnl.equity.ffill()
         pnl = pnl.set_index('timestamp').resample(sampling_frequency).last().reset_index()
         pnl = pnl.dropna(subset=['equity'])

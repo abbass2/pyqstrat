@@ -606,7 +606,8 @@ class Account:
             entry_commission=s.entry_commission,
             exit_commission=s.exit_commission,
             net_pnl=s.net_pnl) for s in rt_trades])
-        df_rts = df_rts.sort_values(by=['entry_timestamp', 'symbol'])
+        if len(df_rts) > 0:
+            df_rts = df_rts.sort_values(by=['entry_timestamp', 'symbol'])
         return df_rts
 
 

@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Sequence, Any
 from pyqstrat.strategy import Strategy
-from pyqstrat.pq_types import Contract, ContractGroup
+from pyqstrat.pq_types import Contract, ContractGroup, DEFAULT_CG
 from pyqstrat.strategy import PriceFunctionType, StrategyContextType, MarketSimulatorType
 from pyqstrat.strategy import RuleType, IndicatorType, SignalType
 from pyqstrat.strategy_components import VectorSignal, VectorIndicator, SimpleMarketSimulator
@@ -104,7 +104,11 @@ class StrategyBuilder:
         self.strategy_context = context
         
     def add_contract(self, symbol: str) -> Contract:
-        contract = Contract.create(symbol)
+        if Contract.exists(symbol):
+            contract = Contract.get(symbol)
+            assert contract is not None  # keep mypy happy
+        else:
+            contract = Contract.create(symbol)
         return contract
         
     def set_price_function(self, price_function: PriceFunctionType) -> None:
@@ -130,7 +134,6 @@ class StrategyBuilder:
                    contract_groups: Sequence[ContractGroup] | None = None,
                    depends_on_indicators: Sequence[str] | None = None,
                    depends_on_signals: Sequence[str] | None = None) -> None:
-        # import pdb; pdb.set_trace()
         self.signals.append((name, signal_function, contract_groups, depends_on_indicators, depends_on_signals))
         
     def add_rule(self,
@@ -167,12 +170,14 @@ class StrategyBuilder:
         '''
         Generates a strategy object that we can then run and evaluate
         '''
-        assert_(len(self.contract_groups) > 0, 'contract_groups cannot be empty')
         assert_(self.price_function is not None, 'price function must be set')
         if self.timestamps is None:
             assert_(self.data is not None, 'data cannot be None if timestamps is not set')
         _timestamps = self.data['timestamp'].values.astype(self.timestamp_unit) if self.timestamps is None else self.timestamps
-        _contract_groups = list(self.contract_groups.values())
+        if len(self.contract_groups) == 0: 
+            _contract_groups = [DEFAULT_CG]
+        else:
+            _contract_groups = list(self.contract_groups.values())
         
         strat = Strategy(_timestamps, 
                          _contract_groups, 
