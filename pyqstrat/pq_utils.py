@@ -205,9 +205,9 @@ def np_bucket(a: np.ndarray, buckets: list[Any], default_value=0, side='mid') ->
         
     >>> a = np.array([1, 5, 18, 3, 6, 10, 4])
     >>> buckets = [4, 8, 12]
-    >>> assert np.alltrue(np_bucket(a, buckets, side='left') == np.array([0,  4, 12,  0,  4,  8,  4]))
-    >>> assert np.alltrue(np_bucket(a, buckets, default_value=25, side='right') == np.array([4,  8, 25,  4,  8, 12,  4])) 
-    >>> assert(np.alltrue(np_bucket(a, buckets) == np.array([4,  4, 12,  4,  8, 12,  4])))
+    >>> assert np.allclose(np_bucket(a, buckets, side='left'), np.array([0,  4, 12,  0,  4,  8,  4]))
+    >>> assert np.allclose(np_bucket(a, buckets, default_value=25, side='right'), np.array([4,  8, 25,  4,  8, 12,  4])) 
+    >>> assert np.allclose(np_bucket(a, buckets), np.array([4,  4, 12,  4,  8, 12,  4]))
     '''
     assert_(side in ['mid', 'left', 'right'], f'unknown side: {side}')
     if side == 'mid':
