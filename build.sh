@@ -9,7 +9,7 @@ mypy --ignore-missing-imports pyqstrat/
 flake8 --ignore W291,W293,W503,E402,E701,E275,E741 --max-line-length=160 --extend-exclude notebooks pyqstrat/
 
 # run notebooks and exit on first error
-find pyqstrat/notebooks -name '*.ipynb' \( -exec sh -c 'trap "exit \$?" EXIT; ipython "$0"' {} \; -o  -quit \)
+find pyqstrat/notebooks -name '*.ipynb' | xargs -n1 sh -c 'ipython $0 || exit 255'
 
 # build docs
 rm -Rf ./docs/*
