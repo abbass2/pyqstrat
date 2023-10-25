@@ -13,6 +13,7 @@
 **/*.ipynb
 **/*.out
 **/.doctrees
+**/tmp_mypy.py
 project.xcworkspace
 xcshareddata
 xcuserdata
