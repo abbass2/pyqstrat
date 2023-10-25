@@ -17,7 +17,7 @@ def build_example_strategy(stop_pct: float = 0.005, ret_threshold: float = 0) ->
     aapl['eod'] = np.where(aapl.date.shift(-2) > aapl.date, True, False)   
     # if the price drops by 1% after we enter in the morning take our loss and get out
     aapl['stop_price'] = np.where(np.isfinite(aapl.overnight_ret), aapl.c * (1 - stop_pct), np.nan) 
-    aapl['stop_price'] = aapl.stop_price.fillna(method='ffill')  # fill in the stop price for the rest of the day
+    aapl['stop_price'] = aapl.stop_price.ffill()  # fill in the stop price for the rest of the day
     aapl['stop'] = np.where(aapl.c < aapl.stop_price, True, False)  # whether we should exit because we are stopped out
 
     strat_builder = pq.StrategyBuilder(data=aapl)   
