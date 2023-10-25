@@ -11,7 +11,7 @@ import pyqstrat as pq
 from dataclasses import dataclass
 import math
 from types import SimpleNamespace
-from typing import Sequence
+from typing import Sequence, Callable
 from pyqstrat.account import Account
 from pyqstrat.pq_types import Contract, ContractGroup, Trade, Order, VWAPOrder
 from pyqstrat.pq_types import MarketOrder, LimitOrder, TimeInForce
@@ -58,7 +58,7 @@ class VectorSignal:
 
     
 def get_contract_price_from_dict(price_dict: dict[str, dict[np.datetime64, float]], 
-                                 contract: pq.Contract,
+                                 contract: Contract,
                                  timestamp: np.datetime64) -> float:               
     assert_(contract.symbol in price_dict, f'{contract.symbol} not found in price_dict')
     ret = price_dict[contract.symbol].get(timestamp)
@@ -67,7 +67,7 @@ def get_contract_price_from_dict(price_dict: dict[str, dict[np.datetime64, float
 
 
 def get_contract_price_from_array_dict(price_dict: dict[str, tuple[np.ndarray, np.ndarray]], 
-                                       contract: pq.Contract, 
+                                       contract: Contract, 
                                        timestamp: np.datetime64) -> float:
     tup: tuple[np.ndarray, np.ndarray] | None = price_dict.get(contract.symbol)
     assert_(tup is not None, f'{contract.symbol} not found in price_dict')
@@ -86,11 +86,11 @@ class PriceFuncArrayDict:
     >>> timestamps = np.arange(np.datetime64('2023-01-01'), np.datetime64('2023-01-04'))
     >>> price_dict = {'AAPL': (timestamps, [8, 9, 10]), 'IBM': (timestamps, [20, 21, 22])}
     >>> pricefunc = PriceFuncArrayDict(price_dict)
-    >>> pq.Contract.clear_cache()
-    >>> aapl = pq.Contract.create('AAPL')
+    >>> Contract.clear_cache()
+    >>> aapl = Contract.create('AAPL')
     >>> assert(pricefunc(aapl, timestamps, 2, None) == 10)
-    >>> ibm = pq.Contract.create('IBM')
-    >>> basket = pq.Contract.create('AAPL_IBM', components=[(aapl, 1), (ibm, -1)])
+    >>> ibm = Contract.create('IBM')
+    >>> basket = Contract.create('AAPL_IBM', components=[(aapl, 1), (ibm, -1)])
     >>> assert(pricefunc(basket, timestamps, 1, None) == -12)
     '''
     price_dict: dict[str, tuple[np.ndarray, np.ndarray]]
@@ -121,11 +121,11 @@ class PriceFuncDict:
     ...    price_dict['AAPL'][timestamp] = aapl_prices[i]
     ...    price_dict['IBM'][timestamp] = ibm_prices[i]
     >>> pricefunc = PriceFuncDict(price_dict)
-    >>> pq.Contract.clear_cache()
-    >>> aapl = pq.Contract.create('AAPL')
+    >>> Contract.clear_cache()
+    >>> aapl = Contract.create('AAPL')
     >>> assert(pricefunc(aapl, timestamps, 2, None) == 10)
-    >>> ibm = pq.Contract.create('IBM')
-    >>> basket = pq.Contract.create('AAPL_IBM', components=[(aapl, 1), (ibm, -1)])
+    >>> ibm = Contract.create('IBM')
+    >>> basket = Contract.create('AAPL_IBM', components=[(aapl, 1), (ibm, -1)])
     >>> assert(pricefunc(basket, timestamps, 1, None) == -12)
     '''
     price_dict: dict[str, dict[np.datetime64, float]]
@@ -149,16 +149,16 @@ class SimpleMarketSimulator:
     '''
     A function object with a signature of MarketSimulatorType.
     It can take into account slippage and commission
-    >>> pq.ContractGroup.clear_cache()
-    >>> pq.Contract.clear_cache()
+    >>> ContractGroup.clear_cache()
+    >>> Contract.clear_cache()
     >>> put_symbol, call_symbol = 'SPX-P-3500-2023-01-19', 'SPX-C-4000-2023-01-19'
-    >>> put_contract = pq.Contract.create(put_symbol)
-    >>> call_contract = pq.Contract.create(call_symbol)
-    >>> basket = pq.Contract.create('test_contract')
+    >>> put_contract = Contract.create(put_symbol)
+    >>> call_contract = Contract.create(call_symbol)
+    >>> basket = Contract.create('test_contract')
     >>> basket.components = [(put_contract, -1), (call_contract, 1)]
     >>> timestamp = np.datetime64('2023-01-03 14:35')
-    >>> price_func = pq.PriceFuncDict({put_symbol: {timestamp: 4.8}, call_symbol: {timestamp: 3.5}})
-    >>> order = pq.MarketOrder(contract=basket, timestamp=timestamp, qty=10, reason_code='TEST')
+    >>> price_func = PriceFuncDict({put_symbol: {timestamp: 4.8}, call_symbol: {timestamp: 3.5}})
+    >>> order = MarketOrder(contract=basket, timestamp=timestamp, qty=10, reason_code='TEST')
     >>> sim = SimpleMarketSimulator(price_func=price_func, slippage_per_trade=0)
     >>> out = sim([order], 0, np.array([timestamp]), {}, {}, SimpleNamespace())
     >>> assert(len(out) == 1)
@@ -180,7 +180,7 @@ class SimpleMarketSimulator:
             between bid/ask mid and execution price 
             commission_per_trade: Fee paid to broker per trade
         '''
-        self.price_func: pq.PriceFunctionType = price_func
+        self.price_func: PriceFunctionType = price_func
         self.slippage: float = slippage_per_trade
         self.commission: float = commission_per_trade
     
@@ -196,7 +196,7 @@ class SimpleMarketSimulator:
         timestamp = timestamps[i]
         # _logger.info(f'got: {orders}')
         for order in orders:
-            if not isinstance(order, pq.MarketOrder) and not isinstance(order, pq.LimitOrder): continue
+            if not isinstance(order, MarketOrder) and not isinstance(order, LimitOrder): continue
             contract = order.contract
             if not contract.is_basket(): 
                 raw_price = self.price_func(contract, timestamps, i, strategy_context)
@@ -210,7 +210,7 @@ class SimpleMarketSimulator:
             slippage = self.slippage * order.qty
             if order.qty < 0: slippage = -slippage
             price = raw_price + slippage
-            if isinstance(order, pq.LimitOrder) and np.isfinite(order.limit_price):
+            if isinstance(order, LimitOrder) and np.isfinite(order.limit_price):
                 if ((abs(order.qty > 0) and order.limit_price > price) 
                         or (abs(order.qty < 0) and order.limit_price < price)):
                     continue
@@ -508,6 +508,7 @@ class VWAPMarketSimulator:
             trades.append(trade)
         return trades
 
+ContractFilterType = Callable[[pq.Contract, np.ndarray, int, pq.StrategyContextType], list[str] | None]
 
 @dataclass
 class FiniteRiskEntryRule:
@@ -523,6 +524,11 @@ class FiniteRiskEntryRule:
             more than this amount. Of course if price gaps up or down rather than moving smoothly,
             we may lose more.
         stop_price_ind: An indicator containing the stop price so we exit the order when this is breached
+        contract_filter: A function that takes the same arguments as a rule but returns a set of contract names
+            that each positive signal timestamp corresponds to. For example, if you have a strategy that 
+            trades 5000 stocks, you may want to construct a single signal and apply it to different
+            contracts at different times, rather than create 5000 signals that will call your rule
+            5000 times every time the signal is true.
     '''
     reason_code: str
     price_func: PriceFunctionType
@@ -531,6 +537,7 @@ class FiniteRiskEntryRule:
     stop_price_ind: str | None
     min_price_diff: float
     single_entry_per_day: bool
+    contract_filter: ContractFilterType | None
         
     def __init__(self, 
                  reason_code: str, 
@@ -539,7 +546,8 @@ class FiniteRiskEntryRule:
                  percent_of_equity: float = 0.1,
                  stop_price_ind: str | None = None,
                  min_price_diff: float = 0,
-                 single_entry_per_day: bool = False) -> None:
+                 single_entry_per_day: bool = False,
+                 contract_filter: ContractFilterType | None = None) -> None:
         self.reason_code = reason_code
         self.price_func = price_func
         self.long = long
@@ -547,7 +555,8 @@ class FiniteRiskEntryRule:
         self.stop_price_ind = stop_price_ind
         self.min_price_diff = min_price_diff
         self.single_entry_per_day = single_entry_per_day
-        
+        self.contract_filter = contract_filter        
+
     def __call__(self,
                  contract_group: ContractGroup,
                  i: int,
@@ -563,9 +572,15 @@ class FiniteRiskEntryRule:
             trades = account.get_trades_for_date(contract_group.name, date)
             if len(trades): return []
 
+            
         contracts = contract_group.get_contracts()
         orders: list[Order] = []
         for contract in contracts:
+            if self.contract_filter is not None:
+                relevant_contracts = self.contract_filter(
+                    contract_group, i, timestamps, indicator_values, signal_values, account, current_orders, strategy_context)
+                if relevant_contracts is None or contract.symbol not in relevant_contracts: continue
+
             entry_price_est = self.price_func(contract, timestamps, i, strategy_context)  # type: ignore
             if math.isnan(entry_price_est): return []
 
