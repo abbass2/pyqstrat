@@ -327,8 +327,8 @@ def resample_vwap(df: pd.DataFrame, sampling_frequency: str) -> np.ndarray | Non
     '''
     if 'v' not in df.columns: return None
     sum_1 = df.vwap * df.v
-    sum_2 = sum_1.resample(sampling_frequency).agg(np.sum)
-    volume_sum = df.v.resample(sampling_frequency).agg(np.sum)
+    sum_2 = sum_1.resample(sampling_frequency).agg('sum')
+    volume_sum = df.v.resample(sampling_frequency).agg('sum')
     vwap = sum_2 / volume_sum
     return vwap
 
@@ -338,7 +338,7 @@ def resample_trade_bars(df, sampling_frequency, resample_funcs=None):
     
     Args:
         df (pd.DataFrame): Must contain an index of numpy datetime64 type which is monotonically increasing
-        sampling_frequency (str): See pandas frequency strings
+            sampling_frequency (str): See pandas frequency strings
         resample_funcs (dict of str: int): a dictionary of column name -> resampling function for any columns that are custom defined.  Default None.
             If there is no entry for a custom column, defaults to 'last' for that column
     Returns:
@@ -356,7 +356,7 @@ def resample_trade_bars(df, sampling_frequency, resample_funcs=None):
     >>> df['vwap'] =  0.5 * (df.l + df.h)
     >>> df.set_index('date', inplace = True)
     >>> df = resample_trade_bars(df, sampling_frequency = 'D', resample_funcs={'x': lambda df, 
-    ...   sampling_frequency: df.x.resample(sampling_frequency).agg(np.mean)})
+    ...   sampling_frequency: df.x.resample(sampling_frequency).agg('mean')})
     >>> assert(len(df) == 4)
     >>> assert(math.isclose(df.vwap.iloc[1], 9.24))
     >>> assert(np.isnan(df.vwap.iloc[2]))
