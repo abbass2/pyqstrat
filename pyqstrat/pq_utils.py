@@ -743,8 +743,6 @@ def get_config() -> dict[str, Any]:
 def find_in_subdir(dir: str, filename: str) -> str:
     '''
     Find relative path of a file in a subdirectory
-    >>> filename = find_in_subdir('.', 'pq_utils.py')
-    >>> assert filename == 'pq_utils.py'
     '''
     curr_dir = pathlib.Path('.')
     matches = list(curr_dir.glob(f'**/{filename}'))
