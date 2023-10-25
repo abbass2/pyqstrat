@@ -739,6 +739,7 @@ def get_config() -> dict[str, Any]:
         config_data.update(config_data_local)
     return config_data
 
+
 def find_in_subdir(dir: str, filename: str) -> str:
     '''
     Find relative path of a file in a subdirectory

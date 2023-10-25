@@ -123,7 +123,7 @@ pyqstrat.markets module
 pyqstrat.strategy_builder module
 -------------------------------------
 
-.. automodule:: pyqstrat.markets
+.. automodule:: pyqstrat.strategy_builder
     :members:
     :undoc-members:
     :show-inheritance:
@@ -133,11 +133,23 @@ pyqstrat.strategy_builder module
 pyqstrat.strategy_components module
 -------------------------------------
 
-.. automodule:: pyqstrat.markets
+.. automodule:: pyqstrat.strategy_components
     :members:
     :undoc-members:
     :show-inheritance:
     :special-members: __call__, __init__
+
+pyqstrat.interactive_plot module
+-------------------------------------
+
+.. automodule:: pyqstrat.interactive_plot
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :special-members: __call__, __init__
+
+
+		      
 
 
 
