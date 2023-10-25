@@ -441,6 +441,7 @@
 <span class="k">class</span> <span class="nc">StopLimitOrder</span><span class="p">(</span><span class="n">Order</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Used for stop loss or stop limit orders.  The order is triggered when price goes above or below trigger price, depending on whether this is a short</span>
 <span class="sd">      or long order.  Becomes either a market or limit order at that point, depending on whether you set the limit price or not.</span>
+<span class="sd">      </span>
 <span class="sd">    Args:</span>
 <span class="sd">        trigger_price: Order becomes a market or limit order if price crosses trigger_price.</span>
 <span class="sd">        limit_price: If not set (default), order becomes a market order when price crosses trigger price.  </span>

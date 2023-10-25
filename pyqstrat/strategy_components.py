@@ -82,6 +82,7 @@ class PriceFuncArrayDict:
     '''
     A function object with a signature of PriceFunctionType and takes a dictionary of 
         contract name -> tuple of sorted timestamps and prices
+        
     >>> timestamps = np.arange(np.datetime64('2023-01-01'), np.datetime64('2023-01-04'))
     >>> price_dict = {'AAPL': (timestamps, [8, 9, 10]), 'IBM': (timestamps, [20, 21, 22])}
     >>> pricefunc = PriceFuncArrayDict(price_dict)
@@ -226,6 +227,7 @@ class SimpleMarketSimulator:
 class PercentOfEquityTradingRule:
     '''
     A rule that trades a percentage of equity.
+    
     Args:
         reason_code: Reason for entering the order, used for display
         equity_percent: Percentage of equity used to size order
@@ -290,6 +292,7 @@ class PercentOfEquityTradingRule:
 class VWAPEntryRule:
     '''
     A rule that generates VWAP orders
+    
     Args:
         reason_code: Reason for each order. For display purposes
         vwap_minutes: How long the vwap period is. For example, a 5 minute vwap order will execute at 5 minute vwap 
@@ -510,6 +513,7 @@ class VWAPMarketSimulator:
 class FiniteRiskEntryRule:
     '''
     A rule that generates orders with stops
+    
     Args:
         reason_code: Reason for the orders created used for display
         price_func: A function that returns price given a contract and timestamp
@@ -592,6 +596,7 @@ class FiniteRiskEntryRule:
 class ClosePositionExitRule:
     '''
     A rule to close out an open position
+    
     Args:
         reason_code: the reason for closing out used for display purposes
         price_func: the function this rule uses to get market prices

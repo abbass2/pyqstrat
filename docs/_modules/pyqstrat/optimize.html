@@ -228,24 +228,21 @@
                 <span class="n">ylim</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
                 <span class="n">vertical_spacing</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
                 <span class="n">show</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">:</span>
-<span class="w">        </span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Creates a 3D plot of the optimization output for plotting 2 parameters and costs.</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Creates a 3D plot of the optimization output for plotting 2 parameters and costs.</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
 <span class="sd">            x: Name of the parameter to plot on the x axis, corresponding to the same name in the generator.</span>
 <span class="sd">            y: Name of the parameter to plot on the y axis, corresponding to the same name in the generator.</span>
-<span class="sd">            z: Can be one of:</span>
-<span class="sd">              &quot;cost&quot; </span>
-<span class="sd">              The name of another cost variable corresponding to the output from the cost function</span>
-<span class="sd">              &quot;all&quot;, which creates a subplot for cost plus all other costs</span>
+<span class="sd">            z: Can be one of</span>
+<span class="sd">                cost, the name of another cost variable corresponding to the output from the cost function</span>
+<span class="sd">                all, which creates a subplot for cost plus all other costs</span>
 <span class="sd">            markers: If set, we show actual datapoints on the graph</span>
 <span class="sd">            filter_func: A function that can be used to reduce the dataset before plotting.</span>
 <span class="sd">                For example, you may want to filter on a dimension beyond x, y, z to pick a single value</span>
 <span class="sd">                from that dimension</span>
-<span class="sd">             marker: Adds a marker to each point in x, y, z to show the actual data used for interpolation.  You can set this to None to turn markers off.</span>
-<span class="sd">            vertical_spacing: Vertical space between subplots</span>
-<span class="sd">         &quot;&quot;&quot;</span>
-        
+<span class="sd">            marker: Adds a marker to each point in x, y, z to show the actual data used for interpolation.  You can set this to None to turn markers off.</span>
+<span class="sd">            vertical_spacing: Vertical space between subplots        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> 
             <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;No experiments found&#39;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">()</span>

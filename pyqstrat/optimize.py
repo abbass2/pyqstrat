@@ -169,24 +169,21 @@ class Optimizer:
                 ylim: tuple[float, float] | None = None, 
                 vertical_spacing: float = 0.05,
                 show: bool = True) -> go.Figure:
-        
-        """Creates a 3D plot of the optimization output for plotting 2 parameters and costs.
+        '''Creates a 3D plot of the optimization output for plotting 2 parameters and costs.
         
         Args:
             x: Name of the parameter to plot on the x axis, corresponding to the same name in the generator.
             y: Name of the parameter to plot on the y axis, corresponding to the same name in the generator.
-            z: Can be one of:
-              "cost" 
-              The name of another cost variable corresponding to the output from the cost function
-              "all", which creates a subplot for cost plus all other costs
+            z: Can be one of
+                cost, the name of another cost variable corresponding to the output from the cost function
+                all, which creates a subplot for cost plus all other costs
             markers: If set, we show actual datapoints on the graph
             filter_func: A function that can be used to reduce the dataset before plotting.
                 For example, you may want to filter on a dimension beyond x, y, z to pick a single value
                 from that dimension
-             marker: Adds a marker to each point in x, y, z to show the actual data used for interpolation.  You can set this to None to turn markers off.
-            vertical_spacing: Vertical space between subplots
-         """
-        
+            marker: Adds a marker to each point in x, y, z to show the actual data used for interpolation.  You can set this to None to turn markers off.
+            vertical_spacing: Vertical space between subplots        
+        '''
         if len(self.experiments) == 0: 
             _logger.warning('No experiments found')
             return go.Figure()

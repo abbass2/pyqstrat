@@ -28,6 +28,7 @@ class StrategyBuilder:
     '''
     A helper class that makes it easier to build simpler strategies by removing the need for a lot of boilerplate code.
     The __call__ member function returns a Strategy built by this class that can then be run and evaluated.
+    
     Args:
         data: A pandas dataframe containing columns for timestamps, indicators and signals
         timestamps: The ''heartbeat'' of the strategy. A vector of each relevant time for this strategy 

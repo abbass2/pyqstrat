@@ -321,6 +321,7 @@ class RollOrder(Order):
 class StopLimitOrder(Order):
     '''Used for stop loss or stop limit orders.  The order is triggered when price goes above or below trigger price, depending on whether this is a short
       or long order.  Becomes either a market or limit order at that point, depending on whether you set the limit price or not.
+      
     Args:
         trigger_price: Order becomes a market or limit order if price crosses trigger_price.
         limit_price: If not set (default), order becomes a market order when price crosses trigger price.  

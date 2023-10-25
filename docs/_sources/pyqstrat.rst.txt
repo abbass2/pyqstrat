@@ -72,15 +72,6 @@ pyqstrat.optimize module
     :show-inheritance:
 
 
-pyqstrat.plot module
---------------------
-
-.. automodule:: pyqstrat.plot
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
 pyqstrat.evaluator module
 -------------------------
 
@@ -139,6 +130,7 @@ pyqstrat.strategy_components module
     :show-inheritance:
     :special-members: __call__, __init__
 
+
 pyqstrat.interactive_plot module
 -------------------------------------
 
@@ -147,11 +139,6 @@ pyqstrat.interactive_plot module
     :undoc-members:
     :show-inheritance:
     :special-members: __call__, __init__
-
-
-		      
-
-
 
 
 Module contents

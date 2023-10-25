@@ -2612,18 +2612,14 @@ The name of another cost variable corresponding to the output from the cost func
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of the parameter to plot on the x axis, corresponding to the same name in the generator.</p></li>
 <li><p><strong>y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of the parameter to plot on the y axis, corresponding to the same name in the generator.</p></li>
-<li><p><strong>z</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Can be one of:
-“cost”
-The name of another cost variable corresponding to the output from the cost function
-“all”, which creates a subplot for cost plus all other costs</p></li>
+<li><p><strong>z</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Can be one of
+cost, the name of another cost variable corresponding to the output from the cost function
+all, which creates a subplot for cost plus all other costs</p></li>
 <li><p><strong>markers</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, we show actual datapoints on the graph</p></li>
-<li><p><strong>filter_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]]) – <dl class="simple">
-<dt>A function that can be used to reduce the dataset before plotting.</dt><dd><p>For example, you may want to filter on a dimension beyond x, y, z to pick a single value
-from that dimension</p>
-</dd>
-</dl>
-<p>marker: Adds a marker to each point in x, y, z to show the actual data used for interpolation.  You can set this to None to turn markers off.</p>
-</p></li>
+<li><p><strong>filter_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]]) – A function that can be used to reduce the dataset before plotting.
+For example, you may want to filter on a dimension beyond x, y, z to pick a single value
+from that dimension</p></li>
+<li><p><strong>marker</strong> – Adds a marker to each point in x, y, z to show the actual data used for interpolation.  You can set this to None to turn markers off.</p></li>
 <li><p><strong>vertical_spacing</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Vertical space between subplots</p></li>
 </ul>
 </dd>
@@ -2667,9 +2663,6 @@ does not have all of them</p>
 <span class="sig-prename descclassname"><span class="pre">pyqstrat.optimize.</span></span><span class="sig-name descname"><span class="pre">test_optimize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/optimize.html#test_optimize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.optimize.test_optimize" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
-</section>
-<section id="pyqstrat-plot-module">
-<h2>pyqstrat.plot module<a class="headerlink" href="#pyqstrat-plot-module" title="Link to this heading">¶</a></h2>
 </section>
 <section id="module-pyqstrat.evaluator">
 <span id="pyqstrat-evaluator-module"></span><h2>pyqstrat.evaluator module<a class="headerlink" href="#module-pyqstrat.evaluator" title="Link to this heading">¶</a></h2>
@@ -3653,17 +3646,14 @@ of the last date in the datetime array</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.strategy_builder.</span></span><span class="sig-name descname"><span class="pre">StrategyBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy_builder.html#StrategyBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.strategy_builder.StrategyBuilder" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A helper class that makes it easier to build simpler strategies by removing the need for a lot of boilerplate code.
-The __call__ member function returns a Strategy built by this class that can then be run and evaluated.
-:type data: <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]
-:param data: A pandas dataframe containing columns for timestamps, indicators and signals
-:param timestamps: The ‘’heartbeat’’ of the strategy. A vector of each relevant time for this strategy
-:param timestamp_unit: Corresponds to bar length. Follows numpy datetime64 datatype strings.</p>
-<blockquote>
-<div><p>For example if you have daily bars, use M8[D] and if you have minute bars use M8[m]</p>
-</div></blockquote>
+The __call__ member function returns a Strategy built by this class that can then be run and evaluated.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]) – A pandas dataframe containing columns for timestamps, indicators and signals</p></li>
+<li><p><strong>timestamps</strong> – The ‘’heartbeat’’ of the strategy. A vector of each relevant time for this strategy</p></li>
+<li><p><strong>timestamp_unit</strong> – Corresponds to bar length. Follows numpy datetime64 datatype strings.
+For example if you have daily bars, use M8[D] and if you have minute bars use M8[m]</p></li>
 <li><p><strong>contract_groups</strong> – Each contract has to be a part of a contract group for PNL aggregation, etc. This class builds
 a contract group for each contract that is supplied to it, so this is only needed if you want to group contracts</p></li>
 <li><p><strong>price_function</strong> – A function of type PriceFunctionType that we use to get market prices by contract name and timestamp</p></li>
@@ -3923,19 +3913,16 @@ the dataframe passed in the constructor to this class</p>
 <dt class="sig sig-object py" id="pyqstrat.strategy_components.ClosePositionExitRule">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.strategy_components.</span></span><span class="sig-name descname"><span class="pre">ClosePositionExitRule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reason_code</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit_increment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">nan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_orders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy_components.html#ClosePositionExitRule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.strategy_components.ClosePositionExitRule" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>A rule to close out an open position
-:type reason_code: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>
-:param reason_code: the reason for closing out used for display purposes
-:type price_func: <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="#pyqstrat.pq_types.Contract" title="pyqstrat.pq_types.Contract"><code class="xref py py-class docutils literal notranslate"><span class="pre">Contract</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleNamespace</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]
-:param price_func: the function this rule uses to get market prices
-:type limit_increment: <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>
-:param limit_increment: if not nan, we add or subtract this number from current market price (if selling or buying respectively)</p>
-<blockquote>
-<div><p>and create a limit order</p>
-</div></blockquote>
+<p>A rule to close out an open position</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>log_orders</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – if set, we use the python logger to log each order as it is generated</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>reason_code</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the reason for closing out used for display purposes</p></li>
+<li><p><strong>price_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="#pyqstrat.pq_types.Contract" title="pyqstrat.pq_types.Contract"><code class="xref py py-class docutils literal notranslate"><span class="pre">Contract</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleNamespace</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – the function this rule uses to get market prices</p></li>
+<li><p><strong>limit_increment</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – if not nan, we add or subtract this number from current market price (if selling or buying respectively)
+and create a limit order</p></li>
+<li><p><strong>log_orders</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – if set, we use the python logger to log each order as it is generated</p></li>
+</ul>
 </dd>
 </dl>
 <dl class="py method">
@@ -3975,23 +3962,19 @@ the dataframe passed in the constructor to this class</p>
 <dt class="sig sig-object py" id="pyqstrat.strategy_components.FiniteRiskEntryRule">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.strategy_components.</span></span><span class="sig-name descname"><span class="pre">FiniteRiskEntryRule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reason_code</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">long</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percent_of_equity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_price_ind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_price_diff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_entry_per_day</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy_components.html#FiniteRiskEntryRule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.strategy_components.FiniteRiskEntryRule" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>A rule that generates orders with stops
-:type reason_code: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>
-:param reason_code: Reason for the orders created used for display
-:type price_func: <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="#pyqstrat.pq_types.Contract" title="pyqstrat.pq_types.Contract"><code class="xref py py-class docutils literal notranslate"><span class="pre">Contract</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleNamespace</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]
-:param price_func: A function that returns price given a contract and timestamp
-:type long: <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>
-:param long: whether we want to go long or short
-:type percent_of_equity: <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>
-:param percent_of_equity: How much to risk per trade as a percentage of current equity.</p>
-<blockquote>
-<div><p>Used to calculate order qty so that if we get stopped out, we don’t lose
-more than this amount. Of course if price gaps up or down rather than moving smoothly,
-we may lose more.</p>
-</div></blockquote>
+<p>A rule that generates orders with stops</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>stop_price_ind</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – An indicator containing the stop price so we exit the order when this is breached</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>reason_code</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Reason for the orders created used for display</p></li>
+<li><p><strong>price_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="#pyqstrat.pq_types.Contract" title="pyqstrat.pq_types.Contract"><code class="xref py py-class docutils literal notranslate"><span class="pre">Contract</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleNamespace</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – A function that returns price given a contract and timestamp</p></li>
+<li><p><strong>long</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – whether we want to go long or short</p></li>
+<li><p><strong>percent_of_equity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – How much to risk per trade as a percentage of current equity.
+Used to calculate order qty so that if we get stopped out, we don’t lose
+more than this amount. Of course if price gaps up or down rather than moving smoothly,
+we may lose more.</p></li>
+<li><p><strong>stop_price_ind</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – An indicator containing the stop price so we exit the order when this is breached</p></li>
+</ul>
 </dd>
 </dl>
 <dl class="py method">
@@ -4051,21 +4034,17 @@ we may lose more.</p>
 <dt class="sig sig-object py" id="pyqstrat.strategy_components.PercentOfEquityTradingRule">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.strategy_components.</span></span><span class="sig-name descname"><span class="pre">PercentOfEquityTradingRule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reason_code</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equity_percent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">long</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit_increment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">nan</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy_components.html#PercentOfEquityTradingRule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.strategy_components.PercentOfEquityTradingRule" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>A rule that trades a percentage of equity.
-:type reason_code: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>
-:param reason_code: Reason for entering the order, used for display
-:type equity_percent: <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>
-:param equity_percent: Percentage of equity used to size order
-:type long: <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>
-:param long: Whether We want to go long or short
-:type limit_increment: <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>
-:param limit_increment: If not nan, we add or subtract this number from current market price (if selling or buying respectively)</p>
-<blockquote>
-<div><p>and create a limit order. If nan, we create market orders</p>
-</div></blockquote>
+<p>A rule that trades a percentage of equity.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>price_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="#pyqstrat.pq_types.Contract" title="pyqstrat.pq_types.Contract"><code class="xref py py-class docutils literal notranslate"><span class="pre">Contract</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleNamespace</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – The function we use to get intraday prices</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>reason_code</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Reason for entering the order, used for display</p></li>
+<li><p><strong>equity_percent</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Percentage of equity used to size order</p></li>
+<li><p><strong>long</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether We want to go long or short</p></li>
+<li><p><strong>limit_increment</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – If not nan, we add or subtract this number from current market price (if selling or buying respectively)
+and create a limit order. If nan, we create market orders</p></li>
+<li><p><strong>price_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="#pyqstrat.pq_types.Contract" title="pyqstrat.pq_types.Contract"><code class="xref py py-class docutils literal notranslate"><span class="pre">Contract</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleNamespace</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – The function we use to get intraday prices</p></li>
+</ul>
 </dd>
 </dl>
 <dl class="py method">
@@ -4300,26 +4279,20 @@ It can take into account slippage and commission
 <dt class="sig sig-object py" id="pyqstrat.strategy_components.VWAPEntryRule">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.strategy_components.</span></span><span class="sig-name descname"><span class="pre">VWAPEntryRule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reason_code</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vwap_minutes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">long</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percent_of_equity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_price_ind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_price_diff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_entry_per_day</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/strategy_components.html#VWAPEntryRule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.strategy_components.VWAPEntryRule" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>A rule that generates VWAP orders
-:type reason_code: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>
-:param reason_code: Reason for each order. For display purposes
-:type vwap_minutes: <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>
-:param vwap_minutes: How long the vwap period is. For example, a 5 minute vwap order will execute at 5 minute vwap
-:param from when it is sent to the market:
-:type price_func: <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="#pyqstrat.pq_types.Contract" title="pyqstrat.pq_types.Contract"><code class="xref py py-class docutils literal notranslate"><span class="pre">Contract</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleNamespace</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]
-:param price_func: A function that this rule uses to get market price at a given timestamp
-:type long: <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>
-:param long: Whether we want to go long or short
-:type percent_of_equity: <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>
-:param percent_of_equity: Order qty is calculated so that if the stop price is reached, we lose this amount
-:type stop_price_ind: <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]
-:param stop_price_ind: Don’t enter if estimated entry price is</p>
-<blockquote>
-<div><p>market price &lt;= stop price + min_price_diff (for long orders) or the opposite for short orders</p>
-</div></blockquote>
+<p>A rule that generates VWAP orders</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>min_price_diff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – See stop_price_ind</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>reason_code</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Reason for each order. For display purposes</p></li>
+<li><p><strong>vwap_minutes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – How long the vwap period is. For example, a 5 minute vwap order will execute at 5 minute vwap</p></li>
+<li><p><strong>market</strong> (<em>from when it is sent to the</em>) – </p></li>
+<li><p><strong>price_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="#pyqstrat.pq_types.Contract" title="pyqstrat.pq_types.Contract"><code class="xref py py-class docutils literal notranslate"><span class="pre">Contract</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleNamespace</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – A function that this rule uses to get market price at a given timestamp</p></li>
+<li><p><strong>long</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether we want to go long or short</p></li>
+<li><p><strong>percent_of_equity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Order qty is calculated so that if the stop price is reached, we lose this amount</p></li>
+<li><p><strong>stop_price_ind</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Don’t enter if estimated entry price is
+market price &lt;= stop price + min_price_diff (for long orders) or the opposite for short orders</p></li>
+<li><p><strong>min_price_diff</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – See stop_price_ind</p></li>
+</ul>
 </dd>
 </dl>
 <dl class="py method">
