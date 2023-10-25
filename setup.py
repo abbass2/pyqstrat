@@ -2,6 +2,7 @@ import setuptools
 from Cython.Build import cythonize
 from distutils.core import setup, Extension
 import numpy as np
+import pybind11
 import glob
 import os
 import sys
@@ -16,6 +17,7 @@ if __name__ == '__main__':
     _windows = (sys.platform == "win32")
 
     conda_prefix = _conda_prefix if _conda_prefix else _conda_prefix_1
+    pybind_11_include = [pybind11.get_include()]
     np_include = [np.get_include()]
 
     if sys.platform in ["win32", "cygwin"]:
@@ -46,7 +48,7 @@ if __name__ == '__main__':
     opt_cpp_files = glob.glob(f'{cpp_dir}/options/*.cpp') + glob.glob(f'{cpp_dir}/lets_be_rational/*.cpp')
     options_module = Extension('pyqstrat.pyqstrat_cpp',
                                sources = opt_cpp_files,
-                               include_dirs=include_dirs,
+                               include_dirs=include_dirs + pybind_11_include,
                                library_dirs=library_dirs,
                                extra_compile_args=extra_compile_args)
 
