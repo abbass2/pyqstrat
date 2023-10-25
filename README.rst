@@ -11,18 +11,18 @@ The goals are:
 
 * Speed - Performance sensitive components are written at the numpy level, or in C++, which can lead to performance improvement of several orders of magnitude over regular Python code.  Where possible, we parrallelize work so you can take advantage of all the cores available on your machine.
 * Transparency - If you are going to commit money to a strategy, you want to know exactly what assumptions you are making.  The code is written and documented so these are as clear as possible.
-* Extensibility - It would be impossible to think of all requirements for backtesting strategies that traders could come up with. In addition, traders will want to measure different metrics depending on the strategy being traded.
+* Extensibility - It would be impossible to think of all requirements for backtesting strategies that traders could come up with. In addition, its important to measure custom metrics relevant to the strategy being traded.
 
 Using this framework, you can:
 
 * Create indicators, trading signals, trading rules and market simulators and add them to a strategy
-* Create contract groups for PNL grouping. For example, for futures and options, you often have a group such as the "front-month future" or the "delta hedge" where the actual instruments change over time but you still want to analyze PNL at the contract group level.
+* Create contract groups for PNL grouping. For example, for futures and options, you may create a "front-month future" and "delta hedge" where the actual instruments change over time but you still want to analyze PNL at the contract group level.
 * Reuse existing market simulation or add your own assumptions to simulate how and when orders are filled
 * Measure returns, drawdowns, common return metrics such as sharpe, calmar and also add your own metrics.
 * Optimize your strategy's parameters using all the CPU cores on your machine.
 
 
-** NOTE: This is beta software and the API will change **
+
 
 Installation
 ------------
@@ -41,7 +41,7 @@ Requirements:
 Documentation
 -------------
 
-The best way to get started is to go through this Jupyter notebook: `Building Strategies <https://github.com/abbass2/pyqstrat/tree/master/pyqstrat/notebooks/building_strategies.ipynb>`_
+The best way to get started is to go through the getting started Jupyter notebook: `Building Strategies <https://github.com/abbass2/pyqstrat/tree/master/pyqstrat/notebooks/getting_started.ipynb>`_
 
 `Jupyter Notebooks <https://github.com/abbass2/pyqstrat/tree/master/pyqstrat/notebooks>`_ 
 

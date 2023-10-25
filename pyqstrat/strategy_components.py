@@ -7,7 +7,6 @@
 # $$_code
 # $$_ %%checkall
 import numpy as np
-import pyqstrat as pq
 from dataclasses import dataclass
 import math
 from types import SimpleNamespace
@@ -507,8 +506,19 @@ class VWAPMarketSimulator:
             _logger.info(f'Trade: {timestamp.astype("M8[m]")} {trade} {i}')
             trades.append(trade)
         return trades
+    
 
-ContractFilterType = Callable[[pq.Contract, np.ndarray, int, pq.StrategyContextType], list[str] | None]
+ContractFilterType = Callable[
+    [Contract, 
+     int, 
+     np.ndarray, 
+     SimpleNamespace, 
+     np.ndarray,
+     Account, 
+     Sequence[Order],
+     StrategyContextType],
+    list[str] | None]
+
 
 @dataclass
 class FiniteRiskEntryRule:
@@ -524,10 +534,10 @@ class FiniteRiskEntryRule:
             more than this amount. Of course if price gaps up or down rather than moving smoothly,
             we may lose more.
         stop_price_ind: An indicator containing the stop price so we exit the order when this is breached
-        contract_filter: A function that takes the same arguments as a rule but returns a set of contract names
-            that each positive signal timestamp corresponds to. For example, if you have a strategy that 
-            trades 5000 stocks, you may want to construct a single signal and apply it to different
-            contracts at different times, rather than create 5000 signals that will call your rule
+        contract_filter: A function that takes similar arguments as a rule (with ContractGroup) replaced by 
+            Contract but returns a list of contract names for each positive signal timestamp. For example, 
+            for a strategy that trades 5000 stocks, you may want to construct a single signal and apply it 
+            to different contracts at different times, rather than create 5000 signals that will call your rule
             5000 times every time the signal is true.
     '''
     reason_code: str
@@ -572,13 +582,12 @@ class FiniteRiskEntryRule:
             trades = account.get_trades_for_date(contract_group.name, date)
             if len(trades): return []
 
-            
         contracts = contract_group.get_contracts()
         orders: list[Order] = []
         for contract in contracts:
             if self.contract_filter is not None:
                 relevant_contracts = self.contract_filter(
-                    contract_group, i, timestamps, indicator_values, signal_values, account, current_orders, strategy_context)
+                    contract, i, timestamps, indicator_values, signal_values, account, current_orders, strategy_context)
                 if relevant_contracts is None or contract.symbol not in relevant_contracts: continue
 
             entry_price_est = self.price_func(contract, timestamps, i, strategy_context)  # type: ignore

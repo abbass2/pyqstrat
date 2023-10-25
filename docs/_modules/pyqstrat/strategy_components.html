@@ -38,11 +38,10 @@
 <span class="c1"># $$_code</span>
 <span class="c1"># $$_ %%checkall</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pyqstrat</span> <span class="k">as</span> <span class="nn">pq</span>
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">SimpleNamespace</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Callable</span>
 <span class="kn">from</span> <span class="nn">pyqstrat.account</span> <span class="kn">import</span> <span class="n">Account</span>
 <span class="kn">from</span> <span class="nn">pyqstrat.pq_types</span> <span class="kn">import</span> <span class="n">Contract</span><span class="p">,</span> <span class="n">ContractGroup</span><span class="p">,</span> <span class="n">Trade</span><span class="p">,</span> <span class="n">Order</span><span class="p">,</span> <span class="n">VWAPOrder</span>
 <span class="kn">from</span> <span class="nn">pyqstrat.pq_types</span> <span class="kn">import</span> <span class="n">MarketOrder</span><span class="p">,</span> <span class="n">LimitOrder</span><span class="p">,</span> <span class="n">TimeInForce</span>
@@ -103,7 +102,7 @@
 <div class="viewcode-block" id="get_contract_price_from_dict">
 <a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.strategy_components.get_contract_price_from_dict">[docs]</a>
 <span class="k">def</span> <span class="nf">get_contract_price_from_dict</span><span class="p">(</span><span class="n">price_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span> 
-                                 <span class="n">contract</span><span class="p">:</span> <span class="n">pq</span><span class="o">.</span><span class="n">Contract</span><span class="p">,</span>
+                                 <span class="n">contract</span><span class="p">:</span> <span class="n">Contract</span><span class="p">,</span>
                                  <span class="n">timestamp</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>               
     <span class="n">assert_</span><span class="p">(</span><span class="n">contract</span><span class="o">.</span><span class="n">symbol</span> <span class="ow">in</span> <span class="n">price_dict</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">contract</span><span class="o">.</span><span class="n">symbol</span><span class="si">}</span><span class="s1"> not found in price_dict&#39;</span><span class="p">)</span>
     <span class="n">ret</span> <span class="o">=</span> <span class="n">price_dict</span><span class="p">[</span><span class="n">contract</span><span class="o">.</span><span class="n">symbol</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
@@ -115,7 +114,7 @@
 <div class="viewcode-block" id="get_contract_price_from_array_dict">
 <a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.strategy_components.get_contract_price_from_array_dict">[docs]</a>
 <span class="k">def</span> <span class="nf">get_contract_price_from_array_dict</span><span class="p">(</span><span class="n">price_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span> 
-                                       <span class="n">contract</span><span class="p">:</span> <span class="n">pq</span><span class="o">.</span><span class="n">Contract</span><span class="p">,</span> 
+                                       <span class="n">contract</span><span class="p">:</span> <span class="n">Contract</span><span class="p">,</span> 
                                        <span class="n">timestamp</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="n">tup</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">price_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">contract</span><span class="o">.</span><span class="n">symbol</span><span class="p">)</span>
     <span class="n">assert_</span><span class="p">(</span><span class="n">tup</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">contract</span><span class="o">.</span><span class="n">symbol</span><span class="si">}</span><span class="s1"> not found in price_dict&#39;</span><span class="p">)</span>
@@ -137,11 +136,11 @@
 <span class="sd">    &gt;&gt;&gt; timestamps = np.arange(np.datetime64(&#39;2023-01-01&#39;), np.datetime64(&#39;2023-01-04&#39;))</span>
 <span class="sd">    &gt;&gt;&gt; price_dict = {&#39;AAPL&#39;: (timestamps, [8, 9, 10]), &#39;IBM&#39;: (timestamps, [20, 21, 22])}</span>
 <span class="sd">    &gt;&gt;&gt; pricefunc = PriceFuncArrayDict(price_dict)</span>
-<span class="sd">    &gt;&gt;&gt; pq.Contract.clear_cache()</span>
-<span class="sd">    &gt;&gt;&gt; aapl = pq.Contract.create(&#39;AAPL&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; Contract.clear_cache()</span>
+<span class="sd">    &gt;&gt;&gt; aapl = Contract.create(&#39;AAPL&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; assert(pricefunc(aapl, timestamps, 2, None) == 10)</span>
-<span class="sd">    &gt;&gt;&gt; ibm = pq.Contract.create(&#39;IBM&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; basket = pq.Contract.create(&#39;AAPL_IBM&#39;, components=[(aapl, 1), (ibm, -1)])</span>
+<span class="sd">    &gt;&gt;&gt; ibm = Contract.create(&#39;IBM&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; basket = Contract.create(&#39;AAPL_IBM&#39;, components=[(aapl, 1), (ibm, -1)])</span>
 <span class="sd">    &gt;&gt;&gt; assert(pricefunc(basket, timestamps, 1, None) == -12)</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">price_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span>
@@ -181,11 +180,11 @@
 <span class="sd">    ...    price_dict[&#39;AAPL&#39;][timestamp] = aapl_prices[i]</span>
 <span class="sd">    ...    price_dict[&#39;IBM&#39;][timestamp] = ibm_prices[i]</span>
 <span class="sd">    &gt;&gt;&gt; pricefunc = PriceFuncDict(price_dict)</span>
-<span class="sd">    &gt;&gt;&gt; pq.Contract.clear_cache()</span>
-<span class="sd">    &gt;&gt;&gt; aapl = pq.Contract.create(&#39;AAPL&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; Contract.clear_cache()</span>
+<span class="sd">    &gt;&gt;&gt; aapl = Contract.create(&#39;AAPL&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; assert(pricefunc(aapl, timestamps, 2, None) == 10)</span>
-<span class="sd">    &gt;&gt;&gt; ibm = pq.Contract.create(&#39;IBM&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; basket = pq.Contract.create(&#39;AAPL_IBM&#39;, components=[(aapl, 1), (ibm, -1)])</span>
+<span class="sd">    &gt;&gt;&gt; ibm = Contract.create(&#39;IBM&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; basket = Contract.create(&#39;AAPL_IBM&#39;, components=[(aapl, 1), (ibm, -1)])</span>
 <span class="sd">    &gt;&gt;&gt; assert(pricefunc(basket, timestamps, 1, None) == -12)</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">price_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
@@ -218,16 +217,16 @@
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    A function object with a signature of MarketSimulatorType.</span>
 <span class="sd">    It can take into account slippage and commission</span>
-<span class="sd">    &gt;&gt;&gt; pq.ContractGroup.clear_cache()</span>
-<span class="sd">    &gt;&gt;&gt; pq.Contract.clear_cache()</span>
+<span class="sd">    &gt;&gt;&gt; ContractGroup.clear_cache()</span>
+<span class="sd">    &gt;&gt;&gt; Contract.clear_cache()</span>
 <span class="sd">    &gt;&gt;&gt; put_symbol, call_symbol = &#39;SPX-P-3500-2023-01-19&#39;, &#39;SPX-C-4000-2023-01-19&#39;</span>
-<span class="sd">    &gt;&gt;&gt; put_contract = pq.Contract.create(put_symbol)</span>
-<span class="sd">    &gt;&gt;&gt; call_contract = pq.Contract.create(call_symbol)</span>
-<span class="sd">    &gt;&gt;&gt; basket = pq.Contract.create(&#39;test_contract&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; put_contract = Contract.create(put_symbol)</span>
+<span class="sd">    &gt;&gt;&gt; call_contract = Contract.create(call_symbol)</span>
+<span class="sd">    &gt;&gt;&gt; basket = Contract.create(&#39;test_contract&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; basket.components = [(put_contract, -1), (call_contract, 1)]</span>
 <span class="sd">    &gt;&gt;&gt; timestamp = np.datetime64(&#39;2023-01-03 14:35&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; price_func = pq.PriceFuncDict({put_symbol: {timestamp: 4.8}, call_symbol: {timestamp: 3.5}})</span>
-<span class="sd">    &gt;&gt;&gt; order = pq.MarketOrder(contract=basket, timestamp=timestamp, qty=10, reason_code=&#39;TEST&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; price_func = PriceFuncDict({put_symbol: {timestamp: 4.8}, call_symbol: {timestamp: 3.5}})</span>
+<span class="sd">    &gt;&gt;&gt; order = MarketOrder(contract=basket, timestamp=timestamp, qty=10, reason_code=&#39;TEST&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; sim = SimpleMarketSimulator(price_func=price_func, slippage_per_trade=0)</span>
 <span class="sd">    &gt;&gt;&gt; out = sim([order], 0, np.array([timestamp]), {}, {}, SimpleNamespace())</span>
 <span class="sd">    &gt;&gt;&gt; assert(len(out) == 1)</span>
@@ -251,7 +250,7 @@
 <span class="sd">            between bid/ask mid and execution price </span>
 <span class="sd">            commission_per_trade: Fee paid to broker per trade</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">price_func</span><span class="p">:</span> <span class="n">pq</span><span class="o">.</span><span class="n">PriceFunctionType</span> <span class="o">=</span> <span class="n">price_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">price_func</span><span class="p">:</span> <span class="n">PriceFunctionType</span> <span class="o">=</span> <span class="n">price_func</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">slippage</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">slippage_per_trade</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">commission</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">commission_per_trade</span></div>
 
@@ -270,7 +269,7 @@
         <span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamps</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
         <span class="c1"># _logger.info(f&#39;got: {orders}&#39;)</span>
         <span class="k">for</span> <span class="n">order</span> <span class="ow">in</span> <span class="n">orders</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">pq</span><span class="o">.</span><span class="n">MarketOrder</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">pq</span><span class="o">.</span><span class="n">LimitOrder</span><span class="p">):</span> <span class="k">continue</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">MarketOrder</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">LimitOrder</span><span class="p">):</span> <span class="k">continue</span>
             <span class="n">contract</span> <span class="o">=</span> <span class="n">order</span><span class="o">.</span><span class="n">contract</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">contract</span><span class="o">.</span><span class="n">is_basket</span><span class="p">():</span> 
                 <span class="n">raw_price</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">price_func</span><span class="p">(</span><span class="n">contract</span><span class="p">,</span> <span class="n">timestamps</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">strategy_context</span><span class="p">)</span>
@@ -284,7 +283,7 @@
             <span class="n">slippage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">slippage</span> <span class="o">*</span> <span class="n">order</span><span class="o">.</span><span class="n">qty</span>
             <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">qty</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span> <span class="n">slippage</span> <span class="o">=</span> <span class="o">-</span><span class="n">slippage</span>
             <span class="n">price</span> <span class="o">=</span> <span class="n">raw_price</span> <span class="o">+</span> <span class="n">slippage</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">pq</span><span class="o">.</span><span class="n">LimitOrder</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">limit_price</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">LimitOrder</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">limit_price</span><span class="p">):</span>
                 <span class="k">if</span> <span class="p">((</span><span class="nb">abs</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">qty</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">order</span><span class="o">.</span><span class="n">limit_price</span> <span class="o">&gt;</span> <span class="n">price</span><span class="p">)</span> 
                         <span class="ow">or</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">qty</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">order</span><span class="o">.</span><span class="n">limit_price</span> <span class="o">&lt;</span> <span class="n">price</span><span class="p">)):</span>
                     <span class="k">continue</span>
@@ -616,6 +615,18 @@
         <span class="k">return</span> <span class="n">trades</span></div>
 </div>
 
+    
+
+<span class="n">ContractFilterType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span>
+    <span class="p">[</span><span class="n">Contract</span><span class="p">,</span> 
+     <span class="nb">int</span><span class="p">,</span> 
+     <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> 
+     <span class="n">SimpleNamespace</span><span class="p">,</span> 
+     <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+     <span class="n">Account</span><span class="p">,</span> 
+     <span class="n">Sequence</span><span class="p">[</span><span class="n">Order</span><span class="p">],</span>
+     <span class="n">StrategyContextType</span><span class="p">],</span>
+    <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="FiniteRiskEntryRule">
@@ -634,6 +645,11 @@
 <span class="sd">            more than this amount. Of course if price gaps up or down rather than moving smoothly,</span>
 <span class="sd">            we may lose more.</span>
 <span class="sd">        stop_price_ind: An indicator containing the stop price so we exit the order when this is breached</span>
+<span class="sd">        contract_filter: A function that takes similar arguments as a rule (with ContractGroup) replaced by </span>
+<span class="sd">            Contract but returns a list of contract names for each positive signal timestamp. For example, </span>
+<span class="sd">            for a strategy that trades 5000 stocks, you may want to construct a single signal and apply it </span>
+<span class="sd">            to different contracts at different times, rather than create 5000 signals that will call your rule</span>
+<span class="sd">            5000 times every time the signal is true.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">reason_code</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">price_func</span><span class="p">:</span> <span class="n">PriceFunctionType</span>
@@ -642,6 +658,7 @@
     <span class="n">stop_price_ind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">min_price_diff</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">single_entry_per_day</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">contract_filter</span><span class="p">:</span> <span class="n">ContractFilterType</span> <span class="o">|</span> <span class="kc">None</span>
         
 <div class="viewcode-block" id="FiniteRiskEntryRule.__init__">
 <a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.strategy_components.FiniteRiskEntryRule.__init__">[docs]</a>
@@ -652,16 +669,18 @@
                  <span class="n">percent_of_equity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
                  <span class="n">stop_price_ind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                  <span class="n">min_price_diff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-                 <span class="n">single_entry_per_day</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                 <span class="n">single_entry_per_day</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">contract_filter</span><span class="p">:</span> <span class="n">ContractFilterType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reason_code</span> <span class="o">=</span> <span class="n">reason_code</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">price_func</span> <span class="o">=</span> <span class="n">price_func</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">long</span> <span class="o">=</span> <span class="n">long</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">percent_of_equity</span> <span class="o">=</span> <span class="n">percent_of_equity</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stop_price_ind</span> <span class="o">=</span> <span class="n">stop_price_ind</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">min_price_diff</span> <span class="o">=</span> <span class="n">min_price_diff</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">single_entry_per_day</span> <span class="o">=</span> <span class="n">single_entry_per_day</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">single_entry_per_day</span> <span class="o">=</span> <span class="n">single_entry_per_day</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contract_filter</span> <span class="o">=</span> <span class="n">contract_filter</span>        </div>
 
-        
+
 <div class="viewcode-block" id="FiniteRiskEntryRule.__call__">
 <a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.strategy_components.FiniteRiskEntryRule.__call__">[docs]</a>
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
@@ -682,6 +701,11 @@
         <span class="n">contracts</span> <span class="o">=</span> <span class="n">contract_group</span><span class="o">.</span><span class="n">get_contracts</span><span class="p">()</span>
         <span class="n">orders</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Order</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">contract</span> <span class="ow">in</span> <span class="n">contracts</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract_filter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">relevant_contracts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract_filter</span><span class="p">(</span>
+                    <span class="n">contract</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">timestamps</span><span class="p">,</span> <span class="n">indicator_values</span><span class="p">,</span> <span class="n">signal_values</span><span class="p">,</span> <span class="n">account</span><span class="p">,</span> <span class="n">current_orders</span><span class="p">,</span> <span class="n">strategy_context</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">relevant_contracts</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">contract</span><span class="o">.</span><span class="n">symbol</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">relevant_contracts</span><span class="p">:</span> <span class="k">continue</span>
+
             <span class="n">entry_price_est</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">price_func</span><span class="p">(</span><span class="n">contract</span><span class="p">,</span> <span class="n">timestamps</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">strategy_context</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
             <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">entry_price_est</span><span class="p">):</span> <span class="k">return</span> <span class="p">[]</span>
 
