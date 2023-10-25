@@ -110,16 +110,6 @@ pyqstrat.pyqstrat\_io module
     :special-members: __call__, __init__
 
 
-pyqstrat.interactive\_plot module
----------------------------------
-
-.. automodule:: pyqstrat.interactive_plot
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :special-members: __call__, __init__
-
-		      
 pyqstrat.markets module
 -------------------------------------
 
@@ -128,6 +118,28 @@ pyqstrat.markets module
     :undoc-members:
     :show-inheritance:
     :special-members: __call__, __init__
+
+
+pyqstrat.strategy_builder module
+-------------------------------------
+
+.. automodule:: pyqstrat.markets
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :special-members: __call__, __init__
+
+		      
+pyqstrat.strategy_components module
+-------------------------------------
+
+.. automodule:: pyqstrat.markets
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :special-members: __call__, __init__
+
+
 
 
 Module contents

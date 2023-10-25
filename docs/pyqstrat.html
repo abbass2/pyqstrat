@@ -3502,338 +3502,6 @@ of the last date in the datetime array</p>
 </dd></dl>
 
 </section>
-<section id="module-pyqstrat.interactive_plot">
-<span id="pyqstrat-interactive-plot-module"></span><h2>pyqstrat.interactive_plot module<a class="headerlink" href="#module-pyqstrat.interactive_plot" title="Link to this heading">¶</a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.InteractivePlot">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.interactive_plot.</span></span><span class="sig-name descname"><span class="pre">InteractivePlot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_func=&lt;pyqstrat.interactive_plot.SimpleTransform</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_selection_widgets_func=&lt;function</span> <span class="pre">create_selection_dropdowns&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_filter_func=&lt;function</span> <span class="pre">simple_dimension_filter&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_filter_func=&lt;function</span> <span class="pre">simple_data_filter&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stat_func=&lt;pyqstrat.interactive_plot.MeanWithCI</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_func=&lt;pyqstrat.interactive_plot.LineGraphWithDetailDisplay</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_form_func=&lt;function</span> <span class="pre">display_form&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#InteractivePlot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.InteractivePlot" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Creates a multidimensional interactive plot off a dataframe.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.InteractivePlot.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_func=&lt;pyqstrat.interactive_plot.SimpleTransform</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_selection_widgets_func=&lt;function</span> <span class="pre">create_selection_dropdowns&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_filter_func=&lt;function</span> <span class="pre">simple_dimension_filter&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_filter_func=&lt;function</span> <span class="pre">simple_data_filter&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stat_func=&lt;pyqstrat.interactive_plot.MeanWithCI</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_func=&lt;pyqstrat.interactive_plot.LineGraphWithDetailDisplay</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_form_func=&lt;function</span> <span class="pre">display_form&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#InteractivePlot.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.InteractivePlot.__init__" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>) – The pandas dataframe to use for plotting</p></li>
-<li><p><strong>labels</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – A dict where column names from the dataframe are mapped to user friendly labels. For any column names
-not found as keys in this dict, we use the column name as the label. Default None</p></li>
-<li><p><strong>dim_filter_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]], <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]) – A function that generates the values of a dimension based on other dimensions. For example, if
-the user chooses “Put Option” in a put/call dropdown, the valid strikes could change in a Strike
-dropdown that follows. Default simple_dimension_filter</p></li>
-<li><p><strong>data_filter_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]], <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]) – A function that filters the data to plot. For example, if the user chooses “Put Option” in a put/call dropdown,
-we could filter the dataframe to only include put options. Default simple_data_filter</p></li>
-<li><p><strong>stat_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]]]]) – Once we have filtered the data, we may need to plot some statistics, such as mean and confidence intervals.
-In this function, we compute these statistics. Default MeanWithCI()</p></li>
-<li><p><strong>plot_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]]]], <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Widget</span></code>]]) – A function that plots the data.  This could also display detail data used to compute the statistics associated
-with each data point.</p></li>
-<li><p><strong>display_form_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Widget</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>], <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – A function that displays the form given a list of plotly widgets (including the graph widget)</p></li>
-<li><p><strong>debug</strong> – Dont clear forms if this is true so we can see print output</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.InteractivePlot.create_pivot">
-<span class="sig-name descname"><span class="pre">create_pivot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xcol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ycol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zcol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dimensions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#InteractivePlot.create_pivot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.InteractivePlot.create_pivot" title="Link to this definition">¶</a></dt>
-<dd><p>Create the initial pivot
-:type xcol: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>
-:param xcol: Column name to use as the x axis in the DataFrame
-:type ycol: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>
-:param ycol: Column name to use as the y axis in the DataFrame
-:type zcol: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>
-:param zcol: Column name to use for z-values. Each zvalue can be used for a different trace within this plot. For example, a column
-:param called “option_type” could contain the values “American”:
-:param “European”:
-:param “Bermudan” and we could plot the data for each type:
-:param in a separate trace:
-:type dimensions: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]
-:param dimensions: The column names used for filter dimensions. For example, we may want to filter by days to expiration and put/call
-:param The key the column name and the value is the initial value for that column. For example:
-:param in a:
-:param dropdown for Put/Call we may want “Put” to be the initial value set in the dropdown.  Set to None if you:
-:param don’t care what initial value is chosen.:</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.InteractivePlot.update">
-<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#InteractivePlot.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.InteractivePlot.update" title="Link to this definition">¶</a></dt>
-<dd><p>Redraw the form using the values of all widgets above and including the one with index owner_idx.
-If owner_idx is -1, we redraw everything.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.LineConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.interactive_plot.</span></span><span class="sig-name descname"><span class="pre">LineConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">nan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secondary_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lines+markers'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_detail</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#LineConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.LineConfig" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.LineConfig.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">nan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secondary_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lines+markers'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_detail</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyqstrat.interactive_plot.LineConfig.__init__" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.LineConfig.color">
-<span class="sig-name descname"><span class="pre">color</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#pyqstrat.interactive_plot.LineConfig.color" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.LineConfig.marker_mode">
-<span class="sig-name descname"><span class="pre">marker_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'lines+markers'</span></em><a class="headerlink" href="#pyqstrat.interactive_plot.LineConfig.marker_mode" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.LineConfig.secondary_y">
-<span class="sig-name descname"><span class="pre">secondary_y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#pyqstrat.interactive_plot.LineConfig.secondary_y" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.LineConfig.show_detail">
-<span class="sig-name descname"><span class="pre">show_detail</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#pyqstrat.interactive_plot.LineConfig.show_detail" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.LineConfig.thickness">
-<span class="sig-name descname"><span class="pre">thickness</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">nan</span></em><a class="headerlink" href="#pyqstrat.interactive_plot.LineConfig.thickness" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.LineGraphWithDetailDisplay">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.interactive_plot.</span></span><span class="sig-name descname"><span class="pre">LineGraphWithDetailDisplay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">display_detail_func=&lt;pyqstrat.interactive_plot.SimpleDetailTable</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_configs={}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hovertemplate=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#LineGraphWithDetailDisplay"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.LineGraphWithDetailDisplay" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Draws line graphs and also includes a detail pane.
-When you click on a point on the line graph, the detail pane shows the data used to compute that point.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.LineGraphWithDetailDisplay.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xaxis_title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yaxis_title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#LineGraphWithDetailDisplay.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.LineGraphWithDetailDisplay.__call__" title="Link to this definition">¶</a></dt>
-<dd><p>Draw the plot and also set it up so if you click on a point, we display the data used to compute that point.
-:type line_data: <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]]]
-:param line_data: The zvalue, plot data, and detail data for each line to draw. The plot data must have
-:param x as the first column and y as the second column:
-:rtype: <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Widget</span></code>]</p>
-<blockquote>
-<div><dl class="simple">
-<dt>Return:</dt><dd><p>A list of widgets to draw.  In this case, a figure widget and a output widget which contains the detail display</p>
-</dd>
-</dl>
-</div></blockquote>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.LineGraphWithDetailDisplay.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">display_detail_func=&lt;pyqstrat.interactive_plot.SimpleDetailTable</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_configs={}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hovertemplate=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#LineGraphWithDetailDisplay.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.LineGraphWithDetailDisplay.__init__" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>display_detail_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Widget</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>], <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – A function that displays the data on the detail pane. Default SimpleDetailTable</p></li>
-<li><p><strong>line_configs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference internal" href="#pyqstrat.interactive_plot.LineConfig" title="pyqstrat.interactive_plot.LineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">LineConfig</span></code></a>]) – Configuration of each line. The key in this dict is the zvalue for that line.  Default {}</p></li>
-<li><p><strong>title</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Title of the graph. Default None</p></li>
-<li><p><strong>hovertemplate</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – What to display when we hover over a point on the graph.  See plotly hovertemplate</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.MeanWithCI">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.interactive_plot.</span></span><span class="sig-name descname"><span class="pre">MeanWithCI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean_func=&lt;function</span> <span class="pre">nanmean&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci_level=0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#MeanWithCI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.MeanWithCI" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Computes mean (or median) and optionally confidence intervals for plotting</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.MeanWithCI.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filtered_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xcol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ycol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zcol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#MeanWithCI.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.MeanWithCI.__call__" title="Link to this definition">¶</a></dt>
-<dd><p>For each unique value of x and z, compute mean (and optionally ci) of y.
-:rtype: <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]]]
-:returns: x, y data for plotting lines of the mean of y versus x for each z and the data used to compute the mean</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.MeanWithCI.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean_func=&lt;function</span> <span class="pre">nanmean&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci_level=0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#MeanWithCI.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.MeanWithCI.__init__" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>mean</strong> – The function to compute ci for</p></li>
-<li><p><strong>ci_level</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Set to 0 for no confidence intervals, or the level you want.
-For example, set to 95 to compute a 95% confidence interval. Default 0</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.SimpleDetailTable">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.interactive_plot.</span></span><span class="sig-name descname"><span class="pre">SimpleDetailTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">colnames</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'{:.4g}'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_to_clipboard</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#SimpleDetailTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.SimpleDetailTable" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Displays a pandas DataFrame under a plot that contains the data used to compute a statistic of y for each x, y pair</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.SimpleDetailTable.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">detail_widget</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#SimpleDetailTable.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.SimpleDetailTable.__call__" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>detail_widget</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Widget</span></code>) – The widget to display the data in</p></li>
-<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>) – The dataframe to display</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.SimpleDetailTable.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">colnames</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'{:.4g}'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_to_clipboard</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#SimpleDetailTable.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.SimpleDetailTable.__init__" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>colnames</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – list of column names to display. If None we display all columns. Default None</p></li>
-<li><p><strong>float_format</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Format for each floating point column. Default {:.4g}</p></li>
-<li><p><strong>min_rows</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Do not truncate the display of the table before this many rows. Default 100</p></li>
-<li><p><strong>copy_to_clipboard</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If set, we copy the dataframe to the clipboard. On linux, you must install xclip for this to work</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.SimpleTransform">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.interactive_plot.</span></span><span class="sig-name descname"><span class="pre">SimpleTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transforms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#SimpleTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.SimpleTransform" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Initial transformation of data.  For example, you might add columns that are quantiles of other columns</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.SimpleTransform.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#SimpleTransform.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.SimpleTransform.__call__" title="Link to this definition">¶</a></dt>
-<dd><p>Call self as a function.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.SimpleTransform.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transforms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#SimpleTransform.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.SimpleTransform.__init__" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.TestInteractivePlot">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.interactive_plot.</span></span><span class="sig-name descname"><span class="pre">TestInteractivePlot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">methodName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'runTest'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#TestInteractivePlot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.TestInteractivePlot" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TestCase</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.TestInteractivePlot.test_interactive_plot">
-<span class="sig-name descname"><span class="pre">test_interactive_plot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#TestInteractivePlot.test_interactive_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.TestInteractivePlot.test_interactive_plot" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.TestInteractivePlot.transform">
-<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#TestInteractivePlot.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.TestInteractivePlot.transform" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.create_selection_dropdowns">
-<span class="sig-prename descclassname"><span class="pre">pyqstrat.interactive_plot.</span></span><span class="sig-name descname"><span class="pre">create_selection_dropdowns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_form_func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#create_selection_dropdowns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.create_selection_dropdowns" title="Link to this definition">¶</a></dt>
-<dd><p>Create a list of selection widgets</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.display_form">
-<span class="sig-prename descclassname"><span class="pre">pyqstrat.interactive_plot.</span></span><span class="sig-name descname"><span class="pre">display_form</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form_widgets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#display_form"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.display_form" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.foo">
-<span class="sig-prename descclassname"><span class="pre">pyqstrat.interactive_plot.</span></span><span class="sig-name descname"><span class="pre">foo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#foo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.foo" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.on_widgets_updated">
-<span class="sig-prename descclassname"><span class="pre">pyqstrat.interactive_plot.</span></span><span class="sig-name descname"><span class="pre">on_widgets_updated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">change</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_form_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_widgets</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#on_widgets_updated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.on_widgets_updated" title="Link to this definition">¶</a></dt>
-<dd><p>Callback called by plotly when widgets are updated by the user.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.percentile_buckets">
-<span class="sig-prename descclassname"><span class="pre">pyqstrat.interactive_plot.</span></span><span class="sig-name descname"><span class="pre">percentile_buckets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#percentile_buckets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.percentile_buckets" title="Link to this definition">¶</a></dt>
-<dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="go">:rtype: :py:class:`~numpy.ndarray`</span>
-</pre></div>
-</div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">percentile_buckets</span><span class="p">(</span><span class="n">a</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">atol</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.simple_data_filter">
-<span class="sig-prename descclassname"><span class="pre">pyqstrat.interactive_plot.</span></span><span class="sig-name descname"><span class="pre">simple_data_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selected_values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#simple_data_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.simple_data_filter" title="Link to this definition">¶</a></dt>
-<dd><p>Filters a dataframe based on the selected values</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyqstrat.interactive_plot.simple_dimension_filter">
-<span class="sig-prename descclassname"><span class="pre">pyqstrat.interactive_plot.</span></span><span class="sig-name descname"><span class="pre">simple_dimension_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selected_values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/interactive_plot.html#simple_dimension_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.interactive_plot.simple_dimension_filter" title="Link to this definition">¶</a></dt>
-<dd><p>Produces a list to put into a dropdown for selecting a dimension value</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
 <section id="module-pyqstrat.markets">
 <span id="pyqstrat-markets-module"></span><h2>pyqstrat.markets module<a class="headerlink" href="#module-pyqstrat.markets" title="Link to this heading">¶</a></h2>
 <dl class="py class">
@@ -3967,6 +3635,294 @@ For example, set to 95 to compute a 95% confidence interval. Default 0</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="pyqstrat.markets.get_future_code">
 <span class="sig-prename descclassname"><span class="pre">pyqstrat.markets.</span></span><span class="sig-name descname"><span class="pre">get_future_code</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">month</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#get_future_code"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.markets.get_future_code" title="Link to this definition">¶</a></dt>
+<dd><p>Given a month number such as 3 for March, return the future code for it, e.g. H
+&gt;&gt;&gt; get_future_code(3)
+‘H’</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-0">
+<span id="pyqstrat-strategy-builder-module"></span><h2>pyqstrat.strategy_builder module<a class="headerlink" href="#module-0" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="id0">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.markets.</span></span><span class="sig-name descname"><span class="pre">EminiFuture</span></span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">calendar</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;pyqstrat.holiday_calendars.Calendar</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#id1" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id2">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_current_symbol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">curr_date</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture.get_current_symbol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id2" title="Link to this definition">¶</a></dt>
+<dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_current_symbol</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">14</span><span class="p">))</span> <span class="o">==</span> <span class="s1">&#39;ESH9&#39;</span><span class="p">)</span>
+<span class="go">:rtype: :py:class:`str`</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_current_symbol</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span> <span class="o">==</span> <span class="s1">&#39;ESM9&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_current_symbol</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2020</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">14</span><span class="p">))</span> <span class="o">==</span> <span class="s1">&#39;ESH0&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id3">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_expiry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fut_symbol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture.get_expiry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id3" title="Link to this definition">¶</a></dt>
+<dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_expiry</span><span class="p">(</span><span class="s1">&#39;ESH8&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;2018-03-16T08:30&#39;</span><span class="p">))</span>
+<span class="go">:rtype: :py:class:`~numpy.datetime64`</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id4">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_next_symbol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">curr_future_symbol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture.get_next_symbol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id4" title="Link to this definition">¶</a></dt>
+<dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_next_symbol</span><span class="p">(</span><span class="s1">&#39;ESZ8&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;ESH9&#39;</span><span class="p">)</span>
+<span class="go">:rtype: :py:class:`str`</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id5">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_previous_symbol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">curr_future_symbol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture.get_previous_symbol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id5" title="Link to this definition">¶</a></dt>
+<dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_previous_symbol</span><span class="p">(</span><span class="s1">&#39;ESH9&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;ESZ8&#39;</span><span class="p">)</span>
+<span class="go">:rtype: :py:class:`str`</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="id6">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.markets.</span></span><span class="sig-name descname"><span class="pre">EminiOption</span></span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiOption"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id6" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-name descname"><span class="pre">calendar</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;pyqstrat.holiday_calendars.Calendar</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#id7" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id8">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">decode_symbol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiOption.decode_symbol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id8" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">weekday</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">EminiOption</span><span class="o">.</span><span class="n">decode_symbol</span><span class="p">(</span><span class="s1">&#39;E1AF8&#39;</span><span class="p">)</span>
+<span class="go">(MO, 2018, 1, 1)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id9">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_expiry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symbol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiOption.get_expiry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id9" title="Link to this definition">¶</a></dt>
+<dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">EminiOption</span><span class="o">.</span><span class="n">get_expiry</span><span class="p">(</span><span class="s1">&#39;EW2Z5&#39;</span><span class="p">)</span>
+<span class="go">numpy.datetime64(&#39;2015-12-11T15:00&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">EminiOption</span><span class="o">.</span><span class="n">get_expiry</span><span class="p">(</span><span class="s1">&#39;E3AF7&#39;</span><span class="p">)</span>
+<span class="go">numpy.datetime64(&#39;2017-01-17T15:00&#39;)</span>
+<span class="go">:rtype: :py:class:`~numpy.datetime64`</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">EminiOption</span><span class="o">.</span><span class="n">get_expiry</span><span class="p">(</span><span class="s1">&#39;EWF0&#39;</span><span class="p">)</span>
+<span class="go">numpy.datetime64(&#39;2020-01-31T15:00&#39;)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="id10">
+<span class="sig-prename descclassname"><span class="pre">pyqstrat.markets.</span></span><span class="sig-name descname"><span class="pre">future_code_to_month</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">future_code</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#future_code_to_month"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id10" title="Link to this definition">¶</a></dt>
+<dd><p>Given a future code such as “X”, return the month abbreviation, such as “nov”</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>future_code</strong> (<em>str</em>) – the one letter future code</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">future_code_to_month</span><span class="p">(</span><span class="s1">&#39;X&#39;</span><span class="p">)</span>
+<span class="go">&#39;nov&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="id11">
+<span class="sig-prename descclassname"><span class="pre">pyqstrat.markets.</span></span><span class="sig-name descname"><span class="pre">future_code_to_month_number</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">future_code</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#future_code_to_month_number"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id11" title="Link to this definition">¶</a></dt>
+<dd><p>Given a future code such as “X”, return the month number (from 1 - 12)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>future_code</strong> (<em>str</em>) – the one letter future code</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">future_code_to_month_number</span><span class="p">(</span><span class="s1">&#39;X&#39;</span><span class="p">)</span>
+<span class="go">11</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="id12">
+<span class="sig-prename descclassname"><span class="pre">pyqstrat.markets.</span></span><span class="sig-name descname"><span class="pre">get_future_code</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">month</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#get_future_code"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id12" title="Link to this definition">¶</a></dt>
+<dd><p>Given a month number such as 3 for March, return the future code for it, e.g. H
+&gt;&gt;&gt; get_future_code(3)
+‘H’</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-1">
+<span id="pyqstrat-strategy-components-module"></span><h2>pyqstrat.strategy_components module<a class="headerlink" href="#module-1" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="id13">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.markets.</span></span><span class="sig-name descname"><span class="pre">EminiFuture</span></span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id13" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id14">
+<span class="sig-name descname"><span class="pre">calendar</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;pyqstrat.holiday_calendars.Calendar</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#id14" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id15">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_current_symbol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">curr_date</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture.get_current_symbol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id15" title="Link to this definition">¶</a></dt>
+<dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_current_symbol</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">14</span><span class="p">))</span> <span class="o">==</span> <span class="s1">&#39;ESH9&#39;</span><span class="p">)</span>
+<span class="go">:rtype: :py:class:`str`</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_current_symbol</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span> <span class="o">==</span> <span class="s1">&#39;ESM9&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_current_symbol</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2020</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">14</span><span class="p">))</span> <span class="o">==</span> <span class="s1">&#39;ESH0&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id16">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_expiry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fut_symbol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture.get_expiry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id16" title="Link to this definition">¶</a></dt>
+<dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_expiry</span><span class="p">(</span><span class="s1">&#39;ESH8&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;2018-03-16T08:30&#39;</span><span class="p">))</span>
+<span class="go">:rtype: :py:class:`~numpy.datetime64`</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id17">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_next_symbol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">curr_future_symbol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture.get_next_symbol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id17" title="Link to this definition">¶</a></dt>
+<dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_next_symbol</span><span class="p">(</span><span class="s1">&#39;ESZ8&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;ESH9&#39;</span><span class="p">)</span>
+<span class="go">:rtype: :py:class:`str`</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id18">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_previous_symbol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">curr_future_symbol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiFuture.get_previous_symbol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id18" title="Link to this definition">¶</a></dt>
+<dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span><span class="p">(</span><span class="n">EminiFuture</span><span class="o">.</span><span class="n">get_previous_symbol</span><span class="p">(</span><span class="s1">&#39;ESH9&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;ESZ8&#39;</span><span class="p">)</span>
+<span class="go">:rtype: :py:class:`str`</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="id19">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.markets.</span></span><span class="sig-name descname"><span class="pre">EminiOption</span></span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiOption"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id19" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id20">
+<span class="sig-name descname"><span class="pre">calendar</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;pyqstrat.holiday_calendars.Calendar</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#id20" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id21">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">decode_symbol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiOption.decode_symbol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id21" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">weekday</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">EminiOption</span><span class="o">.</span><span class="n">decode_symbol</span><span class="p">(</span><span class="s1">&#39;E1AF8&#39;</span><span class="p">)</span>
+<span class="go">(MO, 2018, 1, 1)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id22">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_expiry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symbol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#EminiOption.get_expiry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id22" title="Link to this definition">¶</a></dt>
+<dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">EminiOption</span><span class="o">.</span><span class="n">get_expiry</span><span class="p">(</span><span class="s1">&#39;EW2Z5&#39;</span><span class="p">)</span>
+<span class="go">numpy.datetime64(&#39;2015-12-11T15:00&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">EminiOption</span><span class="o">.</span><span class="n">get_expiry</span><span class="p">(</span><span class="s1">&#39;E3AF7&#39;</span><span class="p">)</span>
+<span class="go">numpy.datetime64(&#39;2017-01-17T15:00&#39;)</span>
+<span class="go">:rtype: :py:class:`~numpy.datetime64`</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">EminiOption</span><span class="o">.</span><span class="n">get_expiry</span><span class="p">(</span><span class="s1">&#39;EWF0&#39;</span><span class="p">)</span>
+<span class="go">numpy.datetime64(&#39;2020-01-31T15:00&#39;)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="id23">
+<span class="sig-prename descclassname"><span class="pre">pyqstrat.markets.</span></span><span class="sig-name descname"><span class="pre">future_code_to_month</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">future_code</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#future_code_to_month"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id23" title="Link to this definition">¶</a></dt>
+<dd><p>Given a future code such as “X”, return the month abbreviation, such as “nov”</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>future_code</strong> (<em>str</em>) – the one letter future code</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">future_code_to_month</span><span class="p">(</span><span class="s1">&#39;X&#39;</span><span class="p">)</span>
+<span class="go">&#39;nov&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="id24">
+<span class="sig-prename descclassname"><span class="pre">pyqstrat.markets.</span></span><span class="sig-name descname"><span class="pre">future_code_to_month_number</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">future_code</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#future_code_to_month_number"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id24" title="Link to this definition">¶</a></dt>
+<dd><p>Given a future code such as “X”, return the month number (from 1 - 12)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>future_code</strong> (<em>str</em>) – the one letter future code</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">future_code_to_month_number</span><span class="p">(</span><span class="s1">&#39;X&#39;</span><span class="p">)</span>
+<span class="go">11</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="id25">
+<span class="sig-prename descclassname"><span class="pre">pyqstrat.markets.</span></span><span class="sig-name descname"><span class="pre">get_future_code</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">month</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/markets.html#get_future_code"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id25" title="Link to this definition">¶</a></dt>
 <dd><p>Given a month number such as 3 for March, return the future code for it, e.g. H
 &gt;&gt;&gt; get_future_code(3)
 ‘H’</p>
