@@ -274,9 +274,9 @@
 <span class="sd">        </span>
 <span class="sd">    &gt;&gt;&gt; a = np.array([1, 5, 18, 3, 6, 10, 4])</span>
 <span class="sd">    &gt;&gt;&gt; buckets = [4, 8, 12]</span>
-<span class="sd">    &gt;&gt;&gt; assert np.alltrue(np_bucket(a, buckets, side=&#39;left&#39;) == np.array([0,  4, 12,  0,  4,  8,  4]))</span>
-<span class="sd">    &gt;&gt;&gt; assert np.alltrue(np_bucket(a, buckets, default_value=25, side=&#39;right&#39;) == np.array([4,  8, 25,  4,  8, 12,  4])) </span>
-<span class="sd">    &gt;&gt;&gt; assert(np.alltrue(np_bucket(a, buckets) == np.array([4,  4, 12,  4,  8, 12,  4])))</span>
+<span class="sd">    &gt;&gt;&gt; assert np.allclose(np_bucket(a, buckets, side=&#39;left&#39;), np.array([0,  4, 12,  0,  4,  8,  4]))</span>
+<span class="sd">    &gt;&gt;&gt; assert np.allclose(np_bucket(a, buckets, default_value=25, side=&#39;right&#39;), np.array([4,  8, 25,  4,  8, 12,  4])) </span>
+<span class="sd">    &gt;&gt;&gt; assert np.allclose(np_bucket(a, buckets), np.array([4,  4, 12,  4,  8, 12,  4]))</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">assert_</span><span class="p">(</span><span class="n">side</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;mid&#39;</span><span class="p">,</span> <span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="s1">&#39;right&#39;</span><span class="p">],</span> <span class="sa">f</span><span class="s1">&#39;unknown side: </span><span class="si">{</span><span class="n">side</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="s1">&#39;mid&#39;</span><span class="p">:</span>
@@ -414,8 +414,8 @@
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="s1">&#39;v&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span> <span class="k">return</span> <span class="kc">None</span>
     <span class="n">sum_1</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">vwap</span> <span class="o">*</span> <span class="n">df</span><span class="o">.</span><span class="n">v</span>
-    <span class="n">sum_2</span> <span class="o">=</span> <span class="n">sum_1</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">sampling_frequency</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">)</span>
-    <span class="n">volume_sum</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">sampling_frequency</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">)</span>
+    <span class="n">sum_2</span> <span class="o">=</span> <span class="n">sum_1</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">sampling_frequency</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="s1">&#39;sum&#39;</span><span class="p">)</span>
+    <span class="n">volume_sum</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">sampling_frequency</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="s1">&#39;sum&#39;</span><span class="p">)</span>
     <span class="n">vwap</span> <span class="o">=</span> <span class="n">sum_2</span> <span class="o">/</span> <span class="n">volume_sum</span>
     <span class="k">return</span> <span class="n">vwap</span></div>
 
@@ -428,7 +428,7 @@
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
 <span class="sd">        df (pd.DataFrame): Must contain an index of numpy datetime64 type which is monotonically increasing</span>
-<span class="sd">        sampling_frequency (str): See pandas frequency strings</span>
+<span class="sd">            sampling_frequency (str): See pandas frequency strings</span>
 <span class="sd">        resample_funcs (dict of str: int): a dictionary of column name -&gt; resampling function for any columns that are custom defined.  Default None.</span>
 <span class="sd">            If there is no entry for a custom column, defaults to &#39;last&#39; for that column</span>
 <span class="sd">    Returns:</span>
@@ -446,7 +446,7 @@
 <span class="sd">    &gt;&gt;&gt; df[&#39;vwap&#39;] =  0.5 * (df.l + df.h)</span>
 <span class="sd">    &gt;&gt;&gt; df.set_index(&#39;date&#39;, inplace = True)</span>
 <span class="sd">    &gt;&gt;&gt; df = resample_trade_bars(df, sampling_frequency = &#39;D&#39;, resample_funcs={&#39;x&#39;: lambda df, </span>
-<span class="sd">    ...   sampling_frequency: df.x.resample(sampling_frequency).agg(np.mean)})</span>
+<span class="sd">    ...   sampling_frequency: df.x.resample(sampling_frequency).agg(&#39;mean&#39;)})</span>
 <span class="sd">    &gt;&gt;&gt; assert(len(df) == 4)</span>
 <span class="sd">    &gt;&gt;&gt; assert(math.isclose(df.vwap.iloc[1], 9.24))</span>
 <span class="sd">    &gt;&gt;&gt; assert(np.isnan(df.vwap.iloc[2]))</span>
