@@ -1,18 +1,15 @@
-
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>pyqstrat.pq_utils &#8212; pyqstrat 0.1.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="../../_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b76e3c8a" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=039e1c02" />
+    <script src="../../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -36,12 +33,7 @@
 <span class="c1"># $$_code</span>
 <span class="c1"># $$_ %%checkall</span>
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
-<span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">tkinter</span>
-<span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-    <span class="n">mpl</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;Agg&#39;</span><span class="p">)</span>  <span class="c1"># Support running in headless mode</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
@@ -54,29 +46,26 @@
 
 
 <span class="n">SEC_PER_DAY</span> <span class="o">=</span> <span class="mi">3600</span> <span class="o">*</span> <span class="mi">24</span>
-<span class="n">_HAS_DISPLAY</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="n">EPOCH</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">DATE_FORMAT</span> <span class="o">=</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span>
 <span class="n">LOG_FORMAT</span> <span class="o">=</span> <span class="s1">&#39;[</span><span class="si">%(asctime)s</span><span class="s1">.</span><span class="si">%(msecs)03d</span><span class="s1"> </span><span class="si">%(funcName)s</span><span class="s1">] </span><span class="si">%(message)s</span><span class="s1">&#39;</span>
 
 
-<div class="viewcode-block" id="has_display"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.has_display">[docs]</a><span class="k">def</span> <span class="nf">has_display</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    If we are running in unit test mode or on a server, then don&#39;t try to draw graphs, etc.</span>
+<div class="viewcode-block" id="has_display">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.has_display">[docs]</a>
+<span class="k">def</span> <span class="nf">has_display</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Useful for running on a headless machine such as a remote server</span>
+<span class="sd">    so we don&#39;t try to show graphs etc during unit tests</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">global</span> <span class="n">_HAS_DISPLAY</span>
-    <span class="k">if</span> <span class="n">_HAS_DISPLAY</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">_HAS_DISPLAY</span>
-    
-    <span class="n">_HAS_DISPLAY</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-    <span class="k">except</span> <span class="n">tkinter</span><span class="o">.</span><span class="n">TclError</span><span class="p">:</span>
-        <span class="n">_HAS_DISPLAY</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="k">return</span> <span class="n">_HAS_DISPLAY</span></div>
+    <span class="k">return</span> <span class="s1">&#39;NO_DISPLAY&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span></div>
 
 
-<div class="viewcode-block" id="shift_np"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.shift_np">[docs]</a><span class="k">def</span> <span class="nf">shift_np</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fill_value</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="shift_np">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.shift_np">[docs]</a>
+<span class="k">def</span> <span class="nf">shift_np</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fill_value</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Similar to pandas.Series.shift but works on numpy arrays.</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
@@ -101,21 +90,24 @@
     <span class="k">return</span> <span class="n">e</span></div>
 
 
-<div class="viewcode-block" id="set_ipython_defaults"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.set_ipython_defaults">[docs]</a><span class="k">def</span> <span class="nf">set_ipython_defaults</span><span class="p">(</span><span class="n">jupyter_multiple_display</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<div class="viewcode-block" id="set_ipython_defaults">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.set_ipython_defaults">[docs]</a>
+<span class="k">def</span> <span class="nf">set_ipython_defaults</span><span class="p">(</span><span class="n">jupyter_multiple_display</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">IPython.core.interactiveshell</span> <span class="kn">import</span> <span class="n">InteractiveShell</span>
-    <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">run_line_magic</span><span class="p">(</span><span class="s1">&#39;matplotlib&#39;</span><span class="p">,</span> <span class="s1">&#39;inline&#39;</span><span class="p">)</span>  <span class="c1"># type: ignore # noqa: 89  </span>
     
     <span class="k">if</span> <span class="n">jupyter_multiple_display</span><span class="p">:</span>
-        <span class="n">InteractiveShell</span><span class="o">.</span><span class="n">ast_node_interactivity</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span></div>
+        <span class="n">InteractiveShell</span><span class="o">.</span><span class="n">ast_node_interactivity</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span>  <span class="c1"># type: ignore # not sure why this is needed</span></div>
+
     
 
-<div class="viewcode-block" id="set_defaults"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.set_defaults">[docs]</a><span class="k">def</span> <span class="nf">set_defaults</span><span class="p">(</span><span class="n">df_float_sf</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">9</span><span class="p">,</span> 
+<div class="viewcode-block" id="set_defaults">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.set_defaults">[docs]</a>
+<span class="k">def</span> <span class="nf">set_defaults</span><span class="p">(</span><span class="n">df_float_sf</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">9</span><span class="p">,</span> 
                  <span class="n">df_display_max_rows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span> 
                  <span class="n">df_display_max_columns</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">99</span><span class="p">,</span>
-                 <span class="n">np_seterr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;raise&#39;</span><span class="p">,</span>
-                 <span class="n">mpl_figsize</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
-                 <span class="n">jupyter_multiple_display</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+                 <span class="n">np_seterr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;raise&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Set some display defaults to make it easier to view dataframes and graphs.</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
@@ -123,37 +115,40 @@
 <span class="sd">        df_display_max_rows: Number of rows to display for pandas dataframes when you print them (default 200).  Set to None to use pandas defaults</span>
 <span class="sd">        df_display_max_columns: Number of columns to display for pandas dataframes when you print them (default 99).  Set to None to use pandas defaults</span>
 <span class="sd">        np_seterr: Error mode for numpy warnings.  See numpy seterr function for details.  Set to None to use numpy defaults</span>
-<span class="sd">        mpl_figsize: Default figure size to use when displaying matplotlib plots (default 8,6).  Set to None to use defaults</span>
 <span class="sd">        jupyter_multiple_display: If set, and you have multiple outputs in a Jupyter cell, output will contain all of them. Default True</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">df_float_sf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">float_format</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;{:.&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">df_float_sf</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;g}&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span>
     <span class="k">if</span> <span class="n">df_display_max_rows</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">max_rows</span> <span class="o">=</span> <span class="n">df_display_max_rows</span>
     <span class="k">if</span> <span class="n">df_display_max_columns</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">max_columns</span> <span class="o">=</span> <span class="n">df_display_max_columns</span>
-    <span class="k">if</span> <span class="n">mpl_figsize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;figure.figsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mpl_figsize</span>
     <span class="k">if</span> <span class="n">np_seterr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">seterr</span><span class="p">(</span><span class="n">np_seterr</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
-    <span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">chained_assignment</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Turn off bogus &#39;view&#39; warnings from pandas when modifying dataframes</span>
-    <span class="c1"># Display all cell outputs</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;figure.max_open_warning&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">})</span>  <span class="c1"># For unit tests, avoid warning when opening more than 20 figures</span>
-    <span class="k">if</span> <span class="n">in_ipython</span><span class="p">():</span>
-        <span class="n">set_ipython_defaults</span><span class="p">(</span><span class="n">jupyter_multiple_display</span><span class="p">)</span></div>
+    <span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">chained_assignment</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Turn off bogus &#39;view&#39; warnings from pandas when modifying dataframes</span></div>
+
     
 
-<div class="viewcode-block" id="str2date"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.str2date">[docs]</a><span class="k">def</span> <span class="nf">str2date</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Converts a string like &quot;2008-01-15 15:00:00&quot; to a numpy datetime64.  If s is not a string, return s back&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="str2date">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.str2date">[docs]</a>
+<span class="k">def</span> <span class="nf">str2date</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Converts a string like &quot;2008-01-15 15:00:00&quot; to a numpy datetime64.  If s is not a string, return s back&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>  <span class="c1"># nat</span>
     <span class="k">return</span> <span class="n">s</span></div>
 
 
-<div class="viewcode-block" id="strtup2date"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.strtup2date">[docs]</a><span class="k">def</span> <span class="nf">strtup2date</span><span class="p">(</span><span class="n">tup</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-    <span class="sd">&#39;&#39;&#39;Converts a string tuple like (&quot;2008-01-15&quot;, &quot;2009-01-16&quot;) to a numpy datetime64 tuple.  </span>
+
+<div class="viewcode-block" id="strtup2date">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.strtup2date">[docs]</a>
+<span class="k">def</span> <span class="nf">strtup2date</span><span class="p">(</span><span class="n">tup</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Converts a string tuple like (&quot;2008-01-15&quot;, &quot;2009-01-16&quot;) to a numpy datetime64 tuple.  </span>
 <span class="sd">      If the tuple does not contain strings, return it back unchanged&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">tup</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">tup</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">tuple</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tup</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span> <span class="k">return</span> <span class="p">(</span><span class="n">str2date</span><span class="p">(</span><span class="n">tup</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">str2date</span><span class="p">(</span><span class="n">tup</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
     <span class="k">return</span> <span class="n">tup</span></div>
 
 
-<div class="viewcode-block" id="remove_dups"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.remove_dups">[docs]</a><span class="k">def</span> <span class="nf">remove_dups</span><span class="p">(</span><span class="n">lst</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">key_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="remove_dups">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.remove_dups">[docs]</a>
+<span class="k">def</span> <span class="nf">remove_dups</span><span class="p">(</span><span class="n">lst</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">key_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Remove duplicates from a list </span>
 <span class="sd">    Args:</span>
 <span class="sd">        lst: list to remove duplicates from</span>
@@ -182,15 +177,38 @@
     <span class="k">return</span> <span class="n">new_list</span></div>
 
 
-<div class="viewcode-block" id="np_get_index"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_get_index">[docs]</a><span class="k">def</span> <span class="nf">np_get_index</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Get index of a value in a numpy array.  Returns -1 if the value does not exist.&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="np_indexof">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_indexof">[docs]</a>
+<span class="k">def</span> <span class="nf">np_indexof</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Get index of a value in a numpy array.  Returns -1 if the value does not exist.&#39;&#39;&#39;</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">array</span> <span class="o">==</span> <span class="n">value</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span> <span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">return</span> <span class="o">-</span><span class="mi">1</span></div>
 
 
-<div class="viewcode-block" id="np_find_closest"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_find_closest">[docs]</a><span class="k">def</span> <span class="nf">np_find_closest</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="np_indexof_sorted">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_indexof_sorted">[docs]</a>
+<span class="k">def</span> <span class="nf">np_indexof_sorted</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Get index of a value in a sorted numpy array.  Returns -1 if the value does not exist</span>
+<span class="sd">    a = np.array([1, 2, 3, 4])</span>
+<span class="sd">    assert(np_indexof_sorted(a, 3) == 2)</span>
+<span class="sd">    assert(np.indexof_sorted(a, 8) == -1)</span>
+<span class="sd">    assert(np.indexof_sorted(a, 0) == -1)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="n">array</span><span class="o">.</span><span class="n">size</span><span class="p">:</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">if</span> <span class="n">array</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">!=</span> <span class="n">value</span><span class="p">:</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">return</span> <span class="n">idx</span></div>
+
+
+
+<div class="viewcode-block" id="np_find_closest">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_find_closest">[docs]</a>
+<span class="k">def</span> <span class="nf">np_find_closest</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    From https://stackoverflow.com/questions/8914491/finding-the-nearest-value-and-return-the-index-of-array-in-python</span>
 <span class="sd">    Find index of closest value to array v in array a.  Returns an array of the same size as v</span>
 <span class="sd">    a must be sorted</span>
@@ -204,8 +222,11 @@
     <span class="k">return</span> <span class="n">idx</span>  <span class="c1"># type: ignore</span></div>
 
 
-<div class="viewcode-block" id="np_rolling_window"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_rolling_window">[docs]</a><span class="k">def</span> <span class="nf">np_rolling_window</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">window</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="np_rolling_window">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_rolling_window">[docs]</a>
+<span class="k">def</span> <span class="nf">np_rolling_window</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">window</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    For applying rolling window functions to a numpy array</span>
 <span class="sd">    See: https://stackoverflow.com/questions/6811183/rolling-window-for-1d-arrays-in-numpy</span>
 <span class="sd">    &gt;&gt;&gt; print(np.std(np_rolling_window(np.array([1, 2, 3, 4]), 2), 1))</span>
@@ -216,8 +237,11 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">stride_tricks</span><span class="o">.</span><span class="n">as_strided</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="n">strides</span><span class="p">)</span>  <span class="c1"># type: ignore</span></div>
 
 
-<div class="viewcode-block" id="np_round"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_round">[docs]</a><span class="k">def</span> <span class="nf">np_round</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">clip</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="np_round">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_round">[docs]</a>
+<span class="k">def</span> <span class="nf">np_round</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">clip</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Round all elements in an array to the nearest clip</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
@@ -230,8 +254,11 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">clip</span><span class="p">)</span> <span class="o">*</span> <span class="n">clip</span></div>
 
 
-<div class="viewcode-block" id="np_bucket"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_bucket">[docs]</a><span class="k">def</span> <span class="nf">np_bucket</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">buckets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">default_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s1">&#39;mid&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="np_bucket">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_bucket">[docs]</a>
+<span class="k">def</span> <span class="nf">np_bucket</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">buckets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">default_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s1">&#39;mid&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Given a numpy array and a sorted list of buckets, assign each element to a bucket.</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
@@ -251,7 +278,7 @@
 <span class="sd">    &gt;&gt;&gt; assert np.alltrue(np_bucket(a, buckets, default_value=25, side=&#39;right&#39;) == np.array([4,  8, 25,  4,  8, 12,  4])) </span>
 <span class="sd">    &gt;&gt;&gt; assert(np.alltrue(np_bucket(a, buckets) == np.array([4,  4, 12,  4,  8, 12,  4])))</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">assert</span> <span class="n">side</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;mid&#39;</span><span class="p">,</span> <span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="s1">&#39;right&#39;</span><span class="p">],</span> <span class="sa">f</span><span class="s1">&#39;unknown side: </span><span class="si">{</span><span class="n">side</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="n">assert_</span><span class="p">(</span><span class="n">side</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;mid&#39;</span><span class="p">,</span> <span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="s1">&#39;right&#39;</span><span class="p">],</span> <span class="sa">f</span><span class="s1">&#39;unknown side: </span><span class="si">{</span><span class="n">side</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="s1">&#39;mid&#39;</span><span class="p">:</span>
         <span class="n">b</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">buckets</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">buckets</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">buckets</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
         <span class="n">conditions</span> <span class="o">=</span> <span class="p">[(</span><span class="n">a</span> <span class="o">&lt;</span> <span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">b</span><span class="p">]</span>
@@ -267,8 +294,11 @@
     <span class="k">return</span> <span class="n">ret</span></div>
 
 
-<div class="viewcode-block" id="np_parse_array"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_parse_array">[docs]</a><span class="k">def</span> <span class="nf">np_parse_array</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="np_parse_array">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_parse_array">[docs]</a>
+<span class="k">def</span> <span class="nf">np_parse_array</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Create a 1 or 2 d numpy array from a string that looks like:</span>
 <span class="sd">    [[2. 5. 3. 0. 0.]</span>
 <span class="sd">    [3. 5. 0. 4. 3.]]</span>
@@ -290,8 +320,11 @@
     <span class="k">return</span> <span class="n">x</span></div>
 
 
-<div class="viewcode-block" id="np_inc_dates"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_inc_dates">[docs]</a><span class="k">def</span> <span class="nf">np_inc_dates</span><span class="p">(</span><span class="n">dates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">num_days</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="np_inc_dates">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_inc_dates">[docs]</a>
+<span class="k">def</span> <span class="nf">np_inc_dates</span><span class="p">(</span><span class="n">dates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">num_days</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Increment the given date array so each cell gets the next higher value in this array</span>
 <span class="sd">    &gt;&gt;&gt; dates = np.array([&#39;2021-06-01&#39;, &#39;2021-06-01&#39;, &#39;2021-08-01&#39;, &#39;2021-04-01&#39;], dtype=&#39;M8[D]&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; check = np.array([dates[2], dates[2], np.datetime64(&#39;nat&#39;), dates[0]])</span>
@@ -311,8 +344,11 @@
     <span class="k">return</span> <span class="n">date_values</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="np_uniques"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_uniques">[docs]</a><span class="k">def</span> <span class="nf">np_uniques</span><span class="p">(</span><span class="n">arrays</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="np_uniques">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.np_uniques">[docs]</a>
+<span class="k">def</span> <span class="nf">np_uniques</span><span class="p">(</span><span class="n">arrays</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Given a list of numpy arrays that may have different datatype, generate a structured numpy</span>
 <span class="sd">    array with sorted, unique elements from that list</span>
 <span class="sd">    &gt;&gt;&gt; array1 = np.array([&#39;2018-01-02&#39;, &#39;2018-01-03&#39;, &#39;2018-01-02&#39;, &#39;2018-01-03&#39;], dtype=&#39;M8[D]&#39;)</span>
@@ -329,8 +365,11 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="day_of_week_num"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.day_of_week_num">[docs]</a><span class="k">def</span> <span class="nf">day_of_week_num</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="day_of_week_num">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.day_of_week_num">[docs]</a>
+<span class="k">def</span> <span class="nf">day_of_week_num</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    From https://stackoverflow.com/questions/52398383/finding-day-of-the-week-for-a-datetime64</span>
 <span class="sd">    Get day of week for a numpy array of datetimes </span>
 <span class="sd">    Monday is 0, Sunday is 6</span>
@@ -350,26 +389,27 @@
     <span class="k">return</span> <span class="n">ret</span></div>
 
 
-<div class="viewcode-block" id="percentile_of_score"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.percentile_of_score">[docs]</a><span class="k">def</span> <span class="nf">percentile_of_score</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="percentile_of_score">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.percentile_of_score">[docs]</a>
+<span class="k">def</span> <span class="nf">percentile_of_score</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    For each element in a, find the percentile of a its in.  From stackoverflow.com/a/29989971/5351549</span>
 <span class="sd">    Like scipy.stats.percentileofscore but runs in O(n log(n)) time.</span>
 <span class="sd">    &gt;&gt;&gt; a = np.array([4, 3, 1, 2, 4.1])</span>
 <span class="sd">    &gt;&gt;&gt; percentiles = percentile_of_score(a)</span>
 <span class="sd">    &gt;&gt;&gt; assert(all(np.isclose(np.array([ 75.,  50.,   0.,  25., 100.]), percentiles)))</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39;expected numpy array, got: </span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="n">assert_</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39;expected numpy array, got: </span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">):</span> <span class="k">return</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">a</span><span class="p">))</span> <span class="o">*</span> <span class="mf">100.</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="date_2_num"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.date_2_num">[docs]</a><span class="k">def</span> <span class="nf">date_2_num</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">matplotlib.dates</span> <span class="kn">import</span> <span class="n">date2num</span>
-    <span class="k">return</span> <span class="n">date2num</span><span class="p">(</span><span class="n">d</span><span class="p">)</span></div>
 
-
-<div class="viewcode-block" id="resample_vwap"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.resample_vwap">[docs]</a><span class="k">def</span> <span class="nf">resample_vwap</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="resample_vwap">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.resample_vwap">[docs]</a>
+<span class="k">def</span> <span class="nf">resample_vwap</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Compute weighted average of vwap given higher frequency vwap and volume</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="s1">&#39;v&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span> <span class="k">return</span> <span class="kc">None</span>
@@ -380,8 +420,11 @@
     <span class="k">return</span> <span class="n">vwap</span></div>
 
 
-<div class="viewcode-block" id="resample_trade_bars"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.resample_trade_bars">[docs]</a><span class="k">def</span> <span class="nf">resample_trade_bars</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="p">,</span> <span class="n">resample_funcs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Downsample trade bars using sampling frequency</span>
+
+<div class="viewcode-block" id="resample_trade_bars">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.resample_trade_bars">[docs]</a>
+<span class="k">def</span> <span class="nf">resample_trade_bars</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="p">,</span> <span class="n">resample_funcs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Downsample trade bars using sampling frequency</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
 <span class="sd">        df (pd.DataFrame): Must contain an index of numpy datetime64 type which is monotonically increasing</span>
@@ -435,8 +478,11 @@
     <span class="k">return</span> <span class="n">resampled</span></div>
 
 
-<div class="viewcode-block" id="resample_ts"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.resample_ts">[docs]</a><span class="k">def</span> <span class="nf">resample_ts</span><span class="p">(</span><span class="n">dates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-    <span class="sd">&#39;&#39;&#39;Downsample a tuple of datetimes and value arrays using sampling frequency, using the last value if it does not exist at the bin edge.</span>
+
+<div class="viewcode-block" id="resample_ts">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.resample_ts">[docs]</a>
+<span class="k">def</span> <span class="nf">resample_ts</span><span class="p">(</span><span class="n">dates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Downsample a tuple of datetimes and value arrays using sampling frequency, using the last value if it does not exist at the bin edge.</span>
 <span class="sd">    See pandas.Series.resample</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
@@ -452,20 +498,29 @@
     <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">values</span></div>
 
 
-<div class="viewcode-block" id="zero_to_nan"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.zero_to_nan">[docs]</a><span class="k">def</span> <span class="nf">zero_to_nan</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Converts any zeros in a numpy array to nans&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="zero_to_nan">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.zero_to_nan">[docs]</a>
+<span class="k">def</span> <span class="nf">zero_to_nan</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Converts any zeros in a numpy array to nans&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">array</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="k">return</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">array</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="nan_to_zero"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.nan_to_zero">[docs]</a><span class="k">def</span> <span class="nf">nan_to_zero</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Converts any nans in a numpy float array to 0&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="nan_to_zero">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.nan_to_zero">[docs]</a>
+<span class="k">def</span> <span class="nf">nan_to_zero</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Converts any nans in a numpy float array to 0&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">array</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="k">return</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">array</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="monotonically_increasing"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.monotonically_increasing">[docs]</a><span class="k">def</span> <span class="nf">monotonically_increasing</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="monotonically_increasing">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.monotonically_increasing">[docs]</a>
+<span class="k">def</span> <span class="nf">monotonically_increasing</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Returns True if the array is monotonically_increasing, False otherwise</span>
 <span class="sd">    </span>
 <span class="sd">    &gt;&gt;&gt; monotonically_increasing(np.array([&#39;2018-01-02&#39;, &#39;2018-01-03&#39;], dtype = &#39;M8[D]&#39;))</span>
@@ -478,30 +533,64 @@
     <span class="k">return</span> <span class="n">ret</span></div>
 
 
-<div class="viewcode-block" id="infer_frequency"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.infer_frequency">[docs]</a><span class="k">def</span> <span class="nf">infer_frequency</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Returns most common frequency of date differences as a fraction of days</span>
+
+<div class="viewcode-block" id="try_frequency">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.try_frequency">[docs]</a>
+<span class="k">def</span> <span class="nf">try_frequency</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="n">diff_dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">timestamps</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;M8[</span><span class="si">{</span><span class="n">period</span><span class="si">}</span><span class="s1">]&#39;</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">counts</span><span class="p">)</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">diff_dates</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">max_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">max_i</span><span class="p">],</span> <span class="mf">0.</span><span class="p">)</span> <span class="ow">or</span> <span class="n">counts</span><span class="p">[</span><span class="n">max_i</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">if</span> <span class="n">period</span> <span class="o">==</span> <span class="s1">&#39;M&#39;</span><span class="p">:</span>
+        <span class="n">fraction_of_day</span> <span class="o">=</span> <span class="mf">30.</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fraction_of_day</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">values</span><span class="p">[</span><span class="n">max_i</span><span class="p">]</span> <span class="o">*</span> <span class="n">fraction_of_day</span></div>
+
+
+
+<div class="viewcode-block" id="infer_frequency">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.infer_frequency">[docs]</a>
+<span class="k">def</span> <span class="nf">infer_frequency</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Returns most common frequency of date differences as a fraction of days</span>
 <span class="sd">    Args:</span>
 <span class="sd">        timestamps: A numpy array of monotonically increasing datetime64</span>
-<span class="sd">    &gt;&gt;&gt; timestamps = np.array([&#39;2018-01-01 11:00:00&#39;, &#39;2018-01-01 11:15:00&#39;, &#39;2018-01-01 11:30:00&#39;, &#39;2018-01-01 11:35:00&#39;], dtype = &#39;M8[ns]&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; timestamps = np.array([&#39;2018-01-01 11:00:00&#39;, &#39;2018-01-01 11:15&#39;, &#39;2018-01-01 11:30&#39;, &#39;2018-01-01 11:35&#39;], dtype = &#39;M8[ns]&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; infer_frequency(timestamps)  # doctest: +IGNORE_EXCEPTION_DETAIL</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">     ...</span>
+<span class="sd">    PQException: could not infer frequency from timestamps...</span>
+<span class="sd">    &gt;&gt;&gt; timestamps = np.array([&#39;2018-01-01 11:00&#39;, &#39;2018-01-01 11:15&#39;, &#39;2018-01-01 11:30&#39;, &#39;2018-01-01 11:35&#39;, &#39;2018-01-01 11:50&#39;], dtype = &#39;M8[ns]&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; print(round(infer_frequency(timestamps), 8))</span>
 <span class="sd">    0.01041667</span>
+<span class="sd">    &gt;&gt;&gt; timestamps = np.array([&#39;2015-01-01&#39;, &#39;2015-03-01&#39;, &#39;2015-05-01&#39;, &#39;2015-07-01&#39;, &#39;2015-09-01&#39;], dtype=&#39;M8[D]&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; assert math.isclose(infer_frequency(timestamps), 60)</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span> <span class="n">timestamps</span> <span class="o">=</span> <span class="n">timestamps</span><span class="o">.</span><span class="n">values</span>
-    <span class="k">assert</span> <span class="p">(</span><span class="n">monotonically_increasing</span><span class="p">(</span><span class="n">timestamps</span><span class="p">))</span>
-    <span class="n">numeric_dates</span> <span class="o">=</span> <span class="n">date_2_num</span><span class="p">(</span><span class="n">timestamps</span><span class="p">)</span>
-    <span class="n">diff_dates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">numeric_dates</span><span class="p">),</span> <span class="mi">8</span><span class="p">)</span>
-    <span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">counts</span><span class="p">)</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">diff_dates</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">values</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">counts</span><span class="p">)]</span></div>
+    <span class="n">assert_</span><span class="p">(</span><span class="n">monotonically_increasing</span><span class="p">(</span><span class="n">timestamps</span><span class="p">))</span>
+    <span class="n">assert_</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">timestamps</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;cannot infer frequency from empty timestamps array&#39;</span><span class="p">)</span>
+    <span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.75</span>
+    <span class="k">for</span> <span class="n">period</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="s1">&#39;s&#39;</span><span class="p">]:</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">try_frequency</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">threshold</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">ret</span><span class="p">):</span> <span class="k">return</span> <span class="n">ret</span>
+    <span class="n">assert_</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;could not infer frequency from timestamps: </span><span class="si">{</span><span class="n">timestamps</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">nan</span>  <span class="c1"># will never execute but keeps mypy happy</span></div>
 
 
-<div class="viewcode-block" id="series_to_array"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.series_to_array">[docs]</a><span class="k">def</span> <span class="nf">series_to_array</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Convert a pandas series to a numpy array.  If the object is not a pandas Series return it back unchanged&#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">series</span><span class="p">)</span> <span class="o">==</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span> <span class="k">return</span> <span class="n">series</span><span class="o">.</span><span class="n">values</span>
+
+<div class="viewcode-block" id="series_to_array">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.series_to_array">[docs]</a>
+<span class="k">def</span> <span class="nf">series_to_array</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Convert a pandas series to a numpy array.  If the object is not a pandas Series return it back unchanged&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span> <span class="k">return</span> <span class="n">series</span><span class="o">.</span><span class="n">values</span>
     <span class="k">return</span> <span class="n">series</span></div>
 
 
-<div class="viewcode-block" id="to_csv"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.to_csv">[docs]</a><span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">compress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="to_csv">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.to_csv">[docs]</a>
+<span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">compress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates a temporary file then renames to the permanent file so we don&#39;t have half written files.</span>
 <span class="sd">    Also optionally compresses using the xz algorithm</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -512,10 +601,13 @@
         <span class="n">suffix</span> <span class="o">=</span> <span class="s1">&#39;.xz&#39;</span>
     <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">file_name</span> <span class="o">+</span> <span class="s1">&#39;.tmp&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="n">compression</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">file_name</span> <span class="o">+</span> <span class="s1">&#39;.tmp&#39;</span><span class="p">,</span> <span class="n">file_name</span> <span class="o">+</span> <span class="n">suffix</span><span class="p">)</span></div>
+
     
 
-<div class="viewcode-block" id="millis_since_epoch"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.millis_since_epoch">[docs]</a><span class="k">def</span> <span class="nf">millis_since_epoch</span><span class="p">(</span><span class="n">dt</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="millis_since_epoch">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.millis_since_epoch">[docs]</a>
+<span class="k">def</span> <span class="nf">millis_since_epoch</span><span class="p">(</span><span class="n">dt</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given a python datetime, return number of milliseconds between the unix epoch and the datetime.</span>
 <span class="sd">    Returns a float since it can contain fractions of milliseconds as well</span>
 <span class="sd">    &gt;&gt;&gt; millis_since_epoch(datetime.datetime(2018, 1, 1))</span>
@@ -524,15 +616,21 @@
     <span class="k">return</span> <span class="p">(</span><span class="n">dt</span> <span class="o">-</span> <span class="n">EPOCH</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">*</span> <span class="mf">1000.0</span></div>
 
 
-<div class="viewcode-block" id="day_symbol"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.day_symbol">[docs]</a><span class="k">def</span> <span class="nf">day_symbol</span><span class="p">(</span><span class="n">day_int</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+
+<div class="viewcode-block" id="day_symbol">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.day_symbol">[docs]</a>
+<span class="k">def</span> <span class="nf">day_symbol</span><span class="p">(</span><span class="n">day_int</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="n">day_str</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">select</span><span class="p">([</span><span class="n">day_int</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">day_int</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">day_int</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="n">day_int</span> <span class="o">==</span> <span class="mi">3</span><span class="p">,</span> <span class="n">day_int</span> <span class="o">==</span> <span class="mi">4</span><span class="p">,</span> <span class="n">day_int</span> <span class="o">==</span> <span class="mi">5</span><span class="p">,</span> <span class="n">day_int</span> <span class="o">==</span> <span class="mi">6</span><span class="p">],</span>
                         <span class="p">[</span><span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;Tu&#39;</span><span class="p">,</span> <span class="s1">&#39;W&#39;</span><span class="p">,</span> <span class="s1">&#39;Th&#39;</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="s1">&#39;Sa&#39;</span><span class="p">,</span> <span class="s1">&#39;Su&#39;</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">day_str</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">():</span> <span class="n">day_str</span> <span class="o">=</span> <span class="n">day_str</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">day_str</span></div>
 
 
-<div class="viewcode-block" id="infer_compression"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.infer_compression">[docs]</a><span class="k">def</span> <span class="nf">infer_compression</span><span class="p">(</span><span class="n">input_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="infer_compression">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.infer_compression">[docs]</a>
+<span class="k">def</span> <span class="nf">infer_compression</span><span class="p">(</span><span class="n">input_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Infers compression for a file from its suffix.  For example, given &quot;/tmp/hello.gz&quot;, this will return &quot;gzip&quot;</span>
 <span class="sd">    &gt;&gt;&gt; infer_compression(&quot;/tmp/hello.gz&quot;)</span>
 <span class="sd">    &#39;gzip&#39;</span>
@@ -549,16 +647,22 @@
     <span class="k">return</span> <span class="kc">None</span></div>
 
 
-<div class="viewcode-block" id="touch"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.touch">[docs]</a><span class="k">def</span> <span class="nf">touch</span><span class="p">(</span><span class="n">fname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mo">0o666</span><span class="p">,</span> <span class="n">dir_fd</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;replicate unix touch command, i.e create file if it doesn&#39;t exist, otherwise update timestamp&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="touch">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.touch">[docs]</a>
+<span class="k">def</span> <span class="nf">touch</span><span class="p">(</span><span class="n">fname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mo">0o666</span><span class="p">,</span> <span class="n">dir_fd</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;replicate unix touch command, i.e create file if it doesn&#39;t exist, otherwise update timestamp&#39;&#39;&#39;</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">O_CREAT</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">O_APPEND</span>
     <span class="k">with</span> <span class="n">os</span><span class="o">.</span><span class="n">fdopen</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">flags</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">dir_fd</span><span class="o">=</span><span class="n">dir_fd</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">os</span><span class="o">.</span><span class="n">utime</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">fileno</span><span class="p">()</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">utime</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">supports_fd</span> <span class="k">else</span> <span class="n">fname</span><span class="p">,</span>
                  <span class="n">dir_fd</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">supports_fd</span> <span class="k">else</span> <span class="n">dir_fd</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
         
 
-<div class="viewcode-block" id="is_newer"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.is_newer">[docs]</a><span class="k">def</span> <span class="nf">is_newer</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ref_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;whether filename ctime (modfication time) is newer than ref_filename or either file does not exist</span>
+<div class="viewcode-block" id="is_newer">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.is_newer">[docs]</a>
+<span class="k">def</span> <span class="nf">is_newer</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ref_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;whether filename ctime (modfication time) is newer than ref_filename or either file does not exist</span>
 <span class="sd">    &gt;&gt;&gt; import time</span>
 <span class="sd">    &gt;&gt;&gt; import tempfile</span>
 <span class="sd">    &gt;&gt;&gt; temp_dir = tempfile.gettempdir()</span>
@@ -577,8 +681,11 @@
     <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">ref_filename</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_empty_np_value"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.get_empty_np_value">[docs]</a><span class="k">def</span> <span class="nf">get_empty_np_value</span><span class="p">(</span><span class="n">np_dtype</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="get_empty_np_value">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.get_empty_np_value">[docs]</a>
+<span class="k">def</span> <span class="nf">get_empty_np_value</span><span class="p">(</span><span class="n">np_dtype</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Get empty value for a given numpy datatype</span>
 <span class="sd">    &gt;&gt;&gt; a = np.array([&#39;2018-01-01&#39;, &#39;2018-01-03&#39;], dtype = &#39;M8[D]&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; get_empty_np_value(a.dtype)</span>
@@ -591,21 +698,27 @@
     <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;NaT&#39;</span><span class="p">)</span>  <span class="c1"># datetime</span>
     <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;O&#39;</span> <span class="ow">or</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;S&#39;</span> <span class="ow">or</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;U&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="s1">&#39;&#39;</span>  <span class="c1"># object or string or unicode</span>
     <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unknown dtype: </span><span class="si">{</span><span class="n">np_dtype</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
     
 
-<div class="viewcode-block" id="get_temp_dir"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.get_temp_dir">[docs]</a><span class="k">def</span> <span class="nf">get_temp_dir</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<div class="viewcode-block" id="get_temp_dir">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.get_temp_dir">[docs]</a>
+<span class="k">def</span> <span class="nf">get_temp_dir</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="s1">&#39;/tmp&#39;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">W_OK</span><span class="p">):</span>
         <span class="k">return</span> <span class="s1">&#39;/tmp&#39;</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">gettempdir</span><span class="p">()</span></div>
+
     
 
-<div class="viewcode-block" id="linear_interpolate"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.linear_interpolate">[docs]</a><span class="k">def</span> <span class="nf">linear_interpolate</span><span class="p">(</span><span class="n">a1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> 
+<div class="viewcode-block" id="linear_interpolate">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.linear_interpolate">[docs]</a>
+<span class="k">def</span> <span class="nf">linear_interpolate</span><span class="p">(</span><span class="n">a1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> 
                        <span class="n">a2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> 
                        <span class="n">x1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> 
                        <span class="n">x2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
                        <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    &gt;&gt;&gt; assert(linear_interpolate(3, 4, 8, 10, 8.9) == 3.45)</span>
 <span class="sd">    &gt;&gt;&gt; assert(linear_interpolate(3, 3, 8, 10, 8.9) == 3)</span>
 <span class="sd">    &gt;&gt;&gt; assert(np.isnan(linear_interpolate(3, 4, 8, 8, 8.9)))</span>
@@ -623,11 +736,14 @@
                     <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x2</span> <span class="o">==</span> <span class="n">x1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">a1</span> <span class="o">+</span> <span class="p">(</span><span class="n">a2</span> <span class="o">-</span> <span class="n">a1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">x1</span><span class="p">)</span> <span class="o">/</span> <span class="n">diff</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="bootstrap_ci"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.bootstrap_ci">[docs]</a><span class="k">def</span> <span class="nf">bootstrap_ci</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> 
+
+<div class="viewcode-block" id="bootstrap_ci">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.bootstrap_ci">[docs]</a>
+<span class="k">def</span> <span class="nf">bootstrap_ci</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> 
                  <span class="n">ci_level</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.95</span><span class="p">,</span>
                  <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> 
                  <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>  <span class="c1"># type: ignore</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Non parametric bootstrap for confidence intervals</span>
 <span class="sd">    Args:</span>
 <span class="sd">        a: The data to bootstrap from</span>
@@ -655,6 +771,7 @@
     <span class="k">return</span> <span class="p">(</span><span class="n">simulations</span><span class="p">[</span><span class="n">l_indx</span><span class="p">],</span> <span class="n">simulations</span><span class="p">[</span><span class="n">u_indx</span><span class="p">])</span></div>
 
 
+
 <span class="k">def</span> <span class="nf">_add_stream_handler</span><span class="p">(</span><span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span> 
                         <span class="n">log_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> 
                         <span class="n">formatter</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -666,7 +783,9 @@
     <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">stream_handler</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="get_main_logger"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.get_main_logger">[docs]</a><span class="k">def</span> <span class="nf">get_main_logger</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
+<div class="viewcode-block" id="get_main_logger">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.get_main_logger">[docs]</a>
+<span class="k">def</span> <span class="nf">get_main_logger</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
     <span class="c1"># sys.stderr = sys.stdout</span>
     <span class="n">main_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;pq&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">main_logger</span><span class="o">.</span><span class="n">handlers</span><span class="p">):</span> <span class="k">return</span> <span class="n">main_logger</span>
@@ -676,27 +795,39 @@
     <span class="k">return</span> <span class="n">main_logger</span></div>
 
 
-<div class="viewcode-block" id="get_child_logger"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.get_child_logger">[docs]</a><span class="k">def</span> <span class="nf">get_child_logger</span><span class="p">(</span><span class="n">child_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
+
+<div class="viewcode-block" id="get_child_logger">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.get_child_logger">[docs]</a>
+<span class="k">def</span> <span class="nf">get_child_logger</span><span class="p">(</span><span class="n">child_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
     <span class="n">_</span> <span class="o">=</span> <span class="n">get_main_logger</span><span class="p">()</span>  <span class="c1"># Init handlers if needed</span>
     <span class="n">full_name</span> <span class="o">=</span> <span class="s1">&#39;pq.&#39;</span> <span class="o">+</span> <span class="n">child_name</span> <span class="k">if</span> <span class="n">child_name</span> <span class="k">else</span> <span class="s1">&#39;pq&#39;</span>
     <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">full_name</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">logger</span></div>
 
 
-<div class="viewcode-block" id="in_ipython"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.in_ipython">[docs]</a><span class="k">def</span> <span class="nf">in_ipython</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="in_ipython">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.in_ipython">[docs]</a>
+<span class="k">def</span> <span class="nf">in_ipython</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Whether we are running in an ipython (or Jupyter) environment</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="kn">import</span> <span class="nn">builtins</span>
     <span class="k">return</span> <span class="s1">&#39;__IPYTHON__&#39;</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="n">builtins</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="PQException"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.PQException">[docs]</a><span class="k">class</span> <span class="nc">PQException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+<div class="viewcode-block" id="PQException">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.PQException">[docs]</a>
+<span class="k">class</span> <span class="nc">PQException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="k">pass</span></div>
 
 
-<div class="viewcode-block" id="assert_"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.assert_">[docs]</a><span class="k">def</span> <span class="nf">assert_</span><span class="p">(</span><span class="n">condition</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="assert_">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.assert_">[docs]</a>
+<span class="k">def</span> <span class="nf">assert_</span><span class="p">(</span><span class="n">condition</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Like a python assert but raises an exception that is not turned off by </span>
 <span class="sd">    using the python optimization switch</span>
 <span class="sd">    &#39;&#39;&#39;</span>
@@ -704,8 +835,11 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">condition</span><span class="p">:</span> <span class="k">raise</span> <span class="n">PQException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="Paths"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.Paths">[docs]</a><span class="k">class</span> <span class="nc">Paths</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="Paths">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.Paths">[docs]</a>
+<span class="k">class</span> <span class="nc">Paths</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Conventions for where to read / write data and reports</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -724,7 +858,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">reports_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_path</span> <span class="o">/</span> <span class="s1">&#39;reports&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">figures_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reports_path</span> <span class="o">/</span> <span class="s1">&#39;figures&#39;</span>
         
-<div class="viewcode-block" id="Paths.create"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.Paths.create">[docs]</a>    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Paths.create">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.Paths.create">[docs]</a>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">default_mode</span> <span class="o">=</span> <span class="mo">0o755</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">default_mode</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">raw_data_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">default_mode</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -732,13 +868,59 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">processed_data_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">default_mode</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">external_data_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">default_mode</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reports_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">default_mode</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">figures_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">default_mode</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">figures_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">default_mode</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+</div>
+
         
 
-<div class="viewcode-block" id="get_paths"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.get_paths">[docs]</a><span class="k">def</span> <span class="nf">get_paths</span><span class="p">(</span><span class="n">base_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Paths</span><span class="p">:</span>
+<div class="viewcode-block" id="get_paths">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.get_paths">[docs]</a>
+<span class="k">def</span> <span class="nf">get_paths</span><span class="p">(</span><span class="n">base_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Paths</span><span class="p">:</span>
     <span class="n">paths</span> <span class="o">=</span> <span class="n">Paths</span><span class="p">(</span><span class="n">base_path</span><span class="p">)</span>
     <span class="n">paths</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">paths</span></div>
+
+
+
+<div class="viewcode-block" id="get_config">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.get_config">[docs]</a>
+<span class="k">def</span> <span class="nf">get_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Load config data from yaml file and returns it as a dict.</span>
+<span class="sd">    This first loads values from a config file called pyqstrat.yml in</span>
+<span class="sd">    your home directory. Next it looks for a file called pyqstrat.yml in your local working directory.</span>
+<span class="sd">    If found, it overrides any values in the config data from any data it finds in this file.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">import</span> <span class="nn">yaml</span>  <span class="c1"># type: ignore</span>
+    <span class="n">home</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span>
+    <span class="n">assert_</span><span class="p">(</span><span class="n">home</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(),</span> <span class="s1">&#39;home dir not found&#39;</span><span class="p">)</span>
+    <span class="n">config_file_global</span> <span class="o">=</span> <span class="n">home</span> <span class="o">/</span> <span class="s1">&#39;pyqstrat.yml&#39;</span>
+    <span class="n">assert_</span><span class="p">(</span><span class="n">config_file_global</span><span class="o">.</span><span class="n">is_file</span><span class="p">(),</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">config_file_global</span><span class="si">}</span><span class="s1"> not found&#39;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_file_global</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">config_data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">wd</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span>
+    <span class="n">config_file_local</span> <span class="o">=</span> <span class="n">wd</span> <span class="o">/</span> <span class="s1">&#39;pyqstrat.yml&#39;</span>
+    <span class="c1"># override values with data from local yml file if present</span>
+    <span class="k">if</span> <span class="n">config_file_local</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_file_local</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">config_data_local</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">config_data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">config_data_local</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">config_data</span></div>
+
+
+<div class="viewcode-block" id="find_in_subdir">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_utils.find_in_subdir">[docs]</a>
+<span class="k">def</span> <span class="nf">find_in_subdir</span><span class="p">(</span><span class="nb">dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Find relative path of a file in a subdirectory</span>
+<span class="sd">    &gt;&gt;&gt; filename = find_in_subdir(&#39;.&#39;, &#39;pq_utils.py&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; assert filename == &#39;pq_utils.py&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">curr_dir</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+    <span class="n">matches</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">curr_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;**/</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
+
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
@@ -803,8 +985,8 @@
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>
 

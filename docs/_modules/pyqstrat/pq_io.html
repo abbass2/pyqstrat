@@ -1,18 +1,15 @@
-
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>pyqstrat.pq_io &#8212; pyqstrat 0.1.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="../../_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b76e3c8a" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=039e1c02" />
+    <script src="../../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -48,13 +45,15 @@
 <span class="n">_logger</span> <span class="o">=</span> <span class="n">get_child_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="np_arrays_to_hdf5"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_io.np_arrays_to_hdf5">[docs]</a><span class="k">def</span> <span class="nf">np_arrays_to_hdf5</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> 
+<div class="viewcode-block" id="np_arrays_to_hdf5">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_io.np_arrays_to_hdf5">[docs]</a>
+<span class="k">def</span> <span class="nf">np_arrays_to_hdf5</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> 
                       <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
                       <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
                       <span class="n">dtypes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
                       <span class="n">as_utf8</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                       <span class="n">compression_args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Write a list of numpy arrays to hdf5</span>
 <span class="sd">    Args:</span>
 <span class="sd">        data: list of numpy one dimensional arrays along with the name of the array</span>
@@ -102,17 +101,20 @@
         <span class="n">grp</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;dataframe&#39;</span>
         <span class="n">grp</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
         <span class="n">grp</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;rows&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
-        <span class="n">grp</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">tup</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">tup</span> <span class="ow">in</span> <span class="n">data</span><span class="p">])</span>
+        <span class="n">grp</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">colname</span> <span class="k">for</span> <span class="n">colname</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()])</span>
         <span class="n">grp</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;utf8_cols&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">as_utf8</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span> 
             <span class="k">del</span> <span class="n">f</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
         <span class="n">f</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">tmp_key</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
         
 
-<div class="viewcode-block" id="hdf5_to_np_arrays"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_io.hdf5_to_np_arrays">[docs]</a><span class="k">def</span> <span class="nf">hdf5_to_np_arrays</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="hdf5_to_np_arrays">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_io.hdf5_to_np_arrays">[docs]</a>
+<span class="k">def</span> <span class="nf">hdf5_to_np_arrays</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Read a list of numpy arrays previously written out by np_arrays_to_hdf5</span>
 <span class="sd">    Args:</span>
 <span class="sd">        filename: path of the hdf5 file to read</span>
@@ -122,7 +124,9 @@
 <span class="sd">        &#39;&#39;&#39;</span>
     <span class="n">ret</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">assert_</span><span class="p">(</span><span class="n">key</span> <span class="ow">in</span> <span class="n">f</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1"> not found in </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1"> not found in </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="n">grp</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
         <span class="n">assert_</span><span class="p">(</span><span class="s1">&#39;type&#39;</span> <span class="ow">in</span> <span class="n">grp</span><span class="o">.</span><span class="n">attrs</span> <span class="ow">and</span> <span class="n">grp</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;dataframe&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1"> not a dataframe&#39;</span><span class="p">)</span>
         <span class="n">columns</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
@@ -143,47 +147,108 @@
                 <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">char</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
             <span class="n">ret</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span>
     <span class="k">return</span> <span class="n">ret</span></div>
+
         
         
-<div class="viewcode-block" id="df_to_hdf5"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_io.df_to_hdf5">[docs]</a><span class="k">def</span> <span class="nf">df_to_hdf5</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> 
+<div class="viewcode-block" id="df_to_hdf5">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_io.df_to_hdf5">[docs]</a>
+<span class="k">def</span> <span class="nf">df_to_hdf5</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> 
                <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
                <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
                <span class="n">dtypes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                <span class="n">as_utf8</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Write out a pandas dataframe to hdf5 using the np_arrays_to_hdf5 function</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">arrays</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
         <span class="n">arrays</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
     <span class="n">np_arrays_to_hdf5</span><span class="p">(</span><span class="n">arrays</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">dtypes</span><span class="p">,</span> <span class="n">as_utf8</span><span class="p">)</span></div>
+
     
 
-<div class="viewcode-block" id="hdf5_to_df"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_io.hdf5_to_df">[docs]</a><span class="k">def</span> <span class="nf">hdf5_to_df</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="hdf5_to_df">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_io.hdf5_to_df">[docs]</a>
+<span class="k">def</span> <span class="nf">hdf5_to_df</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Read a pandas dataframe previously written out using df_to_hdf5 or np_arrays_to_hdf5</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">arrays</span> <span class="o">=</span> <span class="n">hdf5_to_np_arrays</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">arrays</span><span class="p">):</span> <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
     <span class="n">array_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">array</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">array</span> <span class="ow">in</span> <span class="n">arrays</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">array_dict</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="hdf5_repack"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_io.hdf5_repack">[docs]</a><span class="k">def</span> <span class="nf">hdf5_repack</span><span class="p">(</span><span class="n">inp_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">out_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="hdf5_repack">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_io.hdf5_repack">[docs]</a>
+<span class="k">def</span> <span class="nf">hdf5_repack</span><span class="p">(</span><span class="n">in_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">out_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Copy groups from input filename to output filename.</span>
 <span class="sd">    Serves the same purpose as the h5repack command line tool, i.e. </span>
 <span class="sd">    discards empty space in the input file so the output file may be smaller</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">inp_filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">inpf</span><span class="p">:</span>
-        <span class="n">num_items</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">inpf</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">in_filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">inf</span><span class="p">:</span>
+        <span class="n">num_items</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">inf</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
         <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">out_filename</span> <span class="o">+</span> <span class="s1">&#39;.tmp&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outf</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">inpf</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">inf</span><span class="p">):</span>
                 <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;copying </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1"> of </span><span class="si">{</span><span class="n">num_items</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-                <span class="n">inpf</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">inpf</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">outf</span><span class="p">)</span>
+                <span class="c1"># recursively copies subgroups and datasets</span>
+                <span class="n">inf</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">inf</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">outf</span><span class="p">)</span>
     <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">out_filename</span> <span class="o">+</span> <span class="s1">&#39;.tmp&#39;</span><span class="p">,</span> <span class="n">out_filename</span><span class="p">)</span></div>
 
+    
 
-<div class="viewcode-block" id="test_hdf5_to_df"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_io.test_hdf5_to_df">[docs]</a><span class="k">def</span> <span class="nf">test_hdf5_to_df</span><span class="p">():</span>
+<div class="viewcode-block" id="hdf5_copy">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_io.hdf5_copy">[docs]</a>
+<span class="k">def</span> <span class="nf">hdf5_copy</span><span class="p">(</span><span class="n">in_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">in_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">out_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">out_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">skip_if_exists</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Recursively copy groups from input filename to output filename.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        skip_if_exists: if set, we will skip any groups in the output that already exist.</span>
+<span class="sd">        Otherwise we replace them.</span>
+<span class="sd">    &gt;&gt;&gt; tempdir = get_temp_dir()</span>
+<span class="sd">    &gt;&gt;&gt; in_filename = tempdir + &#39;/temp_in.hdf5&#39;</span>
+<span class="sd">    &gt;&gt;&gt; out_filename = tempdir + &#39;/temp_out.hdf5&#39;</span>
+<span class="sd">    &gt;&gt;&gt; for filename in [in_filename, out_filename]:</span>
+<span class="sd">    ...    if os.path.exists(filename): os.remove(filename)</span>
+<span class="sd">    &gt;&gt;&gt; key = &quot;test_g/test_subg&quot;</span>
+<span class="sd">    &gt;&gt;&gt; with h5py.File(in_filename, &#39;w&#39;) as f:</span>
+<span class="sd">    ...    g = f.create_group(key)</span>
+<span class="sd">    ...    ds = g.create_dataset(&#39;a&#39;, data = np.array([5, 3, 2.]))</span>
+<span class="sd">    &gt;&gt;&gt; hdf5_copy(in_filename, key, out_filename, key)</span>
+<span class="sd">    &gt;&gt;&gt; with h5py.File(out_filename, &#39;r&#39;) as f:</span>
+<span class="sd">    ...    assert_(key in f)</span>
+<span class="sd">    &gt;&gt;&gt; hdf5_copy(in_filename, key, out_filename, key)</span>
+<span class="sd">    &gt;&gt;&gt; with h5py.File(out_filename, &#39;r&#39;) as f:</span>
+<span class="sd">    ...    assert_(key in f)</span>
+<span class="sd">    &gt;&gt;&gt; hdf5_copy(in_filename, key, out_filename, key, False)</span>
+<span class="sd">    &gt;&gt;&gt; with h5py.File(out_filename, &#39;r&#39;) as f:</span>
+<span class="sd">    ...    assert_(key in f)</span>
+<span class="sd">    </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">out_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">out_key</span> <span class="o">=</span> <span class="n">in_key</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">in_filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">inf</span><span class="p">:</span>
+        <span class="n">assert_</span><span class="p">(</span><span class="n">in_key</span> <span class="ow">in</span> <span class="n">inf</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;could not find </span><span class="si">{</span><span class="n">in_key</span><span class="si">}</span><span class="s1"> in </span><span class="si">{</span><span class="n">in_filename</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">out_filename</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outf</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">out_key</span> <span class="o">+</span> <span class="s1">&#39;_tmp&#39;</span> <span class="ow">in</span> <span class="n">outf</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">outf</span><span class="p">[</span><span class="n">out_key</span> <span class="o">+</span> <span class="s1">&#39;_tmp&#39;</span><span class="p">]</span>
+            <span class="c1"># _logger.info(f&#39;copying {in_key}&#39;)</span>
+            <span class="k">if</span> <span class="n">out_key</span> <span class="ow">in</span> <span class="n">outf</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">skip_if_exists</span><span class="p">:</span>
+                    <span class="c1"># _logger.info(f&#39;{out_key} already exists in {out_filename}, skipping&#39;)</span>
+                    <span class="k">return</span>
+                <span class="c1"># _logger.info(f&#39;replacing {out_key} in {out_filename}&#39;)</span>
+                <span class="k">del</span> <span class="n">outf</span><span class="p">[</span><span class="n">out_key</span><span class="p">]</span>
+            <span class="n">outf</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">inf</span><span class="p">[</span><span class="n">in_key</span><span class="p">],</span> <span class="n">outf</span><span class="p">,</span> <span class="n">out_key</span> <span class="o">+</span> <span class="s1">&#39;_tmp&#39;</span><span class="p">)</span>
+            <span class="n">outf</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">out_key</span> <span class="o">+</span> <span class="s1">&#39;_tmp&#39;</span><span class="p">,</span> <span class="n">out_key</span><span class="p">)</span>
+            <span class="n">outf</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="test_hdf5_to_df">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_io.test_hdf5_to_df">[docs]</a>
+<span class="k">def</span> <span class="nf">test_hdf5_to_df</span><span class="p">():</span>
     <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
     <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10000</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
     <span class="n">b</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="mf">1.1</span>
@@ -198,13 +263,13 @@
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp_dir</span><span class="si">}</span><span class="s1">/test.hdf5&#39;</span><span class="p">):</span> <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp_dir</span><span class="si">}</span><span class="s1">/test.hdf5&#39;</span><span class="p">)</span>
     <span class="n">np_arrays_to_hdf5</span><span class="p">({</span><span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="n">b</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">:</span> <span class="n">c</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">:</span> <span class="n">d</span><span class="p">},</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp_dir</span><span class="si">}</span><span class="s1">/test.hdf5&#39;</span><span class="p">,</span> <span class="s1">&#39;key1/key2&#39;</span><span class="p">)</span>
     <span class="n">file_size</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp_dir</span><span class="si">}</span><span class="s1">/test.hdf5&#39;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;file size: </span><span class="si">{</span><span class="n">file_size</span> <span class="o">/</span> <span class="mf">1e3</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> KB&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;file size: </span><span class="si">{</span><span class="n">file_size</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e3</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> KB&quot;</span><span class="p">)</span>
     
     <span class="n">hdf5_repack</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp_dir</span><span class="si">}</span><span class="s1">/test.hdf5&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp_dir</span><span class="si">}</span><span class="s1">/test.hdf5.tmp&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp_dir</span><span class="si">}</span><span class="s1">/test.hdf5&#39;</span><span class="p">):</span> <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp_dir</span><span class="si">}</span><span class="s1">/test.hdf5&#39;</span><span class="p">)</span>
     <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp_dir</span><span class="si">}</span><span class="s1">/test.hdf5.tmp&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp_dir</span><span class="si">}</span><span class="s1">/test.hdf5&#39;</span><span class="p">)</span>
     <span class="n">file_size</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp_dir</span><span class="si">}</span><span class="s1">/test.hdf5&#39;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;file size: </span><span class="si">{</span><span class="n">file_size</span> <span class="o">/</span> <span class="mf">1e3</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> KB&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;file size: </span><span class="si">{</span><span class="n">file_size</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e3</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> KB&quot;</span><span class="p">)</span>
     <span class="n">assert_</span><span class="p">(</span><span class="n">file_size</span> <span class="o">&gt;</span> <span class="mi">10000</span> <span class="ow">and</span> <span class="n">file_size</span> <span class="o">&lt;</span> <span class="mi">14000</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;invalid file size: </span><span class="si">{</span><span class="n">file_size</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp_dir</span><span class="si">}</span><span class="s1">/test.hdf5&#39;</span><span class="p">):</span> <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp_dir</span><span class="si">}</span><span class="s1">/test.hdf5&#39;</span><span class="p">)</span>
@@ -216,8 +281,11 @@
     <span class="n">assert_frame_equal</span><span class="p">(</span><span class="n">df_in</span><span class="p">,</span> <span class="n">df_out</span><span class="p">)</span></div>
 
 
+
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">test_hdf5_to_df</span><span class="p">()</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">optionflags</span><span class="o">=</span><span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span> <span class="o">|</span> <span class="n">doctest</span><span class="o">.</span><span class="n">ELLIPSIS</span><span class="p">)</span>
 <span class="c1"># $$_end_code</span>
 </pre></div>
 
@@ -277,8 +345,8 @@
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>
 

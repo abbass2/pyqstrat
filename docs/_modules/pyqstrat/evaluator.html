@@ -1,18 +1,15 @@
-
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>pyqstrat.evaluator &#8212; pyqstrat 0.1.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="../../_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b76e3c8a" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=039e1c02" />
+    <script src="../../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -41,35 +38,43 @@
 <span class="kn">import</span> <span class="nn">statsmodels</span> <span class="k">as</span> <span class="nn">sm</span>
 <span class="kn">import</span> <span class="nn">statsmodels.api</span> <span class="k">as</span> <span class="nn">smapi</span>
 <span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">pyqstrat.pq_utils</span> <span class="kn">import</span> <span class="n">monotonically_increasing</span><span class="p">,</span> <span class="n">infer_frequency</span><span class="p">,</span> <span class="n">assert_</span>
-<span class="kn">from</span> <span class="nn">pyqstrat.plot</span> <span class="kn">import</span> <span class="n">TimeSeries</span><span class="p">,</span> <span class="n">DateLine</span><span class="p">,</span> <span class="n">Subplot</span><span class="p">,</span> <span class="n">HorizontalLine</span><span class="p">,</span> <span class="n">BucketedValues</span><span class="p">,</span> <span class="n">Plot</span><span class="p">,</span> <span class="n">LinePlotAttributes</span>
-<span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
-<span class="kn">import</span> <span class="nn">matplotlib.figure</span> <span class="k">as</span> <span class="nn">mpl_fig</span>
+<span class="kn">from</span> <span class="nn">pyqstrat.pq_utils</span> <span class="kn">import</span> <span class="n">monotonically_increasing</span><span class="p">,</span> <span class="n">infer_frequency</span><span class="p">,</span> <span class="n">assert_</span><span class="p">,</span> <span class="n">PQException</span><span class="p">,</span> <span class="n">has_display</span>
+<span class="kn">import</span> <span class="nn">plotly.graph_objects</span> <span class="k">as</span> <span class="nn">go</span>
+<span class="kn">from</span> <span class="nn">plotly.subplots</span> <span class="kn">import</span> <span class="n">make_subplots</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 <span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Sequence</span>
 
 
-<div class="viewcode-block" id="compute_periods_per_year"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_periods_per_year">[docs]</a><span class="k">def</span> <span class="nf">compute_periods_per_year</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="compute_periods_per_year">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_periods_per_year">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_periods_per_year</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Computes trading periods per year for an array of numpy datetime64&#39;s.</span>
 <span class="sd">        e.g. if most of the timestamps are separated by 1 day, will return 252.</span>
 <span class="sd">      </span>
 <span class="sd">    Args:</span>
 <span class="sd">        timestamps: a numpy array of datetime64&#39;s</span>
 <span class="sd">        </span>
-<span class="sd">    &gt;&gt;&gt; compute_periods_per_year(np.array([&#39;2018-01-01&#39;, &#39;2018-01-02&#39;, &#39;2018-01-03&#39;, &#39;2018-01-09&#39;], dtype=&#39;M8[D]&#39;))</span>
+<span class="sd">    &gt;&gt;&gt; compute_periods_per_year(np.array([&#39;2018-01-01&#39;, &#39;2018-01-02&#39;, &#39;2018-01-03&#39;, &#39;2018-01-09&#39;, &#39;2018-01-10&#39;], dtype=&#39;M8[D]&#39;))</span>
 <span class="sd">    252.0</span>
 <span class="sd">    &gt;&gt;&gt; round(compute_periods_per_year(np.array([&#39;2018-01-01 10:00&#39;, &#39;2018-01-01 10:05&#39;, &#39;2018-01-01 10:10&#39;], dtype=&#39;M8[m]&#39;)), 2)</span>
-<span class="sd">    72576.05</span>
+<span class="sd">    72576.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">timestamps</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-    <span class="n">freq</span> <span class="o">=</span> <span class="n">infer_frequency</span><span class="p">(</span><span class="n">timestamps</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">freq</span> <span class="o">=</span> <span class="n">infer_frequency</span><span class="p">(</span><span class="n">timestamps</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">PQException</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">PQException</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not compute periods per year from unevenly spaced timestamps&#39;</span>
+                          <span class="sa">f</span><span class="s1">&#39;, you may need to set it yourself: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">freq</span> <span class="o">==</span> <span class="mi">31</span><span class="p">:</span> <span class="k">return</span> <span class="mi">12</span>
     <span class="k">return</span> <span class="mf">252.</span> <span class="o">/</span> <span class="n">freq</span> <span class="k">if</span> <span class="n">freq</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span></div>
 
 
-<div class="viewcode-block" id="compute_amean"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_amean">[docs]</a><span class="k">def</span> <span class="nf">compute_amean</span><span class="p">(</span><span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_amean">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_amean">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_amean</span><span class="p">(</span><span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Computes arithmetic mean of a return array, ignoring NaNs</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
@@ -83,8 +88,11 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span> <span class="o">*</span> <span class="n">periods_per_year</span></div>
 
 
-<div class="viewcode-block" id="compute_num_periods"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_num_periods">[docs]</a><span class="k">def</span> <span class="nf">compute_num_periods</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_num_periods">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_num_periods">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_num_periods</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Given an array of timestamps, we compute how many periods there are between the first and last element, where the length</span>
 <span class="sd">        of a period is defined by periods_per_year.  For example, if there are 6 periods per year, </span>
 <span class="sd">        then each period would be approx. 2 months long.</span>
@@ -93,16 +101,19 @@
 <span class="sd">        timestamps (np.ndarray of np.datetime64): a numpy array of returns, can contain nans</span>
 <span class="sd">        periods_per_year: number of periods between first and last return</span>
 <span class="sd">         </span>
-<span class="sd">    &gt;&gt;&gt; assert(compute_num_periods(np.array([&#39;2015-01-01&#39;, &#39;2015-03-01&#39;, &#39;2015-05-01&#39;], dtype=&#39;M8[D]&#39;), 6) == 2)</span>
+<span class="sd">    &gt;&gt;&gt; assert(compute_num_periods(np.array([&#39;2015-01-01&#39;, &#39;2015-03-01&#39;, &#39;2015-05-01&#39;, &#39;2015-07-01&#39;], dtype=&#39;M8[D]&#39;), 6) == 3)</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">timestamps</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
     <span class="n">assert_</span><span class="p">(</span><span class="n">monotonically_increasing</span><span class="p">(</span><span class="n">timestamps</span><span class="p">))</span>
     <span class="n">fraction_of_year</span> <span class="o">=</span> <span class="p">(</span><span class="n">timestamps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">timestamps</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;s&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="mi">365</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">fraction_of_year</span> <span class="o">*</span> <span class="n">periods_per_year</span><span class="p">)</span></div>
+
     
 
-<div class="viewcode-block" id="compute_gmean"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_gmean">[docs]</a><span class="k">def</span> <span class="nf">compute_gmean</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="compute_gmean">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_gmean">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_gmean</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute geometric mean of an array of returns</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
@@ -118,21 +129,27 @@
     <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span>
     <span class="n">timestamps</span> <span class="o">=</span> <span class="n">timestamps</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
     <span class="n">returns</span> <span class="o">=</span> <span class="n">returns</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
-    <span class="n">assert_</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">returns</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">returns</span><span class="p">)]</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39;found returns &lt; -1: </span><span class="si">{</span><span class="n">returns</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+    <span class="n">assert_</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">returns</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">returns</span><span class="p">)]</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39;found returns &lt; -1: </span><span class="si">{</span><span class="n">returns</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
     <span class="n">num_periods</span> <span class="o">=</span> <span class="n">compute_num_periods</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">)</span>
     <span class="n">g_mean</span> <span class="o">=</span> <span class="p">((</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">returns</span><span class="p">)</span><span class="o">.</span><span class="n">prod</span><span class="p">())</span><span class="o">**</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">num_periods</span><span class="p">)</span>
     <span class="n">g_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">g_mean</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span>
     <span class="k">return</span> <span class="n">g_mean</span></div>
 
 
-<div class="viewcode-block" id="compute_std"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_std">[docs]</a><span class="k">def</span> <span class="nf">compute_std</span><span class="p">(</span><span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot; Computes standard deviation of an array of returns, ignoring nans &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="compute_std">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_std">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_std</span><span class="p">(</span><span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Computes standard deviation of an array of returns, ignoring nans &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="compute_sortino"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_sortino">[docs]</a><span class="k">def</span> <span class="nf">compute_sortino</span><span class="p">(</span><span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">amean</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_sortino">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_sortino">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_sortino</span><span class="p">(</span><span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">amean</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Note that this assumes target return is 0.</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
@@ -144,15 +161,18 @@
 <span class="sd">    0.133631</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">amean</span><span class="p">)</span> <span class="ow">or</span> <span class="n">periods_per_year</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-    <span class="n">returns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">returns</span><span class="p">)),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">returns</span><span class="p">)</span>
+    <span class="c1"># returns = np.where((~np.isfinite(returns)), 0.0, returns)</span>
     <span class="n">normalized_rets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">returns</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">returns</span><span class="p">)</span>
-    <span class="n">sortino_denom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">normalized_rets</span><span class="p">)</span>
+    <span class="n">sortino_denom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">normalized_rets</span><span class="p">)</span>
     <span class="n">sortino</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="k">if</span> <span class="n">sortino_denom</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">amean</span> <span class="o">/</span> <span class="p">(</span><span class="n">sortino_denom</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">periods_per_year</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">sortino</span></div>
 
 
-<div class="viewcode-block" id="compute_sharpe"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_sharpe">[docs]</a><span class="k">def</span> <span class="nf">compute_sharpe</span><span class="p">(</span><span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">amean</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_sharpe">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_sharpe">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_sharpe</span><span class="p">(</span><span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">amean</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Note that this does not take into risk free returns so it&#39;s really a sharpe0, i.e. assumes risk free returns are 0</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
@@ -170,8 +190,11 @@
     <span class="k">return</span> <span class="n">sharpe</span></div>
 
 
-<div class="viewcode-block" id="compute_k_ratio"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_k_ratio">[docs]</a><span class="k">def</span> <span class="nf">compute_k_ratio</span><span class="p">(</span><span class="n">equity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">halflife_years</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_k_ratio">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_k_ratio">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_k_ratio</span><span class="p">(</span><span class="n">equity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">halflife_years</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Compute k-ratio (2013 or original versions by Lars Kestner). See https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2230949</span>
 <span class="sd">    We also implement a modification that allows higher weighting for more recent returns.</span>
 <span class="sd">    </span>
@@ -211,13 +234,19 @@
     <span class="k">return</span> <span class="n">k_ratio</span></div>
 
 
-<div class="viewcode-block" id="compute_equity"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_equity">[docs]</a><span class="k">def</span> <span class="nf">compute_equity</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">starting_equity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39; Given starting equity, timestamps and returns, create a numpy array of equity at each date&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_equity">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_equity">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_equity</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">starting_equity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39; Given starting equity, timestamps and returns, create a numpy array of equity at each date&#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="n">starting_equity</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cumprod</span><span class="p">(</span><span class="mf">1.</span> <span class="o">+</span> <span class="n">returns</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="compute_rolling_dd"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_rolling_dd">[docs]</a><span class="k">def</span> <span class="nf">compute_rolling_dd</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">equity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_rolling_dd">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_rolling_dd">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_rolling_dd</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">equity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Compute numpy array of rolling drawdown percentage</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
@@ -232,22 +261,31 @@
     <span class="k">return</span> <span class="n">timestamps</span><span class="p">,</span> <span class="n">dd</span></div>
 
 
-<div class="viewcode-block" id="compute_maxdd_pct"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_maxdd_pct">[docs]</a><span class="k">def</span> <span class="nf">compute_maxdd_pct</span><span class="p">(</span><span class="n">rolling_dd</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Compute max drawdown percentage given a numpy array of rolling drawdowns, ignoring NaNs&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_maxdd_pct">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_maxdd_pct">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_maxdd_pct</span><span class="p">(</span><span class="n">rolling_dd</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute max drawdown percentage given a numpy array of rolling drawdowns, ignoring NaNs&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">rolling_dd</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
     <span class="n">assert_</span><span class="p">(</span><span class="n">rolling_dd</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">rolling_dd</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="compute_maxdd_date"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_maxdd_date">[docs]</a><span class="k">def</span> <span class="nf">compute_maxdd_date</span><span class="p">(</span><span class="n">rolling_dd_dates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">rolling_dd</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39; Compute date of max drawdown given numpy array of timestamps, and corresponding rolling dd percentages&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_maxdd_date">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_maxdd_date">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_maxdd_date</span><span class="p">(</span><span class="n">rolling_dd_dates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">rolling_dd</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39; Compute date of max drawdown given numpy array of timestamps, and corresponding rolling dd percentages&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">rolling_dd_dates</span><span class="p">):</span> <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">NaT</span>
     <span class="n">assert_</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rolling_dd_dates</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">rolling_dd</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">rolling_dd_dates</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">rolling_dd</span><span class="p">)]</span></div>
 
 
-<div class="viewcode-block" id="compute_maxdd_start"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_maxdd_start">[docs]</a><span class="k">def</span> <span class="nf">compute_maxdd_start</span><span class="p">(</span><span class="n">rolling_dd_dates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">rolling_dd</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">mdd_date</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Compute date when max drawdown starts, given numpy array of timestamps corresponding rolling dd </span>
+
+<div class="viewcode-block" id="compute_maxdd_start">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_maxdd_start">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_maxdd_start</span><span class="p">(</span><span class="n">rolling_dd_dates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">rolling_dd</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">mdd_date</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute date when max drawdown starts, given numpy array of timestamps corresponding rolling dd </span>
 <span class="sd">        percentages and date of the max draw down&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">rolling_dd_dates</span><span class="p">)</span> <span class="ow">or</span> <span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">mdd_date</span><span class="p">):</span> <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">NaT</span>
     <span class="n">assert_</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rolling_dd_dates</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">rolling_dd</span><span class="p">))</span>
@@ -256,15 +294,21 @@
     <span class="k">return</span> <span class="n">maxdd_dates</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="compute_mar"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_mar">[docs]</a><span class="k">def</span> <span class="nf">compute_mar</span><span class="p">(</span><span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">mdd_pct</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Compute MAR ratio, which is annualized return divided by biggest drawdown since inception.&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_mar">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_mar">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_mar</span><span class="p">(</span><span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">mdd_pct</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute MAR ratio, which is annualized return divided by biggest drawdown since inception.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">mdd_pct</span><span class="p">)</span> <span class="ow">or</span> <span class="n">mdd_pct</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
     <span class="n">ret</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span> <span class="o">*</span> <span class="n">periods_per_year</span> <span class="o">/</span> <span class="n">mdd_pct</span>
     <span class="k">return</span> <span class="n">ret</span>  <span class="c1"># type: ignore</span></div>
 
 
-<div class="viewcode-block" id="compute_dates_3yr"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_dates_3yr">[docs]</a><span class="k">def</span> <span class="nf">compute_dates_3yr</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39; Given an array of numpy datetimes, return those that are within 3 years of the last date in the array&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_dates_3yr">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_dates_3yr">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_dates_3yr</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39; Given an array of numpy datetimes, return those that are within 3 years of the last date in the array&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">timestamps</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;M8[D]&#39;</span><span class="p">)</span>
     <span class="n">last_date</span> <span class="o">=</span> <span class="n">timestamps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">d</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">last_date</span><span class="p">)</span>
@@ -272,8 +316,11 @@
     <span class="k">return</span> <span class="n">timestamps</span><span class="p">[</span><span class="n">timestamps</span> <span class="o">&gt;</span> <span class="n">start_3yr</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="compute_returns_3yr"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_returns_3yr">[docs]</a><span class="k">def</span> <span class="nf">compute_returns_3yr</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Given an array of numpy datetimes and an array of returns, return those that are within 3 years </span>
+
+<div class="viewcode-block" id="compute_returns_3yr">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_returns_3yr">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_returns_3yr</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Given an array of numpy datetimes and an array of returns, return those that are within 3 years </span>
 <span class="sd">        of the last date in the datetime array &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">timestamps</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
     <span class="n">assert_</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">timestamps</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">))</span>
@@ -281,8 +328,11 @@
     <span class="k">return</span> <span class="n">returns</span><span class="p">[</span><span class="n">timestamps</span> <span class="o">&gt;=</span> <span class="n">timestamps_3yr</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span></div>
 
 
-<div class="viewcode-block" id="compute_rolling_dd_3yr"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_rolling_dd_3yr">[docs]</a><span class="k">def</span> <span class="nf">compute_rolling_dd_3yr</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">equity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-    <span class="sd">&#39;&#39;&#39;Compute rolling drawdowns over the last 3 years&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_rolling_dd_3yr">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_rolling_dd_3yr">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_rolling_dd_3yr</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">equity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute rolling drawdowns over the last 3 years&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">timestamps</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;M8[D]&#39;</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
     <span class="n">last_date</span> <span class="o">=</span> <span class="n">timestamps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">d</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">last_date</span><span class="p">)</span>
@@ -292,28 +342,43 @@
     <span class="k">return</span> <span class="n">compute_rolling_dd</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">equity</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="compute_maxdd_pct_3yr"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_maxdd_pct_3yr">[docs]</a><span class="k">def</span> <span class="nf">compute_maxdd_pct_3yr</span><span class="p">(</span><span class="n">rolling_dd_3yr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Compute max drawdown percentage over the last 3 years&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_maxdd_pct_3yr">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_maxdd_pct_3yr">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_maxdd_pct_3yr</span><span class="p">(</span><span class="n">rolling_dd_3yr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute max drawdown percentage over the last 3 years&#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="n">compute_maxdd_pct</span><span class="p">(</span><span class="n">rolling_dd_3yr</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="compute_maxdd_date_3yr"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_maxdd_date_3yr">[docs]</a><span class="k">def</span> <span class="nf">compute_maxdd_date_3yr</span><span class="p">(</span><span class="n">rolling_dd_3yr_timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">rolling_dd_3yr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Compute max drawdown date over the last 3 years&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_maxdd_date_3yr">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_maxdd_date_3yr">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_maxdd_date_3yr</span><span class="p">(</span><span class="n">rolling_dd_3yr_timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">rolling_dd_3yr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute max drawdown date over the last 3 years&#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="n">compute_maxdd_date</span><span class="p">(</span><span class="n">rolling_dd_3yr_timestamps</span><span class="p">,</span> <span class="n">rolling_dd_3yr</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="compute_maxdd_start_3yr"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_maxdd_start_3yr">[docs]</a><span class="k">def</span> <span class="nf">compute_maxdd_start_3yr</span><span class="p">(</span><span class="n">rolling_dd_3yr_timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">rolling_dd_3yr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">mdd_date_3yr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Comput max drawdown start date over the last 3 years&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_maxdd_start_3yr">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_maxdd_start_3yr">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_maxdd_start_3yr</span><span class="p">(</span><span class="n">rolling_dd_3yr_timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">rolling_dd_3yr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">mdd_date_3yr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Comput max drawdown start date over the last 3 years&#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="n">compute_maxdd_start</span><span class="p">(</span><span class="n">rolling_dd_3yr_timestamps</span><span class="p">,</span> <span class="n">rolling_dd_3yr</span><span class="p">,</span> <span class="n">mdd_date_3yr</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="compute_calmar"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_calmar">[docs]</a><span class="k">def</span> <span class="nf">compute_calmar</span><span class="p">(</span><span class="n">returns_3yr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">mdd_pct_3yr</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Compute Calmar ratio, which is the annualized return divided by max drawdown over the last 3 years&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_calmar">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_calmar">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_calmar</span><span class="p">(</span><span class="n">returns_3yr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">mdd_pct_3yr</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute Calmar ratio, which is the annualized return divided by max drawdown over the last 3 years&#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="n">compute_mar</span><span class="p">(</span><span class="n">returns_3yr</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">,</span> <span class="n">mdd_pct_3yr</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="compute_bucketed_returns"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_bucketed_returns">[docs]</a><span class="k">def</span> <span class="nf">compute_bucketed_returns</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="compute_bucketed_returns">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_bucketed_returns">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_bucketed_returns</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Bucket returns by year</span>
 <span class="sd">    </span>
 <span class="sd">    Returns:</span>
@@ -332,8 +397,11 @@
     <span class="k">return</span> <span class="n">years_list</span><span class="p">,</span> <span class="n">rets_list</span></div>
 
 
-<div class="viewcode-block" id="compute_annual_returns"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_annual_returns">[docs]</a><span class="k">def</span> <span class="nf">compute_annual_returns</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-    <span class="sd">&#39;&#39;&#39;Takes the output of compute_bucketed_returns and returns geometric mean of returns by year</span>
+
+<div class="viewcode-block" id="compute_annual_returns">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_annual_returns">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_annual_returns</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">returns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Takes the output of compute_bucketed_returns and returns geometric mean of returns by year</span>
 <span class="sd">    </span>
 <span class="sd">    Returns:</span>
 <span class="sd">        A tuple with the first element being an array of years (integer) and the second element </span>
@@ -344,7 +412,7 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">timestamps</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
     
     <span class="n">non_nan_rets</span> <span class="o">=</span> <span class="n">returns</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">returns</span><span class="p">)]</span>
-    <span class="n">assert_</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">non_nan_rets</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39;found returns &lt; -1: </span><span class="si">{</span><span class="n">non_nan_rets</span><span class="p">[</span><span class="n">non_nan_rets</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+    <span class="n">assert_</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">non_nan_rets</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39;found returns &lt; -1: </span><span class="si">{</span><span class="n">non_nan_rets</span><span class="p">[</span><span class="n">non_nan_rets</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
 
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;ret&#39;</span><span class="p">:</span> <span class="n">returns</span><span class="p">,</span> <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="n">timestamps</span><span class="p">})</span>
     <span class="n">years</span> <span class="o">=</span> <span class="p">[]</span>
@@ -355,8 +423,11 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">years</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">gmeans</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="Evaluator"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.Evaluator">[docs]</a><span class="k">class</span> <span class="nc">Evaluator</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;You add functions to the evaluator that are dependent on the outputs of other functions.  </span>
+
+<div class="viewcode-block" id="Evaluator">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.Evaluator">[docs]</a>
+<span class="k">class</span> <span class="nc">Evaluator</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;You add functions to the evaluator that are dependent on the outputs of other functions.  </span>
 <span class="sd">    The evaluator will call these functions in the right order</span>
 <span class="sd">    so dependencies are computed first before the functions that need their output.  </span>
 <span class="sd">    You can retrieve the output of a metric using the metric member function</span>
@@ -367,22 +438,30 @@
 <span class="sd">    &gt;&gt;&gt; evaluator.metric(&#39;z&#39;)</span>
 <span class="sd">    array([ 9, 10, 11])</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-<div class="viewcode-block" id="Evaluator.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.Evaluator.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Inits Evaluator with a dictionary of initial metrics that are used to compute subsequent metrics</span>
+<div class="viewcode-block" id="Evaluator.__init__">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.Evaluator.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Inits Evaluator with a dictionary of initial metrics that are used to compute subsequent metrics</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
 <span class="sd">            initial_metrics: a dictionary of string name -&gt; metric.  metric can be any object including a scalar, </span>
 <span class="sd">                an array or a tuple</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">assert_</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">initial_metrics</span><span class="p">)</span> <span class="o">==</span> <span class="nb">dict</span><span class="p">)</span>
+        <span class="n">assert_</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">initial_metrics</span><span class="p">,</span> <span class="nb">dict</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metric_values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">initial_metrics</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span></div>
+
         
-<div class="viewcode-block" id="Evaluator.add_metric"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.Evaluator.add_metric">[docs]</a>    <span class="k">def</span> <span class="nf">add_metric</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">dependencies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Evaluator.add_metric">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.Evaluator.add_metric">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_metric</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">dependencies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">dependencies</span><span class="p">)</span></div>
+
     
-<div class="viewcode-block" id="Evaluator.compute"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.Evaluator.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metric_names</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&#39;&#39;&#39;Compute metrics using the internal dependency graph</span>
+<div class="viewcode-block" id="Evaluator.compute">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.Evaluator.compute">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metric_names</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Compute metrics using the internal dependency graph</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
 <span class="sd">            metric_names: an array of metric names.  If not passed in, evaluator will compute and store all metrics</span>
@@ -391,9 +470,12 @@
         <span class="k">if</span> <span class="n">metric_names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">metric_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="k">for</span> <span class="n">metric_name</span> <span class="ow">in</span> <span class="n">metric_names</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">compute_metric</span><span class="p">(</span><span class="n">metric_name</span><span class="p">)</span></div>
+
             
-<div class="viewcode-block" id="Evaluator.compute_metric"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.Evaluator.compute_metric">[docs]</a>    <span class="k">def</span> <span class="nf">compute_metric</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metric_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="Evaluator.compute_metric">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.Evaluator.compute_metric">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_metric</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metric_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Compute and store a single metric:</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
@@ -408,21 +490,31 @@
         <span class="n">values</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">**</span><span class="n">dependency_values</span><span class="p">)</span>
             
         <span class="bp">self</span><span class="o">.</span><span class="n">metric_values</span><span class="p">[</span><span class="n">metric_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span></div>
+
                 
-<div class="viewcode-block" id="Evaluator.metric"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.Evaluator.metric">[docs]</a>    <span class="k">def</span> <span class="nf">metric</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metric_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="sd">&#39;&#39;&#39;Return the value of a single metric given its name&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="Evaluator.metric">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.Evaluator.metric">[docs]</a>
+    <span class="k">def</span> <span class="nf">metric</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metric_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Return the value of a single metric given its name&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric_values</span><span class="p">[</span><span class="n">metric_name</span><span class="p">]</span></div>
+
     
-<div class="viewcode-block" id="Evaluator.metrics"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.Evaluator.metrics">[docs]</a>    <span class="k">def</span> <span class="nf">metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sd">&#39;&#39;&#39;Return a dictionary of metric name -&gt; metric value&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric_values</span></div></div>
+<div class="viewcode-block" id="Evaluator.metrics">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.Evaluator.metrics">[docs]</a>
+    <span class="k">def</span> <span class="nf">metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Return a dictionary of metric name -&gt; metric value&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric_values</span></div>
+</div>
+
     
 
-<div class="viewcode-block" id="handle_non_finite_returns"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.handle_non_finite_returns">[docs]</a><span class="k">def</span> <span class="nf">handle_non_finite_returns</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<div class="viewcode-block" id="handle_non_finite_returns">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.handle_non_finite_returns">[docs]</a>
+<span class="k">def</span> <span class="nf">handle_non_finite_returns</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
                               <span class="n">rets</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
                               <span class="n">leading_non_finite_to_zeros</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
                               <span class="n">subsequent_non_finite_to_zeros</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span> 
-    <span class="sd">&#39;&#39;&#39;</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    &gt;&gt;&gt; np.set_printoptions(formatter={&#39;float&#39;: &#39;{: .6g}&#39;.format})</span>
 <span class="sd">    &gt;&gt;&gt; timestamps = np.arange(np.datetime64(&#39;2019-01-01&#39;), np.datetime64(&#39;2019-01-07&#39;))</span>
 <span class="sd">    &gt;&gt;&gt; rets = np.array([np.nan, np.nan, 3, 4, np.nan, 5])</span>
@@ -458,14 +550,18 @@
         <span class="n">rets</span> <span class="o">=</span> <span class="n">rets</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">rets</span><span class="p">)]</span>
     
     <span class="k">return</span> <span class="n">timestamps</span><span class="p">,</span> <span class="n">rets</span></div>
+
     
 
-<div class="viewcode-block" id="compute_return_metrics"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_return_metrics">[docs]</a><span class="k">def</span> <span class="nf">compute_return_metrics</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<div class="viewcode-block" id="compute_return_metrics">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.compute_return_metrics">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_return_metrics</span><span class="p">(</span><span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
                            <span class="n">rets</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
                            <span class="n">starting_equity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                           <span class="n">periods_per_year</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
                            <span class="n">leading_non_finite_to_zeros</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
                            <span class="n">subsequent_non_finite_to_zeros</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Evaluator</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Compute a set of common metrics using returns (for example, of an instrument or a portfolio)</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
@@ -483,25 +579,30 @@
 <span class="sd">        If needed, you can add your own metrics to this object based on the values of existing metrics and recompute the Evaluator.</span>
 <span class="sd">        Otherwise, you can just use the output of the evaluator using the metrics function.</span>
 <span class="sd">        </span>
-<span class="sd">    &gt;&gt;&gt; timestamps = np.array([&#39;2015-01-01&#39;, &#39;2015-03-01&#39;, &#39;2015-05-01&#39;, &#39;2015-09-01&#39;], dtype=&#39;M8[D]&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; timestamps = np.array([&#39;2015-01-01&#39;, &#39;2015-03-01&#39;, &#39;2015-05-01&#39;, &#39;2015-07-01&#39;], dtype=&#39;M8[D]&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; rets = np.array([0.01, 0.02, np.nan, -0.015])</span>
 <span class="sd">    &gt;&gt;&gt; starting_equity = 1.e6</span>
 <span class="sd">    &gt;&gt;&gt; ev = compute_return_metrics(timestamps, rets, starting_equity)</span>
 <span class="sd">    &gt;&gt;&gt; metrics = ev.metrics()</span>
-<span class="sd">    &gt;&gt;&gt; assert(round(metrics[&#39;gmean&#39;], 6) == 0.021061)</span>
-<span class="sd">    &gt;&gt;&gt; assert(round(metrics[&#39;sharpe&#39;], 6) == 0.599382)</span>
+<span class="sd">    &gt;&gt;&gt; assert(round(metrics[&#39;gmean&#39;], 6) == 0.03122)</span>
+<span class="sd">    &gt;&gt;&gt; assert(round(metrics[&#39;sharpe&#39;], 6) == 0.594366)</span>
 <span class="sd">    &gt;&gt;&gt; assert(all(metrics[&#39;returns_3yr&#39;] == np.array([0.01, 0.02, 0, -0.015])))</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">assert_</span><span class="p">(</span><span class="n">starting_equity</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)</span>
-    <span class="n">assert_</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">rets</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="ow">and</span> <span class="n">rets</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">assert_</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">timestamps</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">timestamps</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">)</span> <span class="ow">and</span> <span class="n">monotonically_increasing</span><span class="p">(</span><span class="n">timestamps</span><span class="p">))</span>
+    <span class="n">assert_</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">rets</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rets</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">assert_</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">timestamps</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">)</span> <span class="ow">and</span> <span class="n">monotonically_increasing</span><span class="p">(</span><span class="n">timestamps</span><span class="p">))</span>
     <span class="n">non_nan_rets</span> <span class="o">=</span> <span class="n">rets</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">rets</span><span class="p">)]</span>
-    <span class="n">assert_</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">non_nan_rets</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39;found returns &lt; -1: </span><span class="si">{</span><span class="n">non_nan_rets</span><span class="p">[</span><span class="n">non_nan_rets</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+    <span class="n">assert_</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">non_nan_rets</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39;found returns &lt; -1: </span><span class="si">{</span><span class="n">non_nan_rets</span><span class="p">[</span><span class="n">non_nan_rets</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
     
     <span class="n">timestamps</span><span class="p">,</span> <span class="n">rets</span> <span class="o">=</span> <span class="n">handle_non_finite_returns</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">rets</span><span class="p">,</span> <span class="n">leading_non_finite_to_zeros</span><span class="p">,</span> <span class="n">subsequent_non_finite_to_zeros</span><span class="p">)</span>
 
-    <span class="n">ev</span> <span class="o">=</span> <span class="n">Evaluator</span><span class="p">({</span><span class="s1">&#39;timestamps&#39;</span><span class="p">:</span> <span class="n">timestamps</span><span class="p">,</span> <span class="s1">&#39;returns&#39;</span><span class="p">:</span> <span class="n">rets</span><span class="p">,</span> <span class="s1">&#39;starting_equity&#39;</span><span class="p">:</span> <span class="n">starting_equity</span><span class="p">})</span>
-    <span class="n">ev</span><span class="o">.</span><span class="n">add_metric</span><span class="p">(</span><span class="s1">&#39;periods_per_year&#39;</span><span class="p">,</span> <span class="n">compute_periods_per_year</span><span class="p">,</span> <span class="n">dependencies</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;timestamps&#39;</span><span class="p">])</span>
+    <span class="n">starting_metrics</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;timestamps&#39;</span><span class="p">:</span> <span class="n">timestamps</span><span class="p">,</span> <span class="s1">&#39;returns&#39;</span><span class="p">:</span> <span class="n">rets</span><span class="p">,</span> <span class="s1">&#39;starting_equity&#39;</span><span class="p">:</span> <span class="n">starting_equity</span><span class="p">}</span>
+    <span class="n">assert_</span><span class="p">(</span><span class="n">periods_per_year</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;periods_per_year: </span><span class="si">{</span><span class="n">periods_per_year</span><span class="si">}</span><span class="s1"> cannot be negative&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">periods_per_year</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">starting_metrics</span><span class="p">[</span><span class="s1">&#39;periods_per_year&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">periods_per_year</span>
+    <span class="n">ev</span> <span class="o">=</span> <span class="n">Evaluator</span><span class="p">(</span><span class="n">starting_metrics</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">periods_per_year</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">ev</span><span class="o">.</span><span class="n">add_metric</span><span class="p">(</span><span class="s1">&#39;periods_per_year&#39;</span><span class="p">,</span> <span class="n">compute_periods_per_year</span><span class="p">,</span> <span class="n">dependencies</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;timestamps&#39;</span><span class="p">])</span>
     <span class="n">ev</span><span class="o">.</span><span class="n">add_metric</span><span class="p">(</span><span class="s1">&#39;amean&#39;</span><span class="p">,</span> <span class="n">compute_amean</span><span class="p">,</span> <span class="n">dependencies</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;returns&#39;</span><span class="p">,</span> <span class="s1">&#39;periods_per_year&#39;</span><span class="p">])</span>
     <span class="n">ev</span><span class="o">.</span><span class="n">add_metric</span><span class="p">(</span><span class="s1">&#39;std&#39;</span><span class="p">,</span> <span class="n">compute_std</span><span class="p">,</span> <span class="n">dependencies</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;returns&#39;</span><span class="p">])</span>
     <span class="n">ev</span><span class="o">.</span><span class="n">add_metric</span><span class="p">(</span><span class="s1">&#39;up_periods&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">returns</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="p">[</span><span class="n">returns</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]),</span> <span class="n">dependencies</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;returns&#39;</span><span class="p">])</span>
@@ -544,8 +645,11 @@
     <span class="k">return</span> <span class="n">ev</span></div>
 
 
-<div class="viewcode-block" id="display_return_metrics"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.display_return_metrics">[docs]</a><span class="k">def</span> <span class="nf">display_return_metrics</span><span class="p">(</span><span class="n">metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">float_precision</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="display_return_metrics">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.display_return_metrics">[docs]</a>
+<span class="k">def</span> <span class="nf">display_return_metrics</span><span class="p">(</span><span class="n">metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">float_precision</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Creates a dataframe making it convenient to view the output of the metrics obtained using the compute_return_metrics function.</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
@@ -589,53 +693,85 @@
         <span class="n">df</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">metric_name</span><span class="p">,</span> <span class="n">metric_value</span><span class="p">)</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span>
     
-    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
-        <span class="n">display</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">show</span> <span class="ow">and</span> <span class="n">has_display</span><span class="p">():</span> <span class="n">display</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
     
     <span class="k">return</span> <span class="n">df</span></div>
 
 
-<div class="viewcode-block" id="plot_return_metrics"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.plot_return_metrics">[docs]</a><span class="k">def</span> <span class="nf">plot_return_metrics</span><span class="p">(</span><span class="n">metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> 
-                        <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
-                        <span class="n">disp_attribs</span><span class="p">:</span> <span class="n">LinePlotAttributes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                        <span class="n">drawdown_lines</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> 
-                        <span class="n">zero_line</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-                        <span class="n">show_date_gaps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">mpl_fig</span><span class="o">.</span><span class="n">Figure</span><span class="p">,</span> <span class="n">mpl</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">Axes</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="plot_return_metrics">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.plot_return_metrics">[docs]</a>
+<span class="k">def</span> <span class="nf">plot_return_metrics</span><span class="p">(</span><span class="n">metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">show_points</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Plot equity, rolling drawdowns and and a boxplot of annual returns given the output of compute_return_metrics.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        metrics: dict of metrics produced by compute_return_metrics</span>
+<span class="sd">        title: title of the plot</span>
+<span class="sd">        height: height of the plot</span>
+<span class="sd">        width: width of the plot. If set to 0, lets plotly select the width</span>
+<span class="sd">        show: whether to show the plot or just return it</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">timestamps</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;timestamps&#39;</span><span class="p">]</span>
     <span class="n">equity</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;equity&#39;</span><span class="p">]</span>
-    <span class="n">equity</span> <span class="o">=</span> <span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;equity&#39;</span><span class="p">,</span> <span class="n">timestamps</span><span class="o">=</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">equity</span><span class="p">,</span> <span class="n">display_attributes</span><span class="o">=</span><span class="n">disp_attribs</span><span class="p">)</span>
-    <span class="n">mdd_date</span><span class="p">,</span> <span class="n">mdd_start</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mdd_start&#39;</span><span class="p">],</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mdd_date&#39;</span><span class="p">]</span>
-    <span class="n">mdd_date_3yr</span><span class="p">,</span> <span class="n">mdd_start_3yr</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mdd_start_3yr&#39;</span><span class="p">],</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mdd_date_3yr&#39;</span><span class="p">]</span>
-    
-    <span class="k">if</span> <span class="n">drawdown_lines</span><span class="p">:</span>
-        <span class="n">date_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">DateLine</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;max dd&#39;</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="n">mdd_start</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">),</span>
-                      <span class="n">DateLine</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="n">mdd_date</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">),</span>
-                      <span class="n">DateLine</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;3y dd&#39;</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="n">mdd_start_3yr</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">),</span>
-                      <span class="n">DateLine</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="n">mdd_date_3yr</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">)]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">date_lines</span> <span class="o">=</span> <span class="p">[]</span>
-        
-    <span class="n">horizontal_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">HorizontalLine</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;starting_equity&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)]</span> <span class="k">if</span> <span class="n">zero_line</span> <span class="k">else</span> <span class="p">[]</span>
-    <span class="n">equity_subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">(</span><span class="n">equity</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Equity&#39;</span><span class="p">,</span> <span class="n">height_ratio</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">log_y</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">y_tick_format</span><span class="o">=</span><span class="s1">&#39;$</span><span class="si">{x:,.0f}</span><span class="s1">&#39;</span><span class="p">,</span> 
-                             <span class="n">date_lines</span><span class="o">=</span><span class="n">date_lines</span><span class="p">,</span> <span class="n">horizontal_lines</span><span class="o">=</span><span class="n">horizontal_lines</span><span class="p">)</span>     
-
-    <span class="n">rolling_dd</span> <span class="o">=</span> <span class="n">TimeSeries</span><span class="p">(</span><span class="s1">&#39;drawdowns&#39;</span><span class="p">,</span> <span class="n">timestamps</span><span class="o">=</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;rolling_dd&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;rolling_dd&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span>
-                            <span class="n">display_attributes</span><span class="o">=</span><span class="n">disp_attribs</span><span class="p">)</span>
-    <span class="n">horizontal_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">HorizontalLine</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)]</span> <span class="k">if</span> <span class="n">zero_line</span> <span class="k">else</span> <span class="p">[]</span>
-    <span class="n">dd_subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">(</span><span class="n">rolling_dd</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Drawdowns&#39;</span><span class="p">,</span> <span class="n">height_ratio</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">date_lines</span><span class="o">=</span><span class="n">date_lines</span><span class="p">,</span> <span class="n">horizontal_lines</span><span class="o">=</span><span class="n">horizontal_lines</span><span class="p">)</span>
+    <span class="n">ts_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s1">&#39;M8[m]&#39;</span><span class="p">)</span>
+    <span class="n">mdd_date</span><span class="p">,</span> <span class="n">mdd_start</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mdd_date&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">ts_type</span><span class="p">),</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mdd_start&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">ts_type</span><span class="p">)</span>
+    <span class="n">mdd_date_3yr</span><span class="p">,</span> <span class="n">mdd_start_3yr</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mdd_date_3yr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">ts_type</span><span class="p">),</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mdd_start_3yr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">ts_type</span><span class="p">)</span>
     <span class="n">years</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;bucketed_returns&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">ann_rets</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;bucketed_returns&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">ann_ret</span> <span class="o">=</span> <span class="n">BucketedValues</span><span class="p">(</span><span class="s1">&#39;annual returns&#39;</span><span class="p">,</span> <span class="n">bucket_names</span><span class="o">=</span><span class="n">years</span><span class="p">,</span> <span class="n">bucket_values</span><span class="o">=</span><span class="n">ann_rets</span><span class="p">)</span>
-    <span class="n">ann_ret_subplot</span> <span class="o">=</span> <span class="n">Subplot</span><span class="p">(</span><span class="n">ann_ret</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Annual Returns&#39;</span><span class="p">,</span> <span class="n">height_ratio</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">horizontal_lines</span><span class="o">=</span><span class="n">horizontal_lines</span><span class="p">)</span>
-    
-    <span class="n">plt</span> <span class="o">=</span> <span class="n">Plot</span><span class="p">([</span><span class="n">equity_subplot</span><span class="p">,</span> <span class="n">dd_subplot</span><span class="p">,</span> <span class="n">ann_ret_subplot</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">show_date_gaps</span><span class="o">=</span><span class="n">show_date_gaps</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
- 
 
-<div class="viewcode-block" id="test_evaluator"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.test_evaluator">[docs]</a><span class="k">def</span> <span class="nf">test_evaluator</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">make_subplots</span><span class="p">(</span><span class="n">rows</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">)</span>
+
+    <span class="n">equity_trc</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">equity</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;lines&#39;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">equity_trc</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">mdd_start</span><span class="p">,</span> <span class="n">mdd_date</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_vrect</span><span class="p">(</span><span class="n">x0</span><span class="o">=</span><span class="n">mdd_start</span><span class="p">,</span> 
+                  <span class="n">x1</span><span class="o">=</span><span class="n">mdd_date</span><span class="p">,</span> 
+                  <span class="n">annotation_text</span><span class="o">=</span><span class="s2">&quot;max dd&quot;</span><span class="p">,</span> 
+                  <span class="n">annotation_position</span><span class="o">=</span><span class="s2">&quot;top left&quot;</span><span class="p">,</span>
+                  <span class="n">annotation</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">font_size</span><span class="o">=</span><span class="mi">15</span><span class="p">),</span>
+                  <span class="n">fillcolor</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> 
+                  <span class="n">opacity</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> 
+                  <span class="n">line_width</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_hline</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;starting_equity&#39;</span><span class="p">],</span> <span class="n">opacity</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+
+    <span class="n">dd_trc</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;rolling_dd&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;rolling_dd&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;lines&#39;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">dd_trc</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_vrect</span><span class="p">(</span><span class="n">x0</span><span class="o">=</span><span class="n">mdd_start</span><span class="p">,</span> <span class="n">x1</span><span class="o">=</span><span class="n">mdd_date</span><span class="p">,</span> <span class="n">fillcolor</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">opacity</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">line_width</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">mdd_start_3yr</span> <span class="o">!=</span> <span class="n">mdd_start</span> <span class="ow">and</span> <span class="n">mdd_date_3yr</span> <span class="o">!=</span> <span class="n">mdd_date</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_vrect</span><span class="p">(</span><span class="n">x0</span><span class="o">=</span><span class="n">mdd_start_3yr</span><span class="p">,</span> 
+                      <span class="n">x1</span><span class="o">=</span><span class="n">mdd_date_3yr</span><span class="p">,</span> 
+                      <span class="n">fillcolor</span><span class="o">=</span><span class="s1">&#39;#FF851B&#39;</span><span class="p">,</span> 
+                      <span class="n">opacity</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> 
+                      <span class="n">line_width</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> 
+                      <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> 
+                      <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">year</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">years</span><span class="p">):</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Box</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ann_rets</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">boxmean</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">marker_color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">line_color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">year</span><span class="p">),</span> <span class="n">row</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">all_rets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">ann_rets</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Box</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">all_rets</span><span class="p">,</span> <span class="n">boxmean</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">marker_color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">line_color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;All&#39;</span><span class="p">),</span> <span class="n">row</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">show_points</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span><span class="n">boxpoints</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">jitter</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">&quot;Equity&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">&quot;Drawdown&quot;</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">&quot;Return&quot;</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">showlegend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">width</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">show</span> <span class="ow">and</span> <span class="n">has_display</span><span class="p">():</span> <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+
+<div class="viewcode-block" id="test_evaluator">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.evaluator.test_evaluator">[docs]</a>
+<span class="k">def</span> <span class="nf">test_evaluator</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
     <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
     <span class="n">timestamps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
@@ -644,7 +780,7 @@
     
     <span class="n">ev</span> <span class="o">=</span> <span class="n">compute_return_metrics</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">rets</span><span class="p">,</span> <span class="n">starting_equity</span><span class="p">)</span>
     <span class="n">display_return_metrics</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">())</span>
-    <span class="n">plot_return_metrics</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">(),</span> <span class="n">zero_line</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">plot_return_metrics</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">())</span>
     
     <span class="n">assert_</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metric</span><span class="p">(</span><span class="s1">&#39;sharpe&#39;</span><span class="p">),</span> <span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="mf">2.932954</span><span class="p">)</span>
     <span class="n">assert_</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metric</span><span class="p">(</span><span class="s1">&#39;sortino&#39;</span><span class="p">),</span> <span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="mf">5.690878</span><span class="p">)</span>
@@ -652,6 +788,7 @@
     <span class="n">assert_</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metric</span><span class="p">(</span><span class="s1">&#39;annual_returns&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span><span class="mf">0.063530</span><span class="p">])</span>
     <span class="n">assert_</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metric</span><span class="p">(</span><span class="s1">&#39;mdd_start&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;2018-01-19&#39;</span><span class="p">))</span>
     <span class="n">assert_</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metric</span><span class="p">(</span><span class="s1">&#39;mdd_date&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;2018-01-22&#39;</span><span class="p">))</span></div>
+
     
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
@@ -717,8 +854,8 @@
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>
 

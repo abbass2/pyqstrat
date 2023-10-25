@@ -1,18 +1,15 @@
-
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>pyqstrat.portfolio &#8212; pyqstrat 0.1.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="../../_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b76e3c8a" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=039e1c02" />
+    <script src="../../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -50,26 +47,36 @@
 <span class="n">NAT</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;NaT&#39;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Portfolio"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio">[docs]</a><span class="k">class</span> <span class="nc">Portfolio</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;A portfolio contains one or more strategies that run concurrently so you can test running strategies that are uncorrelated together.&#39;&#39;&#39;</span>
-<div class="viewcode-block" id="Portfolio.__init__"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;main&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&#39;&#39;&#39;Args:</span>
+<div class="viewcode-block" id="Portfolio">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio">[docs]</a>
+<span class="k">class</span> <span class="nc">Portfolio</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;A portfolio contains one or more strategies that run concurrently so you can test running strategies that are uncorrelated together.&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="Portfolio.__init__">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;main&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Args:</span>
 <span class="sd">            name: String used for displaying this portfolio</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">strategies</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Strategy</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span></div>
+
         
-<div class="viewcode-block" id="Portfolio.add_strategy"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.add_strategy">[docs]</a>    <span class="k">def</span> <span class="nf">add_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strategy</span><span class="p">:</span> <span class="n">Strategy</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="Portfolio.add_strategy">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.add_strategy">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strategy</span><span class="p">:</span> <span class="n">Strategy</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Args:</span>
 <span class="sd">            name: Name of the strategy</span>
 <span class="sd">            strategy: Strategy instance</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">strategies</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">strategy</span>
         <span class="n">strategy</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span></div>
+
         
-<div class="viewcode-block" id="Portfolio.run_indicators"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.run_indicators">[docs]</a>    <span class="k">def</span> <span class="nf">run_indicators</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">strategy_names</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&#39;&#39;&#39;Compute indicators for the strategies specified</span>
+<div class="viewcode-block" id="Portfolio.run_indicators">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.run_indicators">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_indicators</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">strategy_names</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Compute indicators for the strategies specified</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
 <span class="sd">            strategy_names: By default this is set to None and we use all strategies.</span>
@@ -79,9 +86,12 @@
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">strategy_names</span><span class="p">:</span>
             <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;running strategy indicators: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">strategies</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">run_indicators</span><span class="p">()</span></div>
+
                 
-<div class="viewcode-block" id="Portfolio.run_signals"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.run_signals">[docs]</a>    <span class="k">def</span> <span class="nf">run_signals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">strategy_names</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&#39;&#39;&#39;Compute signals for the strategies specified.  Must be called after run_indicators</span>
+<div class="viewcode-block" id="Portfolio.run_signals">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.run_signals">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_signals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">strategy_names</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Compute signals for the strategies specified.  Must be called after run_indicators</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
 <span class="sd">            strategy_names: By default this is set to None and we use all strategies.</span>
@@ -92,12 +102,13 @@
             <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;running signals: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">strategies</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">run_indicators</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">strategies</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">run_signals</span><span class="p">()</span></div>
+
             
     <span class="k">def</span> <span class="nf">_generate_order_iterations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
                                    <span class="n">strategies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Strategy</span><span class="p">],</span> 
                                    <span class="n">start_date</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">=</span> <span class="n">NAT</span><span class="p">,</span> 
                                    <span class="n">end_date</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">=</span> <span class="n">NAT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Strategy</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]]:</span>
-        <span class="sd">&#39;&#39;&#39;</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        &gt;&gt;&gt; class Strategy:</span>
 <span class="sd">        ...    def __init__(self, num): </span>
 <span class="sd">        ...        self.timestamps = [</span>
@@ -133,11 +144,13 @@
             
         <span class="k">return</span> <span class="n">all_timestamps</span><span class="p">,</span> <span class="n">iterations</span>
                 
-<div class="viewcode-block" id="Portfolio.run_rules"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.run_rules">[docs]</a>    <span class="k">def</span> <span class="nf">run_rules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+<div class="viewcode-block" id="Portfolio.run_rules">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.run_rules">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_rules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
                   <span class="n">strategy_names</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
                   <span class="n">start_date</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">=</span> <span class="n">NAT</span><span class="p">,</span> 
                   <span class="n">end_date</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">=</span> <span class="n">NAT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&#39;&#39;&#39;Run rules for the strategies specified.  Must be called after run_indicators and run_signals.  </span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Run rules for the strategies specified.  Must be called after run_indicators and run_signals.  </span>
 <span class="sd">          See run function for argument descriptions</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">strategy_names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">strategy_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strategies</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
@@ -164,12 +177,15 @@
         <span class="c1"># Make sure we calc to the end for each strategy</span>
         <span class="k">for</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="n">strategies</span><span class="p">:</span>
             <span class="n">strategy</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">calc</span><span class="p">(</span><span class="n">strategy</span><span class="o">.</span><span class="n">timestamps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></div>
+
                 
-<div class="viewcode-block" id="Portfolio.run"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+<div class="viewcode-block" id="Portfolio.run">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.run">[docs]</a>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
             <span class="n">strategy_names</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
             <span class="n">start_date</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">=</span> <span class="n">NAT</span><span class="p">,</span> 
             <span class="n">end_date</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">=</span> <span class="n">NAT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&#39;&#39;&#39;</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Run indicators, signals and rules.</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
@@ -182,11 +198,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">run_indicators</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">run_signals</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">run_rules</span><span class="p">(</span><span class="n">strategy_names</span><span class="p">,</span> <span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span><span class="p">)</span></div>
+
         
-<div class="viewcode-block" id="Portfolio.df_returns"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.df_returns">[docs]</a>    <span class="k">def</span> <span class="nf">df_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+<div class="viewcode-block" id="Portfolio.df_returns">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.df_returns">[docs]</a>
+    <span class="k">def</span> <span class="nf">df_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
                    <span class="n">sampling_frequency</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;D&#39;</span><span class="p">,</span> 
                    <span class="n">strategy_names</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="sd">&#39;&#39;&#39;</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Return dataframe containing equity and returns with a date index.  Equity and returns are combined from all strategies passed in.</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
@@ -205,13 +224,16 @@
         <span class="n">df</span><span class="p">[</span><span class="s1">&#39;equity&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">df</span><span class="p">[</span><span class="s1">&#39;ret&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">equity</span><span class="o">.</span><span class="n">pct_change</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span></div>
+
         
-<div class="viewcode-block" id="Portfolio.evaluate_returns"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.evaluate_returns">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+<div class="viewcode-block" id="Portfolio.evaluate_returns">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.evaluate_returns">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
                          <span class="n">sampling_frequency</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;D&#39;</span><span class="p">,</span> 
                          <span class="n">strategy_names</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
                          <span class="n">plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> 
                          <span class="n">float_precision</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sd">&#39;&#39;&#39;Returns a dictionary of common return metrics.</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Returns a dictionary of common return metrics.</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
 <span class="sd">            sampling_frequency: Date frequency.  Default &#39;D&#39; for daily so we downsample to daily returns before computing metrics</span>
@@ -224,11 +246,14 @@
         <span class="n">display_return_metrics</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">(),</span> <span class="n">float_precision</span><span class="o">=</span><span class="n">float_precision</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">plot</span><span class="p">:</span> <span class="n">plot_return_metrics</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">()</span></div>
+
     
-<div class="viewcode-block" id="Portfolio.plot"><a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+<div class="viewcode-block" id="Portfolio.plot">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.portfolio.Portfolio.plot">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
              <span class="n">sampling_frequency</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;D&#39;</span><span class="p">,</span> 
              <span class="n">strategy_names</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&#39;&#39;&#39;Display plots of equity, drawdowns and returns</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Display plots of equity, drawdowns and returns</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
 <span class="sd">            sampling_frequency: Date frequency.  Default &#39;D&#39; for daily so we downsample to daily returns before computing metrics</span>
@@ -238,9 +263,11 @@
         <span class="n">timestamps</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">values</span>
         <span class="n">ev</span> <span class="o">=</span> <span class="n">compute_return_metrics</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">returns</span><span class="o">.</span><span class="n">ret</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">returns</span><span class="o">.</span><span class="n">equity</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">plot_return_metrics</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">metrics</span><span class="p">())</span></div>
+
         
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">strategies</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
     
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
@@ -305,8 +332,8 @@
       &copy;2018, Sal Abbasi.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>
 
