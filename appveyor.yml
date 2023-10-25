@@ -48,11 +48,12 @@ for:
   test_script:
     - which python
     - python -c 'import pyqstrat'
-    - NO_DISPLAY=1 python -m pytest pyqstrat
+    - export NO_DISPLAY=1
+    - python -m pytest pyqstrat
     - mypy --ignore-missing-imports pyqstrat/
     - flake8 --ignore W291,W293,W503,E402,E701,E275,E741 --max-line-length=160 pyqstrat/
     # run notebooks and exit on first error
-    - NO_DISPLAY=1 find pyqstrat/notebooks -name '*.ipynb' | xargs -n1 sh -c 'ipython $0 || exit 255'
+    - find pyqstrat/notebooks -name '*.ipynb' | xargs -n1 sh -c 'ipython $0 || exit 255'
 
 -
   matrix:
