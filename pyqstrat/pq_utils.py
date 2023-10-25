@@ -739,6 +739,17 @@ def get_config() -> dict[str, Any]:
         config_data.update(config_data_local)
     return config_data
 
+def find_in_subdir(dir: str, filename: str) -> str:
+    '''
+    Find relative path of a file in a subdirectory
+    >>> filename = find_in_subdir('.', 'pq_utils.py')
+    >>> assert filename == 'pq_utils.py'
+    '''
+    curr_dir = pathlib.Path('.')
+    matches = list(curr_dir.glob(f'**/{filename}'))
+    if len(matches) == 0: return ''
+    return str(matches[0])
+
 
 if __name__ == "__main__":
     import doctest
