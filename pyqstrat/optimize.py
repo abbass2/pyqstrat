@@ -12,12 +12,15 @@ import concurrent.futures
 import multiprocessing as mp
 from pyqstrat.pq_utils import get_child_logger, has_display
 import plotly.graph_objects as go
+import plotly
 from plotly.subplots import make_subplots
 
 from typing import Any, Callable, Generator
 from collections.abc import Sequence
 
 _logger = get_child_logger(__name__)
+
+plotly.io.renderers.render_on_display = False
 
 
 def flatten_keys(experiments: Sequence[Any]) -> list[str]:
@@ -370,11 +373,13 @@ def test_optimize():
 
     optimizer_1d = Optimizer('test', _generator_1d(), _cost_func_1d, max_processes=max_processes)
     optimizer_1d.run(raise_on_error=True)
-    optimizer_1d.plot_2d(x='x', marker_mode='lines+markers', title='Optimizer 1D Test')
+    if has_display():
+        optimizer_1d.plot_2d(x='x', marker_mode='lines+markers', title='Optimizer 1D Test')
     
     optimizer_2d = Optimizer('test', _generator_2d(), _cost_func_2d, max_processes=max_processes)
     optimizer_2d.run()
-    optimizer_2d.plot_3d(x='x', y='y')
+    if has_display():
+        optimizer_2d.plot_3d(x='x', y='y')
             
 
 if __name__ == "__main__":
