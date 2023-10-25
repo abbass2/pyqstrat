@@ -12,7 +12,7 @@
 **/var/**
 **/*.ipynb
 **/*.out
-**/*.doctree
+**/.doctrees
 project.xcworkspace
 xcshareddata
 xcuserdata
