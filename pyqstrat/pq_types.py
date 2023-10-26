@@ -434,8 +434,8 @@ class RoundTripTrade:
     exit_reason: str | None
     entry_commission: float
     exit_commission: float
-    entry_properties: SimpleNamespace = SimpleNamespace()
-    exit_properties: SimpleNamespace = SimpleNamespace()
+    entry_properties: SimpleNamespace = field(default_factory=SimpleNamespace)
+    exit_properties: SimpleNamespace = field(default_factory=SimpleNamespace)
     net_pnl: float = np.nan
     
     

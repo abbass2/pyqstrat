@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>pyqstrat.pq_types &#8212; pyqstrat 0.1.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b76e3c8a" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=039e1c02" />
     <script src="../../_static/documentation_options.js?v=01f34227"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
@@ -566,8 +566,8 @@
     <span class="n">exit_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">entry_commission</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">exit_commission</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">entry_properties</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">=</span> <span class="n">SimpleNamespace</span><span class="p">()</span>
-    <span class="n">exit_properties</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">=</span> <span class="n">SimpleNamespace</span><span class="p">()</span>
+    <span class="n">entry_properties</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">SimpleNamespace</span><span class="p">)</span>
+    <span class="n">exit_properties</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">SimpleNamespace</span><span class="p">)</span>
     <span class="n">net_pnl</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span></div>
 
     
