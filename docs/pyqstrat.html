@@ -3,10 +3,10 @@
 <html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>pyqstrat package &#8212; pyqstrat 0.1.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b76e3c8a" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=039e1c02" />
     <script src="_static/documentation_options.js?v=01f34227"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
@@ -681,7 +681,7 @@ See pandas.Series.resample</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>array</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – The numpy array to shift</p></li>
 <li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of places to shift, can be positive or negative</p></li>
-<li><p><strong>fill_value</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – After shifting, there will be empty slots left in the array.  If set, fill these with fill_value.
+<li><p><strong>fill_value</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]) – After shifting, there will be empty slots left in the array.  If set, fill these with fill_value.
 If fill_value is set to None (default), we will fill these with False for boolean arrays, np.nan for floats</p></li>
 </ul>
 </dd>
@@ -1057,7 +1057,7 @@ For example, you may want to store option strike.  Default None</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pyqstrat.pq_types.OrderStatus">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.pq_types.</span></span><span class="sig-name descname"><span class="pre">OrderStatus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_types.html#OrderStatus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.pq_types.OrderStatus" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.pq_types.</span></span><span class="sig-name descname"><span class="pre">OrderStatus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_types.html#OrderStatus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.pq_types.OrderStatus" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
 <p>Enum for order status</p>
 <dl class="py attribute">
@@ -1329,8 +1329,9 @@ Otherwise it becomes a limit order.  Default np.nan</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pyqstrat.pq_types.TimeInForce">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.pq_types.</span></span><span class="sig-name descname"><span class="pre">TimeInForce</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_types.html#TimeInForce"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.pq_types.TimeInForce" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyqstrat.pq_types.</span></span><span class="sig-name descname"><span class="pre">TimeInForce</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyqstrat/pq_types.html#TimeInForce"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyqstrat.pq_types.TimeInForce" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>An enumeration.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pyqstrat.pq_types.TimeInForce.DAY">
 <span class="sig-name descname"><span class="pre">DAY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#pyqstrat.pq_types.TimeInForce.DAY" title="Link to this definition">¶</a></dt>
