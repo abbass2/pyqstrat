@@ -57,8 +57,11 @@ class ContractGroup:
     
     @staticmethod
     def clear_cache() -> None:
-        ContractGroup.contracts = {}
-        ContractGroup.contracts = {}
+        ContractGroup._instances = {}
+        
+    def clear(self) -> None:
+        '''Remove all contracts'''
+        self.contracts.clear()
         
     def __repr__(self) -> str:
         return self.name
@@ -131,6 +134,19 @@ class Contract:
         Returns an existing contrat or none if it does not exist
         '''
         return Contract._instances.get(name)
+    
+    @staticmethod
+    def get_or_create(symbol: str, 
+                      contract_group: ContractGroup | None = None, 
+                      expiry: np.datetime64 | None = None, 
+                      multiplier: float = 1., 
+                      components: list[tuple[Contract, float]] | None = None,
+                      properties: SimpleNamespace | None = None) -> Contract:
+        if symbol in Contract._instances:
+            contract = Contract._instances.get(symbol)
+        else:
+            contract = Contract.create(symbol, contract_group, expiry, multiplier, components, properties)
+        return contract  # type: ignore
     
     @staticmethod
     def clear_cache() -> None:
