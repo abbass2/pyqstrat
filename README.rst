@@ -3,23 +3,21 @@
 Introduction
 ============
 
-The ``pyqstrat`` package is designed for backtesting quantitative strategies. It was originally built for my own use as a quant trader / researcher, after I could not find a python based framework that was fast, extensible and transparent enough for use in my work.  
-
-This framework is designed for capable programmers who are comfortable with numpy and reasonably advanced Python techniques.
+The ``pyqstrat`` package is designed for backtesting quantitative strategies. It was originally built for my own use after I could not find a python based framework that was fast, extensible and transparent enough for use in my work.  
 
 The goals are:
 
-* Speed - Performance sensitive components are written at the numpy level, or in C++, which can lead to performance improvement of several orders of magnitude over regular Python code.  Where possible, we parrallelize work so you can take advantage of all the cores available on your machine.
-* Transparency - If you are going to commit money to a strategy, you want to know exactly what assumptions you are making.  The code is written and documented so these are as clear as possible.
-* Extensibility - It would be impossible to think of all requirements for backtesting strategies that traders could come up with. In addition, its important to measure custom metrics relevant to the strategy being traded.
+* Speed - Performance sensitive components are written at the numpy level, or in cython or C++, which can lead to performance gains of a couple of orders of magnitude over Python code.
+* Transparency - If you are going to commit money to a strategy, you want to know exactly what assumptions it includes. The code is written and documented so these are as clear as possible.
+* Extensibility - It would be impossible to think of all requirements for backtesting strategies that traders could come up with. In addition, it's important to measure custom metrics relevant to the strategy being traded.
 
 Using this framework, you can:
 
 * Create indicators, trading signals, trading rules and market simulators and add them to a strategy
 * Create contract groups for PNL grouping. For example, for futures and options, you may create a "front-month future" and "delta hedge" where the actual instruments change over time but you still want to analyze PNL at the contract group level.
-* Reuse existing market simulation or add your own assumptions to simulate how and when orders are filled
+* Reuse existing market simulation or add your own assumptions to simulate when and at what price orders are filled
 * Measure returns, drawdowns, common return metrics such as sharpe, calmar and also add your own metrics.
-* Optimize your strategy's parameters using all the CPU cores on your machine.
+* Optimize your strategy's parameters taking advantage of all the CPUs on a machine
 
 
 
