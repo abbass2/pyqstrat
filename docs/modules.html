@@ -55,6 +55,7 @@
 <li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_utils.get_paths"><code class="docutils literal notranslate"><span class="pre">get_paths()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_utils.get_temp_dir"><code class="docutils literal notranslate"><span class="pre">get_temp_dir()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_utils.has_display"><code class="docutils literal notranslate"><span class="pre">has_display()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_utils.in_debug"><code class="docutils literal notranslate"><span class="pre">in_debug()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_utils.in_ipython"><code class="docutils literal notranslate"><span class="pre">in_ipython()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_utils.infer_compression"><code class="docutils literal notranslate"><span class="pre">infer_compression()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_utils.infer_frequency"><code class="docutils literal notranslate"><span class="pre">infer_frequency()</span></code></a></li>
@@ -98,6 +99,7 @@
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.Contract.exists"><code class="docutils literal notranslate"><span class="pre">Contract.exists()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.Contract.expiry"><code class="docutils literal notranslate"><span class="pre">Contract.expiry</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.Contract.get"><code class="docutils literal notranslate"><span class="pre">Contract.get()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.Contract.get_or_create"><code class="docutils literal notranslate"><span class="pre">Contract.get_or_create()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.Contract.is_basket"><code class="docutils literal notranslate"><span class="pre">Contract.is_basket()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.Contract.multiplier"><code class="docutils literal notranslate"><span class="pre">Contract.multiplier</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.Contract.properties"><code class="docutils literal notranslate"><span class="pre">Contract.properties</span></code></a></li>
@@ -106,12 +108,14 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.ContractGroup"><code class="docutils literal notranslate"><span class="pre">ContractGroup</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.ContractGroup.add_contract"><code class="docutils literal notranslate"><span class="pre">ContractGroup.add_contract()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.ContractGroup.clear"><code class="docutils literal notranslate"><span class="pre">ContractGroup.clear()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.ContractGroup.clear_cache"><code class="docutils literal notranslate"><span class="pre">ContractGroup.clear_cache()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.ContractGroup.contracts"><code class="docutils literal notranslate"><span class="pre">ContractGroup.contracts</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.ContractGroup.exists"><code class="docutils literal notranslate"><span class="pre">ContractGroup.exists()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.ContractGroup.get"><code class="docutils literal notranslate"><span class="pre">ContractGroup.get()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.ContractGroup.get_contract"><code class="docutils literal notranslate"><span class="pre">ContractGroup.get_contract()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.ContractGroup.get_contracts"><code class="docutils literal notranslate"><span class="pre">ContractGroup.get_contracts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.ContractGroup.get_default"><code class="docutils literal notranslate"><span class="pre">ContractGroup.get_default()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.pq_types.ContractGroup.name"><code class="docutils literal notranslate"><span class="pre">ContractGroup.name</span></code></a></li>
 </ul>
 </li>
@@ -411,10 +415,14 @@
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.contract_groups"><code class="docutils literal notranslate"><span class="pre">StrategyBuilder.contract_groups</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.data"><code class="docutils literal notranslate"><span class="pre">StrategyBuilder.data</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.indicators"><code class="docutils literal notranslate"><span class="pre">StrategyBuilder.indicators</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.log_orders"><code class="docutils literal notranslate"><span class="pre">StrategyBuilder.log_orders</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.log_trades"><code class="docutils literal notranslate"><span class="pre">StrategyBuilder.log_trades</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.market_sims"><code class="docutils literal notranslate"><span class="pre">StrategyBuilder.market_sims</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.pnl_calc_time"><code class="docutils literal notranslate"><span class="pre">StrategyBuilder.pnl_calc_time</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.price_function"><code class="docutils literal notranslate"><span class="pre">StrategyBuilder.price_function</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.rules"><code class="docutils literal notranslate"><span class="pre">StrategyBuilder.rules</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.set_log_orders"><code class="docutils literal notranslate"><span class="pre">StrategyBuilder.set_log_orders()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.set_log_trades"><code class="docutils literal notranslate"><span class="pre">StrategyBuilder.set_log_trades()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.set_pnl_calc_time"><code class="docutils literal notranslate"><span class="pre">StrategyBuilder.set_pnl_calc_time()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.set_price_function"><code class="docutils literal notranslate"><span class="pre">StrategyBuilder.set_price_function()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.set_starting_equity"><code class="docutils literal notranslate"><span class="pre">StrategyBuilder.set_starting_equity()</span></code></a></li>
@@ -432,6 +440,20 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="pyqstrat.html#module-pyqstrat.strategy_components">pyqstrat.strategy_components module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.BracketOrderEntryRule"><code class="docutils literal notranslate"><span class="pre">BracketOrderEntryRule</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.BracketOrderEntryRule.__call__"><code class="docutils literal notranslate"><span class="pre">BracketOrderEntryRule.__call__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.BracketOrderEntryRule.__init__"><code class="docutils literal notranslate"><span class="pre">BracketOrderEntryRule.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.BracketOrderEntryRule.contract_filter"><code class="docutils literal notranslate"><span class="pre">BracketOrderEntryRule.contract_filter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.BracketOrderEntryRule.long"><code class="docutils literal notranslate"><span class="pre">BracketOrderEntryRule.long</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.BracketOrderEntryRule.max_position_size"><code class="docutils literal notranslate"><span class="pre">BracketOrderEntryRule.max_position_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.BracketOrderEntryRule.min_stop_returnt"><code class="docutils literal notranslate"><span class="pre">BracketOrderEntryRule.min_stop_returnt</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.BracketOrderEntryRule.percent_of_equity"><code class="docutils literal notranslate"><span class="pre">BracketOrderEntryRule.percent_of_equity</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.BracketOrderEntryRule.price_func"><code class="docutils literal notranslate"><span class="pre">BracketOrderEntryRule.price_func</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.BracketOrderEntryRule.reason_code"><code class="docutils literal notranslate"><span class="pre">BracketOrderEntryRule.reason_code</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.BracketOrderEntryRule.single_entry_per_day"><code class="docutils literal notranslate"><span class="pre">BracketOrderEntryRule.single_entry_per_day</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.BracketOrderEntryRule.stop_return_func"><code class="docutils literal notranslate"><span class="pre">BracketOrderEntryRule.stop_return_func</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.ClosePositionExitRule"><code class="docutils literal notranslate"><span class="pre">ClosePositionExitRule</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.ClosePositionExitRule.__call__"><code class="docutils literal notranslate"><span class="pre">ClosePositionExitRule.__call__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.ClosePositionExitRule.__init__"><code class="docutils literal notranslate"><span class="pre">ClosePositionExitRule.__init__()</span></code></a></li>
@@ -440,22 +462,10 @@
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.ClosePositionExitRule.reason_code"><code class="docutils literal notranslate"><span class="pre">ClosePositionExitRule.reason_code</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.FiniteRiskEntryRule"><code class="docutils literal notranslate"><span class="pre">FiniteRiskEntryRule</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.FiniteRiskEntryRule.__call__"><code class="docutils literal notranslate"><span class="pre">FiniteRiskEntryRule.__call__()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.FiniteRiskEntryRule.__init__"><code class="docutils literal notranslate"><span class="pre">FiniteRiskEntryRule.__init__()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.FiniteRiskEntryRule.contract_filter"><code class="docutils literal notranslate"><span class="pre">FiniteRiskEntryRule.contract_filter</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.FiniteRiskEntryRule.long"><code class="docutils literal notranslate"><span class="pre">FiniteRiskEntryRule.long</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.FiniteRiskEntryRule.min_price_diff"><code class="docutils literal notranslate"><span class="pre">FiniteRiskEntryRule.min_price_diff</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.FiniteRiskEntryRule.percent_of_equity"><code class="docutils literal notranslate"><span class="pre">FiniteRiskEntryRule.percent_of_equity</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.FiniteRiskEntryRule.price_func"><code class="docutils literal notranslate"><span class="pre">FiniteRiskEntryRule.price_func</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.FiniteRiskEntryRule.reason_code"><code class="docutils literal notranslate"><span class="pre">FiniteRiskEntryRule.reason_code</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.FiniteRiskEntryRule.single_entry_per_day"><code class="docutils literal notranslate"><span class="pre">FiniteRiskEntryRule.single_entry_per_day</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.FiniteRiskEntryRule.stop_price_ind"><code class="docutils literal notranslate"><span class="pre">FiniteRiskEntryRule.stop_price_ind</span></code></a></li>
-</ul>
-</li>
 <li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PercentOfEquityTradingRule"><code class="docutils literal notranslate"><span class="pre">PercentOfEquityTradingRule</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PercentOfEquityTradingRule.__call__"><code class="docutils literal notranslate"><span class="pre">PercentOfEquityTradingRule.__call__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PercentOfEquityTradingRule.__init__"><code class="docutils literal notranslate"><span class="pre">PercentOfEquityTradingRule.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PercentOfEquityTradingRule.allocate_risk"><code class="docutils literal notranslate"><span class="pre">PercentOfEquityTradingRule.allocate_risk</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PercentOfEquityTradingRule.equity_percent"><code class="docutils literal notranslate"><span class="pre">PercentOfEquityTradingRule.equity_percent</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PercentOfEquityTradingRule.limit_increment"><code class="docutils literal notranslate"><span class="pre">PercentOfEquityTradingRule.limit_increment</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PercentOfEquityTradingRule.long"><code class="docutils literal notranslate"><span class="pre">PercentOfEquityTradingRule.long</span></code></a></li>
@@ -466,7 +476,15 @@
 <li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PriceFuncArrayDict"><code class="docutils literal notranslate"><span class="pre">PriceFuncArrayDict</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PriceFuncArrayDict.__call__"><code class="docutils literal notranslate"><span class="pre">PriceFuncArrayDict.__call__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PriceFuncArrayDict.__init__"><code class="docutils literal notranslate"><span class="pre">PriceFuncArrayDict.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PriceFuncArrayDict.allow_previous"><code class="docutils literal notranslate"><span class="pre">PriceFuncArrayDict.allow_previous</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PriceFuncArrayDict.price_dict"><code class="docutils literal notranslate"><span class="pre">PriceFuncArrayDict.price_dict</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PriceFuncArrays"><code class="docutils literal notranslate"><span class="pre">PriceFuncArrays</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PriceFuncArrays.__call__"><code class="docutils literal notranslate"><span class="pre">PriceFuncArrays.__call__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PriceFuncArrays.__init__"><code class="docutils literal notranslate"><span class="pre">PriceFuncArrays.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PriceFuncArrays.allow_previous"><code class="docutils literal notranslate"><span class="pre">PriceFuncArrays.allow_previous</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PriceFuncArrays.price_dict"><code class="docutils literal notranslate"><span class="pre">PriceFuncArrays.price_dict</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.PriceFuncDict"><code class="docutils literal notranslate"><span class="pre">PriceFuncDict</span></code></a><ul>
@@ -479,8 +497,18 @@
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.SimpleMarketSimulator.__call__"><code class="docutils literal notranslate"><span class="pre">SimpleMarketSimulator.__call__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.SimpleMarketSimulator.__init__"><code class="docutils literal notranslate"><span class="pre">SimpleMarketSimulator.__init__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.SimpleMarketSimulator.commission"><code class="docutils literal notranslate"><span class="pre">SimpleMarketSimulator.commission</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.SimpleMarketSimulator.post_trade_func"><code class="docutils literal notranslate"><span class="pre">SimpleMarketSimulator.post_trade_func</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.SimpleMarketSimulator.price_func"><code class="docutils literal notranslate"><span class="pre">SimpleMarketSimulator.price_func</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.SimpleMarketSimulator.slippage"><code class="docutils literal notranslate"><span class="pre">SimpleMarketSimulator.slippage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.SimpleMarketSimulator.price_rounding"><code class="docutils literal notranslate"><span class="pre">SimpleMarketSimulator.price_rounding</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.SimpleMarketSimulator.slippage_pct"><code class="docutils literal notranslate"><span class="pre">SimpleMarketSimulator.slippage_pct</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.StopReturnExitRule"><code class="docutils literal notranslate"><span class="pre">StopReturnExitRule</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.StopReturnExitRule.__call__"><code class="docutils literal notranslate"><span class="pre">StopReturnExitRule.__call__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.StopReturnExitRule.__init__"><code class="docutils literal notranslate"><span class="pre">StopReturnExitRule.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.StopReturnExitRule.price_func"><code class="docutils literal notranslate"><span class="pre">StopReturnExitRule.price_func</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.StopReturnExitRule.reason_code"><code class="docutils literal notranslate"><span class="pre">StopReturnExitRule.reason_code</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.StopReturnExitRule.stop_return_func"><code class="docutils literal notranslate"><span class="pre">StopReturnExitRule.stop_return_func</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.VWAPCloseRule"><code class="docutils literal notranslate"><span class="pre">VWAPCloseRule</span></code></a><ul>
@@ -494,7 +522,7 @@
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.VWAPEntryRule.__call__"><code class="docutils literal notranslate"><span class="pre">VWAPEntryRule.__call__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.VWAPEntryRule.__init__"><code class="docutils literal notranslate"><span class="pre">VWAPEntryRule.__init__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.VWAPEntryRule.long"><code class="docutils literal notranslate"><span class="pre">VWAPEntryRule.long</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.VWAPEntryRule.min_price_diff"><code class="docutils literal notranslate"><span class="pre">VWAPEntryRule.min_price_diff</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.VWAPEntryRule.min_price_diff_pct"><code class="docutils literal notranslate"><span class="pre">VWAPEntryRule.min_price_diff_pct</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.VWAPEntryRule.percent_of_equity"><code class="docutils literal notranslate"><span class="pre">VWAPEntryRule.percent_of_equity</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.VWAPEntryRule.price_func"><code class="docutils literal notranslate"><span class="pre">VWAPEntryRule.price_func</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyqstrat.html#pyqstrat.strategy_components.VWAPEntryRule.reason_code"><code class="docutils literal notranslate"><span class="pre">VWAPEntryRule.reason_code</span></code></a></li>

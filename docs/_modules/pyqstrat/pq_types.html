@@ -77,6 +77,13 @@
         <span class="k">return</span> <span class="n">ContractGroup</span><span class="o">.</span><span class="n">_instances</span><span class="p">[</span><span class="n">name</span><span class="p">]</span></div>
 
     
+<div class="viewcode-block" id="ContractGroup.get_default">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup.get_default">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_default</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ContractGroup</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">DEFAULT_CG</span></div>
+
+    
 <div class="viewcode-block" id="ContractGroup.exists">
 <a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup.exists">[docs]</a>
     <span class="nd">@staticmethod</span>
@@ -107,8 +114,14 @@
 <a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup.clear_cache">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">clear_cache</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">ContractGroup</span><span class="o">.</span><span class="n">contracts</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">ContractGroup</span><span class="o">.</span><span class="n">contracts</span> <span class="o">=</span> <span class="p">{}</span></div>
+        <span class="n">ContractGroup</span><span class="o">.</span><span class="n">_instances</span> <span class="o">=</span> <span class="p">{}</span></div>
+
+        
+<div class="viewcode-block" id="ContractGroup.clear">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.ContractGroup.clear">[docs]</a>
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Remove all contracts&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contracts</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 
         
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -196,6 +209,22 @@
 <span class="sd">        Returns an existing contrat or none if it does not exist</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">Contract</span><span class="o">.</span><span class="n">_instances</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="Contract.get_or_create">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.pq_types.Contract.get_or_create">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_or_create</span><span class="p">(</span><span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+                      <span class="n">contract_group</span><span class="p">:</span> <span class="n">ContractGroup</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+                      <span class="n">expiry</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+                      <span class="n">multiplier</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span> 
+                      <span class="n">components</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Contract</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                      <span class="n">properties</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Contract</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">Contract</span><span class="o">.</span><span class="n">_instances</span><span class="p">:</span>
+            <span class="n">contract</span> <span class="o">=</span> <span class="n">Contract</span><span class="o">.</span><span class="n">_instances</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">contract</span> <span class="o">=</span> <span class="n">Contract</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">contract_group</span><span class="p">,</span> <span class="n">expiry</span><span class="p">,</span> <span class="n">multiplier</span><span class="p">,</span> <span class="n">components</span><span class="p">,</span> <span class="n">properties</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">contract</span>  <span class="c1"># type: ignore</span></div>
 
     
 <div class="viewcode-block" id="Contract.clear_cache">
@@ -387,8 +416,11 @@
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">MarketOrder</span><span class="p">(</span><span class="n">Order</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qty</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qty</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;order qty must be finite and nonzero: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">qty</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qty</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qty</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;order qty must be finite and nonzero: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">qty</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
             
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">timestamp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span><span class="o">.</span><span class="n">to_pydatetime</span><span class="p">()</span>

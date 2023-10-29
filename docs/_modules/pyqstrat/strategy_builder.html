@@ -105,6 +105,8 @@
     <span class="n">signals</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SignalType</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ContractGroup</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span>
     <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RuleType</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span>
     <span class="n">market_sims</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MarketSimulatorType</span><span class="p">]</span>
+    <span class="n">log_trades</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">log_orders</span><span class="p">:</span> <span class="nb">bool</span>
     
 <div class="viewcode-block" id="StrategyBuilder.__init__">
 <a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.__init__">[docs]</a>
@@ -121,7 +123,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">indicators</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">signals</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rules</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">market_sims</span> <span class="o">=</span> <span class="p">[]</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">market_sims</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_trades</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_orders</span> <span class="o">=</span> <span class="kc">False</span></div>
 
         
 <div class="viewcode-block" id="StrategyBuilder.set_timestamps">
@@ -153,6 +157,18 @@
 <a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.set_strategy_context">[docs]</a>
     <span class="k">def</span> <span class="nf">set_strategy_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">StrategyContextType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">strategy_context</span> <span class="o">=</span> <span class="n">context</span></div>
+
+        
+<div class="viewcode-block" id="StrategyBuilder.set_log_trades">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.set_log_trades">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_log_trades</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_trades</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_trades</span> <span class="o">=</span> <span class="n">log_trades</span></div>
+
+        
+<div class="viewcode-block" id="StrategyBuilder.set_log_orders">
+<a class="viewcode-back" href="../../pyqstrat.html#pyqstrat.strategy_builder.StrategyBuilder.set_log_orders">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_log_orders</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_orders</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_orders</span> <span class="o">=</span> <span class="n">log_orders</span></div>
 
         
 <div class="viewcode-block" id="StrategyBuilder.add_contract">
@@ -266,7 +282,9 @@
                          <span class="bp">self</span><span class="o">.</span><span class="n">starting_equity</span><span class="p">,</span> 
                          <span class="bp">self</span><span class="o">.</span><span class="n">pnl_calc_time</span><span class="p">,</span> 
                          <span class="bp">self</span><span class="o">.</span><span class="n">trade_lag</span><span class="p">,</span> 
-                         <span class="kc">True</span><span class="p">,</span> 
+                         <span class="kc">True</span><span class="p">,</span>
+                         <span class="bp">self</span><span class="o">.</span><span class="n">log_trades</span><span class="p">,</span>
+                         <span class="bp">self</span><span class="o">.</span><span class="n">log_orders</span><span class="p">,</span>
                          <span class="bp">self</span><span class="o">.</span><span class="n">strategy_context</span><span class="p">)</span>
         
         <span class="n">assert_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rules</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rules</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;rules cannot be empty or None&#39;</span><span class="p">)</span>
