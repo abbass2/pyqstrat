@@ -626,6 +626,8 @@ def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, width=0,
     fig.add_trace(go.Box(x=all_rets, boxmean=True, marker_color='blue', line_color='blue', name='All'), row=3, col=1)
     if show_points:
         fig.update_traces(boxpoints='all', jitter=0.1, row=3, col=1)
+    else:
+        fig.update_traces(boxpoints=False, row=3, col=1)
 
     fig.update_yaxes(title_text="Equity", type="log", row=1, col=1)
     fig.update_yaxes(title_text="Drawdown", row=2, col=1)

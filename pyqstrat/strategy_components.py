@@ -78,6 +78,9 @@ def get_contract_price_from_array_dict(price_dict: dict[str, tuple[np.ndarray, n
     else:
         idx = np_indexof_sorted(_timestamps, timestamp)
     if idx == -1: return math.nan
+#     if idx >= len(_prices):
+#         import pdb
+#         pdb.set_trace()
     return _prices[idx]  # type: ignore
 
 
