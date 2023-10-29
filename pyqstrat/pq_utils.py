@@ -635,14 +635,12 @@ def _add_stream_handler(logger: logging.Logger,
                         formatter: logging.Formatter | None = None) -> None:
     if formatter is None: formatter = logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT)
     stream_handler = logging.StreamHandler(sys.stdout)
-    # stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(formatter)
     stream_handler.setLevel(log_level)
     logger.addHandler(stream_handler)
 
 
 def get_main_logger() -> logging.Logger:
-    # sys.stderr = sys.stdout
     main_logger = logging.getLogger('pq')
     if len(main_logger.handlers): return main_logger
     _add_stream_handler(main_logger)
@@ -663,7 +661,13 @@ def in_ipython() -> bool:
     Whether we are running in an ipython (or Jupyter) environment
     '''
     import builtins
-    return '__IPYTHON__' in vars(builtins)
+    if ('__IPYTHON__' in vars(builtins)): return True
+    return False
+
+
+def in_debug() -> bool:
+    if 'PQ_DEBUG_MODE' in os.environ: return True
+    return False
 
 
 class PQException(Exception):
@@ -677,7 +681,9 @@ def assert_(condition: bool, msg: str | None = None) -> None:
     '''
     if msg is None: msg = ''
     if not condition:
-        import pdb; pdb.set_trace()
+        if in_debug():
+            import pdb
+            pdb.set_trace()
         raise PQException(msg)
 
 

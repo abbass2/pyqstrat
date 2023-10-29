@@ -569,7 +569,7 @@ def display_return_metrics(metrics: dict[str, Any], float_precision: int = 3, sh
     return df
 
 
-def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, width=0, show_points=True, show=True) -> go.Figure:
+def plot_return_metrics(metrics: dict[str, Any], title='', height=1000, width=0, show_points=False, show=True) -> go.Figure:
     '''
     Plot equity, rolling drawdowns and and a boxplot of annual returns given the output of compute_return_metrics.
     
@@ -645,8 +645,9 @@ def test_evaluator() -> None:
     
     ev = compute_return_metrics(timestamps, rets, starting_equity)
     display_return_metrics(ev.metrics())
-    plot_return_metrics(ev.metrics())
-    
+    plot_return_metrics(ev.metrics(), show_points=False)
+    plot_return_metrics(ev.metrics(), show_points=True)
+
     assert_(round(ev.metric('sharpe'), 6) == 2.932954)
     assert_(round(ev.metric('sortino'), 6) == 5.690878)
     assert_(ev.metric('annual_returns')[0] == [2018])

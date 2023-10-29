@@ -81,7 +81,6 @@ def get_contract_price_from_array_dict(price_dict: dict[str, tuple[np.ndarray, n
     return _prices[idx]  # type: ignore
 
 
-
 @dataclass
 class PriceFuncArrays:
     '''
@@ -236,8 +235,8 @@ class SimpleMarketSimulator:
                  orders: Sequence[Order],
                  i: int, 
                  timestamps: np.ndarray, 
-                 indicators: dict[ContractGroup, SimpleNamespace],
-                 signals: dict[ContractGroup, SimpleNamespace],
+                 indicators: dict[str, SimpleNamespace],
+                 signals: dict[str, SimpleNamespace],
                  strategy_context: SimpleNamespace) -> list[Trade]:
         '''TODO: code for stop orders'''
         trades = []
@@ -572,7 +571,7 @@ ContractFilterType = Callable[
 
 
 @dataclass
-class FiniteRiskEntryRule:
+class BracketOrderEntryRule:
     '''
     A rule that generates orders with stops
     
@@ -604,7 +603,7 @@ class FiniteRiskEntryRule:
     >>> price_dict = {'AAPL': (timestamps, aapl_prices), 'IBM': (timestamps, ibm_prices)}
     >>> stop_dict = {'AAPL': (timestamps, aapl_stops), 'IBM': (timestamps, ibm_stops)}
     >>> price_func = PriceFuncArrayDict(price_dict)
-    >>> fr = FiniteRiskEntryRule('TEST_ENTRY', price_func, long=False)
+    >>> fr = BracketOrderEntryRule('TEST_ENTRY', price_func, long=False)
     >>> default_cg = ContractGroup.get('DEFAULT')
     >>> default_cg.clear_cache()
     >>> default_cg.add_contract(Contract.get_or_create('AAPL'))
@@ -614,7 +613,7 @@ class FiniteRiskEntryRule:
     >>> orders = fr(default_cg, 1, timestamps, SimpleNamespace(), sig_values, account, [], SimpleNamespace())
     >>> assert len(orders) == 2 and orders[0].qty == -998 and orders[1].qty == -499
     >>> stop_return_func = PriceFuncArrayDict(stop_dict)
-    >>> fr = FiniteRiskEntryRule('TEST_ENTRY', price_func, long=True, stop_return_func=stop_return_func, min_stop_return=-0.1)
+    >>> fr = BracketOrderEntryRule('TEST_ENTRY', price_func, long=True, stop_return_func=stop_return_func, min_stop_return=-0.1)
     >>> orders = fr(default_cg, 2, timestamps, SimpleNamespace(), sig_values, account, [], SimpleNamespace())
     >>> assert len(orders) == 2 and orders[0].qty == 4985 and orders[1].qty == 2496
     >>> orders = fr(default_cg, 3, timestamps, SimpleNamespace(), sig_values, account, [], SimpleNamespace())
@@ -701,8 +700,13 @@ class FiniteRiskEntryRule:
             order_qty = risk_amount / abs(entry_price_est - stop_price)
             
             if self.max_position_size > 0:
-                max_qty = self.max_position_size * curr_equity / entry_price_est
-                order_qty = min(order_qty, max_qty)
+                max_qty = abs(self.max_position_size * curr_equity / entry_price_est)
+                orig_qty = order_qty
+                if max_qty < abs(orig_qty):
+                    order_qty = max_qty * np.sign(orig_qty)
+                    _logger.info(f'max postion size exceeded: {contract} timestamp: {timestamp} max_qty: {max_qty}'
+                                 f' orig_qty: {orig_qty} new qty: {order_qty} max_qty: {max_qty} pos size: {self.max_position_size}'
+                                 f' curr_equity: {curr_equity} entry_price_est: {entry_price_est}')
                 
             order_qty = math.floor(order_qty)
             if not self.long: order_qty = -order_qty
@@ -761,6 +765,48 @@ class ClosePositionExitRule:
                 limit_order = LimitOrder(contract=contract, timestamp=timestamp, qty=-qty, limit_price=exit_price_est, reason_code=self.reason_code)
                 orders.append(limit_order)
                 continue
+            order = MarketOrder(contract=contract, timestamp=timestamp, qty=-qty, reason_code=self.reason_code)
+            orders.append(order)
+        return orders
+    
+
+@dataclass
+class StopReturnExitRule:
+    '''
+    A rule that exits any given positions if a stop is hit.
+    You should set entry_price in the strategy context in the market simulator when you enter a position
+    '''
+    reason_code: str
+    price_func: PriceFunctionType
+    stop_return_func: PriceFunctionType
+
+    def __call__(self,
+                 contract_group: ContractGroup,
+                 i: int,
+                 timestamps: np.ndarray,
+                 indicator_values: SimpleNamespace,
+                 signal_values: np.ndarray,
+                 account: Account,
+                 current_orders: Sequence[Order],
+                 context: StrategyContextType) -> list[Order]:
+        
+        timestamp = timestamps[i]
+        date = timestamp.astype('M8[D]')
+        entry_prices: dict[str, float] = context.entry_prices[date]
+        assert_(len(entry_prices) > 0, f'no symbols entered for: {date}')
+        positions = account.positions(contract_group, timestamp)
+
+        orders: list[Order] = []
+        for contract, qty in positions:
+            symbol = contract.symbol
+            stop_ret = self.stop_return_func(contract, timestamps, i, context)
+            assert_(stop_ret < 0, f'stop_return must be negative: {stop_ret} {timestamp} {symbol}')
+            entry_price = entry_prices[symbol]
+            if qty < 0: stop_ret = -stop_ret
+            stop_price = entry_price * (1 + stop_ret)
+            curr_price = self.price_func(contract, timestamps, i, context)
+            if math.isnan(curr_price): continue
+            if (qty > 0 and curr_price > stop_price) or (qty <= 0 and curr_price < stop_price): continue
             order = MarketOrder(contract=contract, timestamp=timestamp, qty=-qty, reason_code=self.reason_code)
             orders.append(order)
         return orders

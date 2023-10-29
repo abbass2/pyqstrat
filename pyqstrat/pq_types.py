@@ -42,6 +42,10 @@ class ContractGroup:
         return ContractGroup._instances[name]
     
     @staticmethod
+    def get_default() -> ContractGroup:
+        return DEFAULT_CG
+    
+    @staticmethod
     def exists(name: str) -> bool:
         return name in ContractGroup._instances
     
@@ -297,7 +301,6 @@ class MarketOrder(Order):
                 raise ValueError(f'order qty must be finite and nonzero: {self.qty}')
         except Exception as ex:
             _logger.info(ex)
-            import pdb; pdb.set_trace()
             
     def __repr__(self):
         timestamp = pd.Timestamp(self.timestamp).to_pydatetime()
