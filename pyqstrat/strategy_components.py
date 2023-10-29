@@ -67,13 +67,49 @@ def get_contract_price_from_dict(price_dict: dict[str, dict[np.datetime64, float
 
 def get_contract_price_from_array_dict(price_dict: dict[str, tuple[np.ndarray, np.ndarray]], 
                                        contract: Contract, 
-                                       timestamp: np.datetime64) -> float:
+                                       timestamp: np.datetime64,
+                                       allow_previous: bool) -> float:
     tup: tuple[np.ndarray, np.ndarray] | None = price_dict.get(contract.symbol)
     assert_(tup is not None, f'{contract.symbol} not found in price_dict')
-    _timestamps: np.ndarray = tup[0]  # type: ignore
-    idx = np_indexof_sorted(_timestamps, timestamp)
+    _timestamps, _prices = tup  # type: ignore
+    idx: int
+    if allow_previous:
+        idx = int(np.searchsorted(_timestamps, timestamp, side='right')) - 1
+    else:
+        idx = np_indexof_sorted(_timestamps, timestamp)
     if idx == -1: return math.nan
-    return tup[1][idx]  # type: ignore
+    return _prices[idx]  # type: ignore
+
+
+
+@dataclass
+class PriceFuncArrays:
+    '''
+    A function object with a signature of PriceFunctionType. Takes three ndarrays
+    of symbols, timestamps and prices
+    '''
+    price_dict: dict[str, tuple[np.ndarray, np.ndarray]]
+    allow_previous: bool
+        
+    def __init__(self, symbols: np.ndarray, timestamps: np.ndarray, prices: np.ndarray, allow_previous: bool = False) -> None:
+        assert_(len(timestamps) == len(symbols) and len(prices) == len(symbols),
+                f'arrays have different sizes: {len(timestamps)} {len(symbols)} {len(prices)}')
+        price_dict: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+        for symbol in np.unique(symbols):
+            mask = (symbols == symbol)
+            price_dict[symbol] = (timestamps[mask], prices[mask])        
+        self.price_dict = price_dict
+        self.allow_previous = allow_previous
+        
+    def __call__(self, contract: Contract, timestamps: np.ndarray, i: int, context: StrategyContextType) -> float:
+        price: float = 0.
+        timestamp = timestamps[i]
+        if contract.is_basket():
+            for _contract, ratio in contract.components:
+                price += get_contract_price_from_array_dict(self.price_dict, _contract, timestamp, self.allow_previous) * ratio
+        else:
+            price = get_contract_price_from_array_dict(self.price_dict, contract, timestamp, self.allow_previous)
+        return price
 
 
 @dataclass
@@ -81,6 +117,11 @@ class PriceFuncArrayDict:
     '''
     A function object with a signature of PriceFunctionType and takes a dictionary of 
         contract name -> tuple of sorted timestamps and prices
+    
+    Args:
+        price_dict: a dict with key=contract nane and value a tuple of timestamp and price arrays
+        allow_previous: if set and we don't find an exact match for the timestamp, use the 
+            previous timestamp. Useful if you have a dict with keys containing dates instead of timestamps
         
     >>> timestamps = np.arange(np.datetime64('2023-01-01'), np.datetime64('2023-01-04'))
     >>> price_dict = {'AAPL': (timestamps, [8, 9, 10]), 'IBM': (timestamps, [20, 21, 22])}
@@ -93,18 +134,20 @@ class PriceFuncArrayDict:
     >>> assert(pricefunc(basket, timestamps, 1, None) == -12)
     '''
     price_dict: dict[str, tuple[np.ndarray, np.ndarray]]
+    allow_previous: bool
         
-    def __init__(self, price_dict: dict[str, tuple[np.ndarray, np.ndarray]]) -> None:
+    def __init__(self, price_dict: dict[str, tuple[np.ndarray, np.ndarray]], allow_previous: bool = False) -> None:
         self.price_dict = price_dict
+        self.allow_previous = allow_previous
         
     def __call__(self, contract: Contract, timestamps: np.ndarray, i: int, context: StrategyContextType) -> float:
         price: float = 0.
         timestamp = timestamps[i]
         if contract.is_basket():
             for _contract, ratio in contract.components:
-                price += get_contract_price_from_array_dict(self.price_dict, _contract, timestamp) * ratio
+                price += get_contract_price_from_array_dict(self.price_dict, _contract, timestamp, self.allow_previous) * ratio
         else:
-            price = get_contract_price_from_array_dict(self.price_dict, contract, timestamp)
+            price = get_contract_price_from_array_dict(self.price_dict, contract, timestamp, self.allow_previous)
         return price
     
     
@@ -158,32 +201,35 @@ class SimpleMarketSimulator:
     >>> timestamp = np.datetime64('2023-01-03 14:35')
     >>> price_func = PriceFuncDict({put_symbol: {timestamp: 4.8}, call_symbol: {timestamp: 3.5}})
     >>> order = MarketOrder(contract=basket, timestamp=timestamp, qty=10, reason_code='TEST')
-    >>> sim = SimpleMarketSimulator(price_func=price_func, slippage=0)
+    >>> sim = SimpleMarketSimulator(price_func=price_func, slippage_pct=0)
     >>> out = sim([order], 0, np.array([timestamp]), {}, {}, SimpleNamespace())
     >>> assert(len(out) == 1)
     >>> assert(math.isclose(out[0].price, -1.3))
     >>> assert(out[0].qty == 10)    
     '''
     price_func: PriceFunctionType
-    slippage: float
+    slippage_pct: float
     commission: float
+    price_rounding: int
     post_trade_func: Callable[[Trade, StrategyContextType], None] | None
         
     def __init__(self,
                  price_func: PriceFunctionType,
-                 slippage: float = 0.,
+                 slippage_pct: float = 0.,
                  commission: float = 0,
+                 price_rounding: int = 3,
                  post_trade_func: Callable[[Trade, StrategyContextType], None] | None = None) -> None:
         '''
         Args:
             price_func: A function that we use to get the price to execute at
-            slippage: Slippage per dollar transacted. 
+            slippage_pct: Slippage per dollar transacted. 
                 Meant to simulate the difference between bid/ask mid and execution price 
             commission: Fee paid to broker per trade
         '''
-        self.price_func: PriceFunctionType = price_func
-        self.slippage: float = slippage
-        self.commission: float = commission
+        self.price_func = price_func
+        self.slippage_pct = slippage_pct
+        self.commission = commission
+        self.price_rounding = price_rounding
         self.post_trade_func = post_trade_func
     
     def __call__(self,
@@ -196,7 +242,6 @@ class SimpleMarketSimulator:
         '''TODO: code for stop orders'''
         trades = []
         timestamp = timestamps[i]
-        # _logger.info(f'got: {orders}')
         for order in orders:
             if not isinstance(order, MarketOrder) and not isinstance(order, LimitOrder): continue
             contract = order.contract
@@ -209,9 +254,10 @@ class SimpleMarketSimulator:
                     if np.isnan(raw_price):
                         break
             if np.isnan(raw_price): continue
-            slippage = self.slippage * order.qty * raw_price
+            slippage = self.slippage_pct * raw_price
             if order.qty < 0: slippage = -slippage
             price = raw_price + slippage
+            price = round(price, self.price_rounding)
             if isinstance(order, LimitOrder) and np.isfinite(order.limit_price):
                 if ((abs(order.qty > 0) and order.limit_price > price) 
                         or (abs(order.qty < 0) and order.limit_price < price)):
@@ -219,7 +265,6 @@ class SimpleMarketSimulator:
             commission = self.commission * order.qty
             if order.qty < 0: commission = -commission
             trade = Trade(order.contract, order, timestamp, order.qty, price, self.commission)
-            _logger.info(f'TRADE: {timestamp.astype("M8[m]")} {trade}')
             order.fill()
             trades.append(trade)
             if self.post_trade_func is not None:
@@ -236,6 +281,7 @@ class PercentOfEquityTradingRule:
         reason_code: Reason for entering the order, used for display
         equity_percent: Percentage of equity used to size order
         long: Whether We want to go long or short
+        allocate_risk: If set, we divide the max risk by number of trades. Otherwise each trade will be alloated max risk 
         limit_increment: If not nan, we add or subtract this number from current market price (if selling or buying respectively)
             and create a limit order. If nan, we create market orders
         price_func: The function we use to get intraday prices
@@ -245,6 +291,7 @@ class PercentOfEquityTradingRule:
     price_func: PriceFunctionType
     equity_percent: float = 0.1  # use 10% of equity by default
     long: bool = True
+    allocate_risk: bool = False
     limit_increment: float = math.nan
         
     def __call__(self,
@@ -268,7 +315,8 @@ class PercentOfEquityTradingRule:
             curr_equity = account.equity(timestamp)
             risk_amount = self.equity_percent * curr_equity
             order_qty = risk_amount / entry_price_est
-            order_qty /= len(contracts)  # divide up qty equally between all contracts
+            if self.allocate_risk:
+                order_qty /= len(contracts)  # divide up qty equally between all contracts
             if not self.long: order_qty *= -1
             order_qty = math.floor(order_qty) if order_qty > 0 else math.ceil(order_qty)
             if math.isclose(order_qty, 0.): return []
@@ -305,8 +353,8 @@ class VWAPEntryRule:
         long: Whether we want to go long or short
         percent_of_equity: Order qty is calculated so that if the stop price is reached, we lose this amount
         stop_price_ind: Don't enter if estimated entry price is 
-            market price <= stop price + min_price_diff (for long orders) or the opposite for short orders
-        min_price_diff: See stop_price_ind
+            market price <= stop price + min_price_diff_pct * market_price (for long orders) or the opposite for short orders
+        min_price_diff_pct: See stop_price_ind
     '''
     reason_code: str
     vwap_minutes: int
@@ -314,7 +362,7 @@ class VWAPEntryRule:
     long: bool
     percent_of_equity: float
     stop_price_ind: str | None
-    min_price_diff: float
+    min_price_diff_pct: float
     single_entry_per_day: bool
         
     def __init__(self, 
@@ -324,7 +372,7 @@ class VWAPEntryRule:
                  long: bool = True,
                  percent_of_equity: float = 0.1,
                  stop_price_ind: str | None = None,
-                 min_price_diff: float = 0,
+                 min_price_diff_pct: float = 0,
                  single_entry_per_day: bool = False) -> None:
         self.reason_code = reason_code
         self.price_func = price_func
@@ -332,7 +380,7 @@ class VWAPEntryRule:
         self.vwap_minutes = vwap_minutes
         self.percent_of_equity = percent_of_equity
         self.stop_price_ind = stop_price_ind
-        self.min_price_diff = min_price_diff
+        self.min_price_diff_pct = min_price_diff_pct
         self.single_entry_per_day = single_entry_per_day
         
     def __call__(self,
@@ -362,8 +410,8 @@ class VWAPEntryRule:
             if self.stop_price_ind:
                 _stop_price_ind = getattr(indicator_values, self.stop_price_ind)
                 stop_price = _stop_price_ind[i]
-                if self.long and (entry_price_est - stop_price) < self.min_price_diff: return []
-                if not self.long and (stop_price - entry_price_est) < self.min_price_diff: return []
+                if self.long and (entry_price_est - stop_price) < self.min_price_diff_pct * entry_price_est: return []
+                if not self.long and (stop_price - entry_price_est) < self.min_price_diff_pct * entry_price_est: return []
             else:
                 stop_price = math.nan
 
@@ -504,11 +552,9 @@ class VWAPMarketSimulator:
                 fill_fraction = (timestamp - order.timestamp) / (order.vwap_end_time - order.timestamp)
                 fill_fraction = min(fill_fraction, 1)
                 fill_qty = np.fix(order.qty * fill_fraction)
-                _logger.info(f'{timestamp} {order.timestamp} {order.vwap_end_time} {fill_fraction} qty: {fill_qty}')
             order.fill(fill_qty)
             order.cancel()
             trade = Trade(order.contract, order, timestamp, fill_qty, vwap)
-            _logger.info(f'Trade: {timestamp.astype("M8[m]")} {trade} {i}')
             trades.append(trade)
         return trades
     
@@ -538,7 +584,11 @@ class FiniteRiskEntryRule:
             Used to calculate order qty so that if we get stopped out, we don't lose 
             more than this amount. Of course if price gaps up or down rather than moving smoothly,
             we may lose more.
-        stop_price_func: An indicator containing the stop price so we exit the order when this is breached
+        stop_return_func: A function that gives us the distance between entry price and stop price
+        min_stop_return: We will not enter if the stop_return is closer than this percent to the stop.
+            Otherwise, we get very large trade sizes
+        max_position_size: An order should not result in a position that is greater than this percent
+            of the portfolio
         contract_filter: A function that takes similar arguments as a rule (with ContractGroup) replaced by 
             Contract but returns a list of contract names for each positive signal timestamp. For example, 
             for a strategy that trades 5000 stocks, you may want to construct a single signal and apply it 
@@ -549,11 +599,12 @@ class FiniteRiskEntryRule:
     >>> sig_values = np.full(len(timestamps), False) 
     >>> aapl_prices = np.array([100.1, 100.2, 100.3, 100.4])
     >>> ibm_prices = np.array([200.1, 200.2, 200.3, 200.4])
-    >>> stops = np.array([50, 75, 85, 100.35])
+    >>> aapl_stops = np.array([-0.5, -0.3, -0.2, -0.01])
+    >>> ibm_stops=  np.array([-0.5, -0.3, -0.2, -0.15])
     >>> price_dict = {'AAPL': (timestamps, aapl_prices), 'IBM': (timestamps, ibm_prices)}
-    >>> stop_dict = {'AAPL': (timestamps, stops), 'IBM': (timestamps, stops)}
+    >>> stop_dict = {'AAPL': (timestamps, aapl_stops), 'IBM': (timestamps, ibm_stops)}
     >>> price_func = PriceFuncArrayDict(price_dict)
-    >>> fr = FiniteRiskEntryRule('TEST_ENTRY', price_func, False)
+    >>> fr = FiniteRiskEntryRule('TEST_ENTRY', price_func, long=False)
     >>> default_cg = ContractGroup.get('DEFAULT')
     >>> default_cg.clear_cache()
     >>> default_cg.add_contract(Contract.get_or_create('AAPL'))
@@ -561,38 +612,41 @@ class FiniteRiskEntryRule:
     >>> account = SimpleNamespace()
     >>> account.equity = lambda x: 1e6
     >>> orders = fr(default_cg, 1, timestamps, SimpleNamespace(), sig_values, account, [], SimpleNamespace())
-    >>> assert len(orders) == 2 and orders[0].qty == 998 and orders[1].qty == 499
-    >>> stop_price_func = PriceFuncArrayDict(stop_dict)
-    >>> fr = FiniteRiskEntryRule('TEST_ENTRY', price_func, long=True, stop_price_func=stop_price_func, min_price_diff=0.1)
+    >>> assert len(orders) == 2 and orders[0].qty == -998 and orders[1].qty == -499
+    >>> stop_return_func = PriceFuncArrayDict(stop_dict)
+    >>> fr = FiniteRiskEntryRule('TEST_ENTRY', price_func, long=True, stop_return_func=stop_return_func, min_stop_return=-0.1)
     >>> orders = fr(default_cg, 2, timestamps, SimpleNamespace(), sig_values, account, [], SimpleNamespace())
-    >>> assert len(orders) == 2 and orders[0].qty == 6535 and orders[1].qty == 867
+    >>> assert len(orders) == 2 and orders[0].qty == 4985 and orders[1].qty == 2496
     >>> orders = fr(default_cg, 3, timestamps, SimpleNamespace(), sig_values, account, [], SimpleNamespace())
-    >>> assert len(orders) == 1 and orders[0].qty == 999
+    >>> assert len(orders) == 1 and orders[0].qty == 3326
     '''
     reason_code: str
     price_func: PriceFunctionType
     long: bool
     percent_of_equity: float
-    min_price_diff: float
+    min_stop_returnt: float
+    max_position_size: float
     single_entry_per_day: bool
     contract_filter: ContractFilterType | None
-    stop_price_func: PriceFunctionType | None
+    stop_return_func: PriceFunctionType | None
 
     def __init__(self, 
                  reason_code: str, 
                  price_func: PriceFunctionType,
                  long: bool = True,
                  percent_of_equity: float = 0.1,
-                 min_price_diff: float = 0,
+                 min_stop_return: float = 0,
+                 max_position_size: float = 0,
                  single_entry_per_day: bool = False,
                  contract_filter: ContractFilterType | None = None,
-                 stop_price_func: PriceFunctionType | None = None) -> None:
+                 stop_return_func: PriceFunctionType | None = None) -> None:
         self.reason_code = reason_code
         self.price_func = price_func
         self.long = long
         self.percent_of_equity = percent_of_equity
-        self.stop_price_func = stop_price_func
-        self.min_price_diff = min_price_diff
+        self.stop_return_func = stop_return_func
+        self.min_stop_return = min_stop_return
+        self.max_position_size = max_position_size
         self.single_entry_per_day = single_entry_per_day
         self.contract_filter = contract_filter        
 
@@ -605,7 +659,6 @@ class FiniteRiskEntryRule:
                  account: Account,
                  current_orders: Sequence[Order],
                  strategy_context: StrategyContextType) -> list[Order]:
-        # import pdb; pdb.set_trace()
         timestamp = timestamps[i]
         date = timestamp.astype('M8[D]')
 
@@ -630,17 +683,29 @@ class FiniteRiskEntryRule:
             if math.isnan(entry_price_est): continue
 
             stop_price = 0.
-            if self.stop_price_func is not None:           
-                stop_price = self.stop_price_func(contract, timestamps, i, strategy_context)  # type: ignore
-                if abs(entry_price_est - stop_price) < self.min_price_diff:
+            if self.stop_return_func is not None:           
+                stop_return = self.stop_return_func(contract, timestamps, i, strategy_context)  # type: ignore
+                assert_(stop_return < 0, f'stop_return must be negative: {stop_return} {timestamp} {contract.symbol}')
+                if stop_return > self.min_stop_return:
                     _logger.info(f'entry price estimate: {entry_price_est} too close to stop price: {stop_price}'
-                                 f' tolerance: {self.min_price_diff}')
+                                 f' min stop return: {self.min_stop_return}')
                     continue
+                if not self.long: stop_return = -stop_return
+                stop_price = entry_price_est * (1 + stop_return)
+                if ((self.long and entry_price_est <= stop_price) or (not self.long and entry_price_est >= stop_price)):
+                    _logger.info(f'entry price estimate: {entry_price_est} exceeds stop price: {stop_price}')
+                    continue                                 
 
             curr_equity = account.equity(timestamp)
             risk_amount = self.percent_of_equity * curr_equity
-            order_qty = risk_amount / (entry_price_est - stop_price)
-            order_qty = math.floor(order_qty) if order_qty > 0 else math.ceil(order_qty)
+            order_qty = risk_amount / abs(entry_price_est - stop_price)
+            
+            if self.max_position_size > 0:
+                max_qty = self.max_position_size * curr_equity / entry_price_est
+                order_qty = min(order_qty, max_qty)
+                
+            order_qty = math.floor(order_qty)
+            if not self.long: order_qty = -order_qty
             if math.isclose(order_qty, 0.): continue
             order = MarketOrder(contract=contract,  # type: ignore
                                 timestamp=timestamp, 
@@ -660,7 +725,6 @@ class ClosePositionExitRule:
         price_func: the function this rule uses to get market prices
         limit_increment: if not nan, we add or subtract this number from current market price (if selling or buying respectively)
             and create a limit order
-        log_orders: if set, we use the python logger to log each order as it is generated
     '''
     reason_code: str
     price_func: PriceFunctionType
@@ -669,13 +733,11 @@ class ClosePositionExitRule:
     def __init__(self, 
                  reason_code: str, 
                  price_func: PriceFunctionType,
-                 limit_increment: float = math.nan,
-                 log_orders: bool = True) -> None:
+                 limit_increment: float = math.nan) -> None:
         self.reason_code = reason_code
         self.price_func = price_func
         assert_(math.isnan(limit_increment) or limit_increment >= 0, f'limit_increment: {limit_increment} cannot be negative')
         self.limit_increment = limit_increment
-        self.log_orders = log_orders
         
     def __call__(self,
                  contract_group: ContractGroup,
@@ -688,7 +750,6 @@ class ClosePositionExitRule:
                  strategy_context: StrategyContextType) -> list[Order]:
         timestamp = timestamps[i]
         positions = account.positions(contract_group, timestamp)
-        # assert len(positions) == 1, f'expected 1 positions, got: {positions}'
         orders: list[Order] = []
         for (contract, qty) in positions:
             if math.isfinite(self.limit_increment):
@@ -702,7 +763,6 @@ class ClosePositionExitRule:
                 continue
             order = MarketOrder(contract=contract, timestamp=timestamp, qty=-qty, reason_code=self.reason_code)
             orders.append(order)
-        if self.log_orders: _logger.info(f'ORDER: {timestamp} {order}')
         return orders
     
 

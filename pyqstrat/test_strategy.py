@@ -89,8 +89,8 @@ def test_strategy() -> None:
 
         curr_equity = account.equity(timestamp)
         order_qty = np.round(curr_equity * risk_percent / indicators.c[i] * np.sign(signal_value))
-        _logger.info(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp}'
-                     f' risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
+        # _logger.info(f'order_qty: {order_qty} curr_equity: {curr_equity} timestamp: {timestamp}'
+        #             f' risk_percent: {risk_percent} indicator: {indicators.c[i]} signal_value: {signal_value}')
         reason_code = 'ENTER_LONG' if order_qty > 0 else 'ENTER_SHORT'
         _orders.append(pq.MarketOrder(contract=contract, 
                                       timestamp=timestamp, 
@@ -151,7 +151,7 @@ def test_strategy() -> None:
 
             trade = pq.Trade(order.contract, order, timestamp, order.qty, trade_price, commission=0, fee=0)
             order.fill()
-            _logger.info(f'trade: {trade}')
+            # _logger.info(f'trade: {trade}')
 
             trades.append(trade)
 
@@ -175,7 +175,12 @@ def test_strategy() -> None:
 
     strategy_context = SimpleNamespace(aapl_price=aapl_prices.c.values, ibm_price=ibm_prices.c.values)
 
-    strategy = pq.Strategy(timestamps, [aapl_contract_group, ibm_contract_group], get_price, trade_lag=1, strategy_context=strategy_context)
+    strategy = pq.Strategy(timestamps, 
+                           [aapl_contract_group, ibm_contract_group], 
+                           get_price, 
+                           trade_lag=1,
+                           log_trades=False,
+                           strategy_context=strategy_context)
     for cg, prices in [(aapl_contract_group, aapl_prices), (ibm_contract_group, ibm_prices)]:
         for column in ['o', 'h', 'l', 'c']:
             strategy.add_indicator(column, pq.VectorIndicator(prices[column].values), contract_groups=[cg])
@@ -194,9 +199,7 @@ def test_strategy() -> None:
 
     strategy.add_market_sim(market_simulator)
 
-    strategy.run_indicators()
-    strategy.run_signals()
-    strategy.run_rules()
+    strategy.run()
 
     metrics = strategy.evaluate_returns(plot=False, display_summary=False, return_metrics=True)
     assert metrics is not None
@@ -229,7 +232,7 @@ def test_strategy_2() -> None:
             timestamp=timestamps[i], 
             qty=10, 
             reason_code='ENTER')
-        _logger.info(order)
+        # _logger.info(order)
         return [order]
             
     def market_simulator(orders: Sequence[pq.Order],
@@ -243,7 +246,7 @@ def test_strategy_2() -> None:
             assert order.contract is not None
             trade = pq.Trade(order.contract, order, timestamps[i], order.qty, 50)
             trades.append(trade)
-        _logger.info(f'trades: {trades}')
+        # _logger.info(f'trades: {trades}')
         return trades
     
     def get_price(contract: pq.Contract, timestamps: np.ndarray, i: int, strategy_context: pq.StrategyContextType) -> float:
@@ -262,7 +265,7 @@ def test_strategy_2() -> None:
         _ = pq.Contract.create(symbol, cg)
         cgs.append(cg)
         # test_cg.add_contract(contract)
-    strategy = pq.Strategy(timestamps, cgs, get_price, trade_lag=1)
+    strategy = pq.Strategy(timestamps, cgs, get_price, trade_lag=1, log_trades=False)
     for cg in cgs:
         _prices = df.set_index('timestamp').reindex(timestamps)
         strategy.add_indicator('price', pq.VectorIndicator(_prices.price.values), [cg])

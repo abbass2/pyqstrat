@@ -72,6 +72,8 @@ class StrategyBuilder:
     signals: list[tuple[str, SignalType, Sequence[ContractGroup] | None, Sequence[str] | None, Sequence[str] | None]]
     rules: list[tuple[str, RuleType, str, Sequence[Any] | None, str | None]]
     market_sims: list[MarketSimulatorType]
+    log_trades: bool
+    log_orders: bool
     
     def __init__(self, data: pd.DataFrame | None = None) -> None:
         if data is not None: assert_(len(data) > 0, 'data cannot be empty')
@@ -87,6 +89,8 @@ class StrategyBuilder:
         self.signals = []
         self.rules = []
         self.market_sims = []
+        self.log_trades = True
+        self.log_orders = False
         
     def set_timestamps(self, timestamps: np.ndarray) -> None:
         assert_(np.issubdtype(timestamps.dtype, np.datetime64), f'timestamps must be np.datetime64: {timestamps}')
@@ -103,6 +107,12 @@ class StrategyBuilder:
         
     def set_strategy_context(self, context: StrategyContextType) -> None:
         self.strategy_context = context
+        
+    def set_log_trades(self, log_trades: bool) -> None:
+        self.log_trades = log_trades
+        
+    def set_log_orders(self, log_orders: bool) -> None:
+        self.log_orders = log_orders
         
     def add_contract(self, symbol: str) -> Contract:
         if Contract.exists(symbol):
@@ -186,7 +196,9 @@ class StrategyBuilder:
                          self.starting_equity, 
                          self.pnl_calc_time, 
                          self.trade_lag, 
-                         True, 
+                         True,
+                         self.log_trades,
+                         self.log_orders,
                          self.strategy_context)
         
         assert_(self.rules is not None and len(self.rules) > 0, 'rules cannot be empty or None')

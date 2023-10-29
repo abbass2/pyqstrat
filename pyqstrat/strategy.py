@@ -68,6 +68,8 @@ class Strategy:
                  pnl_calc_time: int = 16 * 60 + 1,
                  trade_lag: int = 0,
                  run_final_calc: bool = True, 
+                 log_trades: bool = True,
+                 log_orders: bool = False,
                  strategy_context: StrategyContextType | None = None) -> None:
         '''
         Args:
@@ -85,6 +87,8 @@ class Strategy:
             strategy_context: A storage class where you can store key / value pairs relevant to this strategy.
                 For example, you may have a pre-computed table of correlations that you use in the indicator or trade rule functions.  
                 If not set, the __init__ function will create an empty member strategy_context object that you can access.
+            log_trades: If set, we log orders as they are created
+            log_orders: If set, we log trades as they are created
         '''
         self.name = 'main'  # Set by portfolio when running multiple strategies
         increasing_ts: bool = bool(np.all(np.diff(timestamps.astype(int)) > 0))
@@ -99,6 +103,8 @@ class Strategy:
         assert_(trade_lag >= 0, f'trade_lag cannot be negative: {trade_lag}')
         self.trade_lag = trade_lag
         self.run_final_calc = run_final_calc
+        self.log_trades = log_trades
+        self.log_orders = log_orders
         self.indicators: dict[str, IndicatorType] = {}
         self.signals: dict[str, SignalType] = {}
         self.signal_values: dict[str, SimpleNamespace] = defaultdict(types.SimpleNamespace)
@@ -413,6 +419,12 @@ class Strategy:
         
         for j, (rule_function, contract_group, params) in enumerate(rules):
             orders = self._get_orders(i, rule_function, contract_group, params)
+            if self.log_orders and len(orders) > 0:
+                if len(orders) > 1:
+                    _logger.info('ORDERS:' + ''.join([f'\n {order}' for order in orders]))
+                else:
+                    _logger.info(f'ORDER: {orders[0]}')
+                    
             self._orders += orders
             self._current_orders += orders
             # _logger.info(f'current_orders: {self._current_orders}')
@@ -447,9 +459,9 @@ class Strategy:
             if position_filter is not None:
                 curr_pos = self.account.position(contract_group, self.timestamps[idx])
                 if position_filter == 'zero' and not math.isclose(curr_pos, 0): return []
-                if position_filter == 'nonzero' and math.isclose(curr_pos, 0): return []
-                if position_filter == 'positive' and (curr_pos < 0 or math.isclose(curr_pos, 0)): return []
-                if position_filter == 'negative' and (curr_pos > 0 or math.isclose(curr_pos, 0)): return []
+                elif position_filter == 'nonzero' and math.isclose(curr_pos, 0): return []
+                elif position_filter == 'positive' and (curr_pos < 0 or math.isclose(curr_pos, 0)): return []
+                elif position_filter == 'negative' and (curr_pos > 0 or math.isclose(curr_pos, 0)): return []
                 
             orders = rule_function(contract_group, idx, self.timestamps, indicator_values, signal_values, self.account,
                                    self._current_orders, self.strategy_context)
@@ -491,6 +503,13 @@ class Strategy:
                                              self.indicator_values, 
                                              self.signal_values, 
                                              self.strategy_context)
+                
+                if self.log_trades and len(trades) > 0:
+                    if len(trades) > 1:
+                        _logger.info('TRADES:' + ''.join([f'\n {trade}' for trade in trades]))
+                    else:
+                        _logger.info(f'TRADE: {trades[0]}')
+
                 if len(trades): self.account.add_trades(trades)
                 self._trades += trades
             except Exception as e:

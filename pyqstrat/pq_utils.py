@@ -465,7 +465,7 @@ def infer_frequency(timestamps: np.ndarray) -> float:
     for period in ['D', 'M', 'm', 's']:
         ret = try_frequency(timestamps, period, threshold)
         if math.isfinite(ret): return ret
-    assert_(False, f'could not infer frequency from timestamps: {timestamps}')
+    assert_(False, f'could not infer frequency from timestamps: {timestamps[:100]} ...')
     return math.nan  # will never execute but keeps mypy happy
 
 
@@ -676,7 +676,9 @@ def assert_(condition: bool, msg: str | None = None) -> None:
     using the python optimization switch
     '''
     if msg is None: msg = ''
-    if not condition: raise PQException(msg)
+    if not condition:
+        import pdb; pdb.set_trace()
+        raise PQException(msg)
 
 
 class Paths:
