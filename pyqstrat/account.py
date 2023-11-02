@@ -241,7 +241,6 @@ def _get_calc_timestamps(timestamps: np.ndarray, pnl_calc_time: int) -> np.ndarr
     return np.unique(timestamps[calc_indices])
 
 
-# =======
 def _net_trade(stack: deque, trade: Trade) -> RoundTripTrade | None:
     if not len(stack) or np.sign(trade.qty) == np.sign(stack[0].qty):
         stack.append(trade)
@@ -261,7 +260,7 @@ def _net_trade(stack: deque, trade: Trade) -> RoundTripTrade | None:
                         entry.price, trade.price, 
                         entry_reason_code, exit_reason_code,
                         entry.commission * entry_fraction, trade.commission * exit_fraction,
-                        entry.properties, trade.properties,
+                        copy.deepcopy(entry.properties), copy.deepcopy(trade.properties),
                         pnl)
     resid = entry.qty - qty
     entry.qty -= qty
@@ -273,20 +272,17 @@ def _net_trade(stack: deque, trade: Trade) -> RoundTripTrade | None:
     return rt
 
 
-def _roundtrip_trades(trades: list[Trade],
-                      contract_group: ContractGroup | None = None, 
-                      start_date: np.datetime64 = NAT, 
-                      end_date: np.datetime64 = NAT) -> list[RoundTripTrade]:
+def roundtrip_trades(trades: list[Trade]) -> list[RoundTripTrade]:
     '''
     >>> qtys = [100, -50, 20, -120, 10]
     >>> prices = [9, 10, 8, 11, 12]                    
     >>> trades = []
-    >>> contract = SimpleNamespace(symbol='AAPL', contract_group='AAPL', multiplier=1)
+    >>> contract = SimpleNamespace(symbol='AAPL', multiplier=1)
     >>> order = SimpleNamespace(reason_code='DUMMY')
     >>> for i, qty in enumerate(qtys):
     ...    timestamp = np.datetime64('2022-11-05 08:00') + np.timedelta64(i, 'm')
     ...    trades.append(Trade(contract, order, timestamp, qty, prices[i]))
-    >>> rts = _roundtrip_trades(trades, 'AAPL')
+    >>> rts = roundtrip_trades(trades)
     >>> assert [(rt.qty, rt.entry_price, rt.exit_price, rt.net_pnl) for rt in rts] == [
     ...    (50, 9, 10, 50.0), (50, 9, 11, 100.0), (20, 8, 11, 60.0), (-10, 11, 12, -10.0), (-40, 11, np.nan, 0.0)]
     '''
@@ -329,10 +325,26 @@ def _roundtrip_trades(trades: list[Trade],
         rt.entry_properties.entry_index = rt.entry_properties.index
         rt.entry_properties.index = i
         
-    rtt = [rt for rt in rtt if (np.isnat(start_date) or rt.entry_timestamp >= start_date) and (
-        np.isnat(end_date) or np.isnat(rt.exit_timestamp) or rt.exit_timestamp <= end_date) and (
-        contract_group is None or rt.contract.contract_group == contract_group)]
     return rtt
+
+
+def df_roundtrip_trade(rt_trades: list[RoundTripTrade]) -> pd.DataFrame:
+    df_rts = pd.DataFrame.from_records([dict(
+        symbol=s.contract.symbol, 
+        multiplier=s.contract.multiplier, 
+        entry_timestamp=s.entry_timestamp,
+        exit_timestamp=s.exit_timestamp,
+        qty=s.qty,
+        entry_price=s.entry_price,
+        exit_price=s.exit_price,
+        entry_reason=s.entry_reason,
+        exit_reason=s.exit_reason,
+        entry_commission=s.entry_commission,
+        exit_commission=s.exit_commission,
+        net_pnl=s.net_pnl) for s in rt_trades])
+    if len(df_rts) > 0:
+        df_rts = df_rts.sort_values(by=['entry_timestamp', 'symbol'])
+    return df_rts
 
 
 class Account:
@@ -470,7 +482,7 @@ class Account:
         return [trade for trade in self._trades if (np.isnat(start_date) or trade.timestamp >= start_date) and (
             np.isnat(end_date) or trade.timestamp <= end_date) and (
             contract_group is None or trade.contract.contract_group == contract_group)]
-    
+
     def roundtrip_trades(self,
                          contract_group: ContractGroup | None = None, 
                          start_date: np.datetime64 = NAT, 
@@ -478,7 +490,14 @@ class Account:
         '''Returns a list of round trip trades with the given symbol and with trade date 
             between (and including) start date and end date if they are specified. 
             If symbol is None trades for all symbols are returned'''
-        return _roundtrip_trades(self._trades.copy(), contract_group, start_date, end_date)
+        trades = self._trades.copy()
+        if contract_group is not None:
+            trades = [trade for trade in trades if trade.order.contract.contract_group == contract_group]
+        if not np.isnat(start_date):
+            trades = [trade for trade in trades if trade.timestamp >= start_date]
+        if not np.isnat(end_date):
+            trades = [trade for trade in trades if trade.timestamp >= start_date]
+        return roundtrip_trades(trades)
 
     def df_pnl(self, contract_groups: Sequence[str] | None = None) -> pd.DataFrame:
         '''
@@ -593,22 +612,7 @@ class Account:
             end_date: Include trades with date less than or equal to this timestamp.
         '''
         rt_trades = self.roundtrip_trades(contract_group, start_date, end_date)
-        df_rts = pd.DataFrame.from_records([dict(
-            symbol=s.contract.symbol, 
-            multiplier=s.contract.multiplier, 
-            entry_timestamp=s.entry_timestamp,
-            exit_timestamp=s.exit_timestamp,
-            qty=s.qty,
-            entry_price=s.entry_price,
-            exit_price=s.exit_price,
-            entry_reason=s.entry_reason,
-            exit_reason=s.exit_reason,
-            entry_commission=s.entry_commission,
-            exit_commission=s.exit_commission,
-            net_pnl=s.net_pnl) for s in rt_trades])
-        if len(df_rts) > 0:
-            df_rts = df_rts.sort_values(by=['entry_timestamp', 'symbol'])
-        return df_rts
+        return df_roundtrip_trade(rt_trades)
 
 
 def test_account():
