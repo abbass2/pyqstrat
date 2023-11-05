@@ -245,7 +245,6 @@ class OrderStatus(Enum):
     CANCELLED = 5
     
 
-# class syntax
 class TimeInForce(Enum):
     FOK = 1  # Fill or Kill
     GTC = 2  # Good till Cancelled
